@@ -35,8 +35,8 @@
 
   <div *ngIf="!loading && results.length === 0" class="sr-empty">
     <div class="sr-empty-icon">📋</div>
-    <p class="sr-empty-title">No results found</p>
-    <p class="sr-empty-sub">No results found for {{ selectedSession }}.</p>
+    <p class="sr-empty-title">No published results yet</p>
+    <p class="sr-empty-sub">Results for {{ selectedSession }} appear here once your school publishes them.</p>
   </div>
 
   <!-- ── Progress Tracker View ─────────────────────────────────────── -->
@@ -120,9 +120,12 @@
           <span class="sr-exam-name">{{ exam.examName }}</span>
           <div class="sr-exam-summary">
             <span class="sr-summary-chip">{{ exam.totalMarksObtained }}/{{ exam.totalMaxMarks }}</span>
-            <span class="sr-summary-chip">{{ exam.percentage | number:'1.1-1' }}%</span>
-            <span class="sr-grade-badge" [ngClass]="getGradeClass(exam.percentage)">{{ getGrade(exam.percentage) }}</span>
-            <span class="sr-rank-badge">Rank {{ exam.overallRank }}</span>
+            <span class="sr-summary-chip" *ngIf="exam.percentage !== null">{{ exam.percentage | number:'1.1-1' }}%</span>
+            <span class="sr-summary-chip sr-chip-pending" *ngIf="exam.percentage === null"
+              title="The result is final once every mark is entered">{{ exam.marksMissing }} mark{{ exam.marksMissing === 1 ? '' : 's' }} pending</span>
+            <span class="sr-grade-badge" *ngIf="exam.grade" [ngClass]="getGradeClass(exam)">{{ exam.grade }}</span>
+            <span class="sr-grade-badge grade-f" *ngIf="exam.passed === false">Fail</span>
+            <span class="sr-rank-badge" *ngIf="exam.overallRank !== null">Rank {{ exam.overallRank }}</span>
           </div>
         </div>
         <div class="sr-exam-actions" (click)="$event.stopPropagation()">

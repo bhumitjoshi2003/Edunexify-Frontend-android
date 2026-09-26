@@ -43,13 +43,20 @@
       <label>Exam</label>
       <select [(ngModel)]="selectedExamId" (ngModelChange)="onExamChange()">
         <option [ngValue]="null">— Select Exam —</option>
-        <option *ngFor="let e of exams; trackBy: trackById" [ngValue]="e.id">{{ e.examName }}</option>
+        <option *ngFor="let e of exams; trackBy: trackById" [ngValue]="e.id">{{ e.examName }} · {{ isExamPublished(e) ? 'Published' : 'Draft' }}</option>
       </select>
     </div>
   </div>
 
-  <!-- Section Chips -->
-  <div class="me-section-chips" *ngIf="sections.length > 0">
+  <!-- Result status of the selected exam -->
+  <div class="me-status" *ngIf="selectedExam" [class.me-status-published]="examLocked">
+    <span class="me-status-badge">{{ examLocked ? 'Published' : 'Draft' }}</span>
+    <span *ngIf="!examLocked">Students and parents can't see these marks until an admin publishes the results.</span>
+    <span *ngIf="examLocked">Students and parents can see these results. Marks are locked — ask an admin to unpublish to make changes.</span>
+  </div>
+
+  <!-- Section Chips (admins; a teacher always works in their own section) -->
+  <div class="me-section-chips" *ngIf="sections.length > 0 && !isTeacher">
     <span class="section-label">Sections</span>
     <button class="me-sec-chip" [class.me-sec-active]="selectedSectionId === null"
       (click)="onSectionSelect(null)">All Sections</button>
@@ -70,10 +77,24 @@
       </select>
     </div>
 
-    <div *ngIf="selectedSubjectEntryId && subjectStudents.length > 0" class="me-table-wrapper">
+    <!-- Loading: skeleton rows instead of a premature "nothing found" -->
+    <div *ngIf="selectedSubjectEntryId && subjectStudentsState === 'loading'" class="me-table-wrapper me-skeleton" aria-busy="true" aria-label="Loading students">
+      <div class="me-sk-head">
+        <span class="sk-shimmer me-sk-title"></span>
+        <span class="sk-shimmer me-sk-btn"></span>
+      </div>
+      <div class="me-sk-row" *ngFor="let r of skeletonRows">
+        <span class="sk-shimmer me-sk-a"></span>
+        <span class="sk-shimmer me-sk-b"></span>
+        <span class="sk-shimmer me-sk-c"></span>
+        <span class="sk-shimmer me-sk-input"></span>
+      </div>
+    </div>
+
+    <div *ngIf="selectedSubjectEntryId && subjectStudentsState === 'loaded' && subjectStudents.length > 0" class="me-table-wrapper">
       <div class="me-table-header">
         <span>{{ getSelectedSubject()?.subjectName }} — Max: {{ getSelectedSubject()?.maxMarks }}</span>
-        <button class="btn-save" [disabled]="saving" (click)="saveMarksA()">
+        <button class="btn-save" [disabled]="saving || examLocked" (click)="saveMarksA()">
           {{ saving ? 'Saving…' : 'Save Marks' }}
         </button>
       </div>
@@ -95,37 +116,70 @@
               <input type="number" class="me-mark-input"
                 [(ngModel)]="marksInputA[s.studentId]"
                 [max]="getSelectedSubject()?.maxMarks ?? null"
+                [disabled]="examLocked"
+                [class.me-mark-invalid]="rowError(s.studentId, selectedSubjectEntryId)"
                 min="0"
                 placeholder="—" />
+              <span class="me-row-error" *ngIf="rowError(s.studentId, selectedSubjectEntryId) as err">{{ err }}</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div *ngIf="selectedSubjectEntryId && subjectStudents.length === 0" class="me-empty">
+    <div *ngIf="selectedSubjectEntryId && subjectStudentsState === 'loaded' && subjectStudents.length === 0" class="me-empty">
       <div class="me-empty-icon">👤</div>
       <p class="me-empty-title">No students found</p>
       <p class="me-empty-sub">No students found for this subject.</p>
     </div>
+
+    <div *ngIf="selectedSubjectEntryId && subjectStudentsState === 'error'" class="me-empty me-load-error">
+      <div class="me-empty-icon">⚠️</div>
+      <p class="me-empty-title">Couldn't load students</p>
+      <p class="me-empty-sub">Check your connection and try again.</p>
+      <button type="button" class="me-retry" (click)="onSubjectChange()">Try again</button>
+    </div>
+
   </ng-container>
 
   <!-- MODE B — BY STUDENT -->
   <ng-container *ngIf="mode === 'student'">
     <div class="me-filter-group me-subject-filter" *ngIf="selectedExamId">
       <label>Student</label>
-      <select [(ngModel)]="selectedStudentId" (ngModelChange)="onStudentChange()">
-        <option value="">— Select Student —</option>
+      <select [(ngModel)]="selectedStudentId" (ngModelChange)="onStudentChange()" [disabled]="studentsState === 'loading'">
+        <option value="">{{ studentsState === 'loading' ? 'Loading students…' : '— Select Student —' }}</option>
         <option *ngFor="let s of students; trackBy: trackByStudentId" [value]="s.studentId">
           {{ s.name }} ({{ s.studentId }})
         </option>
       </select>
     </div>
 
-    <div *ngIf="selectedStudentId && studentSubjects.length > 0" class="me-table-wrapper">
+    <p class="me-hint" *ngIf="selectedExamId && studentsState === 'loaded' && students.length === 0">No students found in this class/section.</p>
+    <div *ngIf="selectedExamId && studentsState === 'error'" class="me-empty me-load-error">
+      <div class="me-empty-icon">⚠️</div>
+      <p class="me-empty-title">Couldn't load students</p>
+      <p class="me-empty-sub">Check your connection and try again.</p>
+      <button type="button" class="me-retry" (click)="onExamChange()">Try again</button>
+    </div>
+
+    <!-- Loading: skeleton rows instead of a premature "nothing found" -->
+    <div *ngIf="selectedStudentId && studentSubjectsState === 'loading'" class="me-table-wrapper me-skeleton" aria-busy="true" aria-label="Loading subjects">
+      <div class="me-sk-head">
+        <span class="sk-shimmer me-sk-title"></span>
+        <span class="sk-shimmer me-sk-btn"></span>
+      </div>
+      <div class="me-sk-row" *ngFor="let r of skeletonRows">
+        <span class="sk-shimmer me-sk-a"></span>
+        <span class="sk-shimmer me-sk-b"></span>
+        <span class="sk-shimmer me-sk-c"></span>
+        <span class="sk-shimmer me-sk-input"></span>
+      </div>
+    </div>
+
+    <div *ngIf="selectedStudentId && studentSubjectsState === 'loaded' && studentSubjects.length > 0" class="me-table-wrapper">
       <div class="me-table-header">
         <span>{{ selectedStudentName }}</span>
-        <button class="btn-save" [disabled]="saving" (click)="saveMarksB()">
+        <button class="btn-save" [disabled]="saving || examLocked" (click)="saveMarksB()">
           {{ saving ? 'Saving…' : 'Save Marks' }}
         </button>
       </div>
@@ -147,19 +201,30 @@
               <input type="number" class="me-mark-input"
                 [(ngModel)]="marksInputB[s.examSubjectEntryId]"
                 [max]="s.maxMarks"
+                [disabled]="examLocked"
+                [class.me-mark-invalid]="rowError(selectedStudentId, s.examSubjectEntryId)"
                 min="0"
                 placeholder="—" />
+              <span class="me-row-error" *ngIf="rowError(selectedStudentId, s.examSubjectEntryId) as err">{{ err }}</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div *ngIf="selectedStudentId && studentSubjects.length === 0" class="me-empty">
+    <div *ngIf="selectedStudentId && studentSubjectsState === 'loaded' && studentSubjects.length === 0" class="me-empty">
       <div class="me-empty-icon">📚</div>
       <p class="me-empty-title">No subjects found</p>
       <p class="me-empty-sub">No subjects found for this student in this exam.</p>
     </div>
+
+    <div *ngIf="selectedStudentId && studentSubjectsState === 'error'" class="me-empty me-load-error">
+      <div class="me-empty-icon">⚠️</div>
+      <p class="me-empty-title">Couldn't load subjects</p>
+      <p class="me-empty-sub">Check your connection and try again.</p>
+      <button type="button" class="me-retry" (click)="onStudentChange()">Try again</button>
+    </div>
+
   </ng-container>
 
   <div *ngIf="!selectedExamId" class="me-empty">

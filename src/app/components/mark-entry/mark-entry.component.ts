@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, Subscription, takeUntil, forkJoin } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { ToastService } from '../../services/toast.service';
-import { ExamConfigService, ExamConfig, ExamSubjectEntry } from '../../services/exam-config.service';
-import { MarksService, MarkEntryStudent, StudentExamSubject, MarkEntryRequest } from '../../services/marks.service';
+import { ExamConfigService, ExamConfig, ExamSubjectEntry, isPublished } from '../../services/exam-config.service';
+import { MarksService, MarkEntryStudent, StudentExamSubject, MarkEntryRequest, MarkError } from '../../services/marks.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { TeacherService } from '../../services/teacher.service';
 import { StudentService } from '../../services/student.service';
@@ -14,6 +14,8 @@ import { LoggerService } from '../../services/logger.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
+
+type LoadState = 'idle' | 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-mark-entry',
@@ -55,6 +57,18 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   sections: Section[] = [];
   selectedSectionId: number | null = null;
   private sectionMemory: Map<string, number | null> = new Map();
+
+  /** Request state of each table, so "nothing found" is only shown after an empty, successful load. */
+  subjectStudentsState: LoadState = 'idle';
+  studentSubjectsState: LoadState = 'idle';
+  studentsState: LoadState = 'idle';
+  private subjectStudentsSub?: Subscription;
+  private studentSubjectsSub?: Subscription;
+  private studentsSub?: Subscription;
+  readonly skeletonRows = [1, 2, 3, 4, 5];
+
+  /** Per-row reasons from the last rejected save, keyed "studentId|examSubjectEntryId". Nothing was saved. */
+  rowErrors: Record<string, string> = {};
 
   constructor(
     private examService: ExamConfigService,
@@ -122,6 +136,26 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  get isTeacher(): boolean { return this.role === 'TEACHER'; }
+
+  get selectedExam(): ExamConfig | null {
+    return this.exams.find(e => e.id === this.selectedExamId) ?? null;
+  }
+
+  /** Published results are locked on the server; an admin must unpublish before marks change. */
+  get examLocked(): boolean { return isPublished(this.selectedExam); }
+
+  isExamPublished(exam: ExamConfig): boolean { return isPublished(exam); }
+
+  rowError(studentId: string, entryId: number | null): string | null {
+    return entryId == null ? null : this.rowErrors[`${studentId}|${entryId}`] ?? null;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  warnBeforeLeaving(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedMarks()) event.preventDefault();
   }
 
   private hasUnsavedMarks(): boolean {
@@ -204,16 +238,24 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
       this.loadExamSubjects();
     } else {
       const secId = this.selectedSectionId ?? undefined;
-      forkJoin([
+      this.studentsState = 'loading';
+      this.cdr.markForCheck();
+      this.studentsSub = forkJoin([
         this.examService.getExamSubjects(this.selectedExamId),
         this.studentService.getActiveStudentsByClass(this.selectedClass, secId),
       ]).pipe(takeUntil(this.destroy$)).subscribe({
         next: ([subjects, studentList]) => {
           this.examSubjects = subjects;
           this.students = studentList.map((s: { studentId: string; name: string }) => ({ studentId: s.studentId, name: s.name }));
+          this.studentsState = 'loaded';
           this.cdr.markForCheck();
         },
-        error: (e) => { this.logger.error('Error loading exam data:', e); this.toast.error('Error', 'Failed to load exam data.'); },
+        error: (e) => {
+          this.studentsState = 'error';
+          this.logger.error('Error loading exam data:', e);
+          this.toast.error('Error', 'Failed to load exam data.');
+          this.cdr.markForCheck();
+        },
       });
     }
   }
@@ -232,13 +274,18 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   onSubjectChange(): void {
     this.subjectStudents = [];
     this.marksInputA = {};
+    this.subjectStudentsSub?.unsubscribe();   // a late answer for a previous subject must not land here
+    this.subjectStudentsState = 'idle';
     if (!this.selectedSubjectEntryId) return;
 
-    this.marksService.getStudentsForSubject(this.selectedSubjectEntryId, this.selectedSectionId)
+    this.subjectStudentsState = 'loading';
+    this.cdr.markForCheck();
+    this.subjectStudentsSub = this.marksService.getStudentsForSubject(this.selectedSubjectEntryId, this.selectedSectionId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.subjectStudents = data;
+          this.subjectStudentsState = 'loaded';
           this.marksInputA = {};
           this.originalMarksA = {};
           data.forEach(s => {
@@ -247,7 +294,12 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
           });
           this.cdr.markForCheck();
         },
-        error: (e) => { this.logger.error('Error loading students for subject:', e); this.toast.error('Error', 'Failed to load students for this subject.'); },
+        error: (e) => {
+          this.subjectStudentsState = 'error';
+          this.logger.error('Error loading students for subject:', e);
+          this.toast.error('Error', 'Failed to load students for this subject.');
+          this.cdr.markForCheck();
+        },
       });
   }
 
@@ -255,13 +307,18 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   onStudentChange(): void {
     this.studentSubjects = [];
     this.marksInputB = {};
+    this.studentSubjectsSub?.unsubscribe();
+    this.studentSubjectsState = 'idle';
     if (!this.selectedStudentId || !this.selectedExamId) return;
 
-    this.marksService.getSubjectsForStudent(this.selectedStudentId, this.selectedExamId)
+    this.studentSubjectsState = 'loading';
+    this.cdr.markForCheck();
+    this.studentSubjectsSub = this.marksService.getSubjectsForStudent(this.selectedStudentId, this.selectedExamId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.studentSubjects = data;
+          this.studentSubjectsState = 'loaded';
           this.marksInputB = {};
           this.originalMarksB = {};
           data.forEach(s => {
@@ -270,13 +327,22 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
           });
           this.cdr.markForCheck();
         },
-        error: (e) => { this.logger.error('Error loading subjects for student:', e); this.toast.error('Error', 'Failed to load subjects for this student.'); },
+        error: (e) => {
+          this.studentSubjectsState = 'error';
+          this.logger.error('Error loading subjects for student:', e);
+          this.toast.error('Error', 'Failed to load subjects for this student.');
+          this.cdr.markForCheck();
+        },
       });
   }
 
   async saveMarksA(): Promise<void> {
     if (!this.selectedSubjectEntryId) return;
 
+    if (this.examLocked) {
+      this.toast.warning('Results Published', 'These results are published and locked. Ask an admin to unpublish them to change marks.');
+      return;
+    }
     // Issue #11, #28: Validate marks range before saving
     const maxMarks = this.getSelectedSubject()?.maxMarks ?? Infinity;
     const invalidEntries = Object.entries(this.marksInputA)
@@ -318,6 +384,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.saving = true;
+    this.rowErrors = {};
     this.marksService.saveBulkMarks(entries).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.saving = false;
@@ -328,17 +395,16 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
           (result.errors.length ? `, Errors: ${result.errors.length}` : '');
         result.errors.length ? this.toast.warning('Marks Saved', msg) : this.toast.success('Marks Saved', msg);
       },
-      error: (e) => {
-        this.saving = false;
-        this.logger.error('Error saving marks:', e);
-        this.toast.error('Error', 'Failed to save marks.');
-        this.cdr.markForCheck();
-      },
+      error: (e) => this.onSaveRejected(e),
     });
   }
 
   async saveMarksB(): Promise<void> {
     if (!this.selectedStudentId) return;
+    if (this.examLocked) {
+      this.toast.warning('Results Published', 'These results are published and locked. Ask an admin to unpublish them to change marks.');
+      return;
+    }
 
     // Issue #11, #28: Validate marks range before saving — check per-subject maxMarks
     const invalidSubjectEntries = this.studentSubjects.filter(s => {
@@ -383,6 +449,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
     if (!confirmed) return;
 
     this.saving = true;
+    this.rowErrors = {};
     this.marksService.saveBulkMarks(entries).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.saving = false;
@@ -391,17 +458,26 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
         this.toast.success('Marks Saved', `Saved: ${result.saved}, Updated: ${result.updated}`);
       },
-      error: (e) => {
-        this.saving = false;
-        this.logger.error('Error saving marks:', e);
-        this.toast.error('Error', 'Failed to save marks.');
-        this.cdr.markForCheck();
-      },
+      error: (e) => this.onSaveRejected(e),
     });
   }
 
   getSelectedSubject(): ExamSubjectEntry | undefined {
     return this.examSubjects.find(s => s.id === this.selectedSubjectEntryId);
+  }
+
+  /** A rejected save saved nothing: show every per-row reason next to its input. */
+  private onSaveRejected(e: any): void {
+    this.saving = false;
+    this.logger.error('Error saving marks:', e);
+    const errors: MarkError[] = e?.error?.errors ?? [];
+    this.rowErrors = {};
+    errors.forEach(err => {
+      if (err.studentId && err.examSubjectEntryId != null) this.rowErrors[`${err.studentId}|${err.examSubjectEntryId}`] = err.reason;
+    });
+    const message = e?.error?.message || 'Failed to save marks.';
+    this.toast.error('Nothing was saved', errors.length ? `${message} Fix the highlighted rows and try again.` : message);
+    this.cdr.markForCheck();
   }
 
   get selectedStudentName(): string {
@@ -416,16 +492,23 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   }
 
   private resetSubjectSelection(): void {
+    this.rowErrors = {};
     this.examSubjects = [];
     this.selectedSubjectEntryId = null;
+    this.subjectStudentsSub?.unsubscribe();
+    this.subjectStudentsState = 'idle';
     this.subjectStudents = [];
     this.marksInputA = {};
     this.originalMarksA = {};
   }
 
   private resetStudentSelection(): void {
+    this.studentsSub?.unsubscribe();
+    this.studentsState = 'idle';
     this.students = [];
     this.selectedStudentId = '';
+    this.studentSubjectsSub?.unsubscribe();
+    this.studentSubjectsState = 'idle';
     this.studentSubjects = [];
     this.marksInputB = {};
     this.originalMarksB = {};

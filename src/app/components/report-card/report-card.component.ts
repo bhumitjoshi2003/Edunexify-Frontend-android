@@ -12,7 +12,6 @@ import {
   ExamColumn, SubjectRow
 } from '../../services/report-card-template.service';
 import { LoggerService } from '../../services/logger.service';
-import { SchoolService } from '../../services/school.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -46,7 +45,6 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   displayResults: ExamResult[] = [];
   studentName = '';
   className = '';
-  legacyGradingSystem = 'CBSE';
 
   // ── Template-based mode ───────────────────────────────────────────────
   templateId: number | null = null;
@@ -63,7 +61,6 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     private titleService: Title,
     private marksService: MarksService,
     private rcTemplateService: ReportCardTemplateService,
-    private schoolService: SchoolService,
     private authState: AuthStateService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
@@ -175,11 +172,6 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   // ── Legacy exam-based mode ────────────────────────────────────────────
 
   private loadLegacyMode(): void {
-    this.schoolService.getSettings().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (s) => { this.legacyGradingSystem = s.gradingSystem ?? 'CBSE'; this.cdr.markForCheck(); },
-      error: (err) => this.logger.error('Failed to load school settings', err)
-    });
-
     this.marksService.getStudentResults(this.studentId, this.session)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -254,36 +246,6 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     return map[this.reportCardData?.boardType ?? ''] ?? '';
   }
 
-  // gradeLegend — rows for the grade scale legend shown below marks table
-  get gradeLegend(): { grade: string; range: string; descriptor: string }[] {
-    const gs = this.reportCardData?.gradingSystem ?? 'CBSE';
-    if (gs === 'CBSE') {
-      return [
-        { grade: 'A1', range: '91–100', descriptor: 'Outstanding' },
-        { grade: 'A2', range: '81–90',  descriptor: 'Excellent' },
-        { grade: 'B1', range: '71–80',  descriptor: 'Very Good' },
-        { grade: 'B2', range: '61–70',  descriptor: 'Good' },
-        { grade: 'C1', range: '51–60',  descriptor: 'Satisfactory' },
-        { grade: 'C2', range: '41–50',  descriptor: 'Average' },
-        { grade: 'D',  range: '33–40',  descriptor: 'Needs Improvement' },
-        { grade: 'E',  range: '0–32',   descriptor: 'Fail' },
-      ];
-    }
-    if (gs === 'LETTER') {
-      return [
-        { grade: 'A+', range: '90–100', descriptor: 'Outstanding' },
-        { grade: 'A',  range: '80–89',  descriptor: 'Excellent' },
-        { grade: 'B+', range: '70–79',  descriptor: 'Very Good' },
-        { grade: 'B',  range: '60–69',  descriptor: 'Good' },
-        { grade: 'C+', range: '50–59',  descriptor: 'Satisfactory' },
-        { grade: 'C',  range: '40–49',  descriptor: 'Average' },
-        { grade: 'D',  range: '33–39',  descriptor: 'Needs Improvement' },
-        { grade: 'F',  range: '0–32',   descriptor: 'Fail' },
-      ];
-    }
-    return []; // PERCENTAGE — no letter grade legend needed
-  }
-
   get showCgpa(): boolean {
     return (this.branding.showCgpa !== false) && !!this.reportCardData?.cgpa;
   }
@@ -340,16 +302,6 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     return parts.join(' \u00b7 ');
   }
 
-  cbseGradePoint(pct: number): number {
-    const grade = this.getGradeFromPct(pct);
-    const map: Record<string, number> = {
-      'A1': 10, 'A2': 9, 'B1': 8, 'B2': 7,
-      'C1': 6,  'C2': 5, 'D':  4, 'E':  0,
-      'A+': 10, 'A':  9, 'B+': 8, 'B':  7,
-      'C+': 6,  'C':  5, 'F':  0
-    };
-    return map[grade] ?? 0;
-  }
 
   // ── Template helpers ──────────────────────────────────────────────────
 
@@ -375,65 +327,14 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     return cfg?.gradeScale ?? ['A', 'B', 'C', 'D'];
   }
 
-  isPass(pct: number): boolean { return pct >= 33; }
+  // ── Grading display (grades and pass/fail always come from the backend) ──
 
-  // ── Grading (used by both modes) ──────────────────────────────────────
-
-  private get activeGradingSystem(): string {
-    return this.reportCardData?.gradingSystem ?? this.legacyGradingSystem;
-  }
-
-  getGrade(obtained: number | null, max: number): string {
-    if (obtained === null) return 'Ab';
-    return this.gradeFromPct((obtained / max) * 100);
-  }
-
-  getGradeClass(obtained: number | null, max: number): string {
-    if (obtained === null) return 'grade-absent';
-    const pct = (obtained / max) * 100;
-    if (pct >= 81) return 'grade-a';
-    if (pct >= 61) return 'grade-b';
-    if (pct >= 33) return 'grade-c';
-    return 'grade-fail';
-  }
-
-  getOverallGrade(percentage: number): string {
-    return this.gradeFromPct(percentage);
-  }
-
-  getGradeFromPct(pct: number): string { return this.gradeFromPct(pct); }
-
-  getGradeClassFromPct(pct: number): string {
-    if (pct >= 81) return 'grade-a';
-    if (pct >= 61) return 'grade-b';
-    if (pct >= 33) return 'grade-c';
-    return 'grade-fail';
-  }
-
-  private gradeFromPct(pct: number): string {
-    switch (this.activeGradingSystem) {
-      case 'PERCENTAGE':
-        return `${Math.round(pct)}%`;
-      case 'LETTER':
-        if (pct >= 90) return 'A+';
-        if (pct >= 80) return 'A';
-        if (pct >= 70) return 'B+';
-        if (pct >= 60) return 'B';
-        if (pct >= 50) return 'C+';
-        if (pct >= 40) return 'C';
-        if (pct >= 33) return 'D';
-        return 'F';
-      case 'CBSE':
-      default:
-        if (pct >= 91) return 'A1';
-        if (pct >= 81) return 'A2';
-        if (pct >= 71) return 'B1';
-        if (pct >= 61) return 'B2';
-        if (pct >= 51) return 'C1';
-        if (pct >= 41) return 'C2';
-        if (pct >= 33) return 'D';
-        return 'E';
-    }
+  /** Colour only, derived from the backend grade and pass flag — no grading scale lives here. */
+  gradeClass(grade: string | null | undefined, passed: boolean | null | undefined): string {
+    if (!grade) return 'grade-absent';
+    if (passed === false) return 'grade-fail';
+    const band = grade.charAt(0);
+    return band === 'A' ? 'grade-a' : band === 'B' ? 'grade-b' : 'grade-c';
   }
 
   // ── Legacy mode helpers ───────────────────────────────────────────────
@@ -526,7 +427,24 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     });
   }
 
-  goBack(): void { this.location.back(); }
+  /**
+   * Back returns to where the card was opened from with that page's selection intact. With
+   * in-app history, step back (the previous page keeps its selection in its URL, so browser Back
+   * behaves the same); opened directly — e.g. a new tab — fall back to the caller's returnUrl.
+   */
+  goBack(): void {
+    if (this.router.lastSuccessfulNavigation?.previousNavigation) {
+      this.location.back();
+      return;
+    }
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    // Only an in-app dashboard path is accepted — never an external or protocol-relative URL.
+    if (returnUrl && returnUrl.startsWith('/dashboard/') && !returnUrl.startsWith('//')) {
+      this.router.navigateByUrl(returnUrl);
+      return;
+    }
+    this.location.back();
+  }
 
   private buildSampleData(): ReportCardData {
     const sections: TemplateSection[] = [
@@ -547,13 +465,13 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     const subjectRows: SubjectRow[] = [
       { subjectName: 'Computer', examMarks: [
           { obtained: 78, max: 80, percentage: 97.5 },
-        ], weightedPercentage: 97.5 },
+        ], weightedPercentage: 97.5, grade: 'A1' },
       { subjectName: 'General Knowledge', examMarks: [
           { obtained: 71, max: 80, percentage: 88.75 },
-        ], weightedPercentage: 88.75 },
+        ], weightedPercentage: 88.75, grade: 'A2' },
       { subjectName: 'Mathematics', examMarks: [
           { obtained: 75, max: 80, percentage: 93.75 },
-        ], weightedPercentage: 93.75 },
+        ], weightedPercentage: 93.75, grade: 'A1' },
     ];
     return {
       studentId: 'S102',
@@ -569,6 +487,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       schoolCity: 'Lucknow 226001',
       gradingSystem: 'CBSE',
       cgpa: 9.7,
+      overallGrade: 'A1',
       template: {
         id: -1,
         schoolId: 0,

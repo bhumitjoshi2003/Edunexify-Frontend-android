@@ -162,20 +162,28 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
 
   // ── Progress Tracker computed values ────────────────────────────
 
+  /** Exams with a final result (every mark entered); incomplete ones have no percentage yet. */
+  get completeResults(): (ExamResult & { percentage: number })[] {
+    return this.results.filter((r): r is ExamResult & { percentage: number } => r.percentage !== null);
+  }
+
   get bestExam(): ExamResult | null {
-    if (!this.results.length) return null;
-    return this.results.reduce((best, r) => r.percentage > best.percentage ? r : best);
+    const done = this.completeResults;
+    if (!done.length) return null;
+    return done.reduce((best, r) => r.percentage > best.percentage ? r : best);
   }
 
   get averagePercentage(): number {
-    if (!this.results.length) return 0;
-    return this.results.reduce((sum, r) => sum + r.percentage, 0) / this.results.length;
+    const done = this.completeResults;
+    if (!done.length) return 0;
+    return done.reduce((sum, r) => sum + r.percentage, 0) / done.length;
   }
 
   get trend(): string {
-    if (this.results.length < 2) return '—';
-    const last = this.results[this.results.length - 1].percentage;
-    const prev = this.results[this.results.length - 2].percentage;
+    const done = this.completeResults;
+    if (done.length < 2) return '—';
+    const last = done[done.length - 1].percentage;
+    const prev = done[done.length - 2].percentage;
     if (last > prev + 1) return '↑';
     if (last < prev - 1) return '↓';
     return '→';
@@ -223,9 +231,10 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
     const canvas = this.progressCanvas.nativeElement;
     if (this.progressChart) { this.progressChart.destroy(); this.progressChart = null; }
 
-    const labels = this.results.map(r => r.examName);
-    const studentData = this.results.map(r => parseFloat(r.percentage.toFixed(1)));
-    const classAvgData = this.results.map(r => {
+    const done = this.completeResults;
+    const labels = done.map(r => r.examName);
+    const studentData = done.map(r => parseFloat(r.percentage.toFixed(1)));
+    const classAvgData = done.map(r => {
       const totalMax = r.subjects.reduce((sum, s) => sum + s.maxMarks, 0);
       const totalAvg = r.subjects.reduce((sum, s) => sum + (s.classAverage ?? 0), 0);
       return totalMax > 0 ? parseFloat(((totalAvg / totalMax) * 100).toFixed(1)) : 0;
@@ -409,21 +418,13 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
     this.charts.set(exam.examId, chart);
   }
 
-  getGrade(percentage: number): string {
-    if (percentage >= 90) return 'A+';
-    if (percentage >= 80) return 'A';
-    if (percentage >= 70) return 'B+';
-    if (percentage >= 60) return 'B';
-    if (percentage >= 50) return 'C';
-    if (percentage >= 40) return 'D';
-    return 'F';
-  }
-
-  getGradeClass(percentage: number): string {
-    if (percentage >= 80) return 'grade-a';
-    if (percentage >= 60) return 'grade-b';
-    if (percentage >= 40) return 'grade-c';
-    return 'grade-f';
+  /** Badge colour only — the grade itself always comes from the backend (school grading system). */
+  getGradeClass(exam: ExamResult): string {
+    if (exam.percentage === null) return 'grade-c';
+    if (exam.passed === false) return 'grade-f';
+    if (exam.percentage >= 80) return 'grade-a';
+    if (exam.percentage >= 60) return 'grade-b';
+    return 'grade-c';
   }
 
   openReportCard(examId: number | null): void {

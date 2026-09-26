@@ -146,14 +146,14 @@
                 <ng-container *ngIf="mark !== null">{{ mark.obtained !== null ? mark.obtained : 'Ab' }} / {{ mark.max }}</ng-container>
                 <ng-container *ngIf="mark === null">—</ng-container>
               </td>
-              <td class="rc-td-grade">{{ getGradeFromPct(row.weightedPercentage) }}</td>
+              <td class="rc-td-grade">{{ row.grade ?? '—' }}</td>
             </tr>
           </tbody>
           <tfoot>
             <tr class="rc-tfoot-row">
               <td class="rc-td-subject">TOTAL</td>
               <td class="rc-td-center" *ngFor="let tot of mt.examTotals">{{ tot.obtained }} / {{ tot.max }}</td>
-              <td class="rc-td-grade">{{ getGradeFromPct(reportCardData.weightedResult.weightedPercentage) }}</td>
+              <td class="rc-td-grade">{{ reportCardData.overallGrade ?? '—' }}</td>
             </tr>
           </tfoot>
         </table>
@@ -202,7 +202,7 @@
             <span class="rc-kpi-lbl">Overall</span>
           </div>
           <div class="rc-kpi">
-            <span class="rc-kpi-val">{{ getGradeFromPct(reportCardData.weightedResult.weightedPercentage) }}</span>
+            <span class="rc-kpi-val">{{ reportCardData.overallGrade ?? '—' }}</span>
             <span class="rc-kpi-lbl">Grade</span>
           </div>
           <div class="rc-kpi">
@@ -307,11 +307,11 @@
               <td class="rc-td-num">{{ subj.maxMarks }}</td>
               <td class="rc-td-num">
                 <span *ngIf="subj.marksObtained !== null">{{ subj.marksObtained }}</span>
-                <span *ngIf="subj.marksObtained === null" class="rc-absent-text">Absent</span>
+                <span *ngIf="subj.marksObtained === null" class="rc-absent-text">Not entered</span>
               </td>
               <td class="rc-td-num rc-td-grade"
-                  [ngClass]="getGradeClass(subj.marksObtained, subj.maxMarks)">
-                {{ getGrade(subj.marksObtained, subj.maxMarks) }}
+                  [ngClass]="gradeClass(subj.grade, subj.passed)">
+                {{ subj.grade ?? (subj.marksObtained === null ? '—' : '') }}
               </td>
             </tr>
           </tbody>
@@ -321,18 +321,18 @@
               <td class="rc-td-num">{{ exam.totalMaxMarks }}</td>
               <td class="rc-td-num"><strong>{{ exam.totalMarksObtained }}</strong></td>
               <td class="rc-td-num rc-td-grade"
-                  [ngClass]="getGradeClass(exam.totalMarksObtained, exam.totalMaxMarks)">
-                {{ getOverallGrade(exam.percentage) }}
+                  [ngClass]="gradeClass(exam.grade, exam.passed)">
+                {{ exam.grade ?? '—' }}
               </td>
             </tr>
             <tr class="rc-tfoot-summary">
               <td colspan="4">
                 <span class="rc-summary-item">
-                  Percentage: <strong>{{ exam.percentage | number:'1.1-1' }}%</strong>
+                  Percentage: <strong>{{ exam.percentage !== null ? (exam.percentage | number:'1.1-1') + '%' : 'Pending (' + exam.marksMissing + ' mark' + (exam.marksMissing === 1 ? '' : 's') + ' not entered)' }}</strong>
                 </span>
                 <span class="rc-summary-divider">|</span>
                 <span class="rc-summary-item">
-                  Overall Rank: <strong>{{ exam.overallRank }}</strong>
+                  Overall Rank: <strong>{{ exam.overallRank ?? '—' }}</strong>
                 </span>
               </td>
             </tr>

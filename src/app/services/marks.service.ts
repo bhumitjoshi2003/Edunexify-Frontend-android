@@ -23,10 +23,25 @@ export interface SubjectResult {
   examDate: string;
   marksObtained: number | null;
   classAverage: number | null;
+  /** Rank by marks among the same exam, class and section; null when no mark. */
   rank: number | null;
+  /** Subject grade from the school's grading system (backend); null when not entered. */
+  grade?: string | null;
+  /** Subject pass/fail from the backend GradingPolicy; null when not entered. */
+  passed?: boolean | null;
 }
 
-export interface ExamResult {
+/** Canonical result metadata from the backend (ResultCalculator) — never recomputed here. */
+export interface ResultMeta {
+  resultStatus: 'DRAFT' | 'PUBLISHED';
+  /** False while any applicable subject has no mark; percentage/grade/passed/rank are then null. */
+  complete: boolean;
+  marksMissing: number;
+  grade: string | null;
+  passed: boolean | null;
+}
+
+export interface ExamResult extends ResultMeta {
   examId: number;
   examName: string;
   className: string;
@@ -35,8 +50,9 @@ export interface ExamResult {
   subjects: SubjectResult[];
   totalMarksObtained: number;
   totalMaxMarks: number;
-  percentage: number;
-  overallRank: number;
+  percentage: number | null;
+  /** Competition rank by percentage within the same exam, class and section. */
+  overallRank: number | null;
 }
 
 export interface MarkEntryRequest {
@@ -45,10 +61,23 @@ export interface MarkEntryRequest {
   marksObtained: number;
 }
 
+export interface MarkError {
+  index?: number;
+  studentId: string;
+  examSubjectEntryId?: number;
+  reason: string;
+}
+
 export interface MarkBulkResult {
   saved: number;
   updated: number;
-  errors: Array<{ studentId: string; reason: string }>;
+  errors: MarkError[];
+}
+
+/** 400 body when a bulk save is rejected: nothing was saved. */
+export interface MarkSaveRejection {
+  message: string;
+  errors: MarkError[];
 }
 
 export interface ClassStudentSubject {
@@ -58,14 +87,16 @@ export interface ClassStudentSubject {
   marksObtained: number | null;
 }
 
-export interface ClassStudentResult {
+export interface ClassStudentResult extends ResultMeta {
   studentId: string;
   studentName: string;
+  sectionName: string | null;
   subjects: ClassStudentSubject[];
   totalMarksObtained: number;
   totalMaxMarks: number;
-  percentage: number;
-  rank: number;
+  percentage: number | null;
+  /** Rank within the student's section; null while the result is incomplete. */
+  rank: number | null;
 }
 
 @Injectable({ providedIn: 'root' })

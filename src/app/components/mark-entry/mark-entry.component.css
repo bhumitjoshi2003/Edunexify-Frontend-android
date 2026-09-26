@@ -345,3 +345,52 @@
   }
   .me-mark-input { width: 80px; font-size: 1rem; padding: 8px 10px; }
 }
+
+/* ── Results Phase 1: draft/published status and per-row save errors ── */
+.me-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.8rem;
+}
+.me-status-published { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.me-status-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.me-status-published .me-status-badge { background: #d1fae5; }
+.me-mark-invalid { border-color: #ef4444 !important; background: #fef2f2 !important; }
+.me-row-error { display: block; margin-top: 4px; color: #b91c1c; font-size: 0.72rem; font-weight: 600; }
+.me-mark-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Loading skeleton / load error (Results Phase 1) ─────────────── */
+.me-skeleton { padding: 0 0 6px; }
+.me-sk-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #fff7ed; }
+.me-sk-row { display: grid; grid-template-columns: 24px 90px minmax(0, 1fr) 96px; align-items: center; gap: 14px; padding: 12px 16px; border-top: 1px solid #f3f4f6; }
+.me-skeleton .sk-shimmer { display: block; height: 14px; }
+.me-sk-title { width: 42%; height: 16px !important; }
+.me-sk-btn { width: 104px; height: 32px !important; border-radius: 6px; }
+.me-sk-a { width: 18px; }
+.me-sk-b { width: 72px; }
+.me-sk-c { width: 60%; }
+.me-sk-input { width: 80px; height: 32px !important; border-radius: 6px; }
+.me-sk-row:nth-child(odd) .me-sk-c { width: 45%; }
+.me-hint { margin: 8px 2px 0; color: #9ca3af; font-size: 0.85rem; font-style: italic; }
+.me-retry { margin-top: 10px; padding: 8px 18px; border: 1.5px solid #fed7aa; border-radius: 8px; background: #fff7ed; color: #9a3412; font: inherit; font-weight: 600; cursor: pointer; }
+.me-retry:hover { background: #ffedd5; }
+@media (max-width: 600px) {
+  .me-sk-row { grid-template-columns: 18px minmax(0, 1fr) 80px; }
+  .me-sk-b { display: none !important; }
+}

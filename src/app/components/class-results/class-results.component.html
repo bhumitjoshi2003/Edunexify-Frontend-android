@@ -40,8 +40,27 @@
     </div>
   </div>
 
-  <!-- Section chips — only shown when the class has sections -->
-  <div class="cr-section-chips" *ngIf="sections.length > 0">
+  <!-- Result status of the selected exam; admins publish / unpublish -->
+  <div class="cr-status" *ngIf="selectedExam" [class.cr-status-published]="examPublished">
+    <span class="cr-status-badge">{{ examPublished ? 'Published' : 'Draft' }}</span>
+    <span class="cr-status-text">
+      {{ examPublished ? 'Visible to students and parents. Marks are locked.' : 'Only staff can see these results.' }}
+      <ng-container *ngIf="results.length">
+        · {{ completeCount }} complete<span *ngIf="incompleteCount">, {{ incompleteCount }} with marks missing</span><span *ngIf="completeCount"> · {{ passCount }} passed</span>
+      </ng-container>
+    </span>
+    <ng-container *ngIf="isAdmin">
+      <button type="button" class="cr-btn-publish" *ngIf="!examPublished" [disabled]="publishing" (click)="publish()">
+        {{ publishing ? 'Publishing…' : 'Publish Results' }}
+      </button>
+      <button type="button" class="cr-btn-unpublish" *ngIf="examPublished" [disabled]="publishing" (click)="unpublish()">
+        {{ publishing ? 'Updating…' : 'Unpublish' }}
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- Section chips — admins only (a teacher always sees their own section) -->
+  <div class="cr-section-chips" *ngIf="sections.length > 0 && !isTeacher">
     <span class="section-label">Sections</span>
     <button class="cr-sec-chip" [class.cr-sec-active]="selectedSectionId === null"
       (click)="onSectionSelect(null)">All Sections</button>
@@ -54,8 +73,8 @@
 
   <div *ngIf="!loading && selectedExamId && results.length === 0" class="cr-empty">
     <div class="cr-empty-icon">📊</div>
-    <p class="cr-empty-title">No marks entered</p>
-    <p class="cr-empty-sub">No marks have been entered for this exam yet.</p>
+    <p class="cr-empty-title">No students found</p>
+    <p class="cr-empty-sub">No students or subjects are set up for this exam yet.</p>
   </div>
 
   <div *ngIf="!loading && results.length > 0" class="cr-table-wrapper">
@@ -69,6 +88,7 @@
             <div class="cr-th-max">(Max: {{ s.maxMarks }})</div>
           </th>
           <th>Total</th>
+          <th>Result</th>
           <th class="cr-th-action">Report</th>
         </tr>
       </thead>
@@ -76,13 +96,14 @@
         <tr *ngFor="let student of results; trackBy: trackByStudentId"
             [class.cr-row-top]="student.rank === 1">
           <td class="cr-cell-rank">
-            <span class="cr-rank-badge" [class.gold]="student.rank === 1" [class.silver]="student.rank === 2" [class.bronze]="student.rank === 3">
+            <span class="cr-rank-badge" *ngIf="student.rank !== null; else unranked" [class.gold]="student.rank === 1" [class.silver]="student.rank === 2" [class.bronze]="student.rank === 3">
               {{ student.rank }}
             </span>
+            <ng-template #unranked><span class="cr-absent" title="Not ranked until every mark is entered">—</span></ng-template>
           </td>
           <td class="cr-cell-name">
             <div class="cr-student-name">{{ student.studentName }}</div>
-            <div class="cr-student-id">{{ student.studentId }}</div>
+            <div class="cr-student-id">{{ student.studentId }}<span *ngIf="student.sectionName && selectedSectionId === null"> · Section {{ student.sectionName }}</span></div>
           </td>
           <td *ngFor="let s of examSubjects; trackBy: trackById" class="cr-cell-marks">
             <ng-container *ngIf="isEnrolled(student, s.subjectName); else notEnrolled">
@@ -95,7 +116,15 @@
           </td>
           <td class="cr-cell-total">
             <div>{{ student.totalMarksObtained }}/{{ student.totalMaxMarks }}</div>
-            <div class="cr-pct">{{ student.percentage }}%</div>
+            <div class="cr-pct" *ngIf="student.percentage !== null">{{ student.percentage }}%</div>
+            <div class="cr-missing" *ngIf="!student.complete">{{ student.marksMissing }} mark{{ student.marksMissing === 1 ? '' : 's' }} missing</div>
+          </td>
+          <td class="cr-cell-result">
+            <ng-container *ngIf="student.complete; else pending">
+              <span class="cr-grade">{{ student.grade }}</span>
+              <span class="cr-pass" [class.cr-fail]="student.passed === false">{{ student.passed ? 'Pass' : 'Fail' }}</span>
+            </ng-container>
+            <ng-template #pending><span class="cr-absent">Incomplete</span></ng-template>
           </td>
           <td class="cr-cell-action">
             <button class="cr-btn-report" (click)="openReportCard(student.studentId, null)" title="Full Report Card">&#128438;</button>

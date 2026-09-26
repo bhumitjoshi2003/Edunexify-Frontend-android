@@ -547,3 +547,6 @@
   .sp-chart-card, .sp-subject-card { padding: 14px 14px; }
   .sr-btn-toggle { width: 100%; box-sizing: border-box; padding: 10px; font-size: 0.9rem; }
 }
+
+/* Results Phase 1: an incomplete result has no percentage yet. */
+.sr-chip-pending { background: #fef3c7 !important; color: #92400e !important; }

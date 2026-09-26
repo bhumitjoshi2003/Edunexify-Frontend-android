@@ -137,6 +137,8 @@ export interface SubjectRow {
   subjectName: string;
   examMarks: (SubjectExamMark | null)[];  // null if subject not in that exam column
   weightedPercentage: number;
+  /** Subject grade from the backend GradingPolicy — never computed here. */
+  grade?: string | null;
 }
 
 export interface ExamTotal {
