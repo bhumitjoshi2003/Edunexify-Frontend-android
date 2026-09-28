@@ -12,6 +12,12 @@ interface VerifyRcResult {
   publishedAt?: string;
   publishedBy?: string;
   message?: string;
+  // Report Card V2 documents only (absent for legacy report cards).
+  title?: string;
+  studentName?: string;
+  reference?: string;
+  version?: number;
+  status?: 'VALID' | 'SUPERSEDED' | 'WITHDRAWN';
 }
 
 @Component({
@@ -55,6 +61,11 @@ export class VerifyRcComponent implements OnInit {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  /** A Report Card V2 document that is no longer current (replaced or withdrawn by the school). */
+  get retired(): boolean {
+    return !!this.result && !this.result.valid && (this.result.status === 'SUPERSEDED' || this.result.status === 'WITHDRAWN');
   }
 
   get formattedDate(): string {

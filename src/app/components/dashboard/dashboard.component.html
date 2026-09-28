@@ -64,6 +64,10 @@
            (click)="closeSidebarOnMobile()" title="My Results">
           <mat-icon>grade</mat-icon><span>My Results</span>
         </a>
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-documents" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Report Cards">
+          <mat-icon>workspace_premium</mat-icon><span>Report Cards</span>
+        </a>
 
         <div class="nav-section-label">Fees</div>
 
@@ -127,6 +131,11 @@
              [queryParams]="{ studentId: selectedChild.studentId }"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Results">
             <mat-icon>grade</mat-icon><span>Results</span>
+          </a>
+          <a class="nav-item" *ngIf="childCan('canViewResults') && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-documents"
+             [queryParams]="{ studentId: selectedChild.studentId }"
+             routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report Cards">
+            <mat-icon>workspace_premium</mat-icon><span>Report Cards</span>
           </a>
           <a class="nav-item" *ngIf="childCan('canManageLeave')" routerLink="/dashboard/apply-leave"
              [queryParams]="{ studentId: selectedChild.studentId }"
@@ -229,17 +238,14 @@
 
         <div class="nav-section-label">Report Cards</div>
 
-        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-remarks" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Remarks Entry">
-          <mat-icon>rate_review</mat-icon><span>Remarks Entry</span>
+
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Remarks">
+          <mat-icon>edit_note</mat-icon><span>Remarks</span>
         </a>
-        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/bulk-report-cards" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Bulk PDFs">
-          <mat-icon>picture_as_pdf</mat-icon><span>Bulk PDFs</span>
-        </a>
-        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/class-overview" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Class Overview">
-          <mat-icon>bar_chart</mat-icon><span>Class Overview</span>
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/generate" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Generate &amp; Preview">
+          <mat-icon>preview</mat-icon><span>Generate &amp; Preview</span>
         </a>
 
         <div class="nav-section-label">Communication</div>
@@ -368,25 +374,27 @@
 
         <div class="nav-section-label">Report Cards</div>
 
-        <a class="nav-item" *ngIf="hasFeature('EXAM_MARKS')" routerLink="/dashboard/assessment-groups" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Assessment Groups">
-          <mat-icon>layers</mat-icon><span>Assessment Groups</span>
+
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/setup" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Report Card Setup">
+          <mat-icon>tune</mat-icon><span>Report Card Setup</span>
         </a>
-        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-templates" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="RC Templates">
-          <mat-icon>description</mat-icon><span>RC Templates</span>
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Remarks">
+          <mat-icon>edit_note</mat-icon><span>Remarks</span>
         </a>
-        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-remarks" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Remarks Entry">
-          <mat-icon>rate_review</mat-icon><span>Remarks Entry</span>
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/generate" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Generate &amp; Preview">
+          <mat-icon>preview</mat-icon><span>Generate &amp; Preview</span>
         </a>
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/design" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Report Card Design">
+          <mat-icon>palette</mat-icon><span>Report Card Design</span>
+        </a>
+        <!-- Report Card V2 published (frozen) documents: publish, withdraw, bulk download, email links. -->
         <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/bulk-report-cards" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Bulk PDFs">
-          <mat-icon>picture_as_pdf</mat-icon><span>Bulk PDFs</span>
-        </a>
-        <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/class-overview" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Class Overview">
-          <mat-icon>bar_chart</mat-icon><span>Class Overview</span>
+           (click)="closeSidebarOnMobile()" title="Published Report Cards">
+          <mat-icon>picture_as_pdf</mat-icon><span>Published Report Cards</span>
         </a>
 
         <div class="nav-section-label">Fees</div>

@@ -184,15 +184,48 @@ export const routes: Routes = [
         loadComponent: () => import('./components/remarks-entry/remarks-entry.component').then(m => m.RemarksEntryComponent),
         canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARD' }
       },
+      // Published Report Cards: the Report Card V2 frozen documents (the Phase 0 bulk page is no longer routed).
       {
         path: 'bulk-report-cards',
-        loadComponent: () => import('./components/bulk-report-card/bulk-report-card.component').then(m => m.BulkReportCardComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARD' }
+        loadComponent: () => import('./components/report-card-v2/published/rc2-published.component').then(m => m.Rc2PublishedComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'REPORT_CARD' }
       },
       {
         path: 'class-overview',
         loadComponent: () => import('./components/class-overview/class-overview.component').then(m => m.ClassOverviewComponent),
         canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARD' }
+      },
+      // ── Report Card V2 (setup, design, remarks, Generate & Preview, published documents; Phase 0 stays live) ──
+      {
+        path: 'report-cards-v2/setup',
+        loadComponent: () => import('./components/report-card-v2/setup/rc2-setup.component').then(m => m.Rc2SetupComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'REPORT_CARD' }
+      },
+      {
+        path: 'report-cards-v2/design',
+        loadComponent: () => import('./components/report-card-v2/design/rc2-design.component').then(m => m.Rc2DesignComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'REPORT_CARD' }
+      },
+      {
+        path: 'report-cards-v2/remarks',
+        loadComponent: () => import('./components/report-card-v2/remarks/rc2-remarks.component').then(m => m.Rc2RemarksComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARD' }
+      },
+      {
+        path: 'report-cards-v2/generate',
+        loadComponent: () => import('./components/report-card-v2/generate/rc2-generate.component').then(m => m.Rc2GenerateComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARD' }
+      },
+      // Published (frozen) report cards for students and parents; one document also opens for an admin.
+      {
+        path: 'report-card-documents',
+        loadComponent: () => import('./components/report-card-v2/documents/rc2-my-report-cards.component').then(m => m.Rc2MyReportCardsComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['STUDENT', 'PARENT'], featureKey: 'REPORT_CARD' }
+      },
+      {
+        path: 'report-card-documents/:id',
+        loadComponent: () => import('./components/report-card-v2/documents/rc2-document-view.component').then(m => m.Rc2DocumentViewComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['STUDENT', 'PARENT', 'ADMIN'], featureKey: 'REPORT_CARD' }
       },
 
       // ── Admin-only routes ─────────────────────────────────────────────

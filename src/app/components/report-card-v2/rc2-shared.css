@@ -1,0 +1,193 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Report Card V2 — shared styles for Setup, Remarks, Generate & Preview and
+   Report Card Design. Follows the existing Edunexify page pattern (gradient
+   hero with blobs, white 16px cards, tinted filter bar, gradient table header,
+   pill badges, icon empty states) and the global --edu-* tokens in styles.css.
+   Report Cards accent: indigo → violet (as on Bulk PDFs / Remarks Entry).
+════════════════════════════════════════════════════════════════════════ */
+:host {
+  display: block;
+  --rc2-accent: #6d28d9;
+  --rc2-accent-strong: #5b21b6;
+  --rc2-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
+  --rc2-tint: #f5f3ff;
+  --rc2-tint-border: #ddd6fe;
+  --rc2-ring: rgba(124, 58, 237, 0.18);
+  /* Hero and buttons: the original dark navy of the V2 pages */
+  --rc2-hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  --rc2-btn: #1e3a5f;
+  --rc2-btn-hover: #264b78;
+  --rc2-btn-tint: #eef2f7;
+  --rc2-btn-border: #cbd5e1;
+}
+
+/* ── Page ─────────────────────────────────────────────────────────── */
+.rc2-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: var(--edu-text-base, 0.88rem);
+  color: var(--edu-text, #1e293b);
+}
+
+/* ── Hero (same shape as every Edunexify page hero) ──────────────── */
+.rc2-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: var(--edu-hero-padding, 22px 24px);
+  border-radius: var(--edu-hero-radius, 20px);
+  background: var(--rc2-hero-gradient);
+  color: #fff;
+  overflow: hidden;
+}
+.rc2-blob { position: absolute; border-radius: 50%; opacity: 0.12; pointer-events: none; }
+.rc2-blob-1 { width: var(--edu-hero-blob1-size, 130px); height: var(--edu-hero-blob1-size, 130px); background: #fff; top: -30px; right: -20px; }
+.rc2-blob-2 { width: var(--edu-hero-blob2-size, 80px); height: var(--edu-hero-blob2-size, 80px); background: #93c5fd; bottom: -20px; left: 38%; }
+.rc2-hero-icon {
+  position: relative; z-index: 1; flex-shrink: 0;
+  width: var(--edu-hero-icon-size, 52px); height: var(--edu-hero-icon-size, 52px);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--edu-hero-icon-radius, 14px);
+  background: var(--edu-hero-icon-bg, rgba(255, 255, 255, 0.18));
+  font-size: var(--edu-hero-icon-font, 1.7rem);
+}
+.rc2-hero-text { position: relative; z-index: 1; min-width: 0; }
+.rc2-hero-title { margin: 0; font-size: var(--edu-hero-title-size, 1.25rem); font-weight: var(--edu-hero-title-weight, 800); letter-spacing: -0.3px; line-height: 1.2; color: #fff; }
+.rc2-hero-sub { margin: 3px 0 0; font-size: var(--edu-hero-sub-size, 0.78rem); color: rgba(255, 255, 255, 0.8); }
+.rc2-hero-sub a { color: #fff; text-decoration: underline; }
+.rc2-badge-new {
+  display: inline-block; margin-left: 8px; padding: 2px 9px; vertical-align: middle;
+  border-radius: 999px; background: rgba(255, 255, 255, 0.22); color: #fff;
+  font-size: var(--edu-text-xs, 0.75rem); font-weight: 800; letter-spacing: 0.4px;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────── */
+.rc2-card {
+  background: var(--edu-card-bg, #fff);
+  border-radius: var(--edu-card-radius, 16px);
+  padding: var(--edu-card-padding, 20px);
+  box-shadow: var(--edu-shadow-card, 0 2px 12px rgba(0, 0, 0, 0.06));
+}
+.rc2-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.rc2-card-title { margin: 0; font-size: var(--edu-text-md, 1rem); font-weight: 800; color: var(--edu-text, #1e293b); }
+.rc2-card-sub, .rc2-sub { margin: 3px 0 0; font-size: var(--edu-text-sm, 0.82rem); color: var(--edu-text-sec, #64748b); }
+.rc2-section-title { margin: 20px 0 10px; font-size: var(--edu-text-md, 1rem); font-weight: 800; color: var(--edu-text, #1e293b); }
+.rc2-section-title:first-child { margin-top: 0; }
+
+/* ── Filter bar (tinted panel, as on Class Results / Mark Entry) ─── */
+.rc2-filter-bar { background: var(--rc2-tint); border: 1px solid var(--rc2-tint-border); border-radius: 12px; padding: 14px 18px; }
+
+/* ── Buttons (edu button tokens) ─────────────────────────────────── */
+.rc2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: var(--edu-btn-md-padding, 9px 18px);
+  border: 1.5px solid var(--edu-border, #e2e8f0); border-radius: var(--edu-btn-md-radius, 12px);
+  background: #fff; color: var(--edu-text, #1e293b);
+  font: inherit; font-size: var(--edu-btn-md-font, 0.85rem); font-weight: var(--edu-btn-weight, 700);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+  white-space: nowrap; text-decoration: none;
+}
+.rc2-btn:hover:not(:disabled) { background: var(--edu-bg-light, #f8fafc); border-color: #cbd5e1; }
+.rc2-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rc2-btn-primary { background: var(--rc2-btn); border-color: var(--rc2-btn); color: #fff; }
+.rc2-btn-primary:hover:not(:disabled) { background: var(--rc2-btn-hover); border-color: var(--rc2-btn-hover); box-shadow: 0 4px 14px rgba(30, 58, 95, 0.28); }
+.rc2-btn-outline { background: transparent; border-color: var(--rc2-btn-border); color: var(--rc2-btn); }
+.rc2-btn-outline:hover:not(:disabled) { background: var(--rc2-btn-tint); border-color: var(--rc2-btn); }
+.rc2-btn-danger { background: #fff; border-color: #fecaca; color: var(--edu-danger, #dc2626); }
+.rc2-btn-danger:hover:not(:disabled) { background: #fef2f2; border-color: #fca5a5; }
+.rc2-btn-sm { min-height: 32px; padding: var(--edu-btn-sm-padding, 6px 14px); border-radius: var(--edu-btn-sm-radius, 8px); font-size: var(--edu-btn-sm-font, 0.78rem); }
+.rc2-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 34px; height: 34px; padding: 0;
+  border: 1.5px solid var(--edu-border, #e2e8f0); border-radius: var(--edu-radius-sm, 8px);
+  background: #fff; color: var(--edu-text-sec, #64748b); font-size: 0.9rem; cursor: pointer;
+}
+.rc2-icon-btn:hover:not(:disabled) { background: var(--rc2-btn-tint); color: var(--rc2-btn); border-color: var(--rc2-btn-border); }
+.rc2-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.rc2-btn:focus-visible, .rc2-icon-btn:focus-visible { outline: 2px solid var(--rc2-btn); outline-offset: 2px; }
+.rc2-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+/* ── Form controls (edu input tokens) ────────────────────────────── */
+.rc2-field, .rc2-label { display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem; font-weight: 700; color: #475569; }
+.rc2-input, .rc2-select, .rc2-textarea {
+  width: 100%; box-sizing: border-box;
+  padding: var(--edu-input-padding, 9px 12px);
+  border: var(--edu-input-border, 1.5px solid #e2e8f0); border-radius: var(--edu-input-radius, 10px);
+  background: #fff; color: var(--edu-text, #1e293b);
+  font: inherit; font-size: var(--edu-input-font, 0.88rem); font-weight: 400;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.rc2-textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
+.rc2-input:focus, .rc2-select:focus, .rc2-textarea:focus { outline: none; border-color: #a78bfa; box-shadow: var(--edu-input-focus-shadow, 0 0 0 3px) var(--rc2-ring); }
+.rc2-select:disabled, .rc2-input:disabled { background: var(--edu-bg-light, #f8fafc); color: var(--edu-text-sec, #64748b); }
+.rc2-hint { margin: 6px 0 0; font-size: 0.8rem; font-weight: 400; color: var(--edu-text-sec, #64748b); }
+.rc2-error { padding: 10px 14px; border-radius: 10px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; font-size: var(--edu-text-sm, 0.82rem); }
+.rc2-check { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--edu-border, #e2e8f0); border-radius: var(--edu-input-radius, 10px); font-size: var(--edu-text-base, 0.88rem); color: var(--edu-text, #1e293b); cursor: pointer; background: #fff; }
+.rc2-check:hover { border-color: var(--rc2-tint-border); background: var(--rc2-tint); }
+.rc2-check input { width: 16px; height: 16px; accent-color: var(--rc2-accent); flex-shrink: 0; margin: 0; }
+.rc2-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+
+/* ── Table (gradient header, as on Mark Entry / Class Results) ───── */
+.rc2-table-wrap { border: 1px solid var(--rc2-tint-border); border-radius: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.rc2-table { width: 100%; border-collapse: collapse; font-size: var(--edu-text-base, 0.88rem); }
+.rc2-table th {
+  padding: 11px 14px; text-align: left; white-space: nowrap;
+  background: var(--rc2-gradient); color: #fff;
+  font-size: var(--edu-text-xs, 0.75rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.rc2-table td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.rc2-table tbody tr:last-child td { border-bottom: none; }
+.rc2-table tbody tr:hover td { background: #faf5ff; }
+.rc2-table .rc2-col-actions { text-align: right; white-space: nowrap; }
+.rc2-table .rc2-col-actions .rc2-btn + .rc2-btn { margin-left: 6px; }
+.rc2-cell-main { font-weight: 700; color: var(--edu-text, #1e293b); }
+.rc2-cell-sub, .rc2-muted { display: block; margin-top: 2px; font-size: var(--edu-text-xs, 0.75rem); color: var(--edu-text-sec, #64748b); }
+
+/* ── Status badges (one meaning = one look, on every V2 page) ────── */
+.rc2-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.3px; white-space: nowrap; line-height: 1.5; }
+.rc2-badge-success { background: #dcfce7; color: #15803d; }   /* Published · Pass · Active · Complete · Ready */
+.rc2-badge-warning { background: #fef3c7; color: #b45309; }   /* Draft · Incomplete · Missing */
+.rc2-badge-danger  { background: #fee2e2; color: #b91c1c; }   /* Fail */
+.rc2-badge-neutral { background: #f1f5f9; color: #64748b; }   /* Inactive · No result */
+.rc2-badge-accent  { background: var(--rc2-tint); color: var(--rc2-accent); }   /* Total marks · Weighted */
+
+/* ── Empty / loading / error states ──────────────────────────────── */
+.rc2-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 40px 20px; text-align: center; }
+.rc2-empty-icon { font-size: var(--edu-empty-icon-size, 2.5rem); margin-bottom: 4px; }
+.rc2-empty-title { margin: 0; font-size: var(--edu-empty-title-size, 1rem); font-weight: 700; color: var(--edu-empty-title-color, #374151); }
+.rc2-empty-sub { margin: 0; font-size: var(--edu-empty-sub-size, 0.85rem); color: var(--edu-empty-sub-color, #94a3b8); font-style: italic; }
+.rc2-empty .rc2-btn { margin-top: 12px; }
+.rc2-skeleton { display: flex; flex-direction: column; }
+.rc2-sk-row { display: flex; align-items: center; gap: 16px; padding: 13px 4px; border-bottom: 1px solid #f1f5f9; }
+.rc2-sk-row:last-child { border-bottom: none; }
+.sk-shimmer { display: block; height: 14px; border-radius: 6px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: rc2-shimmer 1.4s infinite; }
+@keyframes rc2-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── List rows (setups, terms, exams, activities) ────────────────── */
+.rc2-list { display: flex; flex-direction: column; gap: 10px; }
+.rc2-list-item { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--edu-border, #e2e8f0); border-radius: 12px; background: #fff; }
+.rc2-list-item:hover { border-color: var(--rc2-tint-border); }
+
+/* ── PDF preview dialog ──────────────────────────────────────────── */
+.rc2-pdf-overlay { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--edu-modal-overlay, rgba(0, 0, 0, 0.55)); }
+.rc2-pdf-dialog { display: flex; flex-direction: column; width: min(960px, 100%); height: min(92vh, 1200px); background: #fff; border-radius: var(--edu-modal-radius, 16px); box-shadow: var(--edu-shadow-modal, 0 16px 48px rgba(0, 0, 0, 0.25)); overflow: hidden; }
+.rc2-pdf-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--edu-border, #e2e8f0); background: var(--edu-bg-light, #f8fafc); }
+.rc2-pdf-title { font-size: var(--edu-text-md, 1rem); font-weight: 800; }
+.rc2-pdf-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rc2-pdf-frame { flex: 1; width: 100%; border: 0; background: #525659; }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .rc2-hero { padding: 18px 18px; border-radius: var(--edu-radius-lg, 16px); }
+  .rc2-card { padding: 16px; }
+  .rc2-filter-bar { padding: 12px 14px; }
+}
+@media (max-width: 600px) {
+  .rc2-pdf-overlay { padding: 0; }
+  .rc2-pdf-dialog { height: 100%; border-radius: 0; }
+  .rc2-actions .rc2-btn { flex: 1 1 auto; }
+}

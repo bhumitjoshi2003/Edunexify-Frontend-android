@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, firstValueFrom } from 'rxjs';
 import { SchoolService, SchoolSettings, SchoolEntitlementSummary, PlanDetail, SubscriptionHistoryItem, SchoolFeature } from '../../services/school.service';
@@ -16,7 +17,7 @@ import { FeeWorkflowService } from '../../services/fee-workflow.service';
 @Component({
   selector: 'app-school-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './school-settings.component.html',
   styleUrl: './school-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

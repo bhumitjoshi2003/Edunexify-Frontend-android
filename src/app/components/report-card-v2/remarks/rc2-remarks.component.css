@@ -1,0 +1,12 @@
+/* Remarks-only layout; shared look lives in ../rc2-shared.css */
+.rc2-remark-row { align-items: flex-start; gap: 16px; }
+.rc2-student { display: flex; flex-direction: column; flex: 0 0 200px; min-width: 0; }
+.rc2-remark-fields { flex: 1 1 320px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rc2-dirty { border-color: #fde68a; background: #fffbeb; }
+.rc2-locked { background: #f8fafc; }
+.rc2-lock-badge { margin-top: 6px; align-self: flex-start; }
+.rc2-grades { display: flex; flex-wrap: wrap; gap: 10px; }
+.rc2-grade { flex: 0 1 130px; }
+@media (max-width: 700px) {
+  .rc2-student { flex-basis: 100%; }
+}

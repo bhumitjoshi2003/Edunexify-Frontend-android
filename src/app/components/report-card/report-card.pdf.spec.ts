@@ -113,6 +113,7 @@ describe('ReportCardComponent — backend PDF only', () => {
 
   it('template card: Preview & Print and Download use the template PDF', () => {
     configure({ studentId: 'S1', session: '2026-2027', templateId: '100' });
+    rc.downloadPdf.calls.reset();
     rc.downloadPdf.and.returnValue(of(pdf()));
     component.print();
     component.downloadPdf();
@@ -143,7 +144,7 @@ describe('ReportCardComponent — backend PDF only', () => {
     rc.downloadResultsPdf.and.returnValue(of(pdf()));
     component.selectHistoricalClass({ classId: 10, className: '10' });
     expect(rc.downloadResultsPdf).toHaveBeenCalledWith('S1', '2025-2026', null, 10);
-    expect(component.pdfPreviewUrl).not.toBeNull();
+    expect(component.inlineUrl).not.toBeNull();   // the chosen class's card now shows in the page
   });
 
   it('explains a missing or unpublished card instead of printing anything', async () => {
@@ -157,22 +158,28 @@ describe('ReportCardComponent — backend PDF only', () => {
     expect(printSpy).not.toHaveBeenCalled();
   });
 
-  it('title: a one-exam results card is named after the exam, never "Annual"', () => {
+  it('the page shows the results card as its backend PDF (one design), with no separate layout', () => {
     configure({ studentId: 'S1', session: '2026-2027', examId: '7' });
-    expect(el().querySelector('.rc-card-title')!.textContent!.trim()).toBe('Half Yearly — Report Card');
+    rc.downloadResultsPdf.and.returnValue(of(pdf()));
+    component.loadInline();
+    fixture.detectChanges();
+    expect(rc.downloadResultsPdf).toHaveBeenCalledWith('S1', '2026-2027', 7, null);
+    expect(el().querySelector('.rc-viewer iframe.rc-viewer-frame')).not.toBeNull();
+    expect(el().querySelector('.rc-card')).toBeNull();
   });
 
-  it('title: the whole-session results card is the Annual Report Card', () => {
+  it('Preview & Print prints the report card already shown in the page, never the app page', () => {
     configure({ studentId: 'S1', session: '2026-2027' });
-    expect(el().querySelector('.rc-card-title')!.textContent!.trim()).toBe('Annual Report Card');
-  });
-
-  it('template card shows the backend title, the same one the PDF prints', () => {
-    configure({ studentId: 'S1', session: '2026-2027', templateId: '100' },
-      { ...templateCard(), reportTitle: 'HALF YEARLY — REPORT CARD' });
-    const title = el().querySelector('.rc-title-label')!.textContent!.replace(/\s+/g, ' ').trim();
-    expect(title).toBe('H A L F Y E A R L Y — R E P O R T C A R D');
-    expect(el().querySelector('.rc-title-session')!.textContent!.trim()).toBe('Academic Session 2026-2027');
+    rc.downloadResultsPdf.and.returnValue(of(pdf()));
+    component.loadInline();
+    fixture.detectChanges();
+    const frame = el().querySelector('iframe.rc-viewer-frame') as HTMLIFrameElement;
+    const framePrint = jasmine.createSpy('framePrint');
+    spyOnProperty(frame, 'contentWindow', 'get').and.returnValue({ print: framePrint, focus: () => {} } as unknown as Window);
+    component.print();
+    expect(framePrint).toHaveBeenCalled();
+    expect(printSpy).not.toHaveBeenCalled();
+    expect(component.pdfPreviewUrl).toBeNull();
   });
 
   it('the static sample has no PDF actions', () => {

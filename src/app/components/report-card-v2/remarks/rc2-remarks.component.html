@@ -1,0 +1,82 @@
+<div class="rc2-page">
+  <div class="rc2-hero">
+    <div class="rc2-blob rc2-blob-1"></div>
+    <div class="rc2-blob rc2-blob-2"></div>
+    <div class="rc2-hero-icon" aria-hidden="true">✍️</div>
+    <div class="rc2-hero-text">
+      <h1 class="rc2-hero-title">Remarks</h1>
+      <p class="rc2-hero-sub">Class teacher's remarks and co-scholastic grades for a report card{{ page?.canEditPrincipal ? ', plus the principal’s remarks' : '' }}.</p>
+    </div>
+  </div>
+
+  <app-rc2-context [showSection]="true" [showSetup]="true" (contextChange)="onContext($event)"></app-rc2-context>
+
+  <div class="rc2-card" *ngIf="state === 'idle'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">🧾</div>
+      <p class="rc2-empty-title">Choose a report card</p>
+      <p class="rc2-empty-sub">Report cards are created by an administrator in Report Card Setup.</p>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'loading'" aria-busy="true" aria-label="Loading students">
+    <div class="rc2-skeleton">
+      <div class="rc2-sk-row" *ngFor="let i of [1,2,3,4,5]"><span class="sk-shimmer" style="width: 20%"></span><span class="sk-shimmer" style="width: 50%"></span><span class="sk-shimmer" style="width: 16%"></span></div>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'error'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">⚠️</div>
+      <p class="rc2-empty-title">Couldn't load the students</p>
+      <p class="rc2-empty-sub">Check your connection and try again.</p>
+      <button type="button" class="rc2-btn rc2-btn-outline" (click)="load()">Try again</button>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'loaded' && page">
+    <div class="rc2-card-head">
+      <div>
+        <h2 class="rc2-card-title">{{ page.setupName }} — Class {{ page.className }}</h2>
+        <p class="rc2-card-sub">{{ rows.length }} student{{ rows.length === 1 ? '' : 's' }}<span *ngIf="dirtyCount"> · <span class="rc2-badge rc2-badge-warning">{{ dirtyCount }} unsaved</span></span></p>
+      </div>
+      <button type="button" class="rc2-btn rc2-btn-primary" (click)="save()" [disabled]="saving || dirtyCount === 0">{{ saving ? 'Saving…' : 'Save changes' }}</button>
+    </div>
+
+    <div class="rc2-empty" *ngIf="rows.length === 0">
+      <div class="rc2-empty-icon">👤</div>
+      <p class="rc2-empty-title">No students found</p>
+      <p class="rc2-empty-sub">No students sit this report card's exams in this class/section.</p>
+    </div>
+
+    <div class="rc2-list" *ngIf="rows.length">
+      <div class="rc2-list-item rc2-remark-row" *ngFor="let r of rows; trackBy: trackByStudent" [class.rc2-dirty]="isDirty(r)" [class.rc2-locked]="r.locked">
+        <div class="rc2-student">
+          <span class="rc2-cell-main">{{ r.studentName }}</span>
+          <span class="rc2-cell-sub">{{ r.studentId }}<ng-container *ngIf="r.sectionName"> · Section {{ r.sectionName }}</ng-container></span>
+          <span class="rc2-badge rc2-badge-neutral rc2-lock-badge" *ngIf="r.locked" title="The published report card must be withdrawn before these can change">🔒 Published — locked</span>
+        </div>
+        <div class="rc2-remark-fields">
+          <label class="rc2-field">Class teacher's remark
+            <textarea class="rc2-textarea" [(ngModel)]="r.teacher" maxlength="1000" rows="2" [disabled]="r.locked"></textarea>
+          </label>
+          <label class="rc2-field" *ngIf="page.canEditPrincipal">Principal's remark
+            <textarea class="rc2-textarea" [(ngModel)]="r.principal" maxlength="1000" rows="2" [disabled]="r.locked"></textarea>
+          </label>
+          <div class="rc2-grades" *ngIf="page.activities.length">
+            <label class="rc2-field rc2-grade" *ngFor="let a of page.activities">{{ a.name }}
+              <select class="rc2-select" [(ngModel)]="r.grades[a.id]" [disabled]="r.locked" [attr.aria-label]="a.name + ' grade for ' + r.studentName">
+                <option value="">—</option>
+                <option *ngFor="let g of page.gradeScale" [value]="g">{{ g }}</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rc2-actions" *ngIf="rows.length > 3">
+      <button type="button" class="rc2-btn rc2-btn-primary" (click)="save()" [disabled]="saving || dirtyCount === 0">{{ saving ? 'Saving…' : 'Save changes' }}</button>
+    </div>
+  </div>
+</div>

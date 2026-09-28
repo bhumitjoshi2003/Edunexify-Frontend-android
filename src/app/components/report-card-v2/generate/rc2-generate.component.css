@@ -1,0 +1,8 @@
+/* Generate & Preview-only layout; shared look lives in ../rc2-shared.css */
+.rc2-ready { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.rc2-ready-item { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: var(--edu-radius-md, 12px); border: 1px solid #bbf7d0; background: #f0fdf4; color: #15803d; box-shadow: var(--edu-shadow-stat, 0 2px 8px rgba(0, 0, 0, 0.05)); }
+.rc2-ready-warn { border-color: #fde68a; background: #fffbeb; color: #b45309; }
+.rc2-ready-num { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+.rc2-ready-label { font-size: var(--edu-text-sm, 0.82rem); font-weight: 700; }
+.rc2-ready-detail { font-size: var(--edu-text-xs, 0.75rem); opacity: 0.85; }
+.rc2-ml { margin-left: 4px; }

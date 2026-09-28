@@ -1,0 +1,132 @@
+<div class="rc2-page">
+  <div class="rc2-hero">
+    <div class="rc2-blob rc2-blob-1"></div>
+    <div class="rc2-blob rc2-blob-2"></div>
+    <div class="rc2-hero-icon" aria-hidden="true">📄</div>
+    <div class="rc2-hero-text">
+      <h1 class="rc2-hero-title">Generate &amp; Preview</h1>
+      <p class="rc2-hero-sub">Live data: check the class and preview each student's report card as it stands now. Previews are not official — issue the official copies from <a routerLink="/dashboard/bulk-report-cards" *ngIf="isAdmin; else pubText">Published Report Cards</a><ng-template #pubText>Published Report Cards (administrator)</ng-template>.</p>
+    </div>
+  </div>
+
+  <app-rc2-context [showSection]="true" [showSetup]="true" (contextChange)="onContext($event)"></app-rc2-context>
+
+  <div class="rc2-card" *ngIf="state === 'idle'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">🧾</div>
+      <p class="rc2-empty-title">Choose a report card</p>
+      <p class="rc2-empty-sub">Report cards are created by an administrator in Report Card Setup.</p>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'loading'" aria-busy="true" aria-label="Loading class summary">
+    <div class="rc2-skeleton">
+      <div class="rc2-sk-row" *ngFor="let i of [1,2,3,4,5,6]"><span class="sk-shimmer" style="width: 26%"></span><span class="sk-shimmer" style="width: 10%"></span><span class="sk-shimmer" style="width: 8%"></span><span class="sk-shimmer" style="width: 16%"></span></div>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'error'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">⚠️</div>
+      <p class="rc2-empty-title">Couldn't load the class</p>
+      <p class="rc2-empty-sub">Check your connection and try again.</p>
+      <button type="button" class="rc2-btn rc2-btn-outline" (click)="load()">Try again</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="state === 'loaded' && summary">
+    <!-- Readiness -->
+    <div class="rc2-card">
+      <div class="rc2-card-head">
+        <div>
+          <h2 class="rc2-card-title">{{ summary.setupName }} — Class {{ summary.className }}, {{ summary.sessionLabel }}</h2>
+          <p class="rc2-card-sub">
+            <span class="rc2-badge rc2-badge-accent">{{ summary.resultMode === 'WEIGHTED' ? 'Weighted' : 'Total marks' }}</span>
+            <span *ngIf="summary.teacherView"> · your section only</span>
+          </p>
+        </div>
+      </div>
+      <div class="rc2-ready">
+        <div class="rc2-ready-item" [class.rc2-ready-warn]="summary.readiness.draftExams.length">
+          <span class="rc2-ready-num">{{ summary.readiness.draftExams.length }}</span>
+          <span class="rc2-ready-label">Draft exam{{ summary.readiness.draftExams.length === 1 ? '' : 's' }}</span>
+          <span class="rc2-ready-detail" *ngIf="summary.readiness.draftExams.length">{{ summary.readiness.draftExams.join(', ') }}</span>
+        </div>
+        <div class="rc2-ready-item" [class.rc2-ready-warn]="summary.readiness.incomplete">
+          <span class="rc2-ready-num">{{ summary.readiness.incomplete }}</span><span class="rc2-ready-label">Incomplete marks</span>
+        </div>
+        <div class="rc2-ready-item" [class.rc2-ready-warn]="summary.readiness.missingTeacherRemarks">
+          <span class="rc2-ready-num">{{ summary.readiness.missingTeacherRemarks }}</span><span class="rc2-ready-label">Missing teacher remarks</span>
+        </div>
+        <div class="rc2-ready-item" [class.rc2-ready-warn]="summary.readiness.missingPrincipalRemarks">
+          <span class="rc2-ready-num">{{ summary.readiness.missingPrincipalRemarks }}</span><span class="rc2-ready-label">Missing principal remarks</span>
+        </div>
+        <div class="rc2-ready-item" [class.rc2-ready-warn]="summary.readiness.missingCoScholastic">
+          <span class="rc2-ready-num">{{ summary.readiness.missingCoScholastic }}</span><span class="rc2-ready-label">Missing co-scholastic</span>
+        </div>
+        <div class="rc2-ready-item" [class.rc2-ready-warn]="summary.readiness.missingPhotos">
+          <span class="rc2-ready-num">{{ summary.readiness.missingPhotos }}</span><span class="rc2-ready-label">Missing photos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Class summary -->
+    <div class="rc2-card">
+      <div class="rc2-card-head">
+        <div>
+          <h2 class="rc2-card-title">Students</h2>
+          <p class="rc2-card-sub">{{ summary.students.length }} student{{ summary.students.length === 1 ? '' : 's' }}</p>
+        </div>
+      </div>
+      <div class="rc2-empty" *ngIf="summary.students.length === 0">
+        <div class="rc2-empty-icon">👤</div>
+        <p class="rc2-empty-title">No students found</p>
+        <p class="rc2-empty-sub">No students sit this report card's exams in this class/section.</p>
+      </div>
+      <div class="rc2-table-wrap" *ngIf="summary.students.length">
+        <table class="rc2-table">
+          <thead>
+            <tr><th>Student</th><th>%</th><th>Grade</th><th>Rank</th><th>Result</th><th>Remarks</th><th class="rc2-col-actions">Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of summary.students; trackBy: trackByStudent">
+              <td><span class="rc2-cell-main">{{ r.studentName }}</span><span class="rc2-cell-sub">{{ r.studentId }}<ng-container *ngIf="r.sectionName"> · {{ r.sectionName }}</ng-container></span></td>
+              <td>{{ r.percentage !== null ? (r.percentage | number:'1.2-2') + '%' : '—' }}</td>
+              <td>{{ r.grade ?? '—' }}</td>
+              <td>{{ r.rank ?? '—' }}</td>
+              <td>
+                <span class="rc2-badge" [class.rc2-badge-success]="r.status === 'PASS'" [class.rc2-badge-danger]="r.status === 'FAIL'"
+                      [class.rc2-badge-warning]="r.status === 'INCOMPLETE'" [class.rc2-badge-neutral]="r.status === 'NO_RESULT'">{{ statusLabel(r) }}</span>
+                <span class="rc2-cell-sub" *ngIf="r.marksMissing">{{ r.marksMissing }} mark{{ r.marksMissing === 1 ? '' : 's' }} not entered</span>
+              </td>
+              <td>
+                <span class="rc2-badge" [class.rc2-badge-success]="r.hasTeacherRemark" [class.rc2-badge-warning]="!r.hasTeacherRemark">Teacher</span>
+                <span class="rc2-badge rc2-ml" [class.rc2-badge-success]="r.hasPrincipalRemark" [class.rc2-badge-warning]="!r.hasPrincipalRemark">Principal</span>
+              </td>
+              <td class="rc2-col-actions">
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-primary" (click)="preview(r)" [disabled]="busyStudent !== null">{{ busyStudent === r.studentId ? 'Preparing…' : 'Preview' }}</button>
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="download(r)" [disabled]="busyStudent !== null">Download</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- PDF preview: the generated document itself -->
+  <div class="rc2-pdf-overlay" *ngIf="previewUrl" role="dialog" aria-modal="true" aria-label="Report card preview">
+    <div class="rc2-pdf-dialog">
+      <div class="rc2-pdf-bar">
+        <span class="rc2-pdf-title">Report card preview</span>
+        <div class="rc2-pdf-actions">
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-primary" (click)="printPreview()">Print</button>
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="downloadPreview()">Download</button>
+          <button type="button" class="rc2-btn rc2-btn-sm" (click)="openInNewTab()">Open in new tab</button>
+          <button type="button" class="rc2-icon-btn" (click)="closePreview()" aria-label="Close preview">✕</button>
+        </div>
+      </div>
+      <iframe #pdfFrame class="rc2-pdf-frame" [src]="previewUrl" title="Report card PDF"></iframe>
+    </div>
+  </div>
+</div>

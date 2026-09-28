@@ -35,6 +35,14 @@
             <td class="vrc-dt-label">School</td>
             <td class="vrc-dt-value">{{ result.schoolName }}</td>
           </tr>
+          <tr *ngIf="result.title">
+            <td class="vrc-dt-label">Report Card</td>
+            <td class="vrc-dt-value">{{ result.title }}</td>
+          </tr>
+          <tr *ngIf="result.studentName">
+            <td class="vrc-dt-label">Student</td>
+            <td class="vrc-dt-value">{{ result.studentName }}</td>
+          </tr>
           <tr>
             <td class="vrc-dt-label">Class</td>
             <td class="vrc-dt-value">{{ result.className }}</td>
@@ -44,12 +52,16 @@
             <td class="vrc-dt-value">{{ result.session }}</td>
           </tr>
           <tr>
-            <td class="vrc-dt-label">Published On</td>
+            <td class="vrc-dt-label">{{ result.status ? 'Issued On' : 'Published On' }}</td>
             <td class="vrc-dt-value">{{ formattedDate }}</td>
           </tr>
           <tr *ngIf="result.publishedBy">
             <td class="vrc-dt-label">Published By</td>
             <td class="vrc-dt-value">{{ result.publishedBy }}</td>
+          </tr>
+          <tr *ngIf="result.reference">
+            <td class="vrc-dt-label">Reference</td>
+            <td class="vrc-dt-value">{{ result.reference }}<ng-container *ngIf="result.version"> · Version {{ result.version }}</ng-container></td>
           </tr>
         </tbody>
       </table>
@@ -63,8 +75,51 @@
       </div>
     </ng-container>
 
+    <!-- REPLACED / WITHDRAWN (Report Card V2): genuine, but no longer the current report card -->
+    <ng-container *ngIf="retired">
+      <div class="vrc-badge vrc-badge--retired" role="img"
+           [attr.aria-label]="result.status === 'WITHDRAWN' ? 'Withdrawn by the school' : 'Replaced by a newer version'">
+        {{ result.status === 'WITHDRAWN' ? 'WITHDRAWN' : 'SUPERSEDED' }}
+      </div>
+      <h1 class="vrc-title">{{ result.status === 'WITHDRAWN' ? 'Withdrawn by the School' : 'Newer Version Issued' }}</h1>
+      <p class="vrc-error-msg">{{ result.message }}</p>
+      <table class="vrc-details-table" aria-label="Report card verification details">
+        <tbody>
+          <tr>
+            <td class="vrc-dt-label">School</td>
+            <td class="vrc-dt-value">{{ result.schoolName }}</td>
+          </tr>
+          <tr *ngIf="result.title">
+            <td class="vrc-dt-label">Report Card</td>
+            <td class="vrc-dt-value">{{ result.title }}</td>
+          </tr>
+          <tr *ngIf="result.studentName">
+            <td class="vrc-dt-label">Student</td>
+            <td class="vrc-dt-value">{{ result.studentName }}</td>
+          </tr>
+          <tr *ngIf="result.className">
+            <td class="vrc-dt-label">Class</td>
+            <td class="vrc-dt-value">{{ result.className }}</td>
+          </tr>
+          <tr *ngIf="result.session">
+            <td class="vrc-dt-label">Session</td>
+            <td class="vrc-dt-value">{{ result.session }}</td>
+          </tr>
+          <tr *ngIf="result.publishedAt">
+            <td class="vrc-dt-label">Issued On</td>
+            <td class="vrc-dt-value">{{ formattedDate }}</td>
+          </tr>
+          <tr *ngIf="result.reference">
+            <td class="vrc-dt-label">Reference</td>
+            <td class="vrc-dt-value">{{ result.reference }}<ng-container *ngIf="result.version"> · Version {{ result.version }}</ng-container></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="vrc-error-hint">Please ask the school for the current copy of this report card.</p>
+    </ng-container>
+
     <!-- INVALID -->
-    <ng-container *ngIf="!result.valid">
+    <ng-container *ngIf="!result.valid && !retired">
       <div class="vrc-badge vrc-badge--invalid" role="img" aria-label="Unverified — could not authenticate">
         <svg class="vrc-x-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

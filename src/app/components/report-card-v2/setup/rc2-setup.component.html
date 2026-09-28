@@ -1,0 +1,122 @@
+<div class="rc2-page">
+  <div class="rc2-hero">
+    <div class="rc2-blob rc2-blob-1"></div>
+    <div class="rc2-blob rc2-blob-2"></div>
+    <div class="rc2-hero-icon" aria-hidden="true">🧾</div>
+    <div class="rc2-hero-text">
+      <h1 class="rc2-hero-title">Report Card Setup</h1>
+      <p class="rc2-hero-sub">Choose which exams make up each report card of a class — no templates or assessment groups needed.</p>
+    </div>
+  </div>
+
+  <app-rc2-context (contextChange)="onContext($event)"></app-rc2-context>
+
+  <!-- List -->
+  <div class="rc2-card" *ngIf="!editing">
+    <div class="rc2-card-head">
+      <div>
+        <h2 class="rc2-card-title">Report cards{{ ctx?.schoolClass ? ' — Class ' + ctx?.schoolClass?.name : '' }}</h2>
+        <p class="rc2-card-sub" *ngIf="ctx?.session">{{ ctx?.session?.label }}</p>
+      </div>
+      <button type="button" class="rc2-btn rc2-btn-primary" (click)="startNew()" [disabled]="!canCreate">+ New report card</button>
+    </div>
+
+    <div class="rc2-empty" *ngIf="!canCreate">
+      <div class="rc2-empty-icon">🔍</div>
+      <p class="rc2-empty-title">Choose a class</p>
+      <p class="rc2-empty-sub">Select a session and class to see or create its report cards.</p>
+    </div>
+    <div class="rc2-empty" *ngIf="canCreate && setups.length === 0">
+      <div class="rc2-empty-icon">🧾</div>
+      <p class="rc2-empty-title">No report cards yet</p>
+      <p class="rc2-empty-sub">Create one, e.g. “Half Yearly” (one exam) or “Annual” (several exams, optionally weighted).</p>
+    </div>
+
+    <div class="rc2-list" *ngIf="canCreate && setups.length">
+      <div class="rc2-list-item rc2-setup-item" *ngFor="let s of setups; trackBy: trackById">
+        <div class="rc2-setup-main">
+          <div class="rc2-setup-name">{{ s.name }} <span class="rc2-badge rc2-badge-accent">{{ s.resultMode === 'WEIGHTED' ? 'Weighted' : 'Total marks' }}</span></div>
+          <span class="rc2-cell-sub">{{ describe(s) }}</span>
+          <span class="rc2-cell-sub" *ngIf="s.terms.length">Terms: <ng-container *ngFor="let t of s.terms; let last = last">{{ t.name }}<ng-container *ngIf="s.resultMode === 'WEIGHTED' && t.weight != null"> ({{ t.weight * 100 | number:'1.0-2' }}%)</ng-container>{{ last ? '' : ', ' }}</ng-container></span>
+        </div>
+        <div class="rc2-setup-actions">
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="edit(s)">Edit</button>
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-danger" (click)="remove(s)">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create / edit -->
+  <div class="rc2-card" *ngIf="editing">
+    <div class="rc2-card-head">
+      <div>
+        <h2 class="rc2-card-title">{{ editing.id ? 'Edit report card' : 'New report card' }}</h2>
+        <p class="rc2-card-sub">Class {{ ctx?.schoolClass?.name }} · {{ ctx?.session?.label }}</p>
+      </div>
+    </div>
+
+    <div class="rc2-form">
+      <label class="rc2-field">Name
+        <input class="rc2-input" [(ngModel)]="name" maxlength="100" placeholder="e.g. Half Yearly or Annual" />
+      </label>
+
+      <div class="rc2-field">How is the result worked out?
+        <div class="rc2-mode">
+          <label class="rc2-check"><input type="radio" name="mode" value="TOTAL" [(ngModel)]="mode" /><span><strong>Total marks</strong> — total obtained ÷ total maximum of all the exams</span></label>
+          <label class="rc2-check"><input type="radio" name="mode" value="WEIGHTED" [(ngModel)]="mode" /><span><strong>Weighted</strong> — each exam (or term) counts for a share, e.g. Half Yearly 40% + Annual 60%</span></label>
+        </div>
+      </div>
+
+      <div>
+        <div class="rc2-section-head">
+          <h3 class="rc2-section-title">Terms <span class="rc2-optional">(optional)</span></h3>
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="addTerm()">+ Add term</button>
+        </div>
+        <p class="rc2-hint" *ngIf="terms.length === 0">Group exams into terms (Term 1 / Term 2) if you want term headings{{ mode === 'WEIGHTED' ? ' or term weights' : '' }}.</p>
+        <div class="rc2-list" *ngIf="terms.length">
+          <div class="rc2-list-item" *ngFor="let t of terms; let i = index; trackBy: trackByKey">
+            <input class="rc2-input rc2-grow" [(ngModel)]="t.name" maxlength="60" aria-label="Term name" />
+            <label class="rc2-weight" *ngIf="mode === 'WEIGHTED'"><input class="rc2-input" type="number" min="0" max="100" step="0.01" [(ngModel)]="t.weight" aria-label="Term weight percent" /><span>%</span></label>
+            <button type="button" class="rc2-icon-btn" (click)="removeTerm(i)" aria-label="Remove term">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="rc2-section-head">
+          <h3 class="rc2-section-title">Exams ({{ exams.length }}/{{ maxExams }})</h3>
+          <select class="rc2-select rc2-add-exam" #pick (change)="addExam(pick.value ? +pick.value : null); pick.value = ''" [disabled]="exams.length >= maxExams || unusedExams.length === 0" aria-label="Add exam">
+            <option value="">{{ unusedExams.length ? '+ Add exam' : 'No more exams for this class' }}</option>
+            <option *ngFor="let a of unusedExams" [value]="a.id">{{ a.examName }}{{ a.resultStatus === 'DRAFT' ? ' (draft)' : '' }}</option>
+          </select>
+        </div>
+        <p class="rc2-hint" *ngIf="exams.length === 0">Only this class's exams for {{ ctx?.session?.label }} can be added.</p>
+        <div class="rc2-list" *ngIf="exams.length">
+          <div class="rc2-list-item" *ngFor="let e of exams; let i = index; trackBy: trackByExam">
+            <span class="rc2-grow rc2-cell-main">{{ e.examName }}
+              <span class="rc2-badge" [class.rc2-badge-success]="e.resultStatus === 'PUBLISHED'" [class.rc2-badge-warning]="e.resultStatus !== 'PUBLISHED'">{{ e.resultStatus === 'PUBLISHED' ? 'Published' : 'Draft' }}</span>
+            </span>
+            <select class="rc2-select rc2-term-select" *ngIf="terms.length" [(ngModel)]="e.termKey" aria-label="Term">
+              <option [ngValue]="null">No term</option>
+              <option *ngFor="let t of terms" [ngValue]="t.key">{{ t.name }}</option>
+            </select>
+            <label class="rc2-weight" *ngIf="mode === 'WEIGHTED'"><input class="rc2-input" type="number" min="0" max="100" step="0.01" [(ngModel)]="e.weight" aria-label="Exam weight percent" /><span>%</span></label>
+            <button type="button" class="rc2-icon-btn" (click)="move(i, -1)" [disabled]="i === 0" aria-label="Move up">↑</button>
+            <button type="button" class="rc2-icon-btn" (click)="move(i, 1)" [disabled]="i === exams.length - 1" aria-label="Move down">↓</button>
+            <button type="button" class="rc2-icon-btn" (click)="removeExam(i)" aria-label="Remove exam">✕</button>
+          </div>
+        </div>
+        <p class="rc2-hint" *ngIf="mode === 'WEIGHTED'">
+          {{ terms.length ? 'Term weights add up to 100%. Inside a term, give every exam a weight (adding up to 100%) or leave them all empty to use the term’s total marks.' : 'Exam weights add up to 100%.' }}
+        </p>
+      </div>
+
+      <div class="rc2-error" *ngIf="error" role="alert">{{ error }}</div>
+      <div class="rc2-actions">
+        <button type="button" class="rc2-btn" (click)="cancel()">Cancel</button>
+        <button type="button" class="rc2-btn rc2-btn-primary" (click)="save()" [disabled]="saving || !name.trim() || exams.length === 0">{{ saving ? 'Saving…' : 'Save report card' }}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1047,3 +1047,9 @@
   .rc-pdf-overlay { padding: 0; }
   .rc-pdf-dialog { height: 100%; border-radius: 0; }
 }
+
+/* ── The report card document shown in the page (backend PDF) ── */
+.rc-viewer { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.12); overflow: hidden; }
+.rc-viewer-frame { display: block; width: 100%; height: min(1180px, 85vh); border: 0; background: #525659; }
+.rc-viewer-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 48px 20px; font-family: 'Segoe UI', system-ui, sans-serif; color: #475569; font-size: 0.95rem; }
+@media (max-width: 768px) { .rc-viewer { border-radius: 0; } .rc-viewer-frame { height: 80vh; } }

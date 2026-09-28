@@ -473,41 +473,29 @@
           </div>
           <span>Promotion</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('EXAM_MARKS')" routerLink="/dashboard/assessment-groups">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/setup">
           <div class="ad-action-icon" style="background:#ede9fe;color:#4338ca">
-            <mat-icon>bar_chart</mat-icon>
+            <mat-icon>tune</mat-icon>
           </div>
-          <span>Assessment Groups</span>
+          <span>Report Card Setup</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-templates">
-          <div class="ad-action-icon" style="background:#e0f2fe;color:#0369a1">
-            <mat-icon>description</mat-icon>
-          </div>
-          <span>RC Templates</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-remarks">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/remarks">
           <div class="ad-action-icon" style="background:#f5f3ff;color:#7c3aed">
-            <mat-icon>rate_review</mat-icon>
+            <mat-icon>edit_note</mat-icon>
           </div>
-          <span>Remarks Entry</span>
+          <span>Remarks</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/bulk-report-cards">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/generate">
           <div class="ad-action-icon" style="background:#fdf2f8;color:#be185d">
-            <mat-icon>picture_as_pdf</mat-icon>
+            <mat-icon>preview</mat-icon>
           </div>
-          <span>Bulk PDFs</span>
+          <span>Generate &amp; Preview</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/class-overview">
-          <div class="ad-action-icon" style="background:#ecfeff;color:#0891b2">
-            <mat-icon>bar_chart</mat-icon>
-          </div>
-          <span>Class Overview</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-gallery">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/design">
           <div class="ad-action-icon" style="background:#e0f2fe;color:#0369a1">
-            <mat-icon>style</mat-icon>
+            <mat-icon>palette</mat-icon>
           </div>
-          <span>RC Gallery</span>
+          <span>Report Card Design</span>
         </a>
 
         <a class="ad-action-card" *ngIf="!isAdmin" routerLink="/dashboard/class-management">

@@ -61,6 +61,10 @@
   background: #fee2e2;
   color: #b91c1c;
 }
+.vrc-badge--retired {
+  background: #fef3c7;
+  color: #92400e;
+}
 .vrc-check-icon,
 .vrc-x-icon {
   width: 18px;

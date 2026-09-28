@@ -1,0 +1,17 @@
+/* Setup-only layout; shared look lives in ../rc2-shared.css */
+.rc2-setup-item { justify-content: space-between; align-items: flex-start; }
+.rc2-setup-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 260px; }
+.rc2-setup-name { font-weight: 800; font-size: var(--edu-text-base, 0.88rem); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rc2-setup-actions { display: flex; gap: 8px; }
+.rc2-form { display: flex; flex-direction: column; gap: 20px; }
+.rc2-mode { display: flex; flex-direction: column; gap: 8px; }
+.rc2-mode .rc2-check { font-weight: 400; align-items: flex-start; }
+.rc2-mode .rc2-check input { margin-top: 2px; }
+.rc2-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.rc2-section-head .rc2-section-title { margin: 0; }
+.rc2-optional { font-weight: 400; color: var(--edu-text-sec, #64748b); font-size: var(--edu-text-sm, 0.82rem); }
+.rc2-grow { flex: 1 1 200px; min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rc2-term-select { width: auto; flex: 0 1 160px; }
+.rc2-add-exam { width: auto; min-width: 200px; max-width: 280px; }
+.rc2-weight { display: flex; align-items: center; gap: 6px; font-size: var(--edu-text-base, 0.88rem); color: var(--edu-text-sec, #64748b); }
+.rc2-weight .rc2-input { width: 90px; }

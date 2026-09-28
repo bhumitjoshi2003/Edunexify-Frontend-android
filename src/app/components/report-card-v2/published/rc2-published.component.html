@@ -1,0 +1,192 @@
+<div class="rc2-page">
+  <div class="rc2-hero">
+    <div class="rc2-blob rc2-blob-1"></div>
+    <div class="rc2-blob rc2-blob-2"></div>
+    <div class="rc2-hero-icon" aria-hidden="true">🏅</div>
+    <div class="rc2-hero-text">
+      <h1 class="rc2-hero-title">Published Report Cards</h1>
+      <p class="rc2-hero-sub">The official copies students and parents receive. Each is frozen when published — later changes to marks or remarks don't alter it. To check live data first, use <a routerLink="/dashboard/report-cards-v2/generate">Generate &amp; Preview</a>.</p>
+    </div>
+  </div>
+
+  <app-rc2-context [showSection]="true" [showSetup]="true" (contextChange)="onContext($event)"></app-rc2-context>
+
+  <div class="rc2-card" *ngIf="state === 'idle'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">🧾</div>
+      <p class="rc2-empty-title">Choose a class and report card</p>
+      <p class="rc2-empty-sub">Pick the session, class and report card to see what has been published.</p>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'no-setup'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">🗂️</div>
+      <p class="rc2-empty-title">No report card setup found for this class and session.</p>
+      <p class="rc2-empty-sub">Create one in Report Card Setup, then publish it here.</p>
+      <a class="rc2-btn rc2-btn-primary" routerLink="/dashboard/report-cards-v2/setup">Go to Report Card Setup</a>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'loading'" aria-busy="true" aria-label="Loading published report cards">
+    <div class="rc2-skeleton">
+      <div class="rc2-sk-row" *ngFor="let i of [1,2,3,4]"><span class="sk-shimmer" style="width: 22%"></span><span class="sk-shimmer" style="width: 12%"></span><span class="sk-shimmer" style="width: 30%"></span></div>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="state === 'error'">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">⚠️</div>
+      <p class="rc2-empty-title">Couldn't load published report cards</p>
+      <p class="rc2-empty-sub">Check your connection and try again.</p>
+      <button type="button" class="rc2-btn rc2-btn-outline" (click)="load()">Try again</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="state === 'loaded' && ctx?.setup as setup">
+    <!-- Current status & actions -->
+    <div class="rc2-card">
+      <div class="rc2-card-head">
+        <div>
+          <h2 class="rc2-card-title">{{ setup.name }} — Class {{ setup.className }}, {{ setup.sessionLabel }}</h2>
+          <p class="rc2-card-sub">
+            <ng-container *ngIf="active as a; else notPublished">
+              <span class="rc2-badge rc2-badge-success">Active · Version {{ a.version }}</span>
+              <span class="pub-meta">{{ scopeOf(a) }} · {{ a.documentCount }} report card{{ a.documentCount === 1 ? '' : 's' }} · published {{ a.publishedAt | date:'d MMM y, h:mm a' }}<ng-container *ngIf="a.publishedBy"> by {{ a.publishedBy }}</ng-container></span>
+            </ng-container>
+            <ng-template #notPublished><span class="rc2-badge rc2-badge-neutral">Not published</span><span class="pub-meta">Students and parents can't see this report card yet.</span></ng-template>
+          </p>
+        </div>
+        <a class="rc2-btn rc2-btn-outline" routerLink="/dashboard/report-cards-v2/generate">Preview live data</a>
+      </div>
+
+      <p class="rc2-error" *ngIf="blockedByWholeClass" role="status">
+        This report card is published for the whole class. Choose "All sections" to republish it, or withdraw it before publishing one section.
+      </p>
+
+      <div class="pub-actions">
+        <label class="rc2-check pub-check">
+          <input type="checkbox" [(ngModel)]="includeIncomplete" [disabled]="busy !== null" />
+          <span>Include students with missing marks</span>
+        </label>
+        <button type="button" class="rc2-btn rc2-btn-primary" (click)="publish()" [disabled]="busy !== null || blockedByWholeClass">
+          {{ busy === 'publish' ? 'Publishing…' : (active && !blockedByWholeClass ? 'Republish (new version)' : 'Publish') }}
+        </button>
+      </div>
+      <p class="rc2-hint">All exams in this report card must have published results. {{ busy === 'publish' ? 'Generating every report card — this can take a minute.' : 'Nothing is published unless every report card is generated successfully.' }}</p>
+
+      <!-- Outcome of the last publish attempt -->
+      <div class="pub-result" *ngIf="lastResult" role="status">
+        <p class="pub-result-msg" [class.pub-ok]="lastResult.published" [class.pub-bad]="!lastResult.published">{{ lastResult.message }}</p>
+        <div *ngIf="lastResult.failed.length">
+          <p class="pub-list-title">Could not be generated ({{ lastResult.failed.length }})</p>
+          <ul class="pub-list"><li *ngFor="let f of lastResult.failed"><strong>{{ f.studentName || f.studentId }}</strong> ({{ f.studentId }}) — {{ f.reason }}</li></ul>
+        </div>
+        <div *ngIf="lastResult.excludedIncomplete.length">
+          <p class="pub-list-title">Left out — marks missing ({{ lastResult.excludedIncomplete.length }})</p>
+          <ul class="pub-list"><li *ngFor="let f of lastResult.excludedIncomplete"><strong>{{ f.studentName || f.studentId }}</strong> ({{ f.studentId }}) — {{ f.reason }}</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Versions -->
+    <div class="rc2-card">
+      <div class="rc2-card-head">
+        <div>
+          <h2 class="rc2-card-title">Versions</h2>
+          <p class="rc2-card-sub">Every publication is kept for the record. Students see only the active version.</p>
+        </div>
+      </div>
+      <div class="rc2-empty" *ngIf="history.length === 0">
+        <div class="rc2-empty-icon">📭</div>
+        <p class="rc2-empty-title">Not published yet</p>
+        <p class="rc2-empty-sub">Publish to issue the official report cards.</p>
+      </div>
+      <div class="rc2-table-wrap" *ngIf="history.length">
+        <table class="rc2-table">
+          <thead><tr><th>Version</th><th>Scope</th><th>Status</th><th>Cards</th><th>Published</th><th class="rc2-col-actions">Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let p of history; trackBy: trackById" [class.pub-selected]="selected?.id === p.id">
+              <td><span class="rc2-cell-main">v{{ p.version }}</span></td>
+              <td>{{ scopeOf(p) }}</td>
+              <td>
+                <span class="rc2-badge" [class.rc2-badge-success]="p.status === 'ACTIVE'" [class.rc2-badge-neutral]="p.status === 'SUPERSEDED'"
+                      [class.rc2-badge-danger]="p.status === 'WITHDRAWN'">{{ statusLabel(p) }}</span>
+                <span class="rc2-cell-sub" *ngIf="p.status === 'WITHDRAWN'">{{ p.withdrawnAt | date:'d MMM y' }}<ng-container *ngIf="p.withdrawalReason"> · {{ p.withdrawalReason }}</ng-container></span>
+              </td>
+              <td>{{ p.documentCount }}</td>
+              <td>{{ p.publishedAt | date:'d MMM y, h:mm a' }}<span class="rc2-cell-sub" *ngIf="p.publishedBy">{{ p.publishedBy }}</span></td>
+              <td class="rc2-col-actions">
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="openDocuments(p)">Report cards</button>
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="downloadAll(p)" [disabled]="busy !== null">{{ busy === 'zip' && zipId === p.id ? 'Preparing…' : 'Download all' }}</button>
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" *ngIf="p.status === 'ACTIVE'" (click)="send(p)" [disabled]="busy !== null">{{ busy === 'send' ? 'Sending…' : 'Email links' }}</button>
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-danger" *ngIf="p.status === 'ACTIVE'" (click)="withdraw(p)" [disabled]="busy !== null">{{ busy === 'withdraw' ? 'Withdrawing…' : 'Withdraw' }}</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <label class="rc2-field pub-reason" *ngIf="active && !blockedByWholeClass">Reason for withdrawing (optional, kept in the record)
+        <input class="rc2-input" [(ngModel)]="withdrawReason" maxlength="500" placeholder="e.g. Marks correction" />
+      </label>
+
+      <!-- Bulk download outcome: never a silent skip -->
+      <div class="pub-result" *ngIf="bulk" role="status">
+        <p class="pub-result-msg" [class.pub-ok]="!bulk.missing.length" [class.pub-bad]="bulk.missing.length">
+          Total {{ bulk.total }} · included {{ bulk.available }} · failed {{ bulk.missing.length }}
+        </p>
+        <ul class="pub-list" *ngIf="bulk.missing.length"><li *ngFor="let f of bulk.missing"><strong>{{ f.studentName || f.studentId }}</strong> ({{ f.studentId }}) — {{ f.reason }}</li></ul>
+      </div>
+    </div>
+
+    <!-- Documents of the selected version -->
+    <div class="rc2-card" *ngIf="selected">
+      <div class="rc2-card-head">
+        <div>
+          <h2 class="rc2-card-title">Report cards — version {{ selected.version }} ({{ scopeOf(selected) }})</h2>
+          <p class="rc2-card-sub">
+            <span class="rc2-badge" [class.rc2-badge-success]="selected.status === 'ACTIVE'" [class.rc2-badge-neutral]="selected.status === 'SUPERSEDED'"
+                  [class.rc2-badge-danger]="selected.status === 'WITHDRAWN'">{{ statusLabel(selected) }}</span>
+            <span class="pub-meta">Stored copies — exactly what was issued.</span>
+          </p>
+        </div>
+      </div>
+      <div class="rc2-skeleton" *ngIf="docsState === 'loading'" aria-busy="true">
+        <div class="rc2-sk-row" *ngFor="let i of [1,2,3]"><span class="sk-shimmer" style="width: 30%"></span><span class="sk-shimmer" style="width: 18%"></span></div>
+      </div>
+      <p class="rc2-error" *ngIf="docsState === 'error'">Couldn't load the report cards of this version.</p>
+      <div class="rc2-table-wrap" *ngIf="docsState === 'loaded' && documents.length">
+        <table class="rc2-table">
+          <thead><tr><th>Student</th><th>Reference</th><th>Issued</th><th class="rc2-col-actions">Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of documents; trackBy: trackById">
+              <td><span class="rc2-cell-main">{{ d.studentName }}</span><span class="rc2-cell-sub">{{ d.studentId }}<ng-container *ngIf="d.sectionName"> · {{ d.sectionName }}</ng-container></span></td>
+              <td><code class="pub-ref">{{ d.reference }}</code></td>
+              <td>{{ d.issuedAt | date:'d MMM y' }}</td>
+              <td class="rc2-col-actions">
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-primary" (click)="view(d)" [disabled]="busyDoc !== null">{{ busyDoc === d.id ? 'Opening…' : 'View' }}</button>
+                <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="view(d, 'download')" [disabled]="busyDoc !== null">Download</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- The stored PDF itself -->
+  <div class="rc2-pdf-overlay" *ngIf="previewUrl" role="dialog" aria-modal="true" aria-label="Published report card">
+    <div class="rc2-pdf-dialog">
+      <div class="rc2-pdf-bar">
+        <span class="rc2-pdf-title">Published report card</span>
+        <div class="rc2-pdf-actions">
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-primary" (click)="printPreview()">Print</button>
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="downloadPreview()">Download</button>
+          <button type="button" class="rc2-btn rc2-btn-sm" (click)="openInNewTab()">Open in new tab</button>
+          <button type="button" class="rc2-icon-btn" (click)="closePreview()" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <iframe #pdfFrame class="rc2-pdf-frame" [src]="previewUrl" title="Published report card PDF"></iframe>
+    </div>
+  </div>
+</div>

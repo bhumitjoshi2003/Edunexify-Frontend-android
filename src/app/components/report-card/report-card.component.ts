@@ -126,6 +126,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.revokePreview();
+    this.revokeInline();
     this.titleService.setTitle(this.originalTitle);
     this.destroy$.next();
     this.destroy$.complete();
@@ -168,6 +169,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
           this.reportCardData = data;
           this.loading = false;
           this.cdr.markForCheck();
+          this.loadInline();
           this.titleService.setTitle(
             `ReportCard_${data.studentName.replace(/\s+/g, '_')}_${this.session}`
           );
@@ -199,7 +201,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     if (!this.templateId) {
       // Results card: the choice was needed for the PDF — carry on with what the user asked for.
       this.cdr.markForCheck();
-      if (pending === 'preview') this.print();
+      if (pending === 'preview') this.inlineUrl ? this.print() : this.loadInline();
       if (pending === 'download') this.downloadPdf();
       return;
     }
@@ -225,6 +227,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
             : data;
           this.loading = false;
           this.cdr.markForCheck();
+          if (this.displayResults.length > 0) this.loadInline();
           this.updateDocumentTitle();
         },
         error: (e) => {
@@ -431,9 +434,53 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     return `${name}_${this.session}_ReportCard.pdf`;
   }
 
-  /** Preview & Print: shows the generated PDF; printing prints that document. */
+  // ── The page's report card: the backend PDF itself, shown inline ──────
+  inlineUrl: SafeResourceUrl | null = null;
+  inlineState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+  private inlineObjectUrl: string | null = null;
+  @ViewChild('inlineFrame') private inlineFrame?: ElementRef<HTMLIFrameElement>;
+
+  /** Whether there is a real card to show (template data, or results for the results card). */
+  get hasCard(): boolean { return this.templateId ? !!this.reportCardData : this.displayResults.length > 0; }
+
+  /** In the Android app the PDF opens in the system viewer instead of inside the page. */
+  get isNative(): boolean { return Capacitor.isNativePlatform(); }
+
+  /** Loads the backend report-card PDF into the page (web). */
+  loadInline(): void {
+    if (!this.canUsePdf || this.isNative || !isPlatformBrowser(this.platformId)) return;
+    const request = this.pdfRequest();
+    if (!request) return;
+    this.inlineState = 'loading';
+    this.cdr.markForCheck();
+    request.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (blob) => {
+        this.revokeInline();
+        this.inlineObjectUrl = URL.createObjectURL(blob);
+        this.inlineUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.inlineObjectUrl);
+        this.inlineState = 'ready';
+        this.cdr.markForCheck();
+      },
+      error: (e) => { this.inlineState = 'error'; this.onPdfError(e, 'preview'); },
+    });
+  }
+
+  private revokeInline(): void {
+    if (this.inlineObjectUrl) URL.revokeObjectURL(this.inlineObjectUrl);
+    this.inlineObjectUrl = null;
+    this.inlineUrl = null;
+  }
+
+  /** Preview & Print: prints the report card shown on the page (the PDF), else opens it in a preview. */
   print(): void {
     if (!this.canUsePdf || this.previewingPdf) return;
+    if (this.inlineUrl && !this.isNative) {
+      try {
+        this.inlineFrame?.nativeElement.contentWindow?.focus();
+        this.inlineFrame?.nativeElement.contentWindow?.print();
+        return;
+      } catch { /* fall back to the preview dialog below */ }
+    }
     if (Capacitor.isNativePlatform()) {
       // The app has no browser print: hand the same PDF to Android to open, print or share.
       this.downloadPdf();
@@ -441,7 +488,9 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     }
     this.previewingPdf = true;
     this.cdr.markForCheck();
-    this.pdfRequest().pipe(takeUntil(this.destroy$)).subscribe({
+    const request = this.pdfRequest();
+    if (!request) { this.previewingPdf = false; return; }
+    request.pipe(takeUntil(this.destroy$)).subscribe({
       next: (blob) => {
         this.previewingPdf = false;
         this.revokePreview();

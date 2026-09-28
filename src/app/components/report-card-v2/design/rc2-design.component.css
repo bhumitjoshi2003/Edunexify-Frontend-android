@@ -1,0 +1,8 @@
+/* Design-only layout; shared look lives in ../rc2-shared.css */
+.rc2-add-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.rc2-add-row .rc2-input { flex: 1 1 auto; }
+.rc2-activity-name { flex: 1 1 220px; width: auto; }
+.rc2-inactive .rc2-activity-name { color: var(--edu-text-muted, #94a3b8); }
+@media (max-width: 480px) {
+  .rc2-add-row { flex-direction: column; }
+}

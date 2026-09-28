@@ -99,16 +99,16 @@ describe('ReportCardComponent — backend grades only', () => {
     });
   }
 
-  it('prints subject and overall grades exactly as the backend sent them', () => {
+  it('a real card shows the backend document (V2 design), not a separate on-screen layout', () => {
     configure({ studentId: STUDENT_ID, session: SESSION, templateId: String(TEMPLATE_ID) });
     rcTemplateServiceSpy.getReportCard.and.returnValue(of(marksTableCard()));
+    rcTemplateServiceSpy.downloadPdf.and.returnValue(of(new Blob(['%PDF'], { type: 'application/pdf' })));
     fixture.detectChanges();
 
     const el: HTMLElement = fixture.nativeElement;
-    const grades = Array.from(el.querySelectorAll('.rc-marks-table .rc-td-grade')).map(c => c.textContent!.trim());
-    expect(grades).toEqual(['B2', '—', 'C1']);
-    const kpis = Array.from(el.querySelectorAll('.rc-kpi-val')).map(k => k.textContent!.trim());
-    expect(kpis).toContain('C1');
+    expect(rcTemplateServiceSpy.downloadPdf).toHaveBeenCalledWith(STUDENT_ID, TEMPLATE_ID, SESSION, null);
+    expect(el.querySelector('.rc-viewer iframe.rc-viewer-frame')).not.toBeNull();
+    expect(el.querySelector('.rc-marks-table')).toBeNull();   // grades come printed in the backend PDF
   });
 
   it('has no frontend grading scale left', () => {

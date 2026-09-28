@@ -15,7 +15,6 @@ import { ToastService } from '../../services/toast.service';
 import { StudentService } from '../../services/student.service';
 import { Student } from '../../interfaces/student';
 import { ParentChildContextService } from '../../services/parent-child-context.service';
-import { AcademicSessionService } from '../../services/academic-session.service';
 
 /**
  * Serves two very different audiences at the same route, exactly as before the
@@ -41,7 +40,6 @@ export class ParentPortalComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly childContext = inject(ParentChildContextService);
-  private readonly sessionService = inject(AcademicSessionService);
   private readonly destroy$ = new Subject<void>();
   private readonly studentSearch$ = new Subject<string>();
   private readonly directorySearchInput$ = new Subject<string>();
@@ -300,13 +298,8 @@ export class ParentPortalComponent implements OnInit, OnDestroy {
 
   openReportCard(child: ChildAccess): void {
     this.childContext.select(child);
-    // report-card.component requires a session — it silently redirects to /dashboard without one.
-    this.sessionService.getCurrentSession().pipe(takeUntil(this.destroy$)).subscribe({
-      next: session => this.router.navigate(['/dashboard/report-card'], {
-        queryParams: { studentId: child.studentId, session: session.label }
-      }),
-      error: () => this.toast.error('Could not open report card', 'No active academic session found.'),
-    });
+    // The child's published report cards (the list links on to earlier, pre-V2 report cards).
+    this.router.navigate(['/dashboard/report-card-documents'], { queryParams: { studentId: child.studentId } });
   }
 
   openSchoolUpdates(): void { this.router.navigate(['/dashboard/notice']); }

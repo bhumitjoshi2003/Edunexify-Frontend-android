@@ -97,6 +97,13 @@
           <span>My Results</span>
         </a>
 
+        <a class="sd-action-card" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-documents">
+          <div class="sd-action-icon" style="background:#f0fdf4;color:#15803d">
+            <mat-icon>description</mat-icon>
+          </div>
+          <span>Report Cards</span>
+        </a>
+
         <a class="sd-action-card" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fees">
           <div class="sd-action-icon" style="background:#fefce8;color:#a16207">
             <mat-icon>receipt_long</mat-icon>

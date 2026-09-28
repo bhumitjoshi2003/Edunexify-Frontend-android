@@ -105,7 +105,8 @@
   <!-- ══════════════════════════════════════════════════════════════════
        TEMPLATE-BASED REPORT CARD
   ══════════════════════════════════════════════════════════════════════ -->
-  <ng-container *ngIf="!loading && (templateId || demoMode) && reportCardData">
+  <!-- Static sample only (admin gallery). Real report cards are the backend document below. -->
+  <ng-container *ngIf="!loading && demoMode && reportCardData">
     <div class="rc-card" [class.rc-dense]="isDenseReport">
 
       <!-- Watermark overlay -->
@@ -285,115 +286,31 @@
   </ng-container>
 
   <!-- ══════════════════════════════════════════════════════════════════
-       LEGACY: exam-id based (backward compatibility)
+       THE REPORT CARD — the backend-generated document (one design for every card:
+       Half Yearly, Annual, Final…), shown as-is. No separate on-screen layout.
   ══════════════════════════════════════════════════════════════════════ -->
-  <ng-container *ngIf="!loading && !templateId && !demoMode">
+  <div *ngIf="!loading && !templateId && !demoMode && displayResults.length === 0" class="rc-empty no-print">
+    No results found for this selection.
+  </div>
 
-    <div *ngIf="displayResults.length === 0" class="rc-empty no-print">
-      No results found for this selection.
+  <ng-container *ngIf="!loading && !demoMode && !notPublished && !ambiguousCandidates && hasCard">
+    <div class="rc-viewer no-print">
+      <div class="rc-viewer-state" *ngIf="!isNative && inlineState === 'loading'" role="status" aria-live="polite" aria-busy="true">
+        <div class="rc-loading-spinner" aria-hidden="true"></div>
+        <span>Preparing report card…</span>
+      </div>
+      <iframe #inlineFrame *ngIf="!isNative && inlineUrl" class="rc-viewer-frame" [src]="inlineUrl" title="Report card"></iframe>
+      <div class="rc-viewer-state" *ngIf="!isNative && inlineState === 'error'">
+        <span>Couldn't load the report card.</span>
+        <button type="button" class="rc-btn-pdf" (click)="loadInline()">Try again</button>
+      </div>
+      <div class="rc-viewer-state" *ngIf="isNative">
+        <span>Your report card is ready.</span>
+        <button type="button" class="rc-btn-pdf" (click)="downloadPdf()" [disabled]="downloadingPdf">
+          {{ downloadingPdf ? 'Opening…' : 'Open report card' }}
+        </button>
+      </div>
     </div>
-
-    <div *ngIf="displayResults.length > 0" class="rc-card">
-
-      <!-- School Header -->
-      <div class="rc-legacy-header">
-        <img src="EdunexifyLogo.png" alt="Edunexify" class="rc-header-img" />
-      </div>
-
-      <!-- Card Title -->
-      <div class="rc-card-title-row">
-        <h2 class="rc-card-title">{{ cardTitle }}</h2>
-        <span class="rc-session-badge">Session: {{ session }}</span>
-      </div>
-
-      <!-- Student Info -->
-      <div class="rc-student-info">
-        <div class="rc-info-item">
-          <span class="rc-info-label">Student Name</span>
-          <span class="rc-info-value">{{ studentName }}</span>
-        </div>
-        <div class="rc-info-item">
-          <span class="rc-info-label">Student ID</span>
-          <span class="rc-info-value">{{ studentId }}</span>
-        </div>
-        <div class="rc-info-item">
-          <span class="rc-info-label">Class</span>
-          <span class="rc-info-value">Class {{ className }}</span>
-        </div>
-      </div>
-
-      <!-- Exam Sections -->
-      <div *ngFor="let exam of displayResults; trackBy: trackByExamId" class="rc-exam-section">
-
-        <h3 class="rc-exam-heading">{{ exam.examName }}</h3>
-
-        <div class="rc-marks-scroll">
-        <table class="rc-table">
-          <thead>
-            <tr>
-              <th class="rc-th-subject">Subject</th>
-              <th class="rc-th-num">Max Marks</th>
-              <th class="rc-th-num">Marks Obtained</th>
-              <th class="rc-th-num">Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let subj of exam.subjects; trackBy: trackByIndex"
-                [class.rc-row-absent]="subj.marksObtained === null">
-              <td class="rc-td-subject">{{ subj.subjectName }}</td>
-              <td class="rc-td-num">{{ subj.maxMarks }}</td>
-              <td class="rc-td-num">
-                <span *ngIf="subj.marksObtained !== null">{{ subj.marksObtained }}</span>
-                <span *ngIf="subj.marksObtained === null" class="rc-absent-text">Not entered</span>
-              </td>
-              <td class="rc-td-num rc-td-grade"
-                  [ngClass]="gradeClass(subj.grade, subj.passed)">
-                {{ subj.grade ?? (subj.marksObtained === null ? '—' : '') }}
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr class="rc-tfoot-row">
-              <td class="rc-tfoot-label">Total</td>
-              <td class="rc-td-num">{{ exam.totalMaxMarks }}</td>
-              <td class="rc-td-num"><strong>{{ exam.totalMarksObtained }}</strong></td>
-              <td class="rc-td-num rc-td-grade"
-                  [ngClass]="gradeClass(exam.grade, exam.passed)">
-                {{ exam.grade ?? '—' }}
-              </td>
-            </tr>
-            <tr class="rc-tfoot-summary">
-              <td colspan="4">
-                <span class="rc-summary-item">
-                  Percentage: <strong>{{ exam.percentage !== null ? (exam.percentage | number:'1.1-1') + '%' : 'Pending (' + exam.marksMissing + ' mark' + (exam.marksMissing === 1 ? '' : 's') + ' not entered)' }}</strong>
-                </span>
-                <span class="rc-summary-divider">|</span>
-                <span class="rc-summary-item">
-                  Overall Rank: <strong>{{ exam.overallRank ?? '—' }}</strong>
-                </span>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-        </div>
-
-      </div>
-
-      <!-- Signatures -->
-      <div class="rc-signatures">
-        <div class="rc-sign-col">
-          <div class="rc-sign-space"></div>
-          <div class="rc-sign-line-drawn"></div>
-          <div class="rc-sign-label">Class Teacher</div>
-        </div>
-        <div class="rc-sign-col">
-          <div class="rc-sign-space"></div>
-          <div class="rc-sign-line-drawn"></div>
-          <div class="rc-sign-label">Principal</div>
-        </div>
-      </div>
-
-    </div><!-- end legacy rc-card -->
   </ng-container>
 
 </div><!-- end rc-page -->

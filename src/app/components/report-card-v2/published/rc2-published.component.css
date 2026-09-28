@@ -1,0 +1,17 @@
+.pub-meta { margin-left: 8px; }
+.pub-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.pub-check { flex: 0 1 auto; }
+.pub-reason { margin-top: 14px; max-width: 520px; }
+.pub-result { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--edu-border, #e2e8f0); border-radius: 12px; background: var(--edu-bg-light, #f8fafc); }
+.pub-result-msg { margin: 0 0 6px; font-weight: 700; }
+.pub-ok { color: #15803d; }
+.pub-bad { color: #b91c1c; }
+.pub-list-title { margin: 10px 0 4px; font-size: var(--edu-text-sm, 0.82rem); font-weight: 800; color: #475569; }
+.pub-list { margin: 0; padding-left: 18px; font-size: var(--edu-text-sm, 0.82rem); color: var(--edu-text, #1e293b); max-height: 220px; overflow-y: auto; }
+.pub-list li { margin: 2px 0; }
+.pub-ref { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; color: #334155; }
+.rc2-table tbody tr.pub-selected td { background: var(--rc2-tint); }
+@media (max-width: 600px) {
+  .pub-actions .rc2-btn { flex: 1 1 100%; }
+  .pub-meta { display: block; margin: 4px 0 0; }
+}

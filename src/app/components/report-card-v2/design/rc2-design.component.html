@@ -1,0 +1,83 @@
+<div class="rc2-page">
+  <div class="rc2-hero">
+    <div class="rc2-blob rc2-blob-1"></div>
+    <div class="rc2-blob rc2-blob-2"></div>
+    <div class="rc2-hero-icon" aria-hidden="true">🎨</div>
+    <div class="rc2-hero-text">
+      <h1 class="rc2-hero-title">Report Card Design</h1>
+      <p class="rc2-hero-sub">One look for all your school's report cards. Logo, school name, address, board, affiliation and header image come from <a routerLink="/dashboard/school-settings">School Settings</a>.</p>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="loadError">
+    <div class="rc2-empty">
+      <div class="rc2-empty-icon">⚠️</div>
+      <p class="rc2-empty-title">Couldn't load the design</p>
+      <p class="rc2-empty-sub">{{ loadError }}</p>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="!design && !loadError" aria-busy="true" aria-label="Loading design">
+    <div class="rc2-skeleton">
+      <div class="rc2-sk-row" *ngFor="let i of [1,2,3]"><span class="sk-shimmer" style="width: 30%"></span><span class="sk-shimmer" style="width: 50%"></span></div>
+    </div>
+  </div>
+
+  <div class="rc2-card" *ngIf="design">
+    <div class="rc2-card-head">
+      <div>
+        <h2 class="rc2-card-title">Text &amp; signatures</h2>
+        <p class="rc2-card-sub">Printed on every report card.</p>
+      </div>
+    </div>
+    <div class="rc2-form-grid">
+      <label class="rc2-field">School motto <input class="rc2-input" [(ngModel)]="design.motto" maxlength="150" placeholder="e.g. Knowledge · Discipline · Service" /></label>
+      <label class="rc2-field">Footer text <input class="rc2-input" [(ngModel)]="design.footerText" maxlength="300" placeholder="e.g. This is a computer-generated report card." /></label>
+      <label class="rc2-field">Teacher signature label <input class="rc2-input" [(ngModel)]="design.teacherSignatureLabel" maxlength="60" /></label>
+      <label class="rc2-field">Principal signature label <input class="rc2-input" [(ngModel)]="design.principalSignatureLabel" maxlength="60" /></label>
+      <label class="rc2-field">Watermark
+        <select class="rc2-select" [(ngModel)]="design.watermarkMode">
+          <option value="NONE">None</option><option value="TEXT">Text</option><option value="LOGO">School logo</option>
+        </select>
+      </label>
+      <label class="rc2-field" *ngIf="design.watermarkMode === 'TEXT'">Watermark text <input class="rc2-input" [(ngModel)]="design.watermarkText" maxlength="40" placeholder="Blank = school name" /></label>
+    </div>
+
+    <h2 class="rc2-section-title">Show on the report card</h2>
+    <div class="rc2-form-grid">
+      <label class="rc2-check" *ngFor="let t of toggles">
+        <input type="checkbox" [ngModel]="flag(t.key)" (ngModelChange)="setFlag(t.key, $event)" /><span>{{ t.label }}</span>
+      </label>
+    </div>
+    <div class="rc2-actions">
+      <button type="button" class="rc2-btn rc2-btn-primary" (click)="save()" [disabled]="saving">{{ saving ? 'Saving…' : 'Save design' }}</button>
+    </div>
+  </div>
+
+  <div class="rc2-card">
+    <div class="rc2-card-head">
+      <div>
+        <h2 class="rc2-card-title">Co-scholastic activities</h2>
+        <p class="rc2-card-sub">Set once for the whole school. Teachers grade them (A–E) in Remarks.</p>
+      </div>
+    </div>
+    <div class="rc2-add-row">
+      <input class="rc2-input" [(ngModel)]="newActivity" maxlength="80" placeholder="e.g. Art, Sports, Discipline, Work Education" (keyup.enter)="addActivity()" aria-label="New activity name" />
+      <button type="button" class="rc2-btn rc2-btn-primary" (click)="addActivity()" [disabled]="!newActivity.trim()">Add</button>
+    </div>
+    <div class="rc2-empty" *ngIf="activities.length === 0">
+      <div class="rc2-empty-icon">🏅</div>
+      <p class="rc2-empty-title">No activities yet</p>
+      <p class="rc2-empty-sub">Add the activities your report cards should grade.</p>
+    </div>
+    <div class="rc2-list" *ngIf="activities.length">
+      <div class="rc2-list-item" *ngFor="let a of activities; let i = index; trackBy: trackById" [class.rc2-inactive]="!a.active">
+        <input class="rc2-input rc2-activity-name" [value]="a.name" #n (blur)="rename(a, n.value)" (keyup.enter)="n.blur()" maxlength="80" aria-label="Activity name" />
+        <span class="rc2-badge" [class.rc2-badge-success]="a.active" [class.rc2-badge-neutral]="!a.active">{{ a.active ? 'Active' : 'Inactive' }}</span>
+        <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="toggleActive(a)">{{ a.active ? 'Deactivate' : 'Activate' }}</button>
+        <button type="button" class="rc2-icon-btn" (click)="move(i, -1)" [disabled]="i === 0" aria-label="Move up">↑</button>
+        <button type="button" class="rc2-icon-btn" (click)="move(i, 1)" [disabled]="i === activities.length - 1" aria-label="Move down">↓</button>
+      </div>
+    </div>
+  </div>
+</div>
