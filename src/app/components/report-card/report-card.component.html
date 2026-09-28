@@ -18,18 +18,18 @@
     </div>
     <div class="rc-hero-actions">
       <button class="rc-btn-back" (click)="goBack()" aria-label="Go back">&#8592; Back</button>
-      <button class="rc-btn-print" (click)="print()"
-              aria-label="Preview and print report card"
-              title="Opens print preview. Choose 'Save as PDF' in the print dialog to export.">
+      <button *ngIf="canUsePdf" class="rc-btn-print" (click)="print()" [disabled]="previewingPdf"
+              aria-label="Preview and print report card" [attr.aria-busy]="previewingPdf"
+              title="Opens the report card PDF to preview and print.">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
              style="vertical-align:middle;margin-right:5px">
           <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
           <rect x="6" y="14" width="12" height="8"/>
         </svg>
-        Preview &amp; Print
+        {{ previewingPdf ? 'Preparing…' : 'Preview & Print' }}
       </button>
-      <button *ngIf="templateId && !demoMode" class="rc-btn-pdf" (click)="downloadPdf()" [disabled]="downloadingPdf"
+      <button *ngIf="canUsePdf" class="rc-btn-pdf" (click)="downloadPdf()" [disabled]="downloadingPdf"
               aria-label="Download PDF" [attr.aria-busy]="downloadingPdf">
         <svg *ngIf="!downloadingPdf" width="15" height="15" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -49,6 +49,22 @@
     <button class="rc-demo-dismiss" (click)="goBack()" aria-label="Go back">&#8592; Back</button>
   </div>
 
+  <!-- ── PDF preview: the generated report card document, printed as-is ─ -->
+  <div class="rc-pdf-overlay no-print" *ngIf="pdfPreviewUrl" role="dialog" aria-modal="true" aria-label="Report card PDF preview">
+    <div class="rc-pdf-dialog">
+      <div class="rc-pdf-bar">
+        <span class="rc-pdf-title">Report card PDF</span>
+        <div class="rc-pdf-actions">
+          <button type="button" class="rc-pdf-btn rc-pdf-btn-primary" (click)="printPreview()">Print</button>
+          <button type="button" class="rc-pdf-btn" (click)="savePreview()">Download</button>
+          <button type="button" class="rc-pdf-btn" (click)="openPreviewInNewTab()">Open in new tab</button>
+          <button type="button" class="rc-pdf-close" (click)="closePreview()" aria-label="Close preview">&#10005;</button>
+        </div>
+      </div>
+      <iframe #pdfFrame class="rc-pdf-frame" [src]="pdfPreviewUrl" title="Report card PDF"></iframe>
+    </div>
+  </div>
+
   <!-- ── Loading ────────────────────────────────────────────────────── -->
   <div *ngIf="loading" class="rc-loading no-print" role="status" aria-live="polite" aria-busy="true">
     <div class="rc-loading-spinner" aria-hidden="true"></div>
@@ -63,6 +79,27 @@
       Your report card for <strong>{{ session }}</strong> hasn't been published yet.
       Please check back later or contact your school administration.
     </p>
+  </div>
+
+  <!-- ── Multi-class ambiguity (E6F) ──────────────────────────────────
+       The student has more than one legitimate historical class for this session (e.g. a
+       mid-session class change). Never guessed — the user must pick one. -->
+  <div *ngIf="!loading && ambiguousCandidates" class="rc-locked no-print">
+    <div class="rc-locked-icon">🏫</div>
+    <h2 class="rc-locked-title">Multiple Classes Found for {{ session }}</h2>
+    <p class="rc-locked-msg">
+      This student's records show more than one class for this session. Select the class the
+      report card should reflect.
+    </p>
+    <div class="rc-class-choices">
+      <button
+        type="button"
+        class="rc-class-choice"
+        *ngFor="let candidate of ambiguousCandidates"
+        (click)="selectHistoricalClass(candidate)">
+        Class {{ candidate.className }}
+      </button>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════════
@@ -88,10 +125,10 @@
 
       <div class="rc-title-section">
         <div class="rc-title-rule"></div>
-        <div class="rc-title-label">R E P O R T &nbsp;&nbsp; C A R D</div>
+        <div class="rc-title-label">{{ titleLetterSpaced }}</div>
         <div class="rc-title-rule"></div>
         <div class="rc-title-session" *ngIf="reportCardData.session">
-          Academic Session {{ reportCardData.session }}<ng-container *ngIf="examDisplay">&nbsp;&middot;&nbsp;{{ examDisplay }}</ng-container>
+          Academic Session {{ reportCardData.session }}
         </div>
       </div>
 

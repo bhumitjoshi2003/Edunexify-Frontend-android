@@ -240,11 +240,35 @@ export interface ClassRemarksData {
   students: StudentRemarksData[];
 }
 
+// ── E6F: multi-class ambiguity (HTTP 409) ─────────────────────────────────────
+// The backend returns this shape instead of ReportCardData when a student has more
+// than one legitimate historical class context for the requested session (e.g. a
+// mid-session class change with marked exams under both classes). The caller must
+// show the candidates and retry with the chosen classId — never guess.
+
+export interface AmbiguousClassCandidate {
+  classId: number | null;
+  className: string;
+}
+
+export interface AmbiguousReportCardContext {
+  ambiguous: true;
+  studentId: string;
+  message: string;
+  candidates: AmbiguousClassCandidate[];
+}
+
+export function isAmbiguousReportCardContext(body: unknown): body is AmbiguousReportCardContext {
+  return !!body && typeof body === 'object' && (body as { ambiguous?: unknown }).ambiguous === true;
+}
+
 export interface ReportCardData {
   studentId: string;
   studentName: string;
   // CBSE compliance (Phase 5)
   overallGrade?: string;
+  /** Backend heading for what the card covers: "HALF YEARLY — REPORT CARD" or "ANNUAL REPORT CARD". */
+  reportTitle?: string | null;
   cgpa?: number | null;
   className: string;
   sectionName?: string;
@@ -311,11 +335,10 @@ export class ReportCardTemplateService {
 
   // Report Card Data
 
-  getReportCard(studentId: string, templateId: number, session: string): Observable<ReportCardData> {
-    return this.http.get<ReportCardData>(this.rcBase, {
-      params: { studentId, templateId: templateId.toString(), session },
-      withCredentials: true
-    });
+  getReportCard(studentId: string, templateId: number, session: string, classId?: number | null): Observable<ReportCardData> {
+    const params: Record<string, string> = { studentId, templateId: templateId.toString(), session };
+    if (classId != null) params['classId'] = classId.toString();
+    return this.http.get<ReportCardData>(this.rcBase, { params, withCredentials: true });
   }
 
   // Remarks + Co-Scholastic
@@ -372,12 +395,22 @@ export class ReportCardTemplateService {
 
   // PDF Download
 
-  downloadPdf(studentId: string, templateId: number, session: string): Observable<Blob> {
-    return this.http.get(`${this.rcBase}/pdf`, {
-      params: { studentId, templateId: templateId.toString(), session },
-      responseType: 'blob',
-      withCredentials: true
-    });
+  downloadPdf(studentId: string, templateId: number, session: string, classId?: number | null): Observable<Blob> {
+    const params: Record<string, string> = { studentId, templateId: templateId.toString(), session };
+    if (classId != null) params['classId'] = classId.toString();
+    return this.http.get(`${this.rcBase}/pdf`, { params, responseType: 'blob', withCredentials: true });
+  }
+
+  /**
+   * The report card built from the student's exam results (no template) — the card Class
+   * Results, My Results and the parent portal open. `examId` limits it to one exam; students
+   * and parents only ever get published results (enforced by the server).
+   */
+  downloadResultsPdf(studentId: string, session: string, examId?: number | null, classId?: number | null): Observable<Blob> {
+    const params: Record<string, string> = { studentId, session };
+    if (examId != null) params['examId'] = examId.toString();
+    if (classId != null) params['classId'] = classId.toString();
+    return this.http.get(`${this.rcBase}/pdf`, { params, responseType: 'blob', withCredentials: true });
   }
 
   downloadBulkPdf(templateId: number, session: string, className: string): Observable<Blob> {

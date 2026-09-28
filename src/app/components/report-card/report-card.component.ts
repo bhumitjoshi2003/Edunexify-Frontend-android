@@ -1,15 +1,15 @@
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component,
-  Inject, OnDestroy, OnInit, PLATFORM_ID
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef,
+  Inject, OnDestroy, OnInit, PLATFORM_ID, ViewChild
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Title } from '@angular/platform-browser';
-import { Subject, takeUntil } from 'rxjs';
+import { DomSanitizer, SafeResourceUrl, Title } from '@angular/platform-browser';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { MarksService, ExamResult } from '../../services/marks.service';
 import {
   ReportCardTemplateService, ReportCardData, TemplateSection, BrandingConfig,
-  ExamColumn, SubjectRow
+  ExamColumn, SubjectRow, AmbiguousClassCandidate, isAmbiguousReportCardContext
 } from '../../services/report-card-template.service';
 import { LoggerService } from '../../services/logger.service';
 import { AuthStateService } from '../../auth/auth-state.service';
@@ -49,9 +49,17 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   // ── Template-based mode ───────────────────────────────────────────────
   templateId: number | null = null;
   reportCardData: ReportCardData | null = null;
+  /** The classId chosen (explicitly, or unambiguously implied) for the current request —
+   *  reused for both the data load and the PDF download so both target the exact same
+   *  historical class context (see E6E's "do not independently recalculate class"). */
+  selectedClassId: number | null = null;
 
   loading = true;
   notPublished = false;  // true when STUDENT hits a 403 (report not yet published)
+  // E6F: the student has more than one legitimate historical class for this session (a
+  // mid-session class change with marked exams on both sides). The user must pick one —
+  // never silently guessed. See ReportCardDataAssembler.ReportCardContextAmbiguousException.
+  ambiguousCandidates: AmbiguousClassCandidate[] | null = null;
   private originalTitle = '';
 
   constructor(
@@ -65,6 +73,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
     private toast: ToastService,
+    private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: object
   ) { }
 
@@ -77,6 +86,9 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     const templateIdStr = params.get('templateId');
     this.examId     = examIdStr     ? Number(examIdStr)     : null;
     this.templateId = templateIdStr ? Number(templateIdStr) : null;
+    // A notification link names the historical class so the card opens without asking.
+    const classIdParam = Number(params.get('classId'));
+    this.selectedClassId = Number.isInteger(classIdParam) && classIdParam > 0 ? classIdParam : null;
 
     this.demoMode = params.get('demo') === 'true';
     this.demoStyleName = params.get('styleName') ?? 'CBSE Standard';
@@ -113,6 +125,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.revokePreview();
     this.titleService.setTitle(this.originalTitle);
     this.destroy$.next();
     this.destroy$.complete();
@@ -127,6 +140,8 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.reportCardData = null;
     this.notPublished = false;
+    this.ambiguousCandidates = null;
+    this.selectedClassId = null;
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { studentId: child.studentId },
@@ -144,8 +159,9 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   // ── Template-based mode ───────────────────────────────────────────────
 
   private loadTemplateMode(): void {
+    this.ambiguousCandidates = null;
     this.rcTemplateService
-      .getReportCard(this.studentId, this.templateId!, this.session)
+      .getReportCard(this.studentId, this.templateId!, this.session, this.selectedClassId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
@@ -157,7 +173,11 @@ export class ReportCardComponent implements OnInit, OnDestroy {
           );
         },
         error: (e) => {
-          if (e.status === 403) {
+          if (e.status === 409 && isAmbiguousReportCardContext(e.error)) {
+            // More than one legitimate historical class for this session — show the choice
+            // rather than guessing (see E6E's ReportCardContextAmbiguousException).
+            this.ambiguousCandidates = e.error.candidates;
+          } else if (e.status === 403) {
             this.notPublished = true;
           } else {
             this.logger.error('Error loading template report card:', e);
@@ -167,6 +187,25 @@ export class ReportCardComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  /** User's choice from the E6F ambiguity picker — retries the same request with the selected
+   *  classId, which is also reused for the PDF download so both target the same context. */
+  selectHistoricalClass(candidate: AmbiguousClassCandidate): void {
+    this.selectedClassId = candidate.classId;
+    this.ambiguousCandidates = null;
+    const pending = this.pendingPdfAction;
+    this.pendingPdfAction = null;
+    if (!this.templateId) {
+      // Results card: the choice was needed for the PDF — carry on with what the user asked for.
+      this.cdr.markForCheck();
+      if (pending === 'preview') this.print();
+      if (pending === 'download') this.downloadPdf();
+      return;
+    }
+    this.loading = true;
+    this.cdr.markForCheck();
+    this.loadTemplateMode();
   }
 
   // ── Legacy exam-based mode ────────────────────────────────────────────
@@ -287,6 +326,12 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     if (!term) return '';
     return term.toLowerCase().includes('exam') ? term : `${term} Examination`;
   }
+  /** The backend title (same as the PDF), in the card's letter-spaced style. */
+  get titleLetterSpaced(): string {
+    const title = (this.reportCardData?.reportTitle || 'REPORT CARD').trim();
+    if (title.length > 34) return title;
+    return title.split(' ').map(word => word.split('').join(' ')).join('\u00a0\u00a0\u00a0');
+  }
   get watermarkEnabled(): boolean { return this.branding.showWatermark === true; }
   get watermarkType(): string { return this.branding.watermarkType ?? 'TEXT'; }
   get watermarkText(): string { return this.branding.watermarkText ?? (this.reportCardData?.schoolName ?? ''); }
@@ -359,63 +404,122 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   // ── Actions ───────────────────────────────────────────────────────────
 
+  // ── PDF: the one printable document ──────────────────────────────────
+  // "Preview & Print" and "Download" both use the backend-generated PDF — never window.print()
+  // of this page, so no sidebar, top bar or browser page chrome ever reaches the paper. In the
+  // Android app both hand that PDF to the system (Capacitor Filesystem + Share).
+
+  downloadingPdf = false;
+  previewingPdf = false;
+  pdfPreviewUrl: SafeResourceUrl | null = null;
+  private pdfObjectUrl: string | null = null;
+  private pendingPdfAction: 'preview' | 'download' | null = null;
+  @ViewChild('pdfFrame') private pdfFrame?: ElementRef<HTMLIFrameElement>;
+
+  /** Whether this card has a backend PDF (everything except the static sample). */
+  get canUsePdf(): boolean { return !this.demoMode && !!this.studentId && !!this.session; }
+
+  /** Template card when a template is chosen; otherwise the card built from the exam results. */
+  private pdfRequest(): Observable<Blob> {
+    return this.templateId
+      ? this.rcTemplateService.downloadPdf(this.studentId, this.templateId, this.session, this.selectedClassId)
+      : this.rcTemplateService.downloadResultsPdf(this.studentId, this.session, this.examId, this.selectedClassId);
+  }
+
+  private get pdfFileName(): string {
+    const name = (this.reportCardData?.studentName ?? this.studentName ?? '').trim().replace(/\s+/g, '_') || 'Student';
+    return `${name}_${this.session}_ReportCard.pdf`;
+  }
+
+  /** Preview & Print: shows the generated PDF; printing prints that document. */
   print(): void {
+    if (!this.canUsePdf || this.previewingPdf) return;
     if (Capacitor.isNativePlatform()) {
-      // No native print API — the practical mobile equivalent is sharing the PDF to
-      // whatever print/PDF-viewer app the user has (most support printing from there).
+      // The app has no browser print: hand the same PDF to Android to open, print or share.
       this.downloadPdf();
       return;
     }
-    if (isPlatformBrowser(this.platformId)) {
-      window.print();
+    this.previewingPdf = true;
+    this.cdr.markForCheck();
+    this.pdfRequest().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (blob) => {
+        this.previewingPdf = false;
+        this.revokePreview();
+        this.pdfObjectUrl = URL.createObjectURL(blob);
+        this.pdfPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl);
+        this.cdr.markForCheck();
+      },
+      error: (e) => { this.previewingPdf = false; this.onPdfError(e, 'preview'); },
+    });
+  }
+
+  /** Prints the PDF document shown in the preview (not this page). */
+  printPreview(): void {
+    const frame = this.pdfFrame?.nativeElement;
+    try {
+      frame?.contentWindow?.focus();
+      frame?.contentWindow?.print();
+    } catch {
+      this.openPreviewInNewTab();   // some browsers do not allow printing an embedded PDF
     }
   }
 
-  downloadingPdf = false;
+  openPreviewInNewTab(): void {
+    if (this.pdfObjectUrl && isPlatformBrowser(this.platformId)) window.open(this.pdfObjectUrl, '_blank', 'noopener');
+  }
+
+  savePreview(): void {
+    if (this.pdfObjectUrl) this.saveUrl(this.pdfObjectUrl);
+  }
+
+  closePreview(): void {
+    this.revokePreview();
+    this.cdr.markForCheck();
+  }
+
+  private revokePreview(): void {
+    if (this.pdfObjectUrl) URL.revokeObjectURL(this.pdfObjectUrl);
+    this.pdfObjectUrl = null;
+    this.pdfPreviewUrl = null;
+  }
 
   downloadPdf(): void {
-    if (!this.templateId || !this.studentId || !this.session) return;
+    if (!this.canUsePdf || this.downloadingPdf) return;
 
     this.downloadingPdf = true;
     this.cdr.markForCheck();
 
-    this.rcTemplateService.downloadPdf(this.studentId, this.templateId, this.session)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: async (blob) => {
-          const name = this.reportCardData?.studentName?.replace(/\s+/g, '_') ?? 'Student';
-          const fileName = `${name}_${this.session}_ReportCard.pdf`;
-          try {
-            if (Capacitor.isNativePlatform()) {
-              const base64 = await this.blobToBase64(blob);
-              await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
-              const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
-              await Share.share({ title: 'Report Card', files: [uri], dialogTitle: 'Open, print, or share the report card' });
-            } else {
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = fileName;
-              a.click();
-              URL.revokeObjectURL(url);
-            }
-          } catch (e: any) {
-            if (e?.message !== 'Share canceled') {
-              this.logger.error('PDF share failed', e);
-              this.toast.error('Download Failed', 'Could not generate PDF. Please try again.');
-            }
-          } finally {
-            this.downloadingPdf = false;
-            this.cdr.markForCheck();
+    this.pdfRequest().pipe(takeUntil(this.destroy$)).subscribe({
+      next: async (blob) => {
+        try {
+          if (Capacitor.isNativePlatform()) {
+            await this.sharePdf(blob);
+          } else {
+            const url = URL.createObjectURL(blob);
+            this.saveUrl(url);
+            URL.revokeObjectURL(url);
           }
-        },
-        error: (e) => {
-          this.logger.error('PDF download failed', e);
-          this.toast.error('Download Failed', 'Could not generate PDF. Please try again.');
+        } catch (e: any) {
+          if (e?.message !== 'Share canceled') {
+            this.logger.error('PDF share failed', e);
+            this.toast.error('Download Failed', 'Could not generate PDF. Please try again.');
+          }
+        } finally {
           this.downloadingPdf = false;
           this.cdr.markForCheck();
         }
-      });
+      },
+      error: (e) => { this.downloadingPdf = false; this.onPdfError(e, 'download'); },
+    });
+  }
+
+  /** Android: save the PDF to the app cache and open the system sheet to view, print or share it. */
+  private async sharePdf(blob: Blob): Promise<void> {
+    const fileName = this.pdfFileName;
+    const base64 = await this.blobToBase64(blob);
+    await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
+    const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
+    await Share.share({ title: 'Report Card', files: [uri], dialogTitle: 'Open, print, or share the report card' });
   }
 
   private blobToBase64(blob: Blob): Promise<string> {
@@ -425,6 +529,33 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
+  }
+
+  private saveUrl(url: string): void {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = this.pdfFileName;
+    a.click();
+  }
+
+  /** PDF errors arrive as a Blob body: read it to show the right message (or the class picker). */
+  private async onPdfError(e: any, action: 'preview' | 'download'): Promise<void> {
+    let body: any = e?.error;
+    if (body instanceof Blob) {
+      try { body = JSON.parse(await body.text()); } catch { body = null; }
+    }
+    if (e?.status === 409 && isAmbiguousReportCardContext(body)) {
+      this.pendingPdfAction = action;
+      this.ambiguousCandidates = body.candidates;
+    } else if (e?.status === 403) {
+      this.toast.error('Report card unavailable', body?.message || 'This report card is not available yet.');
+    } else if (e?.status === 404) {
+      this.toast.info('No results yet', body?.message || 'There are no results to put on this report card yet.');
+    } else {
+      this.logger.error('Report card PDF failed', e);
+      this.toast.error('PDF Failed', 'Could not generate the report card PDF. Please try again.');
+    }
+    this.cdr.markForCheck();
   }
 
   /**
