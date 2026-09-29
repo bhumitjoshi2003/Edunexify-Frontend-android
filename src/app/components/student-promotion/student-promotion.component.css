@@ -433,6 +433,15 @@
   background: rgba(0,0,0,0.06);
 }
 .sp-outcome-msg { color: #475569; flex: 1; min-width: 160px; }
+.sp-generate-fees-link {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #c2410c;
+  text-decoration: none;
+  padding: 8px 4px;
+}
+.sp-generate-fees-link:hover { text-decoration: underline; }
 
 .sp-outcome-pending {
   font-size: 0.7rem;
@@ -523,40 +532,143 @@
   display: inline-block;
 }
 
-/* ── Maintenance (Android-only — standalone cleanup action, no web equivalent) ──── */
-.sp-maintenance {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-  border: 1.5px dashed #e2e8f0;
+/* ── Phase 1: result context, bulk defaults, summaries, readiness ─── */
+.sp-result-chip {
+  display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+  background: #f1f5f9; color: #475569; white-space: nowrap;
 }
-.sp-maintenance-label {
-  font-size: 0.68rem; font-weight: 700; color: #94a3b8;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  margin: 0 0 10px;
+.sp-result-pass { background: #dcfce7; color: #166534; }
+.sp-result-fail { background: #fee2e2; color: #991b1b; }
+.sp-result-incomplete { background: #fef3c7; color: #92400e; }
+.sp-result-source { font-size: 0.7rem; color: #94a3b8; }
+.sp-toggle-exit.active { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.sp-toggle-pending.active { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
+.sp-class-breakdown { font-size: 0.75rem; color: #64748b; }
+.sp-bulk { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sp-bulk-btn {
+  padding: 6px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #fff; color: #1e293b;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;
 }
-.sp-maintenance-btn {
-  background: #f8fafc; border: 1.5px solid #e2e8f0;
-  color: #475569; border-radius: 10px;
-  padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
-  cursor: pointer; font-family: inherit;
-  transition: background 0.15s, border-color 0.15s;
+.sp-bulk-btn:hover:not(:disabled) { background: #f8fafc; border-color: #94a3b8; }
+.sp-bulk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sp-bulk-muted { color: #64748b; }
+.sp-exit-detail { flex-wrap: wrap; }
+.sp-exit-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.72rem; font-weight: 700; color: #475569; }
+.sp-exit-reason { flex: 1 1 220px; }
+.sp-exit-date { font-size: 0.85rem; color: #0f172a; padding: 6px 0; }
+.sp-input-sm { padding: 6px 10px; font-size: 0.8rem; }
+.sp-target-exit { color: #991b1b; }
+.sp-attention { margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 0.78rem; font-weight: 600; }
+.sp-overview-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sp-overview-sub { margin: 4px 0 0; font-size: 0.8rem; color: #64748b; }
+.sp-progress { margin-top: 12px; height: 8px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.sp-progress span { display: block; height: 100%; background: linear-gradient(90deg, #16a34a, #22c55e); transition: width 0.2s; }
+.sp-link-btn {
+  padding: 7px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; background: #fff; color: #1e3a5f;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
 }
-.sp-maintenance-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
-.sp-maintenance-hint {
-  margin: 8px 0 0; font-size: 0.78rem; color: #94a3b8;
+.sp-link-btn:hover:not(:disabled) { background: #f1f5f9; }
+.sp-link-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sp-readiness-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.sp-ready-item { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; }
+.sp-ready-item strong { font-size: 1.05rem; color: #0f172a; }
+.sp-ready-item span { font-size: 0.75rem; color: #64748b; }
+.sp-ready-warn { background: #fffbeb; border-color: #fde68a; }
+.sp-pending-list { margin-top: 8px; font-size: 0.82rem; }
+.sp-pending-list summary { cursor: pointer; font-weight: 700; color: #334155; }
+.sp-pending-list ul { margin: 6px 0 0; padding-left: 18px; }
+.sp-run-summary { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+.sp-run-title { margin: 0; font-weight: 800; color: #0f172a; font-size: 0.88rem; }
+.sp-run-meta { margin: 2px 0 8px; font-size: 0.75rem; color: #64748b; }
+.sp-run-counts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.78rem; color: #334155; }
+.sp-run-bad { color: #b91c1c; }
+.sp-result-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+a.sp-outcome-name { color: inherit; text-decoration: underline; text-decoration-color: #cbd5e1; }
+
+/* ── Responsive layout: rows, decision control, class header, footer ── */
+.sp-class-meta { flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.sp-class-title-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sp-class-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sp-mini-chip {
+  padding: 2px 9px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; white-space: nowrap;
+  background: #f1f5f9; color: #475569;
+}
+.sp-mini-promote { background: #dcfce7; color: #166534; }
+.sp-mini-detain { background: #fef9c3; color: #854d0e; }
+.sp-mini-passout { background: #dbeafe; color: #1e40af; }
+.sp-mini-exit { background: #fee2e2; color: #991b1b; }
+
+.sp-student-row { align-items: flex-start; justify-content: space-between; }
+.sp-student-info { flex-direction: column; align-items: flex-start; gap: 5px; min-width: 200px; }
+.sp-student-head, .sp-student-result { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.sp-student-name { overflow-wrap: anywhere; }
+.sp-toggle-group { justify-content: flex-end; max-width: 100%; }
+.sp-toggle.active { box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08); }
+
+/* One compact decision select replaces the button row below desktop width. */
+.sp-decide-mobile { display: none; flex-direction: column; gap: 4px; width: 100%; }
+.sp-decide-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
+.sp-decide-select { width: 100%; min-height: 42px; font-weight: 700; }
+.sp-decide-select[data-decision="NONE"] { color: #64748b; font-weight: 600; }
+.sp-decide-select[data-decision="PROMOTE"] { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.sp-decide-select[data-decision="DETAIN"] { border-color: #fde68a; background: #fefce8; color: #854d0e; }
+.sp-decide-select[data-decision="PASS_OUT"] { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+.sp-decide-select[data-decision="TRANSFER"],
+.sp-decide-select[data-decision="WITHDRAW"] { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+.sp-decide-select[data-decision="PENDING"] { border-color: #cbd5e1; background: #f8fafc; color: #334155; }
+
+.sp-execute-card { z-index: 5; }
+.sp-legend { margin: 6px 0 0; font-size: 0.74rem; color: #64748b; line-height: 1.4; }
+.sp-footer-line { display: none; margin: 0; font-size: 0.8rem; font-weight: 600; color: #334155; line-height: 1.35; }
+.sp-footer-alert { color: #b91c1c; }
+.sp-execute-btn { min-height: 44px; }
+
+@media (max-width: 1024px) {
+  .sp-decide-desktop { display: none; }
+  .sp-decide-mobile { display: flex; }
+  .sp-student-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .sp-student-info { min-width: 0; }
+  .sp-applied-badge { align-self: flex-start; }
+  /* Compact action footer: one summary line + full-width button, no chip card. The right-hand
+     padding keeps its content clear of the AI copilot button (54px, 28px from the edge). */
+  .sp-execute-card {
+    position: sticky; bottom: 0; flex-direction: column; align-items: stretch; gap: 8px;
+    margin: 0; padding: 10px 90px calc(10px + env(safe-area-inset-bottom, 0px)) 12px;
+    background: #fff; border-radius: 12px 12px 0 0; border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.06);
+  }
+  .sp-footer-summary { display: none; }
+  .sp-footer-line { display: block; }
+  .sp-execute-btn { width: 100%; min-width: 0; }
 }
 
-/* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .sp-hero { flex-direction: column; align-items: flex-start; }
+  .sp-card { padding: 14px 14px; gap: 10px; border-radius: 16px; }
   .sp-session-row, .sp-filter-row { flex-direction: column; align-items: stretch; }
   .sp-session-arrow { display: none; }
-  .sp-toggle { padding: 5px 9px; font-size: 0.72rem; }
-  .sp-execute-card { flex-direction: column; align-items: stretch; position: static; }
-  .sp-execute-btn { width: 100%; }
-  .sp-class-header { flex-direction: column; align-items: flex-start; }
-  .sp-student-row { flex-direction: column; align-items: flex-start; }
+  .sp-overview-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .sp-overview .sp-link-btn, .sp-readiness .sp-overview-row .sp-link-btn { width: 100%; min-height: 40px; }
+  .sp-progress { margin-top: 6px; }
+  .sp-class-header { flex-direction: column; align-items: stretch; padding: 12px 14px; gap: 10px; }
+  .sp-bulk { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+  .sp-bulk .sp-select { grid-column: 1 / -1; width: 100%; }
+  .sp-bulk-btn { width: 100%; min-height: 38px; white-space: normal; line-height: 1.2; }
+  .sp-student-item { padding: 12px 14px; }
+  .sp-decision-detail { padding-left: 0; }
+  .sp-decision-detail .sp-select-sm { width: 100%; }
+  .sp-exit-detail { flex-direction: column; align-items: stretch; }
+  .sp-exit-reason { flex: 1 1 auto; }
+  .sp-readiness-grid { grid-template-columns: 1fr 1fr; }
   .sp-outcome-item { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 420px) {
+  /* The copilot button sits 16px from the edge here. */
+  .sp-execute-card { padding-right: 78px; }
+}
+
+@media (max-width: 380px) {
+  .sp-bulk { grid-template-columns: 1fr; }
+  .sp-readiness-grid { grid-template-columns: 1fr; }
 }

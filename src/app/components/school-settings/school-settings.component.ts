@@ -744,6 +744,23 @@ export class SchoolSettingsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Session readiness (warnings only — never blocks the switch; a failure just omits it).
+    let readinessHtml = '';
+    try {
+      const readiness = await firstValueFrom(this.academicSessionService.getReadiness(session.id));
+      const esc = (t: string) => t.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[ch]);
+      readinessHtml = `<p style="margin-top:10px;"><strong>Session readiness</strong> (warnings only): ` +
+        `${readiness.pendingStudents} undecided student(s), ${readiness.plannedEnrollments} planned enrollment(s)` +
+        `${readiness.plannedDueNow ? ` (${readiness.plannedDueNow} due)` : ''}, ` +
+        `${readiness.classesWithTimetable}/${readiness.activeClasses} classes with a timetable, ` +
+        `${readiness.studentsWithFees}/${readiness.targetEnrolled} enrolled students with fees.</p>` +
+        (readiness.warnings.length
+          ? `<ul style="text-align:left; margin:4px 0 8px; color:#92400e;">${readiness.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`
+          : '<p style="color:#166534;">No readiness warnings.</p>');
+    } catch (e) {
+      this.logger.error('Failed to load session readiness', e);
+    }
+
     const configuredCount = preview.configuredCount ?? 0;
     const noUsableConfiguration = configuredCount === 0
       || (preview.ineligibleTeacher + preview.invalidClassOrSection) === configuredCount;
@@ -766,7 +783,7 @@ export class SchoolSettingsComponent implements OnInit, OnDestroy {
             `</ul>` +
             `<p><strong>Class-teacher preview:</strong> Unchanged ${preview.unchanged}, ` +
             `Becoming live ${preview.becomingLive}, Changing ${preview.changing}, Removed ${preview.clearing}.</p>` +
-            warningHtml,
+            warningHtml + readinessHtml,
       confirmText: 'Confirm & Make Current',
       cancelText: 'Cancel',
       icon: showsClearingWarning ? 'warning' : 'question',

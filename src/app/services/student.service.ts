@@ -12,8 +12,10 @@ interface StudentDTO {
   sectionId?: number | null;
 }
 
-/** E2 year-end decision actions — mirrors backend StudentYearEndDecision.Action exactly. */
-export type PromotionAction = 'PROMOTE' | 'DETAIN' | 'PASS_OUT';
+/** Year-end decision actions — mirrors backend StudentYearEndDecision.Action exactly. PROMOTE,
+ *  DETAIN and PASS_OUT are year-end membership decisions; TRANSFER (the year-end leaving option) goes through the
+ *  existing student exit workflow; PENDING records nothing and is only counted. */
+export type PromotionAction = 'PROMOTE' | 'DETAIN' | 'PASS_OUT' | 'TRANSFER' | 'PENDING';
 
 /** Whether a proposed target enrollment would be effective immediately or only once its
  *  academic session actually starts. Mirrors backend StudentEnrollmentStatus (the only two
@@ -23,8 +25,41 @@ export type PromotionTargetStatus = 'ACTIVE' | 'PLANNED';
 /** Machine-readable outcome code for one submitted decision. The first three are successful
  *  mutations; the rest mean nothing was changed for that student. */
 export type PromotionOutcomeCode =
-  | 'PROMOTED' | 'DETAINED' | 'PASSED_OUT'
-  | 'ALREADY_APPLIED' | 'CONFLICT' | 'INVALID_SOURCE' | 'VALIDATION_ERROR';
+  | 'PROMOTED' | 'DETAINED' | 'PASSED_OUT' | 'TRANSFERRED'
+  | 'PENDING' | 'ALREADY_APPLIED' | 'CONFLICT' | 'INVALID_SOURCE' | 'VALIDATION_ERROR';
+
+/** Read-only result context shown next to each student (never used to decide anything).
+ *  source: REPORT_CARD (published report card), RESULTS (published exam results, report card
+ *  not published) or NONE. */
+export interface PromotionResultContext {
+  source: 'REPORT_CARD' | 'RESULTS' | 'NONE';
+  setupName: string | null;
+  percentage: number | null;
+  grade: string | null;
+  result: 'PASS' | 'FAIL' | 'INCOMPLETE' | 'NO_RESULT' | null;
+  reportCardStatus: 'PUBLISHED' | 'NOT_PUBLISHED' | 'RESULTS_NOT_PUBLISHED' | 'NO_SETUP';
+  reportCardReference: string | null;
+}
+
+/** The audit record of one executed batch (student_rollover_run). */
+export interface PromotionRunSummary {
+  id: number;
+  status: 'RUNNING' | 'COMPLETED' | 'COMPLETED_WITH_ERRORS' | 'FAILED';
+  sourceSessionId: number;
+  targetSessionId: number;
+  classId: number | null;
+  startedBy: string;
+  startedAt: string;
+  finishedAt: string | null;
+  totalStudents: number;
+  promoted: number;
+  detained: number;
+  passOut: number;
+  transferred: number;
+  pending: number;
+  alreadyApplied: number;
+  failed: number;
+}
 
 export interface PromotionIssue {
   code: string;
@@ -57,6 +92,8 @@ export interface PromotionCandidate {
   warnings: PromotionIssue[];
   /** 'NOT_APPLIED' (ready for a decision), 'CONFLICT', or 'ALREADY_APPLIED:<ACTION>'. */
   appliedDecisionState: string;
+  /** Read-only result context; null when unavailable. */
+  result: PromotionResultContext | null;
 }
 
 export interface PromotionUncoveredStudent {
@@ -82,11 +119,16 @@ export interface PromotionDecisionPayload {
   expectedSourceClassId: number;
   targetClassId?: number | null;
   targetSectionId?: number | null;
+  /** TRANSFER only; if sent it must be the source session end (the only effective date allowed). */
+  leavingDate?: string | null;
+  reason?: string | null;
 }
 
 export interface PromotionExecuteRequest {
   sourceSessionId: number;
   targetSessionId: number;
+  /** The source-class filter the batch was prepared with (recorded on the run). */
+  classId?: number | null;
   decisions: PromotionDecisionPayload[];
 }
 
@@ -104,6 +146,7 @@ export interface PromotionResultDTO {
   submitted: number;
   summary: Record<string, number>;
   outcomes: PromotionStudentOutcome[];
+  run: PromotionRunSummary | null;
 }
 
 export interface BulkImportError {
@@ -233,12 +276,9 @@ export class StudentService {
     return this.http.post<PromotionResultDTO>(`${this.baseUrl}/promotion/execute`, request);
   }
 
-  /** Maintenance-only cleanup for section assignments left over from before section-aware
-   *  promotion existed. Not part of the E2 preview/execute contract — safe to run any time. */
-  fixOrphanedSections(): Observable<{ affected: number; message: string }> {
-    return this.http.post<{ affected: number; message: string }>(
-      `${this.baseUrl}/promotion/fix-orphaned-sections`, {}
-    );
+  /** Recent year-end runs into a target session (newest first). */
+  getPromotionRuns(targetSessionId: number): Observable<PromotionRunSummary[]> {
+    return this.http.get<PromotionRunSummary[]>(`${this.baseUrl}/promotion/runs`, { params: { targetSessionId } });
   }
 
   searchStudents(query: string): Observable<Student[]> {

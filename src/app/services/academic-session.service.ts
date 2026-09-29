@@ -5,6 +5,27 @@ import { environment } from '../../environments/environment';
 import { AcademicSession } from '../interfaces/academic-session';
 import { ActivationPreview, SessionActivationOutcome } from '../interfaces/session-activation';
 
+export interface SessionReadiness {
+  sessionId: number;
+  sessionLabel: string;
+  current: boolean;
+  previousSessionId: number | null;
+  previousSessionLabel: string | null;
+  pendingStudents: number;
+  pendingSample: { studentId: string; studentName: string | null; className: string | null; sectionName: string | null }[];
+  targetEnrolled: number;
+  plannedEnrollments: number;
+  plannedDueNow: number;
+  classTeacherConfigured: number | null;
+  classTeacherIssues: boolean | null;
+  activeClasses: number;
+  timetableEntries: number;
+  classesWithTimetable: number;
+  studentsWithFees: number;
+  studentsWithoutFees: number;
+  warnings: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -35,6 +56,11 @@ export class AcademicSessionService {
    *  if it were made current right now — for the "Make Current" confirmation, before committing. */
   getActivationPreview(sessionId: number): Observable<ActivationPreview> {
     return this.http.get<ActivationPreview>(`${this.apiUrl}/${sessionId}/activation-preview`);
+  }
+
+  /** Read-only readiness warnings for "Make Current" (never blocks the switch). */
+  getReadiness(sessionId: number): Observable<SessionReadiness> {
+    return this.http.get<SessionReadiness>(`${this.apiUrl}/${sessionId}/readiness`);
   }
 
   deleteSession(sessionId: number): Observable<void> {

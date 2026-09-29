@@ -8,7 +8,7 @@
       <div class="sp-hero-icon">🎓</div>
       <div>
         <h1 class="sp-hero-title">Year-End Promotion</h1>
-        <p class="sp-hero-sub">Record promotion, detention and pass-out decisions between two academic sessions</p>
+        <p class="sp-hero-sub">Decide, class by class, who is promoted, repeats, graduates, transfers or stays pending — results are shown for reference; the decision is yours</p>
       </div>
     </div>
   </div>
@@ -95,25 +95,45 @@
       <button class="sp-result-close" (click)="dismissResult()" aria-label="Dismiss">✕</button>
     </div>
     <div class="sp-result-summary">
-      <span class="sp-fs-item" *ngFor="let e of summaryEntries()"
-        [class.sp-fs-green]="isSuccessOutcome(e.code)"
-        [class.sp-fs-blue]="isInfoOutcome(e.code)"
-        [class.sp-fs-red]="!isSuccessOutcome(e.code) && !isInfoOutcome(e.code)">
-        {{ e.count }} {{ e.code }}
+      <span class="sp-fs-item" *ngFor="let g of outcomeGroups()"
+        [class.sp-fs-green]="g.label === 'Applied'"
+        [class.sp-fs-blue]="g.label === 'Already Applied' || g.label === 'Pending'"
+        [class.sp-fs-red]="g.label === 'Conflict' || g.label === 'Failed'">
+        {{ g.count }} {{ g.label }}
       </span>
+      <span class="sp-fs-item sp-fs-muted" *ngIf="resultUndecided > 0">{{ resultUndecided }} not decided (not submitted)</span>
     </div>
+
+    <div class="sp-run-summary" *ngIf="result.run as run">
+      <p class="sp-run-title">Rollover run #{{ run.id }} · {{ run.status === 'COMPLETED' ? 'Completed' : run.status === 'COMPLETED_WITH_ERRORS' ? 'Completed with errors' : run.status }}</p>
+      <p class="sp-run-meta">By {{ run.startedBy }} · {{ run.startedAt | date:'d MMM y, h:mm a' }} · {{ run.totalStudents }} student(s)</p>
+      <div class="sp-run-counts">
+        <span>Promoted <strong>{{ run.promoted }}</strong></span>
+        <span>Repeat <strong>{{ run.detained }}</strong></span>
+        <span>Pass Out <strong>{{ run.passOut }}</strong></span>
+        <span>Transferred <strong>{{ run.transferred }}</strong></span>
+        <span>Pending <strong>{{ run.pending }}</strong></span>
+        <span>Already applied <strong>{{ run.alreadyApplied }}</strong></span>
+        <span [class.sp-run-bad]="run.failed > 0">Failed/Conflict <strong>{{ run.failed }}</strong></span>
+      </div>
+    </div>
+
     <ul class="sp-outcome-list">
       <li *ngFor="let o of result.outcomes; trackBy: trackByOutcome" class="sp-outcome-item"
         [class.sp-outcome-success]="isSuccessOutcome(o.code)"
         [class.sp-outcome-info]="isInfoOutcome(o.code)"
         [class.sp-outcome-error]="!isSuccessOutcome(o.code) && !isInfoOutcome(o.code)">
-        <span class="sp-outcome-name">{{ outcomeStudentName(o) }}</span>
+        <a class="sp-outcome-name" [routerLink]="['/dashboard/student-details', o.studentId]">{{ outcomeStudentName(o) }}</a>
         <span class="sp-outcome-id">{{ o.studentId }}</span>
-        <span class="sp-outcome-code">{{ o.code }}</span>
+        <span class="sp-outcome-code" [title]="o.code">{{ outcomeGroup(o.code) }} · {{ outcomeLabel(o.code) }}</span>
         <span class="sp-outcome-msg">{{ o.message }}</span>
         <span class="sp-outcome-pending" *ngIf="o.lifecycleFinalizationPending">Scheduled — not yet effective</span>
       </li>
     </ul>
+    <div class="sp-result-links">
+      <!-- Fee generation for the target session is a website-only admin page. -->
+      <button type="button" class="sp-link-btn" (click)="loadReadiness()">Check {{ previewedTargetLabel }} readiness →</button>
+    </div>
   </div>
 
   <!-- ── Uncovered student (studentId filter, no source enrollment) ──── -->
@@ -121,6 +141,67 @@
     <p *ngFor="let u of preview.uncoveredStudents">
       <strong>{{ u.studentName || u.studentId }}</strong> ({{ u.studentId }}) — {{ u.message }}
     </p>
+  </div>
+
+  <!-- ── Overall progress + session readiness ──────────────────────── -->
+  <div class="sp-card sp-overview" *ngIf="preview && preview.valid && !previewLoading && preview.candidates.length > 0">
+    <div class="sp-overview-row">
+      <div>
+        <h2 class="sp-card-title">{{ overallSummary.decided }} / {{ overallSummary.total }} decisions completed</h2>
+        <p class="sp-overview-sub">
+          {{ overallSummary.pending }} kept pending · {{ overallSummary.undecided }} not decided
+          <ng-container *ngIf="overallSummary.alreadyRecorded"> · {{ overallSummary.alreadyRecorded }} already recorded</ng-container>
+          <ng-container *ngIf="overallSummary.blocked"> · {{ overallSummary.blocked }} need attention</ng-container>
+        </p>
+      </div>
+      <button type="button" class="sp-link-btn" (click)="loadReadiness()" [disabled]="readinessLoading">
+        {{ readinessLoading ? 'Checking…' : 'Check ' + previewedTargetLabel + ' readiness' }}
+      </button>
+    </div>
+    <p class="sp-legend">
+      <strong>Choose decision…</strong> = not reviewed yet (nothing is sent) ·
+      <strong>Keep Pending</strong> = reviewed, final decision postponed (recorded and counted)
+    </p>
+    <div class="sp-progress" role="progressbar" [attr.aria-valuenow]="overallSummary.decided" [attr.aria-valuemax]="overallSummary.total">
+      <span [style.width.%]="overallSummary.total ? (overallSummary.decided * 100 / overallSummary.total) : 0"></span>
+    </div>
+  </div>
+
+  <div class="sp-card sp-readiness" *ngIf="readiness">
+    <div class="sp-overview-row">
+      <h2 class="sp-card-title">Session readiness — {{ readiness.sessionLabel }}</h2>
+      <button class="sp-result-close" (click)="readiness = null" aria-label="Close readiness">✕</button>
+    </div>
+    <p class="sp-overview-sub">Warnings only — nothing here blocks making {{ readiness.sessionLabel }} current.</p>
+    <div class="sp-readiness-grid">
+      <div class="sp-ready-item" [class.sp-ready-warn]="readiness.pendingStudents > 0">
+        <strong>{{ readiness.pendingStudents }}</strong><span>undecided from {{ readiness.previousSessionLabel || 'previous session' }}</span>
+      </div>
+      <div class="sp-ready-item" [class.sp-ready-warn]="readiness.plannedDueNow > 0">
+        <strong>{{ readiness.plannedEnrollments }}</strong><span>planned enrollments<ng-container *ngIf="readiness.plannedDueNow"> ({{ readiness.plannedDueNow }} due)</ng-container></span>
+      </div>
+      <div class="sp-ready-item" [class.sp-ready-warn]="readiness.classTeacherConfigured === 0 || readiness.classTeacherIssues">
+        <strong>{{ readiness.classTeacherConfigured ?? '—' }}</strong><span>class-teacher assignments</span>
+      </div>
+      <div class="sp-ready-item" [class.sp-ready-warn]="readiness.classesWithTimetable < readiness.activeClasses">
+        <strong>{{ readiness.classesWithTimetable }} / {{ readiness.activeClasses }}</strong><span>classes with a timetable</span>
+      </div>
+      <div class="sp-ready-item" [class.sp-ready-warn]="readiness.studentsWithoutFees > 0">
+        <strong>{{ readiness.studentsWithFees }} / {{ readiness.targetEnrolled }}</strong><span>enrolled students with fees</span>
+      </div>
+    </div>
+    <ul class="sp-issue-list" *ngIf="readiness.warnings.length">
+      <li *ngFor="let w of readiness.warnings" class="sp-issue sp-issue-warning">⚠ {{ w }}</li>
+    </ul>
+    <details class="sp-pending-list" *ngIf="readiness.pendingSample.length">
+      <summary>Undecided students ({{ readiness.pendingStudents }})</summary>
+      <ul>
+        <li *ngFor="let p of readiness.pendingSample">
+          <a [routerLink]="['/dashboard/student-details', p.studentId]">{{ p.studentName || p.studentId }}</a>
+          <span class="sp-student-id">{{ p.studentId }}</span> · Class {{ p.className }}<ng-container *ngIf="p.sectionName">-{{ p.sectionName }}</ng-container>
+        </li>
+      </ul>
+    </details>
   </div>
 
   <!-- ── Candidate groups ──────────────────────────────────────────── -->
@@ -132,9 +213,32 @@
 
     <div class="sp-class-card" *ngFor="let group of groups; trackBy: trackByGroup">
       <div class="sp-class-header">
-        <div class="sp-class-meta">
-          <span class="sp-class-label">Class {{ group.className }}</span>
-          <span class="sp-class-count">{{ group.candidates.length }} student{{ group.candidates.length !== 1 ? 's' : '' }}</span>
+        <div class="sp-class-meta" *ngIf="summaryFor(group.candidates) as gs">
+          <div class="sp-class-title-row">
+            <span class="sp-class-label">Class {{ group.className }}</span>
+            <span class="sp-class-count">{{ gs.decided }} / {{ gs.total }} decided<ng-container *ngIf="gs.undecided"> · {{ gs.undecided }} not decided</ng-container></span>
+          </div>
+          <div class="sp-class-chips" *ngIf="gs.promote + gs.detain + gs.passOut + gs.transfer + gs.pending + gs.alreadyRecorded > 0">
+            <span class="sp-mini-chip sp-mini-promote" *ngIf="gs.promote">Promote {{ gs.promote }}</span>
+            <span class="sp-mini-chip sp-mini-detain" *ngIf="gs.detain">Repeat {{ gs.detain }}</span>
+            <span class="sp-mini-chip sp-mini-passout" *ngIf="gs.passOut">Pass Out {{ gs.passOut }}</span>
+            <span class="sp-mini-chip sp-mini-exit" *ngIf="gs.transfer">Transfer {{ gs.transfer }}</span>
+            <span class="sp-mini-chip" *ngIf="gs.pending">Pending {{ gs.pending }}</span>
+            <span class="sp-mini-chip" *ngIf="gs.alreadyRecorded">Recorded {{ gs.alreadyRecorded }}</span>
+          </div>
+        </div>
+        <div class="sp-bulk">
+          <button type="button" class="sp-bulk-btn" (click)="promoteAllEligible(group)">Promote all eligible</button>
+          <ng-container *ngIf="sectionsFor(groupPromoteClassId(group)).length > 0">
+            <select class="sp-select sp-select-sm" [ngModel]="bulkSectionFor(group)" (ngModelChange)="setBulkSection(group, $event)"
+              aria-label="Target section for promoted students">
+              <option [ngValue]="null">Target section…</option>
+              <option *ngFor="let sec of sectionsFor(groupPromoteClassId(group))" [ngValue]="sec.id">{{ sec.name }}</option>
+            </select>
+            <button type="button" class="sp-bulk-btn" (click)="promoteAllIntoSection(group)" [disabled]="bulkSectionFor(group) == null">Promote all into section</button>
+            <button type="button" class="sp-bulk-btn" (click)="keepSameSectionLetter(group)">Keep same section letter</button>
+          </ng-container>
+          <button type="button" class="sp-bulk-btn sp-bulk-muted" (click)="keepRestPending(group)">Keep undecided as pending</button>
         </div>
       </div>
 
@@ -142,28 +246,52 @@
         <li *ngFor="let c of group.candidates; trackBy: trackByCandidate" class="sp-student-item">
           <div class="sp-student-row">
             <div class="sp-student-info">
-              <span class="sp-student-name">{{ c.studentName || c.studentId }}</span>
-              <span class="sp-student-id">{{ c.studentId }}</span>
-              <span class="sp-student-section" *ngIf="c.sourceSectionName">Section {{ c.sourceSectionName }}</span>
+              <div class="sp-student-head">
+                <span class="sp-student-name">{{ c.studentName || c.studentId }}</span>
+                <span class="sp-student-id">{{ c.studentId }}</span>
+                <span class="sp-student-section" *ngIf="c.sourceSectionName">Section {{ c.sourceSectionName }}</span>
+              </div>
+              <div class="sp-student-result">
+              <span class="sp-result-chip" [class.sp-result-pass]="c.result?.result === 'PASS'"
+                [class.sp-result-fail]="c.result?.result === 'FAIL'" [class.sp-result-incomplete]="c.result?.result === 'INCOMPLETE'"
+                [title]="resultSourceLabel(c) + (c.result?.setupName ? ' — ' + c.result?.setupName : '')">
+                <ng-container *ngIf="c.result?.percentage != null">{{ c.result?.percentage | number:'1.2-2' }}% · </ng-container>
+                <ng-container *ngIf="c.result?.grade">{{ c.result?.grade }} · </ng-container>{{ resultLabel(c) }}
+              </span>
+              <span class="sp-result-source">{{ resultSourceLabel(c) }}</span>
+              </div>
             </div>
 
-            <div class="sp-toggle-group" *ngIf="c.errors.length === 0 && c.appliedDecisionState === 'NOT_APPLIED'">
-              <button class="sp-toggle sp-toggle-none" [class.active]="getDecision(c.studentId) === 'NONE'"
-                (click)="setDecision(c, 'NONE')">No decision</button>
-              <button *ngFor="let action of c.availableDecisions" class="sp-toggle"
+            <!-- Mobile / tablet: one compact decision control -->
+            <label class="sp-decide-mobile" *ngIf="c.errors.length === 0 && c.appliedDecisionState === 'NOT_APPLIED'">
+              <span class="sp-decide-label">Decision</span>
+              <select class="sp-select sp-decide-select" [attr.data-decision]="getDecision(c.studentId)"
+                [ngModel]="getDecision(c.studentId)" (ngModelChange)="setDecision(c, $event)"
+                [attr.aria-label]="'Decision for ' + (c.studentName || c.studentId)">
+                <option value="NONE">Choose decision…</option>
+                <option *ngFor="let action of actionsFor(c)" [value]="action">{{ actionLabel(action) }}{{ c.recommendedDecision === action ? ' ★' : '' }}</option>
+              </select>
+            </label>
+
+            <!-- Desktop: inline decision buttons -->
+            <div class="sp-toggle-group sp-decide-desktop" *ngIf="c.errors.length === 0 && c.appliedDecisionState === 'NOT_APPLIED'">
+              <button class="sp-toggle sp-toggle-none" *ngIf="getDecision(c.studentId) !== 'NONE'" title="Back to “Choose decision…” (not reviewed)"
+                (click)="setDecision(c, 'NONE')">Clear</button>
+              <button *ngFor="let action of actionsFor(c)" class="sp-toggle"
                 [class.sp-toggle-promote]="action === 'PROMOTE'"
                 [class.sp-toggle-detain]="action === 'DETAIN'"
                 [class.sp-toggle-passout]="action === 'PASS_OUT'"
+                [class.sp-toggle-exit]="action === 'TRANSFER'"
+                [class.sp-toggle-pending]="action === 'PENDING'"
                 [class.active]="getDecision(c.studentId) === action"
                 (click)="setDecision(c, action)">
-                {{ action === 'PROMOTE' ? 'Promote' : action === 'DETAIN' ? 'Detain' : 'Pass Out' }}
+                {{ actionLabel(action) }}
                 <span class="sp-recommended-star" *ngIf="c.recommendedDecision === action" title="Recommended">★</span>
               </button>
             </div>
 
             <span class="sp-applied-badge" *ngIf="c.appliedDecisionState !== 'NOT_APPLIED'">
-              {{ c.appliedDecisionState.startsWith('ALREADY_APPLIED') ? 'Already ' + (c.appliedDecisionState.split(':')[1] | lowercase) + 'ed'
-                 : c.appliedDecisionState === 'CONFLICT' ? 'Conflict' : c.appliedDecisionState }}
+              {{ appliedLabel(c.appliedDecisionState) }}
             </span>
           </div>
 
@@ -197,6 +325,26 @@
           <div class="sp-decision-detail" *ngIf="getDecision(c.studentId) === 'PASS_OUT'">
             <span class="sp-target-info sp-target-passout">🎓 Graduation scheduled — effective when {{ previewedSourceLabel }} ends. Status and access remain unchanged until then.</span>
           </div>
+          <div class="sp-decision-detail sp-exit-detail" *ngIf="isExit(getDecision(c.studentId))">
+            <div class="sp-exit-field">
+              <span>Effective date</span>
+              <strong class="sp-exit-date">{{ exitEffectiveDate | date:'d MMM y' }}</strong>
+            </div>
+            <label class="sp-exit-field sp-exit-reason">
+              <span>Reason</span>
+              <input class="sp-input sp-input-sm" type="text" maxlength="500"
+                [placeholder]="getDecision(c.studentId) === 'TRANSFER' ? 'e.g. Moved to another school' : 'e.g. Family reasons'"
+                [ngModel]="getExitReason(c.studentId)" (ngModelChange)="setExitReason(c.studentId, $event)" />
+            </label>
+            <span class="sp-target-info sp-target-exit" *ngIf="!sourceSessionEnded">Student remains active until the end of the current academic session. On {{ exitEffectiveDate | date:'d MMM y' }} the enrollment ends, the status changes and parent access ends.</span>
+            <span class="sp-target-info sp-target-exit" *ngIf="sourceSessionEnded">The academic session has ended, so this applies now, as of {{ exitEffectiveDate | date:'d MMM y' }}.</span>
+          </div>
+          <div class="sp-decision-detail" *ngIf="getDecision(c.studentId) === 'PENDING'">
+            <span class="sp-target-info">Kept pending — nothing changes now; decide later.</span>
+          </div>
+          <div class="sp-attention" *ngIf="getDecision(c.studentId) === 'PROMOTE' && resultNeedsAttention(c)">
+            ⚠ Result is {{ resultLabel(c) }} — promotion is allowed, but please confirm.
+          </div>
           <div class="sp-section-required-warning" *ngIf="rowNeedsSection(c)">
             A target section must be selected before this decision can be executed.
           </div>
@@ -214,28 +362,23 @@
 
   <!-- ── Confirm + execute ─────────────────────────────────────────── -->
   <div class="sp-execute-card" *ngIf="preview && preview.valid && preview.candidates.length > 0">
+    <!-- Mobile / tablet: one concise line (per-decision counts are in each class header above) -->
+    <p class="sp-footer-line">
+      {{ readyCandidates.length - pendingCount }} decision{{ readyCandidates.length - pendingCount === 1 ? '' : 's' }} ready<ng-container *ngIf="transferCount"> ({{ transferCount }} transfer)</ng-container>
+      · {{ pendingCount }} pending<span class="sp-footer-alert" *ngIf="blockedSelectedCount > 0"> · {{ blockedSelectedCount }} need attention</span>
+    </p>
     <div class="sp-footer-summary">
       <span class="sp-fs-item sp-fs-green">✓ {{ promoteCount }} Promote</span>
-      <span class="sp-fs-item sp-fs-yellow">⟳ {{ detainCount }} Detain</span>
+      <span class="sp-fs-item sp-fs-yellow">⟳ {{ detainCount }} Repeat</span>
       <span class="sp-fs-item sp-fs-blue">🎓 {{ passOutCount }} Pass Out</span>
-      <span class="sp-fs-item sp-fs-muted">— {{ omittedCount }} no decision</span>
+      <span class="sp-fs-item sp-fs-red" *ngIf="transferCount">{{ transferCount }} Transfer</span>
+      <span class="sp-fs-item sp-fs-muted">{{ pendingCount }} pending · {{ omittedCount }} not submitted</span>
       <span class="sp-fs-item sp-fs-red" *ngIf="blockedSelectedCount > 0">{{ blockedSelectedCount }} need attention</span>
     </div>
     <button class="sp-execute-btn" (click)="confirmAndExecute()" [disabled]="!canExecute">
       <span *ngIf="!executing">Execute Decisions</span>
       <span *ngIf="executing" class="sp-btn-spinner"></span>
     </button>
-  </div>
-
-  <!-- ── Maintenance ─────────────────────────────────────────────────── -->
-  <div class="sp-maintenance">
-    <p class="sp-maintenance-label">Maintenance</p>
-    <button class="sp-maintenance-btn" (click)="fixOrphanedSections()">
-      🔧 Fix Orphaned Section Assignments
-    </button>
-    <p class="sp-maintenance-hint">
-      Clears section data for students promoted before section-aware logic was applied (e.g., a Class 1 Section A student now in Class 2 which has no sections).
-    </p>
   </div>
 
 </div>

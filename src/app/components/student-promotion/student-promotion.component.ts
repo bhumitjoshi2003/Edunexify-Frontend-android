@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { forkJoin, Subject, takeUntil } from 'rxjs';
 import {
   StudentService, PromotionAction, PromotionCandidate, PromotionDecisionPayload,
   PromotionExecuteRequest, PromotionPreviewDTO, PromotionResultDTO, PromotionStudentOutcome
 } from '../../services/student.service';
-import { AcademicSessionService } from '../../services/academic-session.service';
+import { AcademicSessionService, SessionReadiness } from '../../services/academic-session.service';
 import { AcademicSession } from '../../interfaces/academic-session';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
@@ -24,10 +25,30 @@ interface CandidateGroup {
   candidates: PromotionCandidate[];
 }
 
+/** Per-class decision summary (display only). */
+export interface GroupSummary {
+  total: number;
+  promote: number;
+  detain: number;
+  passOut: number;
+  transfer: number;
+  pending: number;
+  undecided: number;
+  alreadyRecorded: number;
+  blocked: number;
+  /** Students with a decision (chosen now or already recorded), explicit "Keep pending" excluded. */
+  decided: number;
+}
+
+/** Transfer is the year-end leaving decision (withdrawals use the Student Details exit). */
+const EXIT_ACTIONS: PromotionAction[] = ['TRANSFER'];
+/** Decisions offered on every open row, alongside the backend's year-end options. */
+const EXTRA_ACTIONS: PromotionAction[] = ['TRANSFER', 'PENDING'];
+
 @Component({
   selector: 'app-student-promotion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './student-promotion.component.html',
   styleUrl: './student-promotion.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +82,10 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   /** Chosen target section per studentId — only populated when the row actually needs one
    *  (PROMOTE into a sectioned class, or a DETAIN replacement for an invalid source section). */
   targetSections = new Map<string, number>();
+  /** TRANSFER reason per studentId (the effective date is always the source session end). */
+  exitReasons = new Map<string, string>();
+  /** Bulk "promote into section" choice per source class group. */
+  bulkSections = new Map<string, number | null>();
 
   // ── Section option cache, keyed by classId ───────────────────────────
   sectionOptions = new Map<number, Section[]>();
@@ -69,6 +94,12 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   // ── Execute / results ─────────────────────────────────────────────────
   executing = false;
   result: PromotionResultDTO | null = null;
+  /** Students left with no decision when the last batch was submitted (not sent, not "pending"). */
+  resultUndecided = 0;
+
+  // ── Session readiness (target session) ────────────────────────────────
+  readiness: SessionReadiness | null = null;
+  readinessLoading = false;
 
   constructor(
     private studentService: StudentService,
@@ -142,6 +173,9 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
    *  and results, which must describe what was actually previewed/executed. */
   get previewedSourceLabel(): string { return this.sessionLabel(this.previewedSourceSessionId); }
   get previewedTargetLabel(): string { return this.sessionLabel(this.previewedTargetSessionId); }
+  /** Exposes the previewed target session id to the template (e.g. the "Generate fees for…"
+   *  link) without making the underlying staleness-tracking field itself public. */
+  get previewedTargetSessionIdForLink(): number | null { return this.previewedTargetSessionId; }
 
   // ── Selector change handlers — any change invalidates the loaded preview ────
 
@@ -164,6 +198,9 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
     this.result = null;
     this.decisions.clear();
     this.targetSections.clear();
+    this.exitReasons.clear();
+    this.bulkSections.clear();
+    this.readiness = null;
     this.cdr.markForCheck();
   }
 
@@ -227,8 +264,10 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   private seedDefaultDecisions(preview: PromotionPreviewDTO): void {
     this.decisions.clear();
     this.targetSections.clear();
+    this.exitReasons.clear();
     for (const c of preview.candidates) {
-      if (c.errors.length > 0 || c.appliedDecisionState !== 'NOT_APPLIED') {
+      // A Fail / Incomplete result is never pre-decided: the admin must choose explicitly.
+      if (c.errors.length > 0 || c.appliedDecisionState !== 'NOT_APPLIED' || this.resultNeedsAttention(c)) {
         this.decisions.set(c.studentId, 'NONE');
         continue;
       }
@@ -296,8 +335,209 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
     return this.decisions.get(studentId) ?? 'NONE';
   }
 
+  /** Every decision offered on an open row: the backend's year-end options plus Transfer,
+   *  and Keep Pending ("Keep Pending" = reviewed, decide later; unlike "Choose decision…"). */
+  actionsFor(candidate: PromotionCandidate): PromotionAction[] {
+    return [...candidate.availableDecisions, ...EXTRA_ACTIONS.filter(a => !candidate.availableDecisions.includes(a))];
+  }
+
+  actionLabel(action: PromotionAction): string {
+    return ({ PROMOTE: 'Promote', DETAIN: 'Repeat / Detain', PASS_OUT: 'Graduate / Pass Out', TRANSFER: 'Transfer',
+      PENDING: 'Keep Pending' } as Record<PromotionAction, string>)[action];
+  }
+
+  isExit(decision: RowDecision): boolean {
+    return EXIT_ACTIONS.includes(decision as PromotionAction);
+  }
+
+  /** Badge text for a decision that is already recorded ('ALREADY_APPLIED:<ACTION>'). */
+  appliedLabel(state: string): string {
+    if (state === 'CONFLICT') return 'Conflict';
+    if (!state.startsWith('ALREADY_APPLIED')) return state;
+    return ({ PROMOTE: 'Already promoted', DETAIN: 'Already repeating', PASS_OUT: 'Already passed out',
+      TRANSFER: 'Transfer recorded', WITHDRAW: 'Withdrawn (Student Details)' } as Record<string, string>)[state.split(':')[1]] ?? 'Already recorded';
+  }
+
+  // ── Result context (read-only) ────────────────────────────────────────
+
+  resultLabel(c: PromotionCandidate): string {
+    const r = c.result?.result;
+    return r === 'PASS' ? 'Pass' : r === 'FAIL' ? 'Fail' : r === 'INCOMPLETE' ? 'Incomplete' : r === 'NO_RESULT' ? 'No result' : '—';
+  }
+
+  resultSourceLabel(c: PromotionCandidate): string {
+    switch (c.result?.reportCardStatus) {
+      case 'PUBLISHED': return 'Report card published';
+      case 'NOT_PUBLISHED': return 'Results published · report card not published';
+      case 'RESULTS_NOT_PUBLISHED': return 'Results not published';
+      case 'NO_SETUP': return 'No report card set up';
+      default: return 'Result unavailable';
+    }
+  }
+
+  resultNeedsAttention(c: PromotionCandidate): boolean {
+    return c.result?.result === 'FAIL' || c.result?.result === 'INCOMPLETE';
+  }
+
+  // ── Transfer details ──────────────────────────────────────────────────
+
+  /** A year-end Transfer always takes effect on the source session's last day. */
+  get exitEffectiveDate(): string | null {
+    return this.sessions.find(s => s.id === this.previewedSourceSessionId)?.endDate ?? null;
+  }
+
+  /** True once the source session has ended — the exit is then applied at once (as of its last day). */
+  get sourceSessionEnded(): boolean {
+    const end = this.exitEffectiveDate;
+    if (!end) return false;
+    const today = new Date();
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return end <= iso;
+  }
+
+  getExitReason(studentId: string): string {
+    return this.exitReasons.get(studentId) ?? '';
+  }
+
+  setExitReason(studentId: string, value: string): void {
+    this.exitReasons.set(studentId, value);
+  }
+
+  // ── Bulk defaults (never submit anything) ─────────────────────────────
+
+  private groupKey(g: CandidateGroup): string { return `${g.classId}`; }
+
+  private openRows(g: CandidateGroup): PromotionCandidate[] {
+    return g.candidates.filter(c => c.errors.length === 0 && c.appliedDecisionState === 'NOT_APPLIED');
+  }
+
+  /** Every undecided student who can be promoted gets PROMOTE (manual choices are kept). */
+  promoteAllEligible(g: CandidateGroup): void {
+    let changed = 0;
+    for (const c of this.openRows(g)) {
+      if (this.getDecision(c.studentId) === 'NONE' && c.availableDecisions.includes('PROMOTE')) {
+        this.setDecision(c, 'PROMOTE');
+        changed++;
+      }
+    }
+    this.toast.info('Defaults applied', changed ? `${changed} student(s) set to Promote. Review before executing.`
+      : 'No undecided students can be promoted.');
+  }
+
+  bulkSectionFor(g: CandidateGroup): number | null { return this.bulkSections.get(this.groupKey(g)) ?? null; }
+
+  setBulkSection(g: CandidateGroup, sectionId: number | null): void {
+    this.bulkSections.set(this.groupKey(g), sectionId);
+    this.cdr.markForCheck();
+  }
+
+  /** The class promoted students of this group move into (one successor per class). */
+  groupPromoteClassId(g: CandidateGroup): number | null {
+    return g.candidates.find(c => c.promoteTargetClassId != null)?.promoteTargetClassId ?? null;
+  }
+
+  /** Puts every student marked Promote in this group into the chosen target section. */
+  promoteAllIntoSection(g: CandidateGroup): void {
+    const sectionId = this.bulkSectionFor(g);
+    if (sectionId == null) return;
+    let changed = 0;
+    for (const c of this.openRows(g)) {
+      if (this.getDecision(c.studentId) === 'PROMOTE' && c.promoteTargetSectionRequired) {
+        this.targetSections.set(c.studentId, sectionId);
+        changed++;
+      }
+    }
+    this.cdr.markForCheck();
+    this.toast.info('Section applied', `${changed} promoted student(s) placed in section ${this.sectionName(this.groupPromoteClassId(g), sectionId)}.`);
+  }
+
+  /** For students marked Promote, picks the target section with the same letter as now (A → A). */
+  keepSameSectionLetter(g: CandidateGroup): void {
+    let matched = 0, unmatched = 0;
+    for (const c of this.openRows(g)) {
+      if (this.getDecision(c.studentId) !== 'PROMOTE' || !c.promoteTargetSectionRequired) continue;
+      const same = this.sectionsFor(c.promoteTargetClassId)
+        .find(sec => (sec.name ?? '').trim().toLowerCase() === (c.sourceSectionName ?? '').trim().toLowerCase());
+      if (same?.id != null) { this.targetSections.set(c.studentId, same.id); matched++; } else { unmatched++; }
+    }
+    this.cdr.markForCheck();
+    this.toast.info('Sections matched', `${matched} student(s) kept their section letter` +
+      (unmatched ? `; ${unmatched} need a section chosen (no matching letter).` : '.'));
+  }
+
+  /** Marks every still-undecided student in the group as Keep Pending. */
+  keepRestPending(g: CandidateGroup): void {
+    for (const c of this.openRows(g)) {
+      if (this.getDecision(c.studentId) === 'NONE') this.setDecision(c, 'PENDING');
+    }
+  }
+
+  private sectionName(classId: number | null, sectionId: number): string {
+    return this.sectionsFor(classId).find(s => s.id === sectionId)?.name ?? '';
+  }
+
+  // ── Summaries ─────────────────────────────────────────────────────────
+
+  summaryFor(candidates: PromotionCandidate[]): GroupSummary {
+    const s: GroupSummary = { total: candidates.length, promote: 0, detain: 0, passOut: 0, transfer: 0,
+      pending: 0, undecided: 0, alreadyRecorded: 0, blocked: 0, decided: 0 };
+    for (const c of candidates) {
+      if (c.appliedDecisionState !== 'NOT_APPLIED') { s.alreadyRecorded++; continue; }
+      if (c.errors.length > 0) { s.blocked++; continue; }
+      switch (this.getDecision(c.studentId)) {
+        case 'PROMOTE': s.promote++; break;
+        case 'DETAIN': s.detain++; break;
+        case 'PASS_OUT': s.passOut++; break;
+        case 'TRANSFER': s.transfer++; break;
+        case 'PENDING': s.pending++; break;
+        default: s.undecided++;
+      }
+    }
+    s.decided = s.promote + s.detain + s.passOut + s.transfer + s.alreadyRecorded;
+    return s;
+  }
+
+  get overallSummary(): GroupSummary {
+    return this.summaryFor(this.preview?.candidates ?? []);
+  }
+
+  // ── Warnings shown before confirming ──────────────────────────────────
+
+  /** Plain-text warnings for the confirmation step. They never override backend rules. */
+  get preSubmitWarnings(): string[] {
+    if (!this.preview) return [];
+    const warnings: string[] = [];
+    const candidates = this.preview.candidates;
+    const name = (c: PromotionCandidate) => c.studentName || c.studentId;
+    const list = (cs: PromotionCandidate[]) => cs.slice(0, 5).map(name).join(', ') + (cs.length > 5 ? ` and ${cs.length - 5} more` : '');
+
+    const summary = this.overallSummary;
+    if (summary.pending > 0) warnings.push(`${summary.pending} student(s) are kept pending — nothing changes for them yet.`);
+    if (summary.undecided > 0) warnings.push(`${summary.undecided} student(s) have no decision and will be left unchanged.`);
+    const failPromote = candidates.filter(c => this.getDecision(c.studentId) === 'PROMOTE' && c.result?.result === 'FAIL');
+    if (failPromote.length) warnings.push(`${failPromote.length} student(s) with a Fail result are marked Promote: ${list(failPromote)}.`);
+    const incompletePromote = candidates.filter(c => this.getDecision(c.studentId) === 'PROMOTE' && c.result?.result === 'INCOMPLETE');
+    if (incompletePromote.length) warnings.push(`${incompletePromote.length} student(s) with an Incomplete result are marked Promote: ${list(incompletePromote)}.`);
+    const missingSection = candidates.filter(c => this.getDecision(c.studentId) !== 'NONE' && this.rowNeedsSection(c));
+    if (missingSection.length) warnings.push(`${missingSection.length} student(s) still need a target section and will not be submitted: ${list(missingSection)}.`);
+    const badPassOut = candidates.filter(c => this.getDecision(c.studentId) === 'PASS_OUT' && !c.availableDecisions.includes('PASS_OUT'));
+    if (badPassOut.length) warnings.push(`Pass Out is only allowed from the final class — ${list(badPassOut)} will not be submitted.`);
+    const blocked = candidates.filter(c => this.getDecision(c.studentId) !== 'NONE' && c.errors.length > 0);
+    if (blocked.length) warnings.push(`${blocked.length} student(s) have validation errors and will not be submitted: ${list(blocked)}.`);
+    const exits = candidates.filter(c => this.rowIsReady(c) && this.isExit(this.getDecision(c.studentId)));
+    if (exits.length) {
+      warnings.push(this.sourceSessionEnded
+        ? `${exits.length} Transfer decision(s) apply now, as of ${this.exitEffectiveDate}, and end parent access.`
+        : `${exits.length} Transfer decision(s) take effect on ${this.exitEffectiveDate} — the students stay active (with parent access) until then.`);
+    }
+    return warnings;
+  }
+
   setDecision(candidate: PromotionCandidate, decision: RowDecision): void {
     this.decisions.set(candidate.studentId, decision);
+    if (!this.isExit(decision)) {
+      this.exitReasons.delete(candidate.studentId);
+    }
     if (decision !== 'PROMOTE' && decision !== 'DETAIN') {
       this.targetSections.delete(candidate.studentId);
     } else if (decision === 'DETAIN' && candidate.proposedDetainTargetSectionId != null) {
@@ -359,6 +599,7 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
     if (decision === 'NONE') return false;
     if (candidate.errors.length > 0) return false;
     if (candidate.appliedDecisionState !== 'NOT_APPLIED') return false;
+    if (!this.actionsFor(candidate).includes(decision)) return false;
     return !this.rowNeedsSection(candidate);
   }
 
@@ -375,6 +616,8 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   get promoteCount(): number { return this.readyCandidates.filter(c => this.getDecision(c.studentId) === 'PROMOTE').length; }
   get detainCount(): number { return this.readyCandidates.filter(c => this.getDecision(c.studentId) === 'DETAIN').length; }
   get passOutCount(): number { return this.readyCandidates.filter(c => this.getDecision(c.studentId) === 'PASS_OUT').length; }
+  get transferCount(): number { return this.readyCandidates.filter(c => this.getDecision(c.studentId) === 'TRANSFER').length; }
+  get pendingCount(): number { return this.readyCandidates.filter(c => this.getDecision(c.studentId) === 'PENDING').length; }
   get omittedCount(): number {
     if (!this.preview) return 0;
     return this.preview.candidates.length - this.readyCandidates.length;
@@ -390,35 +633,46 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   async confirmAndExecute(): Promise<void> {
     if (!this.canExecute) return;
     const promote = this.promoteCount, detain = this.detainCount, passOut = this.passOutCount;
-    const omitted = this.omittedCount;
-    const sourceLabel = this.sessionLabel(this.previewedSourceSessionId);
-    const targetLabel = this.sessionLabel(this.previewedTargetSessionId);
+    const transfer = this.transferCount, pending = this.pendingCount;
+    const sourceLabel = this.escape(this.sessionLabel(this.previewedSourceSessionId));
+    const targetLabel = this.escape(this.sessionLabel(this.previewedTargetSessionId));
+    const warnings = this.preSubmitWarnings;
+    const chip = (bg: string, fg: string, text: string) =>
+      `<span style="background:${bg};color:${fg};padding:6px 14px;border-radius:20px;font-weight:700;">${text}</span>`;
 
     const confirmed = await this.toast.confirm({
       title: 'Confirm Year-End Decisions',
       html: `
         <p style="margin-bottom:12px;color:#374151;">
           This records year-end decisions from <strong>${sourceLabel}</strong> to <strong>${targetLabel}</strong>
-          for <strong>${promote + detain + passOut}</strong> student(s):
+          for <strong>${this.readyCandidates.length}</strong> student(s):
         </p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <span style="background:#dcfce7;color:#166534;padding:6px 14px;border-radius:20px;font-weight:700;">${promote} to Promote</span>
-          <span style="background:#fef9c3;color:#854d0e;padding:6px 14px;border-radius:20px;font-weight:700;">${detain} to Detain</span>
-          <span style="background:#dbeafe;color:#1e40af;padding:6px 14px;border-radius:20px;font-weight:700;">${passOut} to Pass Out</span>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          ${chip('#dcfce7', '#166534', `${promote} Promote`)}
+          ${chip('#fef9c3', '#854d0e', `${detain} Repeat`)}
+          ${chip('#dbeafe', '#1e40af', `${passOut} Pass Out`)}
+          ${transfer ? chip('#fee2e2', '#991b1b', `${transfer} Transfer`) : ''}
+          ${pending ? chip('#f1f5f9', '#475569', `${pending} Keep Pending`) : ''}
         </div>
-        ${omitted > 0 ? `<p style="margin-top:10px;font-size:0.82rem;color:#64748b;">${omitted} student(s) with no decision selected will be left unchanged.</p>` : ''}
+        ${warnings.length ? `<div style="margin-top:14px;padding:10px 12px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;text-align:left;">
+          <p style="margin:0 0 6px;font-weight:700;color:#92400e;">Please check before confirming:</p>
+          <ul style="margin:0;padding-left:18px;color:#78350f;font-size:0.85rem;">${warnings.map(w => `<li>${this.escape(w)}</li>`).join('')}</ul>
+        </div>` : ''}
         <p style="margin-top:14px;font-size:0.85rem;color:#334155;">
-          This only <strong>records</strong> the decision. A future-dated target does not change a student's
-          current class until its session actually begins; a Pass Out does not graduate the student until
-          ${sourceLabel} ends.
+          Promote/Repeat to a future session doesn't change a student's current class until ${targetLabel} begins;
+          a Pass Out graduates the student when ${sourceLabel} ends. The school's rules are re-checked for every student.
         </p>
       `,
       icon: 'warning',
-      danger: passOut > 0,
+      danger: passOut + transfer > 0 || warnings.length > 0,
       confirmText: 'Yes, Record Decisions',
       cancelText: 'Cancel',
     });
     if (confirmed) this.doExecute();
+  }
+
+  private escape(text: string): string {
+    return text.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[ch]);
   }
 
   private doExecute(): void {
@@ -440,6 +694,10 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
       } else if (action === 'DETAIN') {
         payload.targetClassId = c.detainTargetClassId;
         payload.targetSectionId = this.getTargetSection(c.studentId) ?? c.proposedDetainTargetSectionId ?? null;
+      } else if (action === 'TRANSFER') {
+        payload.targetClassId = null;
+        payload.targetSectionId = null;
+        payload.reason = this.getExitReason(c.studentId).trim() || null;
       } else {
         payload.targetClassId = null;
         payload.targetSectionId = null;
@@ -450,12 +708,15 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
     const request: PromotionExecuteRequest = {
       sourceSessionId: this.previewedSourceSessionId,
       targetSessionId: this.previewedTargetSessionId,
+      classId: this.previewedClassFilter,
       decisions,
     };
+    const undecided = this.overallSummary.undecided;
 
     this.studentService.executePromotion(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.result = result;
+        this.resultUndecided = undecided;
         this.executing = false;
         this.cdr.markForCheck();
         // Reflect authoritative backend state — never assume the UI's own optimistic view.
@@ -477,11 +738,53 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   }
 
   isSuccessOutcome(code: string): boolean {
-    return code === 'PROMOTED' || code === 'DETAINED' || code === 'PASSED_OUT';
+    return code === 'PROMOTED' || code === 'DETAINED' || code === 'PASSED_OUT' || code === 'TRANSFERRED';
   }
 
   isInfoOutcome(code: string): boolean {
-    return code === 'ALREADY_APPLIED';
+    return code === 'ALREADY_APPLIED' || code === 'PENDING';
+  }
+
+  /** Applied / Already Applied / Conflict / Failed / Pending. */
+  outcomeGroup(code: string): string {
+    if (this.isSuccessOutcome(code)) return 'Applied';
+    if (code === 'ALREADY_APPLIED') return 'Already Applied';
+    if (code === 'CONFLICT') return 'Conflict';
+    if (code === 'PENDING') return 'Pending';
+    return 'Failed';
+  }
+
+  outcomeLabel(code: string): string {
+    return ({ PROMOTED: 'Promoted', DETAINED: 'Repeating', PASSED_OUT: 'Pass Out', TRANSFERRED: 'Transferred',
+      PENDING: 'Kept pending', ALREADY_APPLIED: 'Already applied', CONFLICT: 'Conflict',
+      INVALID_SOURCE: 'Failed', VALIDATION_ERROR: 'Failed' } as Record<string, string>)[code] ?? code;
+  }
+
+  /** Counts per outcome group, in a fixed order. */
+  outcomeGroups(): { label: string; count: number }[] {
+    if (!this.result) return [];
+    const order = ['Applied', 'Already Applied', 'Conflict', 'Failed', 'Pending'];
+    const counts = new Map<string, number>();
+    for (const o of this.result.outcomes) counts.set(this.outcomeGroup(o.code), (counts.get(this.outcomeGroup(o.code)) ?? 0) + 1);
+    return order.filter(l => counts.has(l)).map(label => ({ label, count: counts.get(label)! }));
+  }
+
+  // ── Session readiness (warnings only; never blocks anything) ──────────
+
+  loadReadiness(): void {
+    const target = this.previewedTargetSessionId ?? this.targetSessionId;
+    if (target == null || this.readinessLoading) return;
+    this.readinessLoading = true;
+    this.cdr.markForCheck();
+    this.academicSessionService.getReadiness(target).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (r) => { this.readiness = r; this.readinessLoading = false; this.cdr.markForCheck(); },
+      error: (e) => {
+        this.logger.error('Error loading session readiness:', e);
+        this.readinessLoading = false;
+        this.toast.error('Error', 'Could not check session readiness.');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   summaryEntries(): { code: string; count: number }[] {
@@ -492,33 +795,6 @@ export class StudentPromotionComponent implements OnInit, OnDestroy {
   dismissResult(): void {
     this.result = null;
     this.cdr.markForCheck();
-  }
-
-  // ── Maintenance (Android-only carryover — no equivalent UI on web; endpoint is a
-  //    standalone backend cleanup action unrelated to the E2 preview/execute contract) ──
-
-  fixOrphanedSections(): void {
-    this.toast.confirm({
-      title: 'Fix Orphaned Sections?',
-      message: 'This will clear section assignments for any students whose section belongs to a different class (e.g., promoted students who retained their old section). This is safe to run at any time.',
-      confirmText: 'Yes, Fix',
-      cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
-      this.studentService.fixOrphanedSections().pipe(takeUntil(this.destroy$)).subscribe({
-        next: ({ affected, message }) => {
-          if (affected > 0) {
-            this.toast.success('Done', message);
-          } else {
-            this.toast.info('No Issues Found', 'All student section assignments are valid.');
-          }
-        },
-        error: (e) => {
-          this.logger.error('Error fixing orphaned sections:', e);
-          this.toast.error('Error', 'Failed to fix orphaned sections.');
-        }
-      });
-    });
   }
 
   // ── trackBy ────────────────────────────────────────────────────────────
