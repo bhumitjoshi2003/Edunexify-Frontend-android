@@ -94,6 +94,8 @@
         <!-- Info -->
         <div class="al-leave-info">
           <span class="al-leave-reason">{{ leave.reason || 'No reason provided' }}</span>
+          <span class="al-leave-note" *ngIf="leave.status === 'REJECTED' && leave.decisionReason">School's reason: {{ leave.decisionReason }}</span>
+          <span class="al-leave-note" *ngIf="leave.status === 'CANCELLED' && leave.cancellationReason">Cancelled: {{ leave.cancellationReason }}</span>
           <span class="al-leave-year">{{ leave.leaveDate | date:'yyyy' }}</span>
         </div>
 
@@ -103,10 +105,10 @@
             [ngClass]="'al-status--' + leave.status.toLowerCase()">
             {{ leave.status | titlecase }}
           </span>
-          <button class="al-delete-btn"
-            [disabled]="leave.originalLeaveDate < today || leave.status === 'APPROVED'"
+          <button class="al-delete-btn" *ngIf="leave.status === 'PENDING'"
+            [disabled]="leave.originalLeaveDate < today"
             (click)="deleteLeave(leave.originalLeaveDate)"
-            title="Delete">
+            title="Cancel request" aria-label="Cancel request">
             🗑️
           </button>
         </div>

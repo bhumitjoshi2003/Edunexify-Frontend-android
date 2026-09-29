@@ -69,6 +69,7 @@ describe('AdminDashboardComponent — Daily Action Center (Phase 1)', () => {
         },
         {
           provide: LeaveService, useValue: {
+            getOnLeaveToday: () => of({ date: '2026-10-05', students: [], staff: [], periodsNeedingSubstitute: 0 }),
             getLeavesPaginated: () => opts.studentLeavesError ? throwError(() => new Error('leaves offline')) : of({ content: [] }),
           },
         },
@@ -431,7 +432,7 @@ describe('AdminDashboardComponent — Daily Action Center (Phase 1)', () => {
         { provide: TeacherSubstitutionService, useValue: { getUncovered: () => of([]) } },
         { provide: AdminService, useValue: { getAdminById: () => of({ name: 'Test Admin' }) } },
         { provide: DashboardAnalyticsService, useValue: { getStats } },
-        { provide: LeaveService, useValue: { getLeavesPaginated } },
+        { provide: LeaveService, useValue: { getLeavesPaginated, getOnLeaveToday: () => of({ date: '2026-10-05', students: [], staff: [], periodsNeedingSubstitute: 0 }) } },
         { provide: SchoolService, useValue: { getEntitlement } },
         { provide: TeacherCheckinService, useValue: { getTodaySummary } },
         { provide: StaffAdoptionService, useValue: jasmine.createSpyObj('StaffAdoptionService', { getStaffAdoption: of({ summary: { totalTeachers: 1, startedTeachers: 1, notStartedTeachers: 0, attendanceUsedTeachers: 1, disabledTeachers: 0 }, teachers: [] }) }) },

@@ -30,7 +30,8 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
   studentId: string = '';
   studentName: string = '';
   className = '';
-  leaves: { originalLeaveDate: string; leaveDate: string; reason: string; status: string }[] = [];
+  leaves: { id: number; originalLeaveDate: string; leaveDate: string; reason: string; status: string;
+             decisionReason?: string | null; cancellationReason?: string | null }[] = [];
   isLoading: boolean = true;
 
   // Pagination
@@ -159,10 +160,13 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: PaginatedResponse<any>) => {
           this.leaves = response.content.map((leave: any) => ({
+            id: leave.id,
             originalLeaveDate: leave.leaveDate,
             leaveDate: leave.leaveDate,
             reason: leave.reason,
             status: leave.status ?? 'PENDING',
+            decisionReason: leave.decisionReason ?? null,
+            cancellationReason: leave.cancellationReason ?? null,
           }));
           this.totalPages = response.totalPages;
           this.totalElements = response.totalElements;
@@ -211,10 +215,10 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
   deleteLeave(leaveDate: string): void {
     if (leaveDate) {
       this.toast.confirm({
-        title: 'Are you sure?',
-        message: 'You will not be able to recover this leave!',
-        confirmText: 'Yes, delete it!',
-        cancelText: 'Cancel',
+        title: 'Cancel this leave request?',
+        message: 'The request will be withdrawn. It stays in your history as cancelled.',
+        confirmText: 'Yes, cancel it',
+        cancelText: 'Keep it',
         danger: true,
       }).then((confirmed) => {
         if (confirmed) {
@@ -225,13 +229,13 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
               this.leaveForm.reset();
               this.reasonControl?.setValue('');
               this.showOtherReasonInput = false;
-              this.toast.success('Deleted!', 'Your leave has been deleted.');
+              this.toast.success('Cancelled', 'Your leave request has been cancelled.');
               this.currentPage = 0;
               this.loadStudentLeaves();
             },
             error: (error) => {
-              this.logger.error('Error deleting leave:', error);
-              this.toast.error('Error!', 'Failed to delete leave. Please try again.');
+              this.logger.error('Error cancelling leave:', error);
+              this.toast.error('Could not cancel', this.serverMessage(error) || 'Please try again.');
             },
           });
         }
@@ -239,7 +243,17 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
     }
   }
 
-  trackByLeaveDate(index: number, leave: { originalLeaveDate: string }): string { return leave.originalLeaveDate; }
+  trackByLeaveDate(index: number, leave: { id: number; originalLeaveDate: string }): string { return String(leave.id ?? leave.originalLeaveDate); }
+
+  /** The server's own error message (e.g. a date rule), whether the body is JSON or text. */
+  serverMessage(error: any): string | null {
+    const body = error?.error;
+    if (!body) return null;
+    if (typeof body === 'string') {
+      try { return JSON.parse(body)?.message ?? body; } catch { return body; }
+    }
+    return body.message ?? null;
+  }
   trackByReason(index: number, reason: string): string { return reason; }
 
   check(): void {
@@ -301,7 +315,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       }
 
       const leaveExists = this.leaves.some(
-        (leave) => leave.originalLeaveDate === formattedLeaveDate
+        (leave) => leave.originalLeaveDate === formattedLeaveDate && (leave.status === 'PENDING' || leave.status === 'APPROVED')
       );
 
       if (leaveExists) {
@@ -309,12 +323,10 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
         return;
       }
 
+      // Only the day and the reason — the server decides everything else.
       const leaveRequest: LeaveRequest = {
-        studentId: this.studentId,
-        studentName: this.studentName,
         leaveDate: formattedLeaveDate,
         reason: finalReason,
-        className: this.className,
       };
       const parentStudentId = this.authStateService.getUserRole() === 'PARENT' ? this.studentId : undefined;
       this.leaveService.applyLeave(leaveRequest, parentStudentId).pipe(takeUntil(this.destroy$)).subscribe({
@@ -329,9 +341,9 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.logger.error('Error applying leave:', error);
-          this.errorMessage = error.status === 404
+          this.errorMessage = this.serverMessage(error) || (error.status === 404
             ? 'Failed to retrieve student information. Please try again.'
-            : 'Failed to apply leave. Please try again.';
+            : 'Failed to apply leave. Please try again.');
           this.toast.error('Error!', this.errorMessage);
         }
       });

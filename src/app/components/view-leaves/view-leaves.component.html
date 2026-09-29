@@ -20,50 +20,44 @@
     <div class="vl-blob vl-blob-2"></div>
   </div>
 
-  <!-- ── Status Chips ─────────────────────────────────────────────── -->
-  <div class="vl-status-wrap">
-    <div class="vl-status-filters">
-      <button class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'PENDING'" (click)="onStatusSelect('PENDING')">Pending</button>
-      <button class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'APPROVED'" (click)="onStatusSelect('APPROVED')">Approved</button>
-      <button class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'REJECTED'" (click)="onStatusSelect('REJECTED')">Rejected</button>
-      <button class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'all'" (click)="onStatusSelect('all')">All</button>
+  <!-- ── Toolbar: status, class, filters (always above the records) ── -->
+  <div class="vl-toolbar">
+    <div class="vl-status-filters" role="tablist" aria-label="Leave status">
+      <button type="button" role="tab" class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'PENDING'" [attr.aria-selected]="statusFilter === 'PENDING'" (click)="onStatusSelect('PENDING')">Pending</button>
+      <button type="button" role="tab" class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'APPROVED'" [attr.aria-selected]="statusFilter === 'APPROVED'" (click)="onStatusSelect('APPROVED')">Approved</button>
+      <button type="button" role="tab" class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'REJECTED'" [attr.aria-selected]="statusFilter === 'REJECTED'" (click)="onStatusSelect('REJECTED')">Rejected</button>
+      <button type="button" role="tab" class="vl-status-filter" [class.vl-status-filter-active]="statusFilter === 'all'" [attr.aria-selected]="statusFilter === 'all'" (click)="onStatusSelect('all')">All</button>
     </div>
-  </div>
 
-  <!-- ── Class Chips (Admin only) ──────────────────────────────────── -->
-  <div class="vl-chips-wrap" *ngIf="loggedInUserRole === 'ADMIN'">
-    <div class="vl-chips">
-      <span class="vl-class-filter-label">Classes</span>
-      <button class="vl-chip" [class.vl-chip-active]="selectedClass === 'all'"
-        (click)="onClassSelect('all')">All Classes</button>
-      <button *ngFor="let c of classList; trackBy: trackByClass"
+    <!-- Class chips (Admin only) -->
+    <div class="vl-chips" *ngIf="loggedInUserRole === 'ADMIN'">
+      <span class="vl-class-filter-label">Class</span>
+      <button type="button" class="vl-chip" [class.vl-chip-active]="selectedClass === 'all'"
+        (click)="onClassSelect('all')">All</button>
+      <button type="button" *ngFor="let c of classList; trackBy: trackByClass"
         class="vl-chip" [class.vl-chip-active]="selectedClass === c"
         (click)="onClassSelect(c)">{{ c }}</button>
     </div>
-  </div>
 
-  <!-- ── Filters Card ───────────────────────────────────────────────── -->
-  <div class="vl-filter-card">
     <div class="vl-filter-row">
-      <div class="vl-filter-group">
-        <label class="vl-filter-label">Filter by Date</label>
-        <input type="date" class="vl-filter-input" [(ngModel)]="selectedDate" (ngModelChange)="onDateSelect()">
-      </div>
-
-      <div class="vl-filter-group">
-        <label class="vl-filter-label">Filter by Student ID</label>
-        <input class="vl-filter-input" [(ngModel)]="studentIdFilter" (input)="onStudentIdInput()" placeholder="Enter student ID">
-      </div>
+      <label class="vl-filter-group">
+        <span class="vl-filter-label">Date</span>
+        <input type="date" class="vl-filter-input" [(ngModel)]="selectedDate" (ngModelChange)="onDateSelect()" aria-label="Filter by date">
+      </label>
+      <label class="vl-filter-group">
+        <span class="vl-filter-label">Student ID</span>
+        <input class="vl-filter-input" [(ngModel)]="studentIdFilter" (input)="onStudentIdInput()" placeholder="e.g. stu_26010003" aria-label="Filter by student ID">
+      </label>
     </div>
 
     <div class="vl-filter-actions">
-      <button class="vl-btn-clear" (click)="clearFilter()">Clear</button>
-      <div class="vl-filter-meta" *ngIf="totalElements > 0">
-        <span>{{ totalElements }} results</span>
-      </div>
-      <button *ngIf="loggedInUserRole === 'ADMIN'" class="vl-btn-delete-all"
+      <span class="vl-filter-meta">
+        {{ isLoading ? 'Loading…' : (totalElements + (totalElements === 1 ? ' application' : ' applications')) }}
+      </span>
+      <button type="button" class="vl-btn-clear" *ngIf="selectedDate || studentIdFilter" (click)="clearFilter()">Clear filters</button>
+      <button type="button" *ngIf="loggedInUserRole === 'ADMIN'" class="vl-btn-delete-all"
         [disabled]="allApproved"
-        (click)="deleteAllFilteredLeaves()">🗑 Delete Leaves</button>
+        (click)="deleteAllFilteredLeaves()">🗑 Cancel pending</button>
     </div>
   </div>
 
@@ -105,11 +99,15 @@
 
         <!-- Main info -->
         <div class="vl-card-body">
-          <div class="vl-card-name-row">
-            <span class="vl-card-name">{{ leave.studentName }}</span>
-            <span class="vl-card-id">{{ leave.studentId }}</span>
-          </div>
-          <span class="vl-card-reason" *ngIf="leave.reason">{{ leave.reason }}</span>
+          <span class="vl-card-name">{{ leave.studentName }}</span>
+          <span class="vl-card-id">ID · {{ leave.studentId }}<ng-container *ngIf="loggedInUserRole === 'ADMIN' && leave.className"> · Class {{ leave.className }}</ng-container></span>
+          <span class="vl-card-reason" *ngIf="leave.reason">“{{ leave.reason }}”</span>
+          <span class="vl-card-meta" *ngIf="leave.decidedBy && (leave.status === 'APPROVED' || leave.status === 'REJECTED')">
+            {{ leave.status === 'APPROVED' ? 'Approved' : 'Rejected' }} by {{ leave.decidedBy }}<ng-container *ngIf="leave.decidedAt"> · {{ leave.decidedAt | date:'d MMM, h:mm a' }}</ng-container><ng-container *ngIf="leave.decisionReason"> · {{ leave.decisionReason }}</ng-container>
+          </span>
+          <span class="vl-card-meta" *ngIf="leave.status === 'CANCELLED'">
+            Cancelled<ng-container *ngIf="leave.cancelledBy"> by {{ leave.cancelledBy }}</ng-container><ng-container *ngIf="leave.cancellationReason"> · {{ leave.cancellationReason }}</ng-container>
+          </span>
         </div>
 
         <!-- Right side: status + actions -->
@@ -117,7 +115,8 @@
           <span class="vl-status-chip"
             [class.vl-status-pending]="leave.status === 'PENDING'"
             [class.vl-status-approved]="leave.status === 'APPROVED'"
-            [class.vl-status-rejected]="leave.status === 'REJECTED'">
+            [class.vl-status-rejected]="leave.status === 'REJECTED'"
+            [class.vl-status-cancelled]="leave.status === 'CANCELLED'">
             {{ leave.status }}
           </span>
           <div class="vl-actions" *ngIf="loggedInUserRole === 'ADMIN' || loggedInUserRole === 'TEACHER'">
@@ -125,10 +124,10 @@
               <button class="vl-btn-approve" [disabled]="updatingLeaveIds.has(leave.id)" (click)="updateLeaveStatus(leave, 'APPROVED')" title="Approve">✓</button>
               <button class="vl-btn-reject"  [disabled]="updatingLeaveIds.has(leave.id)" (click)="updateLeaveStatus(leave, 'REJECTED')" title="Reject">✕</button>
             </ng-container>
-            <button *ngIf="leave.status !== 'PENDING'"
-              class="vl-btn-edit" (click)="editLeaveStatus(leave)" title="Edit status">✎</button>
-            <button *ngIf="loggedInUserRole === 'ADMIN' && leave.status !== 'APPROVED'"
-              class="vl-btn-del" (click)="deleteLeave(leave.id)" title="Delete">🗑</button>
+            <button *ngIf="leave.status === 'APPROVED' || leave.status === 'REJECTED'"
+              class="vl-btn-edit" (click)="editLeaveStatus(leave)" title="Change decision">✎</button>
+            <button *ngIf="loggedInUserRole === 'ADMIN' && leave.status === 'PENDING'"
+              class="vl-btn-del" (click)="deleteLeave(leave.id)" title="Cancel request">🗑</button>
           </div>
         </div>
 

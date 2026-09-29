@@ -9,7 +9,10 @@ export interface DashboardStats {
   feesCollectedThisMonth: number;
   overdueStudents: number;
   todayAttendanceRate: number;
+  /** Student + teacher pending leave requests. */
   pendingLeaves: number;
+  pendingStudentLeaves?: number;
+  pendingTeacherLeaves?: number;
 }
 
 export interface FeeTrend {

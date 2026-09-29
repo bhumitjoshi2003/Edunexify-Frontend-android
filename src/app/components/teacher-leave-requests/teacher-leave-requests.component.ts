@@ -116,22 +116,25 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
 
   updateStatus(leave: TeacherLeave, status: 'APPROVED' | 'REJECTED'): void {
     const isApprove = status === 'APPROVED';
-    this.toast.confirm({
+    this.toast.confirmWithReason({
       title: isApprove ? 'Approve Leave?' : 'Reject Leave?',
-      html: `<strong>${leave.teacherName}</strong> &mdash; ${leave.startDate} to ${leave.endDate}`,
+      html: `<strong>${this.escape(leave.teacherName)}</strong> &mdash; ${leave.startDate} to ${leave.endDate}`,
       icon: 'question',
       danger: !isApprove,
       confirmText: isApprove ? 'Yes, approve' : 'Yes, reject',
       cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
+      reasonInput: isApprove
+        ? { label: 'Note', placeholder: 'Optional note for the teacher' }
+        : { label: 'Reason for rejecting', placeholder: 'Shown to the teacher' },
+    }).then((reason) => {
+      if (reason === null) return;
       this.updatingIds.add(leave.id);
       this.cdr.markForCheck();
-      this.teacherLeaveService.updateStatus(leave.id, status)
+      this.teacherLeaveService.updateStatus(leave.id, status, reason)
         .pipe(takeUntil(this.ngUnsubscribe))
         .subscribe({
           next: (updated) => {
-            leave.status = updated.status;
+            Object.assign(leave, updated);
             this.updatingIds.delete(leave.id);
             this.cdr.markForCheck();
             if (isApprove) {
@@ -150,32 +153,68 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Changing a decision is an explicit reversal (APPROVED ↔ REJECTED) and needs a reason. */
   editStatus(leave: TeacherLeave): void {
     const newStatus = leave.status === 'APPROVED' ? 'REJECTED' : 'APPROVED';
-    this.updateStatus(leave, newStatus);
-  }
-
-  cancelLeave(leave: TeacherLeave): void {
-    this.toast.confirm({
-      title: 'Delete Leave Request?',
-      message: 'This leave request will be permanently deleted.',
-      icon: 'warning',
-      danger: true,
-      confirmText: 'Yes, delete it!',
+    this.toast.confirmWithReason({
+      title: 'Change decision?',
+      html: `Change <strong>${this.escape(leave.teacherName)}</strong> (${leave.startDate} to ${leave.endDate}) to <strong>${newStatus}</strong>?`,
+      icon: 'question',
+      danger: newStatus === 'REJECTED',
+      confirmText: `Yes, mark ${newStatus.toLowerCase()}`,
       cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
-      this.teacherLeaveService.cancelLeave(leave.id).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
-        next: (response) => {
-          this.toast.success('Deleted!', response.message);
-          this.fetchLeaves();
+      reasonInput: { label: 'Reason for the change', required: true },
+    }).then((reason) => {
+      if (reason === null) return;
+      this.updatingIds.add(leave.id);
+      this.cdr.markForCheck();
+      this.teacherLeaveService.reverseDecision(leave.id, reason).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: (updated) => {
+          Object.assign(leave, updated);
+          this.updatingIds.delete(leave.id);
+          this.cdr.markForCheck();
+          this.toast.success('Updated!', `Decision changed to ${updated.status}.`);
         },
         error: (error) => {
-          this.logger.error('Error deleting teacher leave:', error);
-          this.toast.error('Error!', error?.error?.message || 'Failed to delete the leave request.');
+          this.updatingIds.delete(leave.id);
+          this.logger.error('Error changing teacher leave decision:', error);
+          this.toast.error('Error!', error?.error?.message || 'Failed to change the decision.');
+          this.cdr.markForCheck();
         }
       });
     });
+  }
+
+  /** Cancels (kept as history). An approved leave needs a reason — it changes attendance and cover. */
+  cancelLeave(leave: TeacherLeave): void {
+    const approved = leave.status === 'APPROVED';
+    this.toast.confirmWithReason({
+      title: 'Cancel this leave request?',
+      message: approved
+        ? 'This leave is approved. Cancelling it removes it from staff attendance and substitution. It stays in the history as cancelled.'
+        : 'The request stays in the history as cancelled.',
+      icon: 'warning',
+      danger: true,
+      confirmText: 'Yes, cancel it',
+      cancelText: 'Keep it',
+      reasonInput: { label: 'Reason', required: approved },
+    }).then((reason) => {
+      if (reason === null) return;
+      this.teacherLeaveService.cancelLeave(leave.id, reason).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: () => {
+          this.toast.success('Cancelled', 'The leave request was cancelled.');
+          this.fetchLeaves();
+        },
+        error: (error) => {
+          this.logger.error('Error cancelling teacher leave:', error);
+          this.toast.error('Error!', error?.error?.message || 'Failed to cancel the leave request.');
+        }
+      });
+    });
+  }
+
+  private escape(text: string): string {
+    return (text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[ch]);
   }
 
   goToPage(page: number): void {

@@ -52,11 +52,19 @@ export class TeacherLeaveService {
     return this.http.get<PaginatedResponse<TeacherLeave>>(this.apiUrl, { params, withCredentials: true });
   }
 
-  updateStatus(leaveId: number, status: string): Observable<TeacherLeave> {
-    return this.http.patch<TeacherLeave>(`${this.apiUrl}/${leaveId}/status`, { status }, { withCredentials: true });
+  /** First decision on a PENDING request (APPROVED or REJECTED), with an optional reason. */
+  updateStatus(leaveId: number, status: string, reason?: string | null): Observable<TeacherLeave> {
+    return this.http.patch<TeacherLeave>(`${this.apiUrl}/${leaveId}/status`, { status, reason: reason || null }, { withCredentials: true });
   }
 
-  cancelLeave(leaveId: number): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.apiUrl}/${leaveId}`, { withCredentials: true });
+  /** Admin change of a decision (APPROVED ↔ REJECTED); a reason is required. */
+  reverseDecision(leaveId: number, reason: string): Observable<TeacherLeave> {
+    return this.http.post<TeacherLeave>(`${this.apiUrl}/${leaveId}/reverse`, { reason }, { withCredentials: true });
+  }
+
+  /** Cancels (kept as CANCELLED history). An approved leave needs a reason (admin only). */
+  cancelLeave(leaveId: number, reason?: string | null): Observable<{ message: string }> {
+    const params = reason ? new HttpParams().set('reason', reason) : undefined;
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${leaveId}`, { params, withCredentials: true });
   }
 }

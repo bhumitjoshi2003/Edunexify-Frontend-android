@@ -28,6 +28,8 @@ export interface ConfirmDialogData {
   icon?: 'warning' | 'question' | 'info' | 'success' | 'danger';
   /** When set, user must type this exact string to enable the confirm button (e.g. "DELETE") */
   requiredInput?: string;
+  /** Shows a free-text reason field; use {@link ToastService.confirmWithReason} to read it. */
+  reasonInput?: { label: string; placeholder?: string; required?: boolean; maxLength?: number };
 }
 
 export interface SelectMonthDialogData {
@@ -78,6 +80,19 @@ export class ToastService {
         disableClose: true,
       }).afterClosed()
     ).then(r => !!r);
+  }
+
+  /** Confirm dialog with a reason field. Resolves to the reason ('' if left empty) or null if cancelled. */
+  confirmWithReason(data: ConfirmDialogData & { reasonInput: NonNullable<ConfirmDialogData['reasonInput']> }): Promise<string | null> {
+    return firstValueFrom(
+      this.dialog.open(ConfirmDialogComponent, {
+        data,
+        maxWidth: '440px',
+        width: '92vw',
+        panelClass: 'edu-dialog',
+        disableClose: true,
+      }).afterClosed()
+    ).then(r => (r === undefined || r === null || r === false) ? null : (r === true ? '' : String(r)));
   }
 
   /** Open a month-picker dialog. Returns the selected month number, or null if cancelled. */

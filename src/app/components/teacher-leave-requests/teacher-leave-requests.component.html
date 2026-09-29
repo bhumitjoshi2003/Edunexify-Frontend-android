@@ -99,6 +99,12 @@
             {{ leave.startDate | date:'d MMM' }} – {{ leave.endDate | date:'d MMM yyyy' }}
             · {{ leave.days }} day{{ leave.days > 1 ? 's' : '' }}
           </span>
+          <span class="tl-card-meta" *ngIf="leave.decidedBy && (leave.status === 'APPROVED' || leave.status === 'REJECTED')">
+            {{ leave.status === 'APPROVED' ? 'Approved' : 'Rejected' }} by {{ leave.decidedBy }}<ng-container *ngIf="leave.decisionReason"> · {{ leave.decisionReason }}</ng-container>
+          </span>
+          <span class="tl-card-meta" *ngIf="leave.status === 'CANCELLED'">
+            Cancelled<ng-container *ngIf="leave.cancelledBy"> by {{ leave.cancelledBy }}</ng-container><ng-container *ngIf="leave.cancellationReason"> · {{ leave.cancellationReason }}</ng-container>
+          </span>
         </div>
 
         <!-- Right side: status + actions -->
@@ -106,7 +112,8 @@
           <span class="tl-status-chip"
             [class.tl-status-pending]="leave.status === 'PENDING'"
             [class.tl-status-approved]="leave.status === 'APPROVED'"
-            [class.tl-status-rejected]="leave.status === 'REJECTED'">
+            [class.tl-status-rejected]="leave.status === 'REJECTED'"
+            [class.tl-status-cancelled]="leave.status === 'CANCELLED'">
             {{ leave.status }}
           </span>
           <div class="tl-actions">
@@ -114,9 +121,10 @@
               <button class="tl-btn-approve" [disabled]="updatingIds.has(leave.id)" (click)="updateStatus(leave, 'APPROVED')" title="Approve">✓</button>
               <button class="tl-btn-reject"  [disabled]="updatingIds.has(leave.id)" (click)="updateStatus(leave, 'REJECTED')" title="Reject">✕</button>
             </ng-container>
-            <button *ngIf="leave.status !== 'PENDING'"
-              class="tl-btn-edit" [disabled]="updatingIds.has(leave.id)" (click)="editStatus(leave)" title="Reverse decision">✎</button>
-            <button class="tl-btn-del" (click)="cancelLeave(leave)" title="Delete">🗑</button>
+            <button *ngIf="leave.status === 'APPROVED' || leave.status === 'REJECTED'"
+              class="tl-btn-edit" [disabled]="updatingIds.has(leave.id)" (click)="editStatus(leave)" title="Change decision">✎</button>
+            <button *ngIf="leave.status === 'PENDING' || leave.status === 'APPROVED'"
+              class="tl-btn-del" (click)="cancelLeave(leave)" title="Cancel request">🗑</button>
           </div>
         </div>
 

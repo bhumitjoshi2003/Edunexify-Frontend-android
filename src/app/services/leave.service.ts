@@ -12,6 +12,21 @@ export interface LeaveApplication {
   reason: string;
   className: string;
   status: string;
+  appliedDate?: string;
+  decidedBy?: string | null;
+  decidedAt?: string | null;
+  decisionReason?: string | null;
+  cancelledBy?: string | null;
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
+}
+
+export interface OnLeaveToday {
+  date: string;
+  students: { leaveId: number; studentId: string; studentName: string; className: string; sectionName: string | null; reason: string }[];
+  staff: { leaveId: number; teacherId: string; teacherName: string; startDate: string; endDate: string; reason: string;
+           periodsToday: number; periodsNeedingSubstitute: number }[];
+  periodsNeedingSubstitute: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -85,16 +100,30 @@ export class LeaveService {
       `${this.apiUrl}/student/${studentId}`, { params, withCredentials: true });
   }
 
-  deleteLeave(studentId: string, leaveDate: string): Observable<string> {
-    return this.http.delete(`${this.apiUrl}/delete/${studentId}/${leaveDate}`, { responseType: 'text', withCredentials: true });
+  /** Cancels (the request stays as CANCELLED history). */
+  deleteLeave(studentId: string, leaveDate: string, reason?: string | null): Observable<string> {
+    const params = reason ? new HttpParams().set('reason', reason) : undefined;
+    return this.http.delete(`${this.apiUrl}/delete/${studentId}/${leaveDate}`, { params, responseType: 'text', withCredentials: true });
   }
 
-  deleteLeaveById(leaveId: number): Observable<string> {
-    return this.http.delete(`${this.apiUrl}/${leaveId}`, { responseType: 'text', withCredentials: true });
+  /** Admin cancel (kept as history). An approved leave needs a reason. */
+  deleteLeaveById(leaveId: number, reason?: string | null): Observable<string> {
+    const params = reason ? new HttpParams().set('reason', reason) : undefined;
+    return this.http.delete(`${this.apiUrl}/${leaveId}`, { params, responseType: 'text', withCredentials: true });
   }
 
-  updateLeaveStatus(leaveId: number, status: string): Observable<LeaveApplication> {
-    return this.http.patch<LeaveApplication>(`${this.apiUrl}/${leaveId}/status`, { status }, { withCredentials: true });
+  /** First decision on a PENDING request (APPROVED or REJECTED), with an optional reason. */
+  updateLeaveStatus(leaveId: number, status: string, reason?: string | null): Observable<LeaveApplication> {
+    return this.http.patch<LeaveApplication>(`${this.apiUrl}/${leaveId}/status`, { status, reason: reason || null }, { withCredentials: true });
+  }
+
+  /** Explicit change of a decision (APPROVED ↔ REJECTED); a reason is required. */
+  reverseLeaveDecision(leaveId: number, reason: string): Observable<LeaveApplication> {
+    return this.http.post<LeaveApplication>(`${this.apiUrl}/${leaveId}/reverse`, { reason }, { withCredentials: true });
+  }
+
+  getOnLeaveToday(): Observable<OnLeaveToday> {
+    return this.http.get<OnLeaveToday>(`${this.apiUrl}/on-leave-today`, { withCredentials: true });
   }
 
   getLeavesByDateAndClass(date: string, selectedClass: string): Observable<string[]> {

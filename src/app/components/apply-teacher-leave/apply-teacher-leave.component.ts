@@ -194,7 +194,7 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
   cancelLeave(leave: TeacherLeave): void {
     this.toast.confirm({
       title: 'Cancel Leave Request?',
-      message: 'This pending leave request will be permanently cancelled.',
+      message: 'Your pending request will be withdrawn. It stays in your history as cancelled.',
       icon: 'warning',
       danger: true,
       confirmText: 'Yes, cancel it!',

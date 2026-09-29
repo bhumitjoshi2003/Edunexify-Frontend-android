@@ -16,6 +16,7 @@ import { ConfirmDialogData } from '../../services/toast.service';
 export class ConfirmDialogComponent implements AfterViewInit {
   sanitizedHtml: SafeHtml | null = null;
   confirmInput = '';
+  reasonText = '';
 
   @ViewChild('cancelBtn') cancelBtnRef?: ElementRef<HTMLButtonElement>;
 
@@ -38,6 +39,7 @@ export class ConfirmDialogComponent implements AfterViewInit {
   }
 
   get confirmDisabled(): boolean {
+    if (this.data.reasonInput?.required && !this.reasonText.trim()) return true;
     return !!this.data.requiredInput && this.confirmInput !== this.data.requiredInput;
   }
 
@@ -65,5 +67,6 @@ export class ConfirmDialogComponent implements AfterViewInit {
   }
 
   cancel():  void { this.ref.close(false); }
-  confirm(): void { this.ref.close(true);  }
+  /** With a reason field the dialog closes with the (trimmed) reason text, '' when left empty. */
+  confirm(): void { this.ref.close(this.data.reasonInput ? this.reasonText.trim() : true); }
 }

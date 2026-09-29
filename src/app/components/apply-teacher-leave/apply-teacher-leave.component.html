@@ -94,6 +94,8 @@
             {{ leave.startDate | date:'d MMM' }} – {{ leave.endDate | date:'d MMM yyyy' }}
             · {{ leave.days }} day{{ leave.days > 1 ? 's' : '' }}
           </span>
+          <span class="al-leave-note" *ngIf="leave.status === 'REJECTED' && leave.decisionReason">Reason: {{ leave.decisionReason }}</span>
+          <span class="al-leave-note" *ngIf="leave.status === 'CANCELLED' && leave.cancellationReason">Cancelled: {{ leave.cancellationReason }}</span>
         </div>
 
         <!-- Status + cancel -->

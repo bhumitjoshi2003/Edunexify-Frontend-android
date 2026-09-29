@@ -22,11 +22,12 @@ import { EventService } from '../../services/event.service';
 import { CalendarEvent } from '../../interfaces/event-calendar.component';
 import { pickNearestUpcomingEvent } from '../../utils/upcoming-event.util';
 import { TeacherSubstitutionService } from '../../services/teacher-substitution.service';
+import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [WisdomCardsComponent, CommonModule, RouterLink, MatIconModule],
+  imports: [WisdomCardsComponent, OnLeaveTodayComponent, CommonModule, RouterLink, MatIconModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,10 +131,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return Math.max(0, this.staffAdoption.totalTeachers - this.staffAdoption.appUpToDateTeachers);
   }
 
+  /** Pending student leave only (stats.pendingLeaves now also includes teacher leave). */
+  get studentPendingLeaves(): number {
+    return this.stats?.pendingStudentLeaves ?? this.stats?.pendingLeaves ?? 0;
+  }
+
   get hasAdminAttention(): boolean {
     return this.uncoveredSubstitutionCount > 0 || (this.isAdmin && (
       this.notYetCheckedIn > 0 || (this.staffAttendance?.onLeaveCount ?? 0) > 0
-      || (this.teacherPendingLeaveCount ?? 0) > 0 || (this.stats?.pendingLeaves ?? 0) > 0
+      || (this.teacherPendingLeaveCount ?? 0) > 0 || this.studentPendingLeaves > 0
       || this.staffAdoptionNotStarted > 0 || this.adoptionOnboardingIncomplete > 0 || this.adoptionOutdatedApp > 0
     ));
   }

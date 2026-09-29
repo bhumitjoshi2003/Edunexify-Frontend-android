@@ -37,7 +37,7 @@
         <a class="is-leave" *ngIf="isAdmin && (staffAttendance?.onLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests"><mat-icon>event_busy</mat-icon><span>Teachers on approved leave</span><strong>{{ staffAttendance?.onLeaveCount }}</strong></a>
         <a class="is-substitution" *ngIf="uncoveredSubstitutionCount > 0" routerLink="/dashboard/teacher-substitutions"><mat-icon>swap_horiz</mat-icon><span>Uncovered substitution periods</span><strong>{{ uncoveredSubstitutionCount }}</strong></a>
         <a class="is-leave" *ngIf="isAdmin && (teacherPendingLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests"><mat-icon>approval</mat-icon><span>Teacher leave requests</span><strong>{{ teacherPendingLeaveCount }}</strong></a>
-        <a class="is-leave" *ngIf="isAdmin && (stats?.pendingLeaves ?? 0) > 0" routerLink="/dashboard/view-leaves"><mat-icon>assignment_late</mat-icon><span>Student leave requests</span><strong>{{ stats?.pendingLeaves }}</strong></a>
+        <a class="is-leave" *ngIf="isAdmin && studentPendingLeaves > 0" routerLink="/dashboard/view-leaves"><mat-icon>assignment_late</mat-icon><span>Student leave requests</span><strong>{{ studentPendingLeaves }}</strong></a>
         <a class="is-adoption" *ngIf="isAdmin && staffAdoptionNotStarted > 0" routerLink="/dashboard/staff-adoption"><mat-icon>person_off</mat-icon><span>Staff adoption not started</span><strong>{{ staffAdoptionNotStarted }}</strong></a>
         <a class="is-adoption" *ngIf="isAdmin && adoptionOnboardingIncomplete > 0" routerLink="/dashboard/staff-adoption"><mat-icon>pending_actions</mat-icon><span>Staff onboarding incomplete</span><strong>{{ adoptionOnboardingIncomplete }}</strong></a>
         <a class="is-update" *ngIf="isAdmin && adoptionOutdatedApp > 0" routerLink="/dashboard/staff-adoption"><mat-icon>system_update</mat-icon><span>Staff app update needed</span><strong>{{ adoptionOutdatedApp }}</strong></a>
@@ -45,6 +45,8 @@
       <div class="ad-attention-ok" *ngIf="!attentionLoading && !hasAdminAttention && !attentionDataFailed"><mat-icon>task_alt</mat-icon><span>Everything looks good for today.</span></div>
       <div class="ad-attention-ok is-muted" *ngIf="!attentionLoading && attentionDataFailed"><mat-icon>info_outline</mat-icon><span>Some attention data is temporarily unavailable.</span></div>
     </section>
+
+    <app-on-leave-today *ngIf="isAdmin"></app-on-leave-today>
 
     <!-- ── Stats error ──────────────────────────────────────────────── -->
     <div class="ad-stats-error" *ngIf="isAdmin && statsFailed">
@@ -168,9 +170,9 @@
         <div class="ad-leave-type-pill" style="--pc:#0369a1">
           <div class="ad-leave-type-icon"><mat-icon>school</mat-icon></div>
           <div class="ad-leave-type-copy">
-            <span class="ad-leave-type-value" *ngIf="!statsFailed">{{ statsLoading ? '—' : (stats?.pendingLeaves ?? 0) }}</span>
+            <span class="ad-leave-type-value" *ngIf="!statsFailed">{{ statsLoading ? '—' : studentPendingLeaves }}</span>
             <span class="ad-leave-type-value" *ngIf="statsFailed">—</span>
-            <span class="ad-leave-type-label" *ngIf="!statsFailed">Student{{ (stats?.pendingLeaves ?? 0) === 1 ? '' : 's' }} pending</span>
+            <span class="ad-leave-type-label" *ngIf="!statsFailed">Student{{ studentPendingLeaves === 1 ? '' : 's' }} pending</span>
             <span class="ad-leave-type-label" *ngIf="statsFailed">Unavailable</span>
           </div>
           <a class="ad-leave-type-cta" routerLink="/dashboard/view-leaves"><mat-icon>arrow_forward</mat-icon></a>

@@ -228,94 +228,100 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
     this.fetchLeaves();
   }
 
+  /** Cancels every PENDING request on this page (kept as CANCELLED history; decided ones are skipped). */
   deleteAllFilteredLeaves(): void {
-    const deletable = this.filteredLeaves.filter(l => l.status !== 'APPROVED');
-    if (deletable.length === 0) {
-      this.toast.info('Info', 'No deletable leaves on this page (approved leaves cannot be deleted).');
+    const cancellable = this.filteredLeaves.filter(l => l.status === 'PENDING');
+    if (cancellable.length === 0) {
+      this.toast.info('Nothing to cancel', 'Only pending requests on this page can be cancelled.');
       return;
     }
 
     this.toast.confirm({
-      title: 'Delete All Leaves?',
-      html: `This will delete <strong>${deletable.length}</strong> leave application(s) on this page. Approved leaves are skipped.`,
+      title: 'Cancel pending requests?',
+      html: `This cancels <strong>${cancellable.length}</strong> pending leave request(s) on this page. They stay in the history as cancelled.`,
       icon: 'warning',
       danger: true,
-      confirmText: 'Yes, delete all!',
-      cancelText: 'Cancel',
+      confirmText: 'Yes, cancel them',
+      cancelText: 'Keep them',
     }).then((confirmed) => {
       if (!confirmed) return;
-      from(deletable).pipe(
+      from(cancellable).pipe(
         concatMap(leave => this.leaveService.deleteLeaveById(leave.id)),
         takeUntil(this.ngUnsubscribe)
       ).subscribe({
         next: () => { },
         complete: () => {
-          this.toast.success('Deleted!', 'All displayed leave applications deleted successfully.');
+          this.toast.success('Cancelled', 'The pending requests on this page were cancelled.');
           this.fetchLeaves();
         },
         error: (error) => {
-          this.logger.error('Error deleting leaves:', error);
-          this.toast.error('Error!', 'Failed to delete one or more leave applications.');
+          this.logger.error('Error cancelling leaves:', error);
+          this.toast.error('Error!', this.errorText(error, 'Failed to cancel one or more leave requests.'));
           this.fetchLeaves();
         }
       });
     });
   }
 
+  /** Cancels one pending request (admin), with an optional reason; the request is kept as history. */
   deleteLeave(leaveId: number): void {
-    this.toast.confirm({
-      title: 'Delete Leave?',
-      message: 'This leave application will be permanently deleted.',
+    this.toast.confirmWithReason({
+      title: 'Cancel this leave request?',
+      message: 'The request stays in the history as cancelled.',
       icon: 'warning',
       danger: true,
-      confirmText: 'Yes, delete it!',
-      cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
-      this.leaveService.deleteLeaveById(leaveId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
-        next: (response) => {
-          this.toast.success('Deleted!', response);
+      confirmText: 'Yes, cancel it',
+      cancelText: 'Keep it',
+      reasonInput: { label: 'Reason', placeholder: 'e.g. Entered by mistake' },
+    }).then((reason) => {
+      if (reason === null) return;
+      this.leaveService.deleteLeaveById(leaveId, reason).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: () => {
+          this.toast.success('Cancelled', 'The leave request was cancelled.');
           this.fetchLeaves();
         },
         error: (error) => {
-          this.logger.error('Error deleting leave:', error);
-          this.toast.error('Error!', error?.error || 'Failed to delete the leave application.');
+          this.logger.error('Error cancelling leave:', error);
+          this.toast.error('Error!', this.errorText(error, 'Failed to cancel the leave request.'));
         }
       });
     });
   }
 
   get allApproved(): boolean {
-    return this.filteredLeaves.length > 0 && this.filteredLeaves.every(l => l.status === 'APPROVED');
+    return !this.filteredLeaves.some(l => l.status === 'PENDING');
   }
 
+  /** Changing a decision is an explicit reversal (APPROVED ↔ REJECTED) and needs a reason. */
   editLeaveStatus(leave: LeaveApplication): void {
     const newStatus = leave.status === 'APPROVED' ? 'REJECTED' : 'APPROVED';
     const isApprove = newStatus === 'APPROVED';
-    this.toast.confirm({
-      title: 'Change Leave Status?',
-      html: `Mark <strong>${leave.studentName}</strong> (${leave.leaveDate}) as <strong>${newStatus}</strong>?`,
+    this.toast.confirmWithReason({
+      title: 'Change decision?',
+      html: `Change <strong>${this.escape(leave.studentName)}</strong> (${leave.leaveDate}) to <strong>${newStatus}</strong>? `
+        + `Attendance records stay as they are.`,
       icon: 'question',
       danger: !isApprove,
       confirmText: `Yes, mark ${newStatus.toLowerCase()}`,
       cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
+      reasonInput: { label: 'Reason for the change', required: true, placeholder: 'Why is the decision changing?' },
+    }).then((reason) => {
+      if (reason === null) return;
       this.updatingLeaveIds.add(leave.id);
       this.cdr.markForCheck();
-      this.leaveService.updateLeaveStatus(leave.id, newStatus)
+      this.leaveService.reverseLeaveDecision(leave.id, reason)
         .pipe(takeUntil(this.ngUnsubscribe))
         .subscribe({
           next: (updated) => {
-            leave.status = updated.status;
+            Object.assign(leave, updated);
             this.updatingLeaveIds.delete(leave.id);
             this.cdr.markForCheck();
-            this.toast.success('Updated!', `Status changed to ${updated.status}.`);
+            this.toast.success('Updated!', `Decision changed to ${updated.status}.`);
           },
           error: (error) => {
             this.updatingLeaveIds.delete(leave.id);
-            this.logger.error('Error updating leave status:', error);
-            this.toast.error('Error!', error?.error || 'Failed to update leave status.');
+            this.logger.error('Error changing leave decision:', error);
+            this.toast.error('Error!', this.errorText(error, 'Failed to change the decision.'));
             this.cdr.markForCheck();
           }
         });
@@ -324,22 +330,25 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
 
   updateLeaveStatus(leave: LeaveApplication, status: 'APPROVED' | 'REJECTED'): void {
     const isApprove = status === 'APPROVED';
-    this.toast.confirm({
+    this.toast.confirmWithReason({
       title: isApprove ? 'Approve Leave?' : 'Reject Leave?',
-      html: `<strong>${leave.studentName}</strong> &mdash; ${leave.leaveDate}`,
+      html: `<strong>${this.escape(leave.studentName)}</strong> &mdash; ${leave.leaveDate}`,
       icon: 'question',
       danger: !isApprove,
       confirmText: isApprove ? 'Yes, approve' : 'Yes, reject',
       cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
+      reasonInput: isApprove
+        ? { label: 'Note', placeholder: 'Optional note for the student' }
+        : { label: 'Reason for rejecting', placeholder: 'Shown to the student and parents' },
+    }).then((reason) => {
+      if (reason === null) return;
       this.updatingLeaveIds.add(leave.id);
       this.cdr.markForCheck();
-      this.leaveService.updateLeaveStatus(leave.id, status)
+      this.leaveService.updateLeaveStatus(leave.id, status, reason)
         .pipe(takeUntil(this.ngUnsubscribe))
         .subscribe({
           next: (updated) => {
-            leave.status = updated.status;
+            Object.assign(leave, updated);
             this.updatingLeaveIds.delete(leave.id);
             this.cdr.markForCheck();
             if (status === 'APPROVED') {
@@ -351,11 +360,23 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
           error: (error) => {
             this.updatingLeaveIds.delete(leave.id);
             this.logger.error('Error updating leave status:', error);
-            this.toast.error('Error!', error?.error || 'Failed to update leave status.');
+            this.toast.error('Error!', this.errorText(error, 'Failed to update leave status.'));
             this.cdr.markForCheck();
           }
         });
     });
+  }
+
+  private errorText(error: any, fallback: string): string {
+    const body = error?.error;
+    if (typeof body === 'string') {
+      try { return JSON.parse(body)?.message ?? body; } catch { return body || fallback; }
+    }
+    return body?.message || fallback;
+  }
+
+  private escape(text: string): string {
+    return (text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[ch]);
   }
 
   goToPage(page: number): void {
