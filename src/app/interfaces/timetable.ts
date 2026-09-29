@@ -14,6 +14,8 @@ export interface TimetableEntry {
   teacherName?: string;
   isSubstitution?: boolean;
   originalTeacherName?: string | null;
+  /** Covered periods only: the admin's optional note for the substitute. */
+  substitutionNote?: string | null;
   /** Covered periods only: the real timetable entry id (their `id` is a negative display key). */
   timetableEntryId?: number | null;
 }

@@ -141,7 +141,7 @@
               ><strong
                 ><span class="td-today-icon">{{ getSubjectIcon(todayView.current.subjectName) }}</span
                 >{{ periodClassLabel(todayView.current) }}</strong
-              ><small>{{ todayView.current.subjectName }}<span class="td-cover-chip" *ngIf="todayView.current.isSubstitution">Arrangement</span></small
+              ><small>{{ todayView.current.subjectName }}<span class="td-cover-chip" *ngIf="todayView.current.isSubstitution">Arrangement</span><em class="td-cover-for" *ngIf="todayView.current.isSubstitution && todayView.current.originalTeacherName">Replacing {{ todayView.current.originalTeacherName }}<ng-container *ngIf="todayView.current.substitutionNote"> · {{ todayView.current.substitutionNote }}</ng-container></em></small
               ></span
             >
             <span class="td-today-time" *ngIf="classTimeRange(todayView.current) as time">{{ time }}</span>
@@ -160,7 +160,7 @@
               ><strong
                 ><span class="td-today-icon">{{ getSubjectIcon(entry.subjectName) }}</span
                 >{{ periodClassLabel(entry) }}</strong
-              ><small>{{ entry.subjectName }}<span class="td-cover-chip" *ngIf="entry.isSubstitution">Arrangement</span></small
+              ><small>{{ entry.subjectName }}<span class="td-cover-chip" *ngIf="entry.isSubstitution">Arrangement</span><em class="td-cover-for" *ngIf="entry.isSubstitution && entry.originalTeacherName">Replacing {{ entry.originalTeacherName }}<ng-container *ngIf="entry.substitutionNote"> · {{ entry.substitutionNote }}</ng-container></em></small
               ></span
             >
             <span class="td-today-time" *ngIf="classTimeRange(entry) as time">{{ time }}</span>
@@ -197,6 +197,26 @@
           ><span>No classes scheduled for today.</span>
         </div>
       </ng-container>
+
+      <div class="td-cover-extra" *ngIf="showMyCoverage">
+        <strong><mat-icon>event_busy</mat-icon>Your periods today — you're {{ myCoverageReason() }}</strong>
+        <ul>
+          <li *ngFor="let p of myCoverage!.periods">
+            <span>P{{ p.periodNumber }} · {{ coverClassLabel(p) }} · {{ p.subjectName }}</span>
+            <span class="td-cover-status" [class.is-covered]="p.covered">{{ p.covered ? 'Covered by ' + p.substituteTeacherName : 'Not covered yet' }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="td-cover-extra is-tomorrow" *ngIf="tomorrowCovers.length">
+        <strong><mat-icon>event</mat-icon>Tomorrow's cover</strong>
+        <ul>
+          <li *ngFor="let c of tomorrowCovers">
+            <span>P{{ c.periodNumber }} ({{ c.startTime }}–{{ c.endTime }}) · {{ coverClassLabel(c) }} · {{ c.subjectName }}</span>
+            <small>Replacing {{ c.originalTeacherName }}<ng-container *ngIf="c.note"> · {{ c.note }}</ng-container></small>
+          </li>
+        </ul>
+      </div>
     </section>
 
     <section class="td-panel td-attendance-panel">

@@ -73,8 +73,9 @@ describe('TeacherDashboardComponent', () => {
     timetableService = jasmine.createSpyObj('TimetableService', ['getTeacherTimetable']);
     timetableService.getTeacherTimetable.and.returnValue(of([]));
 
-    substitutionService = jasmine.createSpyObj('TeacherSubstitutionService', ['getMine']);
+    substitutionService = jasmine.createSpyObj('TeacherSubstitutionService', ['getMine', 'getMyCoverage']);
     substitutionService.getMine.and.returnValue(of([]));
+    substitutionService.getMyCoverage.and.returnValue(of(null as any));
 
     notificationService = jasmine.createSpyObj('NotificationStateService', ['getUnreadNotificationCount']);
     notificationService.getUnreadNotificationCount.and.returnValue(of(0));
@@ -365,6 +366,56 @@ describe('TeacherDashboardComponent', () => {
     expect(component.attendanceTaken).toBeFalse();
     expect(component.todayAbsent).toBe(0);
     expect(component.monthlyAttendanceRate).toBe(0);
+  });
+
+  it('a cover class carries who it replaces and the admin\'s note', () => {
+    timetableService.getTeacherTimetable.and.returnValue(of([]));
+    substitutionService.getMine.and.returnValue(of([coverClass({ note: 'Worksheet on desk' })]));
+    component = buildComponent();
+    component.ngOnInit();
+
+    const cover = component.todayView.upcoming.find(e => e.isSubstitution)!;
+    expect(cover.originalTeacherName).toBe('Mr Original');
+    expect(cover.substitutionNote).toBe('Worksheet on desk');
+  });
+
+  it('loads tomorrow\'s cover periods for the substitute', () => {
+    timetableService.getTeacherTimetable.and.returnValue(of([]));
+    substitutionService.getMine.and.callFake((date: string) =>
+      of(date === '2026-09-18' ? [coverClass({ id: 12, date: '2026-09-18', note: 'Test paper' })] : []));
+    component = buildComponent();
+    component.ngOnInit();
+
+    expect(substitutionService.getMine).toHaveBeenCalledWith('2026-09-18');
+    expect(component.tomorrowCovers.map(c => c.id)).toEqual([12]);
+  });
+
+  it('shows the teacher\'s own periods and who covers them on a day they are away', () => {
+    timetableService.getTeacherTimetable.and.returnValue(of([]));
+    substitutionService.getMyCoverage.and.returnValue(of({
+      date: '2026-09-17', unavailable: true, unavailabilityReason: 'APPROVED_LEAVE',
+      periods: [
+        { timetableEntryId: 1, periodNumber: 2, startTime: '09:50', endTime: '10:30', className: 'VIII', sectionName: 'A', subjectName: 'English', covered: true, substituteTeacherName: 'Ms Rao' },
+        { timetableEntryId: 2, periodNumber: 4, startTime: '11:10', endTime: '11:50', className: 'IX', sectionName: null, subjectName: 'English', covered: false, substituteTeacherName: null },
+      ],
+    }));
+    component = buildComponent();
+    component.ngOnInit();
+
+    expect(substitutionService.getMyCoverage).toHaveBeenCalledWith('2026-09-17');
+    expect(component.showMyCoverage).toBeTrue();
+    expect(component.myCoverageReason()).toBe('on leave');
+  });
+
+  it('hides the own-coverage card when the teacher is not away, and a lookup failure hides the extras only', () => {
+    timetableService.getTeacherTimetable.and.returnValue(of([entry({})]));
+    substitutionService.getMyCoverage.and.returnValue(throwError(() => new Error('offline')));
+    component = buildComponent();
+    component.ngOnInit();
+
+    expect(component.showMyCoverage).toBeFalse();
+    expect(component.todayClassesError).toBeNull();
+    expect(component.timetableEntries.length).toBe(1);
   });
 
   // ─── Show Time parity — a per-device viewer preference, not a school/admin setting ───
@@ -669,8 +720,9 @@ describe('TeacherDashboardComponent layout order', () => {
     teacherLeaveService.getMyLeaves.and.returnValue(of({ content: [], totalElements: 0, totalPages: 0 }));
     const timetableService = jasmine.createSpyObj('TimetableService', ['getTeacherTimetable']);
     timetableService.getTeacherTimetable.and.returnValue(of([]));
-    const substitutionService = jasmine.createSpyObj('TeacherSubstitutionService', ['getMine']);
+    const substitutionService = jasmine.createSpyObj('TeacherSubstitutionService', ['getMine', 'getMyCoverage']);
     substitutionService.getMine.and.returnValue(of([]));
+    substitutionService.getMyCoverage.and.returnValue(of(null as any));
     const notificationService = jasmine.createSpyObj('NotificationStateService', ['getUnreadNotificationCount']);
     notificationService.getUnreadNotificationCount.and.returnValue(of(2));
     notificationService.unreadState$ = of({ status: 'success', count: 2 } as UnreadCountState);

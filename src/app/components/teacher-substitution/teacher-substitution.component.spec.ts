@@ -6,7 +6,7 @@ import { TeacherSubstitutionService } from '../../services/teacher-substitution.
 import { AuthStateService } from '../../auth/auth-state.service';
 import { LoggerService } from '../../services/logger.service';
 import { ToastService } from '../../services/toast.service';
-import { UncoveredPeriod } from '../../interfaces/teacher-substitution';
+import { SubstitutionDayOverview, UncoveredPeriod } from '../../interfaces/teacher-substitution';
 
 describe('TeacherSubstitutionComponent', () => {
   let fixture: ComponentFixture<TeacherSubstitutionComponent>;
@@ -23,10 +23,15 @@ describe('TeacherSubstitutionComponent', () => {
     ...overrides,
   });
 
+  const day = (periods: UncoveredPeriod[], extra: Partial<SubstitutionDayOverview> = {}): SubstitutionDayOverview => ({
+    date: '2026-10-06', closedReason: null, periods, workload: [],
+    needingSubstitute: 0, covered: 0, noLongerNeeded: 0, ...extra,
+  });
+
   function configure(role: 'ADMIN' | 'SUB_ADMIN', opts: { hasTimetableEdit?: boolean } = {}): void {
     substitutions = jasmine.createSpyObj('TeacherSubstitutionService',
-      ['getUncovered', 'getFreeTeachers', 'assign', 'change', 'cancel', 'getMine']);
-    substitutions.getUncovered.and.returnValue(of([period()]));
+      ['getUncovered', 'getOverview', 'getFreeTeachers', 'assign', 'change', 'cancel', 'getMine', 'suggestFill', 'assignMany']);
+    substitutions.getOverview.and.returnValue(of(day([period()])));
 
     authState = jasmine.createSpyObj('AuthStateService', ['getUser', 'hasPermission']);
     authState.getUser.and.returnValue({ role } as any);
@@ -53,14 +58,14 @@ describe('TeacherSubstitutionComponent', () => {
     configure('ADMIN');
     fixture.detectChanges();
 
-    expect(substitutions.getUncovered).toHaveBeenCalled();
+    expect(substitutions.getOverview).toHaveBeenCalled();
     expect(component.periods.length).toBe(1);
     expect(component.periods[0].freeTeachers[0].name).toBe('Ms Free');
   });
 
   it('shows an isolated fallback with Retry when uncovered periods fail to load', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(throwError(() => new Error('offline')));
+    substitutions.getOverview.and.returnValue(throwError(() => new Error('offline')));
     fixture.detectChanges();
 
     expect(component.failed).toBeTrue();
@@ -70,7 +75,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('shows a truthful empty state when there are no uncovered periods', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([]));
+    substitutions.getOverview.and.returnValue(of(day([])));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('No uncovered periods for this date.');
@@ -84,7 +89,7 @@ describe('TeacherSubstitutionComponent', () => {
     component.selections[100] = 'T2';
     component.save(component.periods[0]);
 
-    expect(substitutions.assign).toHaveBeenCalledWith(100, component.selectedDate, 'T2');
+    expect(substitutions.assign).toHaveBeenCalledWith(100, component.selectedDate, 'T2', null);
     expect(toast.success).toHaveBeenCalled();
   });
 
@@ -107,7 +112,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('changes the substitute for a period that already has one', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([period({
+    substitutions.getOverview.and.returnValue(of(day([period({
       assignment: {
         id: 5, revision: 0, date: '2026-09-17', timetableEntryId: 100,
         originalTeacherId: 'T1', originalTeacherName: 'Mr Original',
@@ -116,20 +121,20 @@ describe('TeacherSubstitutionComponent', () => {
         startTime: '09:10', endTime: '09:50', status: 'ACTIVE', assignedBy: 'A1',
         assignedAt: '2026-09-17T08:00:00', updatedAt: '2026-09-17T08:00:00',
       },
-    })]));
+    })])));
     fixture.detectChanges();
     substitutions.change.and.returnValue(of({} as any));
 
     component.selections[100] = 'T3';
     component.save(component.periods[0]);
 
-    expect(substitutions.change).toHaveBeenCalledWith(5, 'T3');
+    expect(substitutions.change).toHaveBeenCalledWith(5, 'T3', '');
     expect(substitutions.assign).not.toHaveBeenCalled();
   });
 
   it('cancels a substitute after user confirmation', fakeAsync(() => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([period({
+    substitutions.getOverview.and.returnValue(of(day([period({
       assignment: {
         id: 5, revision: 0, date: '2026-09-17', timetableEntryId: 100,
         originalTeacherId: 'T1', originalTeacherName: 'Mr Original',
@@ -138,7 +143,7 @@ describe('TeacherSubstitutionComponent', () => {
         startTime: '09:10', endTime: '09:50', status: 'ACTIVE', assignedBy: 'A1',
         assignedAt: '2026-09-17T08:00:00', updatedAt: '2026-09-17T08:00:00',
       },
-    })]));
+    })])));
     fixture.detectChanges();
     substitutions.cancel.and.returnValue(of({} as any));
 
@@ -152,7 +157,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('does not cancel when the user declines the confirmation', fakeAsync(() => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([period({
+    substitutions.getOverview.and.returnValue(of(day([period({
       assignment: {
         id: 5, revision: 0, date: '2026-09-17', timetableEntryId: 100,
         originalTeacherId: 'T1', originalTeacherName: 'Mr Original',
@@ -161,7 +166,7 @@ describe('TeacherSubstitutionComponent', () => {
         startTime: '09:10', endTime: '09:50', status: 'ACTIVE', assignedBy: 'A1',
         assignedAt: '2026-09-17T08:00:00', updatedAt: '2026-09-17T08:00:00',
       },
-    })]));
+    })])));
     fixture.detectChanges();
     toast.confirm.and.resolveTo(false);
 
@@ -195,10 +200,17 @@ describe('TeacherSubstitutionComponent', () => {
     },
   });
 
-  it('shows "Absent teacher: X" instead of "Replacing X"', () => {
+  it('shows the unavailable teacher, why, and the leave dates', () => {
     configure('ADMIN');
+    substitutions.getOverview.and.returnValue(of(day([period({
+      unavailabilityReason: 'APPROVED_LEAVE', leaveStart: '2026-10-06', leaveEnd: '2026-10-08',
+    })])));
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Absent teacher: Mr Original');
+    const text = fixture.nativeElement.querySelector('.sub-absent').textContent;
+    expect(text).toContain('Mr Original');
+    expect(text).toContain('Approved leave');
+    expect(text).toContain('6 Oct');
+    expect(text).toContain('8 Oct');
     expect(fixture.nativeElement.textContent).not.toContain('Replacing');
   });
 
@@ -206,23 +218,23 @@ describe('TeacherSubstitutionComponent', () => {
     configure('ADMIN');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.sub-chip')?.textContent).toContain('Needs substitute');
-    expect(fixture.nativeElement.textContent).toContain('1 period needs attention');
+    expect(fixture.nativeElement.textContent).toContain('1 period needs a substitute');
   });
 
   it('shows a "Covered" chip and the substitute\'s name once assigned — with no summary attention needed', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([assignedPeriod()]));
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()])));
     fixture.detectChanges();
 
     const chip = fixture.nativeElement.querySelector('.sub-chip');
     expect(chip?.textContent).toContain('Covered');
     expect(fixture.nativeElement.textContent).toContain('Substitute: Ms Free');
-    expect(fixture.nativeElement.textContent).toContain('All uncovered periods are covered.');
+    expect(fixture.nativeElement.textContent).toContain('All affected periods are covered.');
   });
 
   it('does not permanently show the teacher selector once a period is covered', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([assignedPeriod()]));
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()])));
     fixture.detectChanges();
 
     // The <select> stays in the DOM (hidden) rather than being destroyed/recreated —
@@ -235,7 +247,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('reveals the selector and a confirm action only after "Change substitute" is clicked', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([assignedPeriod()]));
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()])));
     fixture.detectChanges();
     expect(component.changingEntryId).toBeNull();
 
@@ -251,7 +263,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('the <select> element is never recreated across a "Change substitute" toggle — only its container\'s [hidden] state changes (this is what keeps a mobile browser from mispositioning its native options popup)', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([assignedPeriod()]));
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()])));
     fixture.detectChanges();
     const selectBeforeToggle = fixture.nativeElement.querySelector('.sub-assign-changing select');
 
@@ -264,7 +276,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('cancelling the change collapses the selector back to the substitute name', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([assignedPeriod()]));
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()])));
     fixture.detectChanges();
     component.startChange(component.periods[0]);
     fixture.detectChanges();
@@ -279,7 +291,7 @@ describe('TeacherSubstitutionComponent', () => {
 
   it('collapses the change-selector back after a successful change', () => {
     configure('ADMIN');
-    substitutions.getUncovered.and.returnValue(of([assignedPeriod()]));
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()])));
     substitutions.change.and.returnValue(of({} as any));
     fixture.detectChanges();
     component.startChange(component.periods[0]);
@@ -288,5 +300,152 @@ describe('TeacherSubstitutionComponent', () => {
     component.save(component.periods[0]);
 
     expect(component.changingEntryId).toBeNull();
+  });
+
+  // ─── Phase 2 ───
+
+  it('ranked suggestion shows its context and "Assign suggested" assigns that teacher with the note', () => {
+    configure('ADMIN');
+    const suggested = { teacherId: 'T7', name: 'Priya Sharma', reasons: ['SAME_SUBJECT', 'KNOWS_CLASS', 'COVERING_1'] };
+    substitutions.getOverview.and.returnValue(of(day([period({ suggested, freeTeachers: [suggested] })])));
+    substitutions.assign.and.returnValue(of({} as any));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.sub-suggested').textContent)
+      .toContain('Priya Sharma · Same subject · Knows class · Covering 1 today');
+    component.notes[100] = '  Worksheet on desk ';
+    component.assignSuggested(component.periods[0]);
+
+    expect(substitutions.assign).toHaveBeenCalledWith(100, component.selectedDate, 'T7', 'Worksheet on desk');
+  });
+
+  it('a cover that is no longer needed shows who, what, and only a Remove action', fakeAsync(() => {
+    configure('ADMIN');
+    substitutions.getOverview.and.returnValue(of(day([{
+      ...assignedPeriod(), state: 'NO_LONGER_NEEDED', freeTeachers: [],
+      assignment: { ...assignedPeriod().assignment!, reasonSource: 'LEAVE', note: 'Chapter 4' },
+    }], { noLongerNeeded: 1 })));
+    substitutions.cancel.and.returnValue(of({} as any));
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.sub-card');
+    expect(card.classList).toContain('is-stale');
+    expect(card.textContent).toContain('No longer needed');
+    expect(card.textContent).toContain('Mr Original is available again');
+    expect(card.textContent).toContain('Substitute: Ms Free');
+    expect(card.textContent).toContain('Class X · A');
+    expect(card.textContent).toContain('P3');
+    expect(card.textContent).toContain('Chapter 4');
+    expect(card.textContent).not.toContain('Change substitute');
+    expect(component.needsAttentionCount).toBe(0);
+    expect(fixture.nativeElement.textContent).toContain('1 no longer needed');
+
+    component.remove(component.periods[0]);
+    tick();
+    expect(substitutions.cancel).toHaveBeenCalledWith(5);
+  }));
+
+  it('groups by period or by absent teacher', () => {
+    configure('ADMIN');
+    substitutions.getOverview.and.returnValue(of(day([
+      period({ timetableEntryId: 1, periodNumber: 1, originalTeacherId: 'T1', originalTeacherName: 'Mr Original' }),
+      period({ timetableEntryId: 2, periodNumber: 1, originalTeacherId: 'T9', originalTeacherName: 'Ms Away', unavailabilityReason: 'ABSENT' }),
+      period({ timetableEntryId: 3, periodNumber: 2, originalTeacherId: 'T1', originalTeacherName: 'Mr Original' }),
+    ])));
+    fixture.detectChanges();
+    expect(component.groups.map(g => g.label)).toEqual(['Period 1', 'Period 2']);
+
+    component.setGrouping('teacher');
+    fixture.detectChanges();
+    expect(component.groups.map(g => g.label)).toEqual(['Mr Original', 'Ms Away']);
+    expect(component.groups[0].periods.length).toBe(2);
+    expect(component.groups[1].sublabel).toBe('Absent');
+  });
+
+  it('shows the cover workload strip', () => {
+    configure('ADMIN');
+    substitutions.getOverview.and.returnValue(of(day([assignedPeriod()], {
+      workload: [{ teacherId: 'T2', teacherName: 'Ms Free', covers: 3 }],
+    })));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sub-workload').textContent).toContain('Ms Free — 3 covers');
+  });
+
+  it('a holiday / closed day shows why and offers no assignment controls', () => {
+    configure('ADMIN');
+    substitutions.getOverview.and.returnValue(of(day([], { closedReason: 'School holiday: Diwali' })));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('School holiday: Diwali');
+    expect(component.canEdit).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.sub-fill-btn')).toBeNull();
+  });
+
+  it('a past date is read-only', () => {
+    configure('ADMIN');
+    fixture.detectChanges();
+    component.selectedDate = '2020-01-06';
+    component.onDateChange();
+    fixture.detectChanges();
+    expect(component.canEdit).toBeFalse();
+    expect(fixture.nativeElement.textContent).toContain('This date has passed');
+    expect(fixture.nativeElement.querySelector('.sub-assign select')).toBeNull();
+  });
+
+  it('Fill all: calculates a preview, saves only after confirmation, and reports conflicts and failures', () => {
+    configure('ADMIN');
+    substitutions.getOverview.and.returnValue(of(day([
+      period({ timetableEntryId: 100 }), period({ timetableEntryId: 101, className: 'IX' }), period({ timetableEntryId: 102, className: 'VIII' }),
+    ])));
+    substitutions.suggestFill.and.returnValue(of({
+      date: '2026-10-06',
+      proposals: [
+        { timetableEntryId: 100, periodNumber: 3, className: 'X', sectionName: 'A', subjectName: 'Maths', originalTeacherName: 'Mr Original', substituteTeacherId: 'T2', substituteTeacherName: 'Ms Free', reasons: ['SAME_SUBJECT'] },
+        { timetableEntryId: 101, periodNumber: 3, className: 'IX', sectionName: 'A', subjectName: 'Maths', originalTeacherName: 'Mr Original', substituteTeacherId: 'T3', substituteTeacherName: 'Mr Three', reasons: [] },
+        { timetableEntryId: 102, periodNumber: 3, className: 'VIII', sectionName: 'A', subjectName: 'Maths', originalTeacherName: 'Mr Original', substituteTeacherId: 'T4', substituteTeacherName: 'Mr Four', reasons: [] },
+      ],
+      unfillable: [],
+    }));
+    substitutions.assignMany.and.returnValue(of({
+      assigned: 1, conflicts: 1, failed: 1,
+      outcomes: [
+        { timetableEntryId: 100, status: 'ASSIGNED', message: 'Assigned', assignment: null },
+        { timetableEntryId: 101, status: 'CONFLICT', message: 'This period already has an active substitute.', assignment: null },
+        { timetableEntryId: 102, status: 'FAILED', message: 'Could not be saved.', assignment: null },
+      ],
+    }));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.sub-fill-btn').click();
+    fixture.detectChanges();
+    expect(substitutions.assignMany).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Review suggested substitutes');
+    expect(fixture.nativeElement.textContent).toContain('Confirm 3 assignments');
+
+    component.confirmFill();
+    fixture.detectChanges();
+
+    expect(substitutions.assignMany).toHaveBeenCalledWith('2026-10-06', [
+      { timetableEntryId: 100, substituteTeacherId: 'T2' },
+      { timetableEntryId: 101, substituteTeacherId: 'T3' },
+      { timetableEntryId: 102, substituteTeacherId: 'T4' },
+    ]);
+    const result = fixture.nativeElement.querySelector('.sub-fill.result');
+    expect(result.textContent).toContain('1 assigned · 1 conflict · 1 failed');
+    expect(result.textContent).toContain('This period already has an active substitute.');
+    expect(result.textContent).toContain('Class IX · A, P3');
+    expect(result.textContent).toContain('Failed');
+    expect(toast.warning).toHaveBeenCalled();
+  });
+
+  it('cancelling the Fill all preview saves nothing', () => {
+    configure('ADMIN');
+    substitutions.suggestFill.and.returnValue(of({ date: '2026-10-06', proposals: [], unfillable: [period()] }));
+    fixture.detectChanges();
+    component.calculateFill();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No free teacher for 1 period');
+    component.cancelFill();
+    expect(component.fillPreview).toBeNull();
+    expect(substitutions.assignMany).not.toHaveBeenCalled();
   });
 });

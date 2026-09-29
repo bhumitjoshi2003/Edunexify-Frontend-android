@@ -25,6 +25,7 @@ import { TeacherLeave } from '../../interfaces/teacher-leave';
 import { formatTeacherAttendanceTime, teacherAttendanceErrorMessage } from '../../utils/teacher-attendance.util';
 import { TimetableService } from '../../services/timetable.service';
 import { TeacherSubstitutionService } from '../../services/teacher-substitution.service';
+import { MyCoverage, TeacherSubstitution } from '../../interfaces/teacher-substitution';
 import { TimetableEntry } from '../../interfaces/timetable';
 import { subjectIcon } from '../../utils/subject-visual.util';
 import { isShowTimesEnabled } from '../../utils/timetable-preferences.util';
@@ -79,6 +80,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   todayClassesLoading = true;
   todayClassesError: string | null = null;
   todayView: TeacherTodayClassesView = EMPTY_TODAY_VIEW;
+  tomorrowCovers: TeacherSubstitution[] = [];
+  myCoverage: MyCoverage | null = null;
   unreadCount = 0;
   unreadCountLoading = true;
   /** true only when the unread-count call itself failed — the dashboard must stay fully
@@ -259,6 +262,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.todayClassesLoading = true;
     this.todayClassesError = null;
     this.cdr.markForCheck();
+    this.loadCoverExtras();
 
     forkJoin({
       timetable: this.timetableService.getTeacherTimetable(teacherId),
@@ -287,6 +291,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
             teacherName: item.substituteTeacherName,
             isSubstitution: true,
             originalTeacherName: item.originalTeacherName,
+            substitutionNote: item.note ?? null,
             timetableEntryId: item.timetableEntryId,
           }));
           const entries = [...timetable, ...coverEntries];
@@ -302,6 +307,40 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  /** Tomorrow's cover periods (as the substitute) and, on a day this teacher is away,
+   *  who covers each of their own periods. Both are optional extras: a failure only hides them. */
+  private loadCoverExtras(): void {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    forkJoin({
+      tomorrow: this.substitutionService.getMine(this.toLocalDateKey(tomorrow)).pipe(catchError(() => of([] as TeacherSubstitution[]))),
+      coverage: this.substitutionService.getMyCoverage(this.toLocalDateKey(new Date())).pipe(catchError(() => of(null))),
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ tomorrow, coverage }) => {
+        this.tomorrowCovers = tomorrow ?? [];
+        this.myCoverage = coverage;
+        this.cdr.markForCheck();
+      });
+  }
+
+  get showMyCoverage(): boolean {
+    return !!this.myCoverage?.unavailable && !!this.myCoverage.periods?.length;
+  }
+
+  myCoverageReason(): string {
+    switch (this.myCoverage?.unavailabilityReason) {
+      case 'APPROVED_LEAVE': return 'on leave';
+      case 'ABSENT': return 'marked absent';
+      case 'ON_LEAVE': return 'marked on leave';
+      default: return 'away';
+    }
+  }
+
+  coverClassLabel(item: { className: string; sectionName?: string | null }): string {
+    return item.sectionName ? `Class ${item.className} – ${item.sectionName}` : `Class ${item.className}`;
   }
 
   retryTodayClasses(): void {

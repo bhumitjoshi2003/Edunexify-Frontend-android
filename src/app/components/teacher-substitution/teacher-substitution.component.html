@@ -16,15 +16,93 @@
   <div class="sub-filters">
     <div class="sub-filter-group">
       <label>Date</label>
-      <input type="date" [(ngModel)]="selectedDate" (change)="load()" />
+      <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" />
     </div>
+    <div class="sub-filter-group" *ngIf="periods.length">
+      <label>Group by</label>
+      <div class="sub-toggle" role="group" aria-label="Group periods by">
+        <button type="button" [class.active]="grouping === 'period'" [attr.aria-pressed]="grouping === 'period'" (click)="setGrouping('period')">Period</button>
+        <button type="button" [class.active]="grouping === 'teacher'" [attr.aria-pressed]="grouping === 'teacher'" (click)="setGrouping('teacher')">Absent teacher</button>
+      </div>
+    </div>
+    <button type="button" class="primary sub-fill-btn"
+            *ngIf="canEdit && !loading && !failed && needsAttentionCount && !fillPreview"
+            (click)="calculateFill()" [disabled]="fillLoading || fillSaving">
+      <mat-icon>auto_fix_high</mat-icon>{{ fillLoading ? 'Calculating…' : 'Fill all with suggested' }}
+    </button>
   </div>
+
+  <div class="sub-notice closed" *ngIf="!loading && !failed && overview?.closedReason">
+    <mat-icon>event_busy</mat-icon>
+    <span><strong>{{ overview?.closedReason }}</strong> — no substitution is needed on this date.</span>
+  </div>
+  <div class="sub-notice" *ngIf="!loading && !failed && isPastDate && !overview?.closedReason">
+    <mat-icon>history</mat-icon>
+    <span>This date has passed. Substitutions are shown for reference and can't be changed.</span>
+  </div>
+
+  <!-- Fill all: preview (nothing saved yet) -->
+  <section class="sub-fill" *ngIf="fillPreview" aria-label="Fill all preview">
+    <header>
+      <strong>Review suggested substitutes</strong>
+      <small>Nothing is saved until you confirm. Each period is saved separately; any that can't be saved will be listed.</small>
+    </header>
+    <ul class="sub-fill-list" *ngIf="fillPreview.proposals.length">
+      <li *ngFor="let p of fillPreview.proposals">
+        <span class="sub-fill-period">P{{ p.periodNumber }}</span>
+        <span class="sub-fill-copy">
+          <strong>{{ classLabel(p) }} · {{ p.subjectName }}</strong>
+          <small>{{ p.originalTeacherName }} → <b>{{ p.substituteTeacherName }}</b>
+            <ng-container *ngFor="let r of p.reasons"> · {{ reasonLabel(r) }}</ng-container></small>
+        </span>
+      </li>
+    </ul>
+    <div class="sub-fill-unfillable" *ngIf="fillPreview.unfillable.length">
+      <mat-icon>error_outline</mat-icon>
+      <span>No free teacher for {{ fillPreview.unfillable.length }} period{{ fillPreview.unfillable.length === 1 ? '' : 's' }}:
+        <ng-container *ngFor="let u of fillPreview.unfillable; let last = last">{{ classLabel(u) }} P{{ u.periodNumber }}{{ last ? '' : ', ' }}</ng-container>
+      </span>
+    </div>
+    <p class="sub-fill-empty" *ngIf="!fillPreview.proposals.length">There is no free teacher to suggest for the remaining periods.</p>
+    <div class="sub-fill-actions">
+      <button type="button" class="link-cancel" (click)="cancelFill()" [disabled]="fillSaving">Cancel</button>
+      <button type="button" class="primary" (click)="confirmFill()" [disabled]="fillSaving || !fillPreview.proposals.length">
+        {{ fillSaving ? 'Saving…' : 'Confirm ' + fillPreview.proposals.length + ' assignment' + (fillPreview.proposals.length === 1 ? '' : 's') }}
+      </button>
+    </div>
+  </section>
+
+  <!-- Fill all: results (never hides partial failures) -->
+  <section class="sub-fill result" *ngIf="fillResult" [class.partial]="fillResult.conflicts || fillResult.failed" aria-label="Fill all results">
+    <header>
+      <strong>{{ fillResultSummary(fillResult) }}</strong>
+      <button type="button" class="link-cancel" (click)="dismissFillResult()">Dismiss</button>
+    </header>
+    <ul class="sub-fill-list" *ngIf="fillResult.conflicts || fillResult.failed">
+      <ng-container *ngFor="let o of fillResult.outcomes">
+        <li *ngIf="o.status !== 'ASSIGNED'" [class]="'outcome-' + o.status.toLowerCase()">
+          <span class="sub-fill-status">{{ o.status === 'CONFLICT' ? 'Conflict' : 'Failed' }}</span>
+          <span class="sub-fill-copy">
+            <strong>{{ o.assignment ? classLabel(o.assignment) + ', P' + o.assignment.periodNumber : outcomeLabel(o.timetableEntryId) }}</strong>
+            <small>{{ o.message || 'Could not be saved.' }}</small>
+          </span>
+        </li>
+      </ng-container>
+    </ul>
+  </section>
 
   <div class="sub-summary" *ngIf="!loading && !failed && periods.length" [class.all-covered]="!needsAttentionCount">
     <span class="sub-summary-icon"><mat-icon>{{ needsAttentionCount ? 'warning_amber' : 'task_alt' }}</mat-icon></span>
     <span class="sub-summary-copy">
       <strong>{{ attentionSummary }}</strong>
-      <small>{{ periods.length }} uncovered period{{ periods.length === 1 ? "" : "s" }} on this date</small>
+      <small>{{ coveredCount }} covered<ng-container *ngIf="noLongerNeededCount"> · {{ noLongerNeededCount }} no longer needed</ng-container></small>
+    </span>
+  </div>
+
+  <div class="sub-workload" *ngIf="!loading && !failed && workload.length" aria-label="Cover workload">
+    <span class="sub-workload-title"><mat-icon>groups</mat-icon>Covers today</span>
+    <span class="sub-workload-chip" *ngFor="let row of workload" [class.heavy]="row.covers >= 3">
+      {{ row.teacherName }} — {{ coversLabel(row) }}
     </span>
   </div>
 
@@ -43,61 +121,96 @@
     <span>Approved leave and recorded staff absence are checked automatically.</span>
   </div>
 
-  <section class="sub-list" *ngIf="!loading && !failed && periods.length">
-    <article class="sub-card" *ngFor="let period of periods" [class.is-covered]="period.assignment">
-      <div class="sub-card-period">
-        <span class="sub-card-period-num">P{{ period.periodNumber }}</span>
-        <span class="sub-card-time">{{ period.startTime }}–{{ period.endTime }}</span>
-      </div>
-
-      <div class="sub-card-body">
-        <div class="sub-card-info">
-          <div class="sub-card-top">
-            <strong class="sub-card-class">{{ classLabel(period) }}</strong>
-            <span class="sub-chip" [class.covered]="period.assignment">{{ period.assignment ? "Covered" : "Needs substitute" }}</span>
-          </div>
-          <span class="sub-subject">{{ period.subjectName }}</span>
-          <small class="sub-absent">Absent teacher: {{ period.originalTeacherName }}</small>
+  <section class="sub-group" *ngFor="let group of groups; trackBy: trackGroup">
+    <h2 class="sub-group-title" *ngIf="!loading && !failed">
+      {{ group.label }} <small *ngIf="group.sublabel">{{ group.sublabel }}</small>
+    </h2>
+    <div class="sub-list" *ngIf="!loading && !failed">
+      <article class="sub-card" *ngFor="let period of group.periods; trackBy: trackPeriod"
+               [class.is-covered]="stateOf(period) === 'COVERED'" [class.is-stale]="stateOf(period) === 'NO_LONGER_NEEDED'">
+        <div class="sub-card-period">
+          <span class="sub-card-period-num">P{{ period.periodNumber }}</span>
+          <span class="sub-card-time">{{ period.startTime }}–{{ period.endTime }}</span>
         </div>
-        <span class="sub-substitute-mobile" *ngIf="canManage && period.assignment && changingEntryId !== period.timetableEntryId">
-          <small>Substitution</small>
-          <strong>{{ period.assignment.substituteTeacherName }}</strong>
-        </span>
-      </div>
 
-      <div class="sub-assign" *ngIf="canManage; else viewOnly">
-        <ng-container *ngIf="!period.assignment">
-          <select [(ngModel)]="selections[period.timetableEntryId]" [disabled]="busyEntryId === period.timetableEntryId">
-            <option value="">Select free teacher</option>
-            <option *ngFor="let teacher of period.freeTeachers" [value]="teacher.teacherId">{{ teacher.name }}</option>
-          </select>
-          <button type="button" class="primary" (click)="save(period)" [disabled]="busyEntryId === period.timetableEntryId || !selections[period.timetableEntryId]">Assign</button>
-          <small *ngIf="!period.freeTeachers.length">No eligible teacher is free for this period.</small>
-        </ng-container>
-
-        <ng-container *ngIf="period.assignment">
-          <div class="sub-assign-collapsed" [hidden]="changingEntryId === period.timetableEntryId">
-            <span class="sub-substitute"><mat-icon>how_to_reg</mat-icon>Substitute: <strong>{{ period.assignment.substituteTeacherName }}</strong></span>
-            <div class="sub-assign-actions">
-              <button type="button" class="secondary" (click)="startChange(period)" [disabled]="busyEntryId === period.timetableEntryId">Change substitute</button>
-              <button type="button" class="remove" (click)="remove(period)" [disabled]="busyEntryId === period.timetableEntryId">Remove</button>
+        <div class="sub-card-body">
+          <div class="sub-card-info">
+            <div class="sub-card-top">
+              <strong class="sub-card-class">{{ classLabel(period) }}</strong>
+              <span class="sub-chip" [class.covered]="stateOf(period) === 'COVERED'" [class.stale]="stateOf(period) === 'NO_LONGER_NEEDED'">
+                {{ stateOf(period) === 'COVERED' ? 'Covered' : stateOf(period) === 'NO_LONGER_NEEDED' ? 'No longer needed' : 'Needs substitute' }}
+              </span>
             </div>
+            <span class="sub-subject">{{ period.subjectName }}</span>
+            <small class="sub-absent" *ngIf="stateOf(period) !== 'NO_LONGER_NEEDED'">
+              {{ period.originalTeacherName }}<ng-container *ngIf="unavailabilityLabel(period)"> · {{ unavailabilityLabel(period) }}</ng-container><ng-container *ngIf="leaveDates(period)"> ({{ leaveDates(period) }})</ng-container>
+            </small>
+            <small class="sub-absent stale" *ngIf="stateOf(period) === 'NO_LONGER_NEEDED'">
+              {{ period.originalTeacherName }} is available again<ng-container *ngIf="period.assignment?.reasonSource"> (was {{ period.assignment?.reasonSource === 'LEAVE' ? 'on leave' : 'absent' }})</ng-container>
+            </small>
+            <small class="sub-note" *ngIf="period.assignment?.note"><mat-icon>sticky_note_2</mat-icon>{{ period.assignment?.note }}</small>
           </div>
+          <span class="sub-substitute-mobile" *ngIf="canManage && period.assignment && changingEntryId !== period.timetableEntryId">
+            <small>Substitution</small>
+            <strong>{{ period.assignment.substituteTeacherName }}</strong>
+          </span>
+        </div>
 
-          <div class="sub-assign-changing" [hidden]="changingEntryId !== period.timetableEntryId">
-            <select [(ngModel)]="selections[period.timetableEntryId]" [disabled]="busyEntryId === period.timetableEntryId">
-              <option value="">Select free teacher</option>
-              <option *ngFor="let teacher of period.freeTeachers" [value]="teacher.teacherId">{{ teacher.name }}</option>
+        <div class="sub-assign" *ngIf="canManage; else viewOnly">
+          <!-- Needs a substitute -->
+          <ng-container *ngIf="stateOf(period) === 'NEEDS_SUBSTITUTE' && canEdit">
+            <div class="sub-suggested" *ngIf="period.suggested">
+              <span class="sub-suggested-copy"><small>Suggested</small>{{ teacherContext(period.suggested) }}</span>
+              <button type="button" class="primary" (click)="assignSuggested(period)" [disabled]="busyEntryId === period.timetableEntryId">Assign suggested</button>
+            </div>
+            <select [(ngModel)]="selections[period.timetableEntryId]" [disabled]="busyEntryId === period.timetableEntryId" aria-label="Choose another free teacher">
+              <option value="">{{ period.suggested ? 'Or choose another teacher' : 'Select free teacher' }}</option>
+              <option *ngFor="let teacher of period.freeTeachers" [value]="teacher.teacherId">{{ teacherContext(teacher) }}</option>
             </select>
-            <button type="button" class="primary" (click)="save(period)" [disabled]="busyEntryId === period.timetableEntryId || !selections[period.timetableEntryId]">Confirm change</button>
-            <button type="button" class="link-cancel" (click)="cancelChange(period)" [disabled]="busyEntryId === period.timetableEntryId">Cancel</button>
+            <button type="button" class="secondary" (click)="save(period)" [disabled]="busyEntryId === period.timetableEntryId || !selections[period.timetableEntryId]">Assign</button>
+            <button type="button" class="link-cancel" (click)="toggleNote(period)">{{ noteOpen[period.timetableEntryId] ? 'Hide note' : 'Add note' }}</button>
+            <input class="sub-note-input" *ngIf="noteOpen[period.timetableEntryId]" type="text" maxlength="300"
+                   [(ngModel)]="notes[period.timetableEntryId]" placeholder="Optional note for the substitute (e.g. worksheet on desk)" aria-label="Note for the substitute" />
             <small *ngIf="!period.freeTeachers.length">No eligible teacher is free for this period.</small>
-          </div>
-        </ng-container>
-      </div>
-      <ng-template #viewOnly>
-        <small class="sub-view-only">Your role does not have permission to manage substitutions.</small>
-      </ng-template>
-    </article>
+          </ng-container>
+
+          <!-- Covered -->
+          <ng-container *ngIf="stateOf(period) === 'COVERED' && period.assignment">
+            <div class="sub-assign-collapsed" [hidden]="changingEntryId === period.timetableEntryId">
+              <span class="sub-substitute"><mat-icon>how_to_reg</mat-icon>Substitute: <strong>{{ period.assignment.substituteTeacherName }}</strong></span>
+              <div class="sub-assign-actions" *ngIf="canEdit">
+                <button type="button" class="secondary" (click)="startChange(period)" [disabled]="busyEntryId === period.timetableEntryId">Change substitute</button>
+                <button type="button" class="remove" (click)="remove(period)" [disabled]="busyEntryId === period.timetableEntryId">Remove</button>
+              </div>
+            </div>
+
+            <div class="sub-assign-changing" [hidden]="changingEntryId !== period.timetableEntryId">
+              <select [(ngModel)]="selections[period.timetableEntryId]" [disabled]="busyEntryId === period.timetableEntryId">
+                <option value="">Select free teacher</option>
+                <option *ngFor="let teacher of period.freeTeachers" [value]="teacher.teacherId">{{ teacherContext(teacher) }}</option>
+              </select>
+              <input class="sub-note-input" type="text" maxlength="300" [(ngModel)]="notes[period.timetableEntryId]"
+                     placeholder="Optional note for the substitute" aria-label="Note for the substitute" />
+              <button type="button" class="primary" (click)="save(period)" [disabled]="busyEntryId === period.timetableEntryId || !selections[period.timetableEntryId]">Confirm change</button>
+              <button type="button" class="link-cancel" (click)="cancelChange(period)" [disabled]="busyEntryId === period.timetableEntryId">Cancel</button>
+              <small *ngIf="!period.freeTeachers.length">No eligible teacher is free for this period.</small>
+            </div>
+          </ng-container>
+
+          <!-- No longer needed: the original teacher is back; the cover stays until removed -->
+          <ng-container *ngIf="stateOf(period) === 'NO_LONGER_NEEDED' && period.assignment">
+            <div class="sub-assign-collapsed">
+              <span class="sub-substitute stale"><mat-icon>info</mat-icon>Substitute: <strong>{{ period.assignment.substituteTeacherName }}</strong></span>
+              <div class="sub-assign-actions" *ngIf="!isPastDate">
+                <button type="button" class="remove" (click)="remove(period)" [disabled]="busyEntryId === period.timetableEntryId">Remove</button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+        <ng-template #viewOnly>
+          <small class="sub-view-only">Your role does not have permission to manage substitutions.</small>
+        </ng-template>
+      </article>
+    </div>
   </section>
 </div>
