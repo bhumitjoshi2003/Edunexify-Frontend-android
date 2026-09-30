@@ -504,3 +504,28 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ── Student Admission Phase 1: enrollment history, hints, readmit ── */
+.sd-item-hint { display: block; margin-top: 4px; font-size: 0.72rem; color: #64748b; }
+.sd-history { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sd-history-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0;
+}
+.sd-history-state {
+  flex-shrink: 0; min-width: 78px; text-align: center;
+  padding: 4px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800;
+  background: #e2e8f0; color: #334155;
+}
+.sd-history-row.is-current .sd-history-state { background: #dcfce7; color: #15803d; }
+.sd-history-row.is-upcoming .sd-history-state { background: #dbeafe; color: #1d4ed8; }
+.sd-history-row.is-cancelled .sd-history-state { background: #fee2e2; color: #b91c1c; }
+.sd-history-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sd-history-main strong { font-size: 0.86rem; color: #0f172a; }
+.sd-history-main small { font-size: 0.74rem; color: #64748b; }
+.sd-history-empty { font-size: 0.8rem; color: #64748b; margin: 0; }
+.readmit-note { font-size: 0.8rem; color: #64748b; margin: -4px 0 12px; }
+@media (max-width: 600px) {
+  .sd-history-row { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .sd-history-state { min-width: 0; }
+}

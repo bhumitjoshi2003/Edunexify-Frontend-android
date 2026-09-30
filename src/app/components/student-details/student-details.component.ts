@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
-import { StudentExitRequest, PendingDuesInfo } from '../../interfaces/student';
+import { StudentExitRequest, PendingDuesInfo, EnrollmentHistoryItem, StudentLoginStatus } from '../../interfaces/student';
 
 interface StudentDetails {
   studentId?: string;
@@ -96,6 +96,20 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
   };
   pendingDues: PendingDuesInfo | null = null;
 
+  // Admin lifecycle extras (Student Admission Phase 1)
+  enrollmentHistory: EnrollmentHistoryItem[] = [];
+  enrollmentHistoryFailed = false;
+  loginStatus: StudentLoginStatus | null = null;
+  lifecycleBusy = false;
+
+  // Readmit modal state
+  showReadmitModal = false;
+  readmitLoading = false;
+  readmitClassName = '';
+  readmitSectionId: number | null = null;
+  readmitDate = '';
+  readmitSections: Section[] = [];
+
   readonly exitReasons = [
     'Family relocation',
     'Admitted to another school',
@@ -159,6 +173,7 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
         this.updatedDetails = { ...details };
         this.photoLoadFailed = false;
         if (details.className) this.loadSectionsForClass(details.className);
+        this.loadAdminExtras();
         this.cdr.markForCheck();
       },
       error: (error) => {
@@ -284,23 +299,44 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** True when an enrolled (ACTIVE) student's class or section is being changed. */
+  get isActiveMembershipChange(): boolean {
+    if (!this.studentDetails || !this.updatedDetails || this.studentDetails.status !== 'ACTIVE') return false;
+    return this.updatedDetails.className !== this.studentDetails.className
+      || (this.updatedDetails.sectionId ?? null) !== (this.studentDetails.sectionId ?? null);
+  }
+
+  /** Only the admin-editable fields — never status, exit details or the (signed) photo URL. */
+  private editablePayload(d: StudentDetails) {
+    return {
+      name: d.name, email: d.email, phoneNumber: d.phoneNumber, dob: d.dob,
+      className: d.className, sectionId: d.sectionId ?? null, gender: d.gender,
+      fatherName: d.fatherName, motherName: d.motherName, takesBus: d.takesBus,
+      distance: d.distance ?? null, joiningDate: d.joiningDate,
+    };
+  }
+
   executeUpdate(): void {
     this.toast.confirm({
       title: 'Are you sure?',
-      message: 'Do you want to save the changes to the details?',
-      icon: 'question',
+      message: this.isActiveMembershipChange
+        ? 'The new class/section applies from today. Attendance and marks already recorded stay with the previous class/section.'
+        : 'Do you want to save the changes to the details?',
+      icon: this.isActiveMembershipChange ? 'warning' : 'question',
       confirmText: 'Yes, save it!',
       cancelText: 'Cancel',
     }).then((confirmed) => {
       if (confirmed) {
         if (this.updatedDetails) {
           const payload = {
-            studentDetails: this.updatedDetails,
+            studentDetails: this.editablePayload(this.updatedDetails),
             effectiveFromMonth: this.effectiveFromMonth
           };
           this.studentService.updateStudent(this.studentId, payload).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
             next: (response) => {
-              this.studentDetails = { ...this.updatedDetails };
+              this.studentDetails = { ...this.updatedDetails, ...response, photoUrl: this.studentDetails?.photoUrl };
+              this.updatedDetails = { ...this.studentDetails };
+              this.loadAdminExtras();
               this.isEditing = false;
               this.effectiveFromMonth = null;
               this.validationErrors = {};
@@ -309,7 +345,7 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               this.logger.error('Error updating details:', error);
-              this.toast.error('Error!', 'Failed to update details.');
+              this.toast.error('Error!', this.serverMessage(error, 'Failed to update details.'));
             }
           });
         }
@@ -488,7 +524,115 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
 
   isExitStatus(): boolean {
     const s = this.studentDetails?.status;
-    return s === 'GRADUATED' || s === 'TRANSFERRED' || s === 'WITHDRAWN';
+    return s === 'GRADUATED' || s === 'TRANSFERRED' || s === 'WITHDRAWN' || s === 'ADMISSION_CANCELLED';
+  }
+
+  statusLabel(status?: string): string {
+    return status === 'ADMISSION_CANCELLED' ? 'Admission cancelled' : (status ?? '');
+  }
+
+  // ── Admin lifecycle extras ─────────────────────────────────────────
+
+  private loadAdminExtras(): void {
+    if (this.getUserRole() !== 'ADMIN' || !this.studentId) return;
+    this.studentService.getEnrollmentHistory(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: history => { this.enrollmentHistory = history; this.enrollmentHistoryFailed = false; this.cdr.markForCheck(); },
+      error: () => { this.enrollmentHistory = []; this.enrollmentHistoryFailed = true; this.cdr.markForCheck(); }
+    });
+    this.studentService.getLoginStatus(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: status => { this.loginStatus = status; this.cdr.markForCheck(); },
+      error: () => { this.loginStatus = null; this.cdr.markForCheck(); }
+    });
+  }
+
+  get canCreateLogin(): boolean {
+    const s = this.studentDetails?.status;
+    return this.getUserRole() === 'ADMIN' && !!this.loginStatus && !this.loginStatus.exists
+      && s !== 'TRANSFERRED' && s !== 'WITHDRAWN' && s !== 'ADMISSION_CANCELLED';
+  }
+
+  historyStateLabel(item: EnrollmentHistoryItem): string {
+    switch (item.state) {
+      case 'CURRENT': return 'Current';
+      case 'UPCOMING': return 'Upcoming';
+      case 'CANCELLED': return 'Cancelled';
+      default: return 'Closed';
+    }
+  }
+
+  closureLabel(reason?: string | null): string {
+    switch (reason) {
+      case 'SESSION_COMPLETED': return 'Session completed';
+      case 'CLASS_CHANGE': return 'Class changed';
+      case 'SECTION_CHANGE': return 'Section changed';
+      case 'GRADUATED': return 'Graduated';
+      case 'TRANSFERRED': return 'Transferred';
+      case 'WITHDRAWN': return 'Withdrawn';
+      case 'CANCELLED_BEFORE_START': return 'Cancelled before start';
+      default: return '';
+    }
+  }
+
+  async cancelAdmission(): Promise<void> {
+    const reason = await this.toast.confirmWithReason({
+      title: 'Cancel admission?',
+      message: `${this.studentDetails?.name} has not joined yet. The admission is kept in history, the student will not be activated on the joining date, and any login and parent access are switched off.`,
+      confirmText: 'Cancel admission',
+      cancelText: 'Keep admission',
+      danger: true,
+      reasonInput: { label: 'Reason (optional)', placeholder: 'e.g. Family chose another school', required: false, maxLength: 500 },
+    });
+    if (reason === null) return;
+    this.lifecycleBusy = true;
+    this.cdr.markForCheck();
+    this.studentService.cancelAdmission(this.studentId, reason).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: student => {
+        this.lifecycleBusy = false;
+        this.studentDetails = { ...student, photoUrl: this.studentDetails?.photoUrl };
+        this.updatedDetails = { ...this.studentDetails };
+        this.loadAdminExtras();
+        this.cdr.markForCheck();
+        this.toast.success('Admission cancelled', `${student.name} will not be activated.`);
+      },
+      error: err => {
+        this.lifecycleBusy = false;
+        this.cdr.markForCheck();
+        this.toast.error('Error', this.serverMessage(err, 'Failed to cancel the admission.'));
+      }
+    });
+  }
+
+  createMissingLogin(): void {
+    this.toast.confirm({
+      title: 'Create login?',
+      message: `Creates the login for ${this.studentDetails?.name}. Initial password: date of birth (YYYYMMDD); it must be changed at first sign-in. A welcome email is sent if an email is on file.`,
+      confirmText: 'Create login',
+      cancelText: 'Cancel',
+    }).then(confirmed => {
+      if (!confirmed) return;
+      this.lifecycleBusy = true;
+      this.cdr.markForCheck();
+      this.studentService.createMissingLogin(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: status => {
+          this.lifecycleBusy = false;
+          this.loginStatus = status;
+          this.cdr.markForCheck();
+          this.toast.success('Login created', 'Initial password is the date of birth in YYYYMMDD format.');
+        },
+        error: err => {
+          this.lifecycleBusy = false;
+          this.loadAdminExtras();
+          this.cdr.markForCheck();
+          this.toast.error('Error', this.serverMessage(err, 'Failed to create the login.'));
+        }
+      });
+    });
+  }
+
+  private serverMessage(err: any, fallback: string): string {
+    const e = err?.error;
+    if (typeof e === 'string' && e) return e;
+    return e?.message || e?.detail || fallback;
   }
 
   get todayStr(): string {
@@ -574,25 +718,102 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
   }
 
   readmitStudent(): void {
-    this.toast.confirm({
-      title: 'Re-admit Student?',
-      message: `This will set ${this.studentDetails?.name} back to ACTIVE status and clear all exit details. Continue?`,
-      confirmText: 'Yes, re-admit',
-      cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
-      this.studentService.readmitStudent(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
-        next: (student) => {
-          this.studentDetails = student;
-          this.updatedDetails = { ...student };
-          this.cdr.markForCheck();
-          this.toast.success('Re-admitted', `${student.name} is now active again.`);
-        },
-        error: (err) => {
-          const msg = typeof err?.error === 'string' ? err.error : 'Failed to re-admit student.';
-          this.toast.error('Error', msg);
+    this.openReadmitModal();
+  }
+
+  openReadmitModal(): void {
+    this.readmitClassName = this.studentDetails?.className ?? '';
+    this.readmitSectionId = this.studentDetails?.sectionId ?? null;
+    this.readmitDate = this.todayStr;
+    this.readmitSections = [];
+    this.loadReadmitSections(this.readmitClassName, true);
+    this.showReadmitModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeReadmitModal(): void {
+    this.showReadmitModal = false;
+    this.cdr.markForCheck();
+  }
+
+  onReadmitClassChange(className: string): void {
+    this.readmitSectionId = null;
+    this.loadReadmitSections(className, false);
+  }
+
+  private loadReadmitSections(className: string, keepSelection: boolean): void {
+    const cls = this.managedClasses.find(c => c.name === className);
+    if (!cls) { this.readmitSections = []; return; }
+    this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: sections => {
+        this.readmitSections = sections;
+        if (!keepSelection || !sections.some(sec => sec.id === this.readmitSectionId)) {
+          this.readmitSectionId = keepSelection && sections.some(sec => sec.id === this.readmitSectionId) ? this.readmitSectionId : null;
         }
-      });
+        this.cdr.markForCheck();
+      },
+      error: () => { this.readmitSections = []; this.cdr.markForCheck(); }
+    });
+  }
+
+  submitReadmit(): void {
+    const cls = this.managedClasses.find(c => c.name === this.readmitClassName);
+    if (!cls) {
+      this.toast.error('Required', 'Choose the class to readmit into.');
+      return;
+    }
+    if (this.readmitSections.length && this.readmitSectionId == null) {
+      this.toast.error('Required', 'Choose a section.');
+      return;
+    }
+    if (!this.readmitDate || this.readmitDate > this.todayStr) {
+      this.toast.error('Invalid Date', 'The readmission date cannot be in the future.');
+      return;
+    }
+    this.readmitLoading = true;
+    this.cdr.markForCheck();
+    this.studentService.readmitStudent(this.studentId, {
+      classId: cls.id, sectionId: this.readmitSectionId, readmissionDate: this.readmitDate,
+    }).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: (student) => {
+        this.readmitLoading = false;
+        this.showReadmitModal = false;
+        this.studentDetails = { ...student, photoUrl: this.studentDetails?.photoUrl };
+        this.updatedDetails = { ...this.studentDetails };
+        this.loadAdminExtras();
+        this.cdr.markForCheck();
+        this.toast.success('Re-admitted', `${student.name} is now active again.`);
+        this.offerParentLinkRestore();
+      },
+      error: (err) => {
+        this.readmitLoading = false;
+        this.cdr.markForCheck();
+        this.toast.error('Error', this.serverMessage(err, 'Failed to re-admit student.'));
+      }
+    });
+  }
+
+  /** After readmission, parent access ended by the exit is restored only if the admin confirms. */
+  private offerParentLinkRestore(): void {
+    this.studentService.getRestorableParentLinks(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: links => {
+        if (!links.length) return;
+        const names = links.map(l => `${l.parentName} (${l.relationshipType.toLowerCase()})`).join(', ');
+        this.toast.confirm({
+          title: 'Restore parent access?',
+          message: `Parent access ended when this student left: ${names}. Restore it now?`,
+          confirmText: 'Restore access',
+          cancelText: 'Not now',
+        }).then(confirmed => {
+          if (!confirmed) return;
+          this.studentService.restoreParentLinks(this.studentId, links.map(l => l.relationshipId))
+            .pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+              next: res => this.toast.success('Parent access restored', `${res.restored} parent link(s) restored.`),
+              error: err => this.toast.error('Error', this.serverMessage(err, 'Failed to restore parent access.')),
+            });
+        });
+      },
+      error: () => { /* optional follow-up; readmission itself already succeeded */ }
     });
   }
 

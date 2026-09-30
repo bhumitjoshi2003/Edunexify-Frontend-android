@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Student, StudentExitRequest, PendingDuesInfo } from '../interfaces/student';
+import { Student, StudentExitRequest, PendingDuesInfo, ReadmitRequest, StudentLoginStatus, EnrollmentHistoryItem, RestorableParentLink } from '../interfaces/student';
 import { UploadRequestResponse, UploadCompleteResponse } from '../interfaces/upload';
 
 interface StudentDTO {
@@ -306,8 +306,34 @@ export class StudentService {
     return this.http.post<Student>(`${this.baseUrl}/${studentId}/exit`, request);
   }
 
-  readmitStudent(studentId: string): Observable<Student> {
-    return this.http.post<Student>(`${this.baseUrl}/${studentId}/readmit`, {});
+  readmitStudent(studentId: string, request: ReadmitRequest = {}): Observable<Student> {
+    return this.http.post<Student>(`${this.baseUrl}/${studentId}/readmit`, request);
+  }
+
+  /** Cancels an upcoming admission that has not started (kept as history, never deleted). */
+  cancelAdmission(studentId: string, reason?: string | null): Observable<Student> {
+    return this.http.post<Student>(`${this.baseUrl}/${studentId}/cancel-admission`, { reason: reason || null });
+  }
+
+  getLoginStatus(studentId: string): Observable<StudentLoginStatus> {
+    return this.http.get<StudentLoginStatus>(`${this.baseUrl}/${studentId}/login`);
+  }
+
+  /** Creates the login for a student who has none; refused (409) when one already exists. */
+  createMissingLogin(studentId: string): Observable<StudentLoginStatus> {
+    return this.http.post<StudentLoginStatus>(`${this.baseUrl}/${studentId}/login`, {});
+  }
+
+  getEnrollmentHistory(studentId: string): Observable<EnrollmentHistoryItem[]> {
+    return this.http.get<EnrollmentHistoryItem[]>(`${this.baseUrl}/${studentId}/enrollments`);
+  }
+
+  getRestorableParentLinks(studentId: string): Observable<RestorableParentLink[]> {
+    return this.http.get<RestorableParentLink[]>(`${this.baseUrl}/${studentId}/restorable-parent-links`);
+  }
+
+  restoreParentLinks(studentId: string, relationshipIds: number[]): Observable<{ restored: number }> {
+    return this.http.post<{ restored: number }>(`${this.baseUrl}/${studentId}/restore-parent-links`, { relationshipIds });
   }
 
 }

@@ -66,9 +66,8 @@ describe('RegisterStudentComponent', () => {
     expect(component.studentForm.valid).toBeFalse();
   });
 
-  it('does not send a password when registering the login account — the backend derives it from DOB', () => {
+  it('admits in ONE call — the backend creates the login in the same transaction; no second register call', () => {
     studentService.addStudent.and.returnValue(of({ studentId: 'stu_26010001' } as any));
-    authService.register.and.returnValue(of('ok'));
 
     component.studentForm.patchValue({
       name: 'Test', email: 'test@test.com',
@@ -76,16 +75,15 @@ describe('RegisterStudentComponent', () => {
     });
     component.onSubmit();
 
-    expect(authService.register).toHaveBeenCalledWith(jasmine.objectContaining({
-      userId: 'stu_26010001', role: 'STUDENT', email: 'test@test.com'
-    }));
-    const callArg = authService.register.calls.mostRecent().args[0] as any;
-    expect(callArg.password).toBeUndefined();
+    expect(studentService.addStudent).toHaveBeenCalledTimes(1);
+    const sent = studentService.addStudent.calls.mostRecent().args[0] as any;
+    expect(sent.password).toBeUndefined();
+    expect(sent.studentId).toBeUndefined();
+    expect(authService.register).not.toHaveBeenCalled();
   });
 
   it('shows the DOB-based initial-password message and the Edunexify-generated Student ID on success', () => {
     studentService.addStudent.and.returnValue(of({ studentId: 'stu_26010001' } as any));
-    authService.register.and.returnValue(of('ok'));
 
     component.studentForm.patchValue({
       name: 'Test', email: 'test@test.com',
@@ -97,16 +95,18 @@ describe('RegisterStudentComponent', () => {
     expect(toast.success).toHaveBeenCalledWith('Student Registered!', jasmine.stringMatching(/stu_26010001/));
   });
 
-  it('surfaces an error toast when account setup fails after the student record is created', () => {
-    studentService.addStudent.and.returnValue(of({ studentId: 'stu_26010001' } as any));
-    authService.register.and.returnValue(throwError(() => ({ status: 500 })));
+  it('shows the server reason when an admission is rejected (e.g. a past-session joining date)', () => {
+    studentService.addStudent.and.returnValue(throwError(() => ({
+      status: 400, error: 'The joining date 2025-06-02 belongs to a past academic session (2025-2026).'
+    })));
 
     component.studentForm.patchValue({
       name: 'Test', email: 'test@test.com',
-      className: '10', gender: 'MALE', joiningDate: '2024-01-01', dob: '1990-05-23'
+      className: '10', gender: 'MALE', joiningDate: '2025-06-02', dob: '1990-05-23'
     });
     component.onSubmit();
 
-    expect(toast.error).toHaveBeenCalledWith('Error', jasmine.stringMatching(/account setup failed/));
+    expect(toast.error).toHaveBeenCalledWith('Error!', jasmine.stringMatching(/past academic session/));
+    expect(authService.register).not.toHaveBeenCalled();
   });
 });

@@ -126,7 +126,7 @@
           <span class="sl-card-id">{{ s.studentId }}</span>
         </div>
         <span class="sl-alumni-tag">GRADUATED</span>
-        <span *ngIf="s.status" class="sl-exit-badge" [class]="getExitBadgeClass(s.status)">{{ s.status }}</span>
+        <span *ngIf="s.status" class="sl-exit-badge" [class]="getExitBadgeClass(s.status)">{{ s.status === 'ADMISSION_CANCELLED' ? 'ADMISSION CANCELLED' : s.status }}</span>
         <span class="sl-arrow">›</span>
       </div>
     </div>
@@ -147,7 +147,7 @@
           <span class="sl-card-name sl-name-left">{{ s.name }}</span>
           <span class="sl-card-id">{{ s.studentId }}</span>
         </div>
-        <span *ngIf="s.status" class="sl-exit-badge" [class]="getExitBadgeClass(s.status)">{{ s.status }}</span>
+        <span *ngIf="s.status" class="sl-exit-badge" [class]="getExitBadgeClass(s.status)">{{ s.status === 'ADMISSION_CANCELLED' ? 'ADMISSION CANCELLED' : s.status }}</span>
         <span class="sl-arrow">›</span>
       </div>
     </div>

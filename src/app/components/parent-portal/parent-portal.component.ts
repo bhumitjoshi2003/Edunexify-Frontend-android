@@ -140,7 +140,7 @@ export class ParentPortalComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(matches => {
       this.studentMatches = matches.filter(student =>
-        !['GRADUATED', 'TRANSFERRED', 'WITHDRAWN'].includes(student.status ?? ''));
+        !['GRADUATED', 'TRANSFERRED', 'WITHDRAWN', 'ADMISSION_CANCELLED'].includes(student.status ?? ''));
       this.searchingStudents = false;
       this.studentSearchOpen = this.studentQuery.trim().length >= 2;
       this.cdr.markForCheck();

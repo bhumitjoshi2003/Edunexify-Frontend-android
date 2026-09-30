@@ -17,7 +17,10 @@
         </ng-container>
         <button *ngIf="getUserRole() !== 'TEACHER'" class="sd-pill-icon" (click)="openPasswordModal()" title="Change Password">🔐</button>
         <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'ACTIVE' && !isEditing" class="sd-pill sd-pill-exit" (click)="openExitModal()">Mark as Left</button>
-        <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" class="sd-pill sd-pill-green" (click)="readmitStudent()">Re-admit</button>
+        <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" class="sd-pill sd-pill-green" (click)="openReadmitModal()">Re-admit</button>
+        <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'UPCOMING' && !isEditing" class="sd-pill sd-pill-exit"
+          (click)="cancelAdmission()" [disabled]="lifecycleBusy">Cancel Admission</button>
+        <button *ngIf="canCreateLogin && !isEditing" class="sd-pill" (click)="createMissingLogin()" [disabled]="lifecycleBusy">Create Login</button>
       </div>
     </div>
 
@@ -38,7 +41,8 @@
         <div class="sd-hero-chips">
           <span class="sd-hero-chip">Class {{ studentDetails.className }}<ng-container *ngIf="studentDetails.sectionName"> - {{ studentDetails.sectionName }}</ng-container></span>
           <span class="sd-hero-chip">{{ studentDetails.studentId }}</span>
-          <span *ngIf="isExitStatus()" class="sd-hero-chip sd-chip-exit">{{ studentDetails.status }}</span>
+          <span *ngIf="isExitStatus()" class="sd-hero-chip sd-chip-exit">{{ statusLabel(studentDetails.status) }}</span>
+          <span *ngIf="studentDetails.status === 'UPCOMING'" class="sd-hero-chip">Upcoming</span>
         </div>
       </div>
     </div>
@@ -61,15 +65,16 @@
       <div class="sd-item">
         <span class="sd-item-label">Class</span>
         <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.className }}</span>
-        <select class="sd-item-input" *ngIf="isEditing && getUserRole() === 'ADMIN'" [(ngModel)]="updatedDetails.className" (ngModelChange)="onClassChangeInEdit($event)">
+        <select class="sd-item-input" *ngIf="isEditing && getUserRole() === 'ADMIN' && !isExitStatus()" [(ngModel)]="updatedDetails.className" (ngModelChange)="onClassChangeInEdit($event)">
           <option *ngFor="let className of classList" [value]="className">{{ className }}</option>
         </select>
-        <span class="sd-item-value" *ngIf="isEditing && getUserRole() !== 'ADMIN'">{{ studentDetails.className }}</span>
+        <span class="sd-item-value" *ngIf="isEditing && (getUserRole() !== 'ADMIN' || isExitStatus())">{{ studentDetails.className }}</span>
       </div>
       <div class="sd-item" *ngIf="studentDetails.sectionName || (isEditing && sections.length > 0)">
         <span class="sd-item-label">Section</span>
         <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.sectionName }}</span>
-        <select class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.sectionId">
+        <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.sectionName }}</span>
+        <select class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.sectionId">
           <option [ngValue]="null">-- None --</option>
           <option *ngFor="let sec of sections" [ngValue]="sec.id">{{ sec.name }}</option>
         </select>
@@ -133,14 +138,14 @@
       <div class="sd-item">
         <span class="sd-item-label">Joining Date</span>
         <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.joiningDate | date }}</span>
-        <input type="date" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.joiningDate"
+        <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.joiningDate | date }}</span>
+        <input type="date" class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.joiningDate"
           (input)="updateFieldValue('joiningDate', $event)">
+        <small class="sd-item-hint" *ngIf="isEditing && studentDetails.status === 'ACTIVE'">Can be corrected only before any attendance or marks are recorded.</small>
       </div>
-      <div class="sd-item" *ngIf="studentDetails.leavingDate || isEditing">
+      <div class="sd-item" *ngIf="studentDetails.leavingDate">
         <span class="sd-item-label">Leaving Date</span>
-        <span class="sd-item-value" *ngIf="!isEditing && studentDetails.leavingDate">{{ studentDetails.leavingDate | date }}</span>
-        <input type="date" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.leavingDate"
-          (input)="updateFieldValue('leavingDate', $event)">
+        <span class="sd-item-value">{{ studentDetails.leavingDate | date }}</span>
       </div>
     </div>
   </div>
@@ -154,8 +159,8 @@
         <span class="sd-item-value sd-exit-badge"
           [class.sd-badge-graduated]="studentDetails.status === 'GRADUATED'"
           [class.sd-badge-transferred]="studentDetails.status === 'TRANSFERRED'"
-          [class.sd-badge-withdrawn]="studentDetails.status === 'WITHDRAWN'">
-          {{ studentDetails.status }}
+          [class.sd-badge-withdrawn]="studentDetails.status === 'WITHDRAWN' || studentDetails.status === 'ADMISSION_CANCELLED'">
+          {{ statusLabel(studentDetails.status) }}
         </span>
       </div>
       <div class="sd-item" *ngIf="studentDetails.leavingDate">
@@ -175,6 +180,24 @@
         <span class="sd-item-value">{{ studentDetails.exitRemarks }}</span>
       </div>
     </div>
+  </div>
+
+  <!-- ── Enrollment History (admin, read-only) ─────────────────────── -->
+  <div class="sd-section" *ngIf="getUserRole() === 'ADMIN' && (enrollmentHistory.length || enrollmentHistoryFailed)">
+    <p class="sd-section-title">Enrollment History</p>
+    <p class="sd-history-empty" *ngIf="enrollmentHistoryFailed">Enrollment history is unavailable right now.</p>
+    <ol class="sd-history" *ngIf="enrollmentHistory.length">
+      <li *ngFor="let item of enrollmentHistory" class="sd-history-row" [ngClass]="'is-' + item.state.toLowerCase()">
+        <span class="sd-history-state">{{ historyStateLabel(item) }}</span>
+        <span class="sd-history-main">
+          <strong>Class {{ item.className }}<ng-container *ngIf="item.sectionName"> - {{ item.sectionName }}</ng-container></strong>
+          <small>{{ item.sessionLabel || 'Session' }} · {{ item.effectiveFrom | date:'d MMM y' }}
+            <ng-container *ngIf="item.state !== 'CANCELLED'"> – {{ item.effectiveUntil ? (item.effectiveUntil | date:'d MMM y') : 'present' }}</ng-container>
+            <ng-container *ngIf="closureLabel(item.closureReason)"> · {{ closureLabel(item.closureReason) }}</ng-container>
+          </small>
+        </span>
+      </li>
+    </ol>
   </div>
 
   <!-- ── Quick Actions ──────────────────────────────────────────── -->
@@ -306,6 +329,41 @@
       <button class="cp-btn-cancel" (click)="closeExitModal()">Cancel</button>
       <button class="cp-btn-submit exit-submit-btn" (click)="submitExit()" [disabled]="exitLoading">
         {{ exitLoading ? 'Processing...' : 'Confirm Exit' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Readmit Student Modal ──────────────────────────────────────── -->
+<div class="cp-overlay" *ngIf="showReadmitModal" (click)="closeReadmitModal()">
+  <div class="cp-modal" (click)="$event.stopPropagation()">
+    <h3 class="cp-title">Re-admit Student</h3>
+    <p class="readmit-note">A new enrollment starts on the readmission date. Earlier enrollment history is kept unchanged.</p>
+
+    <div class="cp-field">
+      <label class="cp-label">Class *</label>
+      <select class="cp-input" [(ngModel)]="readmitClassName" (ngModelChange)="onReadmitClassChange($event)">
+        <option *ngFor="let c of managedClasses" [value]="c.name">{{ c.name }}</option>
+      </select>
+    </div>
+
+    <div class="cp-field" *ngIf="readmitSections.length">
+      <label class="cp-label">Section *</label>
+      <select class="cp-input" [(ngModel)]="readmitSectionId">
+        <option [ngValue]="null" disabled>Select section...</option>
+        <option *ngFor="let sec of readmitSections" [ngValue]="sec.id">{{ sec.name }}</option>
+      </select>
+    </div>
+
+    <div class="cp-field">
+      <label class="cp-label">Readmission Date *</label>
+      <input type="date" class="cp-input" [(ngModel)]="readmitDate" [max]="todayStr">
+    </div>
+
+    <div class="cp-actions">
+      <button class="cp-btn-cancel" (click)="closeReadmitModal()">Cancel</button>
+      <button class="cp-btn-submit" (click)="submitReadmit()" [disabled]="readmitLoading">
+        {{ readmitLoading ? 'Processing...' : 'Re-admit' }}
       </button>
     </div>
   </div>

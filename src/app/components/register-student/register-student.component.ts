@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { EMPTY, Subject, forkJoin, takeUntil } from 'rxjs';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { finalize, tap } from 'rxjs/operators';
 import { StudentService } from '../../services/student.service';
 import { Router } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../auth/auth.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
@@ -34,7 +33,6 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private studentService: StudentService,
     private router: Router,
-    private authService: AuthService,
     private authState: AuthStateService,
     private logger: LoggerService,
     private toast: ToastService,
@@ -119,27 +117,13 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
     if (this.studentForm.valid) {
       this.isSubmitting = true;
       this.cdr.markForCheck();
-      // The backend generates the Student ID (and derives the initial login password
-      // from date of birth, YYYYMMDD) — neither is ever supplied by the frontend. The
-      // generated ID is captured here (switchMap discards the outer emission) so it can
-      // still be shown to the admin once account setup completes.
+      // One call: the backend generates the Student ID and creates the student, enrollment and
+      // login (initial password = date of birth, YYYYMMDD) in a single transaction, so a failure
+      // never leaves a student without an account.
       let generatedStudentId = '';
       this.studentService.addStudent(this.studentForm.value).pipe(
         takeUntil(this.destroy$),
-        switchMap((response: { studentId: string }) => {
-          generatedStudentId = response.studentId;
-          return this.authService.register({
-            userId: response.studentId,
-            role: 'STUDENT',
-            email: this.studentForm.value.email
-          }).pipe(
-            catchError((authError) => {
-              this.logger.error('Error registering user in auth service:', authError);
-              this.toast.error('Error', 'Student record created but account setup failed. Please retry.');
-              return EMPTY;
-            })
-          );
-        }),
+        tap((response: { studentId: string }) => { generatedStudentId = response.studentId; }),
         finalize(() => {
           this.isSubmitting = false;
           this.cdr.markForCheck();
@@ -154,7 +138,8 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
         error: (error) => {
           this.logger.error('Error registering student:', error);
           let errorMessage = 'Failed to register new student.';
-          if (error.status === 409) {
+          if ((error.status === 409 || error.status === 400) && typeof error.error === 'string' && error.error) {
+            // e.g. a joining date in a past academic session — nothing was created.
             errorMessage = error.error;
           }
           this.toast.error('Error!', errorMessage);

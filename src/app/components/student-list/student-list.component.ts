@@ -218,6 +218,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
     if (status === 'GRADUATED') return 'badge-success';
     if (status === 'TRANSFERRED') return 'badge-info';
     if (status === 'WITHDRAWN') return 'badge-warning';
+    if (status === 'ADMISSION_CANCELLED') return 'badge-secondary';
     return 'badge-secondary';
   }
 
