@@ -200,6 +200,24 @@
     </ol>
   </div>
 
+  <!-- ── Guardians (admin, read-only) ─────────────────────────────── -->
+  <div class="sd-section" *ngIf="getUserRole() === 'ADMIN' && guardians">
+    <p class="sd-section-title">Guardians</p>
+    <p class="sd-history-empty" *ngIf="!guardians.length">No parent or guardian accounts are linked to this student.</p>
+    <ul class="sd-guardians" *ngIf="guardians.length">
+      <li *ngFor="let g of guardians" class="sd-guardian" [ngClass]="'is-' + g.linkStatus.toLowerCase()">
+        <div class="sd-guardian-head">
+          <strong>{{ g.parentName }}</strong>
+          <span class="sd-guardian-chip is-primary" *ngIf="g.primaryGuardian">Primary guardian</span>
+          <span class="sd-guardian-chip" [ngClass]="'is-' + g.linkStatus.toLowerCase()">{{ g.linkStatus === 'ACTIVE' ? 'Linked' : g.linkStatus === 'UPCOMING' ? 'Starts ' + (g.effectiveFrom | date:'d MMM y') : 'Ended' }}</span>
+        </div>
+        <small>{{ g.parentId }} · {{ g.relationshipType | titlecase }} · {{ g.phoneNumber }}<ng-container *ngIf="g.email"> · {{ g.email }}</ng-container></small>
+        <small>{{ g.effectiveFrom | date:'d MMM y' }} – {{ g.effectiveUntil ? (g.effectiveUntil | date:'d MMM y') : 'present' }} · {{ guardianAccessSummary(g) }} · {{ guardianLoginLabel(g) }}</small>
+        <button type="button" class="sd-guardian-link" (click)="router.navigate(['/dashboard/parent-portal', g.parentId])">Manage access</button>
+      </li>
+    </ul>
+  </div>
+
   <!-- ── Quick Actions ──────────────────────────────────────────── -->
   <div class="sd-section" *ngIf="getUserRole() !== 'STUDENT'">
     <p class="sd-section-title">Quick Actions</p>

@@ -43,6 +43,8 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 })
 export class PaymentHistoryComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  /** Latest history request wins — a page change or a parent switching child cancels the previous one. */
+  private readonly historyRequest$ = new Subject<void>();
 
   comingSoonConfig = MODULE_MESSAGES.paymentHistory;
   showFeesModule: boolean = true;
@@ -107,6 +109,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.historyRequest$.next();
     this.loading = true;
     this.error = '';
 
@@ -114,7 +117,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       this.studentId,
       this.currentPage,
       this.pageSize
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    ).pipe(takeUntil(this.destroy$), takeUntil(this.historyRequest$)).subscribe({
       next: (response: PaginatedResponse<PaymentHistory>) => {
         this.paymentHistory = response.content;
         this.totalElements = response.totalElements;

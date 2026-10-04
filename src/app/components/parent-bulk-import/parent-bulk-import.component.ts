@@ -215,8 +215,16 @@ export class ParentBulkImportComponent {
       MISSING_REQUIRED_FIELD: 'Missing required field',
       DUPLICATE_ROW_IN_FILE: 'Duplicate row in file',
       ALREADY_LINKED: 'Already linked',
+      RESTORABLE: 'Ended link — can be restored',
     };
     return labels[status];
+  }
+
+  outcomeLabel(outcome: string): string {
+    const labels: Record<string, string> = {
+      created: 'Linked', restored: 'Restored', already_linked: 'Already linked', restorable: 'Ended link — not restored',
+    };
+    return labels[outcome] ?? outcome;
   }
 
   // ── Confirm ──────────────────────────────────────────────────────

@@ -101,8 +101,8 @@
     <div class="error-table-wrapper" *ngIf="resolvableRows.length > 0">
       <h3 class="error-table__title">Needs Your Review ({{ resolvableRows.length }})</h3>
       <p class="pbi-table-hint">
-        Same phone or email as an existing parent, but not both — never merged automatically.
-        Choose what to do with each row before confirming.
+        Same phone or email as an existing parent, but not both — never merged automatically —
+        or a parent whose earlier link to this student has ended. Choose what to do with each row before confirming.
       </p>
 
       <!-- Desktop table -->
@@ -121,8 +121,11 @@
               <td class="error-reason">{{ row.message }}</td>
               <td class="pbi-decision">
                 <select [ngModel]="choiceFor(row).action" (ngModelChange)="setAction(row, $event)">
-                  <option value="LINK_EXISTING">Link to existing parent {{ row.matchedParentId }}</option>
-                  <option value="CREATE_NEW">This is a different parent — create new</option>
+                  <ng-container *ngIf="row.status !== 'RESTORABLE'">
+                    <option value="LINK_EXISTING">Link to existing parent {{ row.matchedParentId }}</option>
+                    <option value="CREATE_NEW">This is a different parent — create new</option>
+                  </ng-container>
+                  <option *ngIf="row.status === 'RESTORABLE'" value="RESTORE">Restore the ended link ({{ row.matchedParentId }})</option>
                   <option value="SKIP">Skip this row</option>
                 </select>
                 <input *ngIf="choiceFor(row).action === 'LINK_EXISTING'" type="text"
@@ -159,8 +162,11 @@
             <label class="pbi-m-key" [attr.for]="'pbi-action-' + row.row">Your decision</label>
             <select [id]="'pbi-action-' + row.row"
                     [ngModel]="choiceFor(row).action" (ngModelChange)="setAction(row, $event)">
-              <option value="LINK_EXISTING">Link to existing parent {{ row.matchedParentId }}</option>
-              <option value="CREATE_NEW">This is a different parent — create new</option>
+              <ng-container *ngIf="row.status !== 'RESTORABLE'">
+                <option value="LINK_EXISTING">Link to existing parent {{ row.matchedParentId }}</option>
+                <option value="CREATE_NEW">This is a different parent — create new</option>
+              </ng-container>
+              <option *ngIf="row.status === 'RESTORABLE'" value="RESTORE">Restore the ended link ({{ row.matchedParentId }})</option>
               <option value="SKIP">Skip this row</option>
             </select>
             <input *ngIf="choiceFor(row).action === 'LINK_EXISTING'" type="text"
@@ -290,7 +296,7 @@
     </div>
 
     <div class="error-table-wrapper" *ngIf="confirmResult.created.length > 0">
-      <h3 class="error-table__title">Created</h3>
+      <h3 class="error-table__title">Processed rows</h3>
 
       <div class="pbi-table-scroll">
         <table class="error-table">
@@ -300,7 +306,7 @@
               <td>{{ c.row }}</td>
               <td><strong>{{ c.parentId }}</strong></td>
               <td>{{ c.studentId }}</td>
-              <td>{{ c.outcome }}</td>
+              <td>{{ outcomeLabel(c.outcome) }}</td>
             </tr>
           </tbody>
         </table>
@@ -310,7 +316,7 @@
         <div class="pbi-m-card" *ngFor="let c of confirmResult.created">
           <div class="pbi-m-head">
             <span class="pbi-m-row">Row {{ c.row }}</span>
-            <span class="pbi-m-badge pbi-m-badge--ok">{{ c.outcome }}</span>
+            <span class="pbi-m-badge pbi-m-badge--ok">{{ outcomeLabel(c.outcome) }}</span>
           </div>
           <div class="pbi-m-field">
             <span class="pbi-m-key">Parent ID</span>

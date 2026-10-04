@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { CreateParentRequest, LinkStudentRequest, ParentDirectoryStats, ParentProfile, ParentStatusFilter, ParentLinkedFilter, ParentSummary } from '../interfaces/parent-portal';
+import { CreateParentRequest, GuardianLink, LinkStudentRequest, ParentDirectoryStats, ParentProfile, ParentStatusFilter, ParentLinkedFilter, ParentSummary, UpdateParentRequest } from '../interfaces/parent-portal';
 import { PaginatedResponse } from './leave.service';
 
 export interface ParentDirectoryQuery {
@@ -33,6 +33,16 @@ export class ParentPortalService {
   }
   getParent(parentId: string): Observable<ParentProfile> {
     return this.http.get<ParentProfile>(`${this.baseUrl}/${encodeURIComponent(parentId)}`);
+  }
+  updateParent(parentId: string, request: UpdateParentRequest): Observable<ParentProfile> {
+    return this.http.put<ParentProfile>(`${this.baseUrl}/${encodeURIComponent(parentId)}`, request);
+  }
+  resendSetupLink(parentId: string): Observable<{ parentId: string; status: string }> {
+    return this.http.post<{ parentId: string; status: string }>(
+      `${this.baseUrl}/${encodeURIComponent(parentId)}/resend-setup-link`, {});
+  }
+  getGuardians(studentId: string): Observable<GuardianLink[]> {
+    return this.http.get<GuardianLink[]>(`${this.baseUrl}/students/${encodeURIComponent(studentId)}/guardians`);
   }
   getMyProfile(): Observable<ParentProfile> { return this.http.get<ParentProfile>(`${this.baseUrl}/me/profile`); }
   linkStudent(parentId: string, request: LinkStudentRequest): Observable<ParentProfile> {

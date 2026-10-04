@@ -11,6 +11,8 @@ import { SchoolService } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { ToastService } from '../../services/toast.service';
 import { EnrollmentHistoryItem } from '../../interfaces/student';
+import { ParentPortalService } from '../../services/parent-portal.service';
+import { GuardianLink } from '../../interfaces/parent-portal';
 
 /** Student Admission Phase 1: safe edit payloads and the admin lifecycle actions. */
 describe('StudentDetailsComponent (admission lifecycle)', () => {
@@ -18,6 +20,7 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
   let component: StudentDetailsComponent;
   let students: jasmine.SpyObj<StudentService>;
   let toast: jasmine.SpyObj<ToastService>;
+  let parents: jasmine.SpyObj<ParentPortalService>;
 
   const baseStudent = (overrides: any = {}) => ({
     studentId: 'stu_1', name: 'Asha Rao', className: '9', sectionId: 91, sectionName: 'A',
@@ -33,7 +36,9 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
       status: 'ACTIVE', state: 'CURRENT', effectiveFrom: '2026-09-25', effectiveUntil: null, closureReason: null },
   ];
 
-  function setup(student: any, role = 'ADMIN', login = { exists: true, active: true }): void {
+  function setup(student: any, role = 'ADMIN', login = { exists: true, active: true }, guardians: GuardianLink[] = []): void {
+    parents = jasmine.createSpyObj('ParentPortalService', ['getGuardians']);
+    parents.getGuardians.and.returnValue(of(guardians));
     students = jasmine.createSpyObj('StudentService', [
       'getStudent', 'updateStudent', 'exitStudent', 'readmitStudent', 'checkPendingDues', 'cancelAdmission',
       'getLoginStatus', 'createMissingLogin', 'getEnrollmentHistory', 'getRestorableParentLinks', 'restoreParentLinks',
@@ -64,6 +69,7 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
         { provide: SchoolService, useValue: school },
         { provide: SectionService, useValue: sections },
         { provide: ToastService, useValue: toast },
+        { provide: ParentPortalService, useValue: parents },
       ],
     });
     fixture = TestBed.createComponent(StudentDetailsComponent);
@@ -185,5 +191,35 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
     const selects = (fixture.nativeElement as HTMLElement).querySelectorAll('select.sd-item-input');
     expect(selects.length).toBe(0);
     expect((fixture.nativeElement as HTMLElement).querySelector('input[type="date"].sd-item-input')).toBeNull();
+  });
+
+  it('shows a read-only Guardians panel to the admin: primary, ended links, access summary and login state', () => {
+    const guardian = (o: Partial<GuardianLink>): GuardianLink => ({
+      relationshipId: 1, parentId: 'par_1', parentName: 'Mum', phoneNumber: '9800000001', email: 'mum@x.test',
+      relationshipType: 'MOTHER', primaryGuardian: true, linkStatus: 'ACTIVE', effectiveFrom: '2026-04-01', effectiveUntil: null,
+      canViewAttendance: true, canViewFees: true, canPayFees: true, canViewResults: true, canViewTimetable: true,
+      canManageLeave: true, parentActive: true, loginState: 'ACTIVE', ...o,
+    });
+    setup(baseStudent(), 'ADMIN', { exists: true, active: true }, [
+      guardian({}),
+      guardian({ relationshipId: 2, parentId: 'par_2', parentName: 'Dad', primaryGuardian: false, linkStatus: 'ENDED',
+        effectiveUntil: '2026-09-30', canPayFees: false, canViewFees: false, parentActive: false, loginState: 'DISABLED' }),
+    ]);
+
+    expect(parents.getGuardians).toHaveBeenCalledWith('stu_1');
+    const panel = text();
+    expect(panel).toContain('Guardians');
+    expect(panel).toContain('Primary guardian');
+    expect(panel).toContain('Standard access');
+    expect(panel).toContain('Ended');
+    expect(panel).toContain('Attendance · Results · Timetable · Leave');
+    expect(panel).toContain('Account disabled');
+    expect(panel).not.toContain('password');
+  });
+
+  it('never asks a non-admin for guardians', () => {
+    setup(baseStudent(), 'TEACHER');
+    expect(parents.getGuardians).not.toHaveBeenCalled();
+    expect(text()).not.toContain('Guardians');
   });
 });

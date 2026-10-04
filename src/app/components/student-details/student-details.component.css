@@ -529,3 +529,14 @@
   .sd-history-row { align-items: flex-start; flex-direction: column; gap: 6px; }
   .sd-history-state { min-width: 0; }
 }
+
+.sd-guardians { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sd-guardian { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; }
+.sd-guardian.is-ended { opacity: 0.7; }
+.sd-guardian small { color: #6b7280; font-size: 12px; overflow-wrap: anywhere; }
+.sd-guardian-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sd-guardian-chip { padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f3f4f6; color: #374151; }
+.sd-guardian-chip.is-primary { background: #ede9fe; color: #6d28d9; }
+.sd-guardian-chip.is-active { background: #dcfce7; color: #15803d; }
+.sd-guardian-chip.is-upcoming { background: #dbeafe; color: #1d4ed8; }
+.sd-guardian-link { justify-self: start; margin-top: 2px; padding: 0; border: 0; background: none; color: #1f6f8b; font-weight: 600; font-size: 12px; cursor: pointer; }

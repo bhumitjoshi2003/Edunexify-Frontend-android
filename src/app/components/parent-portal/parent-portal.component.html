@@ -60,7 +60,7 @@
           <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="DISABLED">Disabled</option>
         </select>
         <select aria-label="Filter by linked students" [value]="linkedFilter" (change)="updateLinkedFilter($event)">
-          <option value="ALL">All students</option><option value="LINKED">Linked</option><option value="UNLINKED">Unlinked</option>
+          <option value="ALL">All students</option><option value="LINKED">Linked</option><option value="UNLINKED">Unlinked</option><option value="NO_ACTIVE_CHILDREN">No active children</option>
         </select>
         <button type="button" class="text-button" *ngIf="hasActiveFilters" (click)="clearFilters()"><mat-icon>filter_alt_off</mat-icon>Clear filters</button>
       </div>
@@ -75,7 +75,7 @@
               <tr *ngFor="let parent of parents" (click)="viewParent(parent)">
                 <td class="directory-name-cell"><span class="avatar">{{ parent.name.charAt(0) }}</span><strong>{{ parent.name }}</strong></td>
                 <td>{{ parent.parentId }}</td>
-                <td><span class="children-badge"><mat-icon>school</mat-icon>{{ parent.linkedChildren }}</span></td>
+                <td><span class="children-badge"><mat-icon>school</mat-icon>{{ parent.linkedChildren }}</span><span class="no-active-badge" *ngIf="parent.noActiveChildren" title="Every linked child has left or the links ended">No active children</span></td>
                 <td><span class="status-badge" [class.off]="!parent.active">{{ parent.active ? 'Active' : 'Disabled' }}</span></td>
                 <td class="directory-action-cell"><button type="button" class="row-view-btn" (click)="viewParent(parent)" [attr.aria-label]="'View ' + parent.name"><mat-icon>chevron_right</mat-icon></button></td>
               </tr>
@@ -90,7 +90,7 @@
               <div><strong>{{ parent.name }}</strong><small>{{ parent.parentId }}</small></div>
               <span class="status-badge" [class.off]="!parent.active">{{ parent.active ? 'Active' : 'Disabled' }}</span>
             </div>
-            <div class="directory-card-bottom"><span class="children-badge"><mat-icon>school</mat-icon>{{ parent.linkedChildren }}</span></div>
+            <div class="directory-card-bottom"><span class="children-badge"><mat-icon>school</mat-icon>{{ parent.linkedChildren }}</span><span class="no-active-badge" *ngIf="parent.noActiveChildren">No active children</span></div>
           </button>
         </div>
       </ng-container>

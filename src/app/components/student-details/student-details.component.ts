@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
@@ -12,6 +12,8 @@ import { environment } from '../../../environments/environment';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
+import { GuardianLink } from '../../interfaces/parent-portal';
+import { ParentPortalService } from '../../services/parent-portal.service';
 import { StudentExitRequest, PendingDuesInfo, EnrollmentHistoryItem, StudentLoginStatus } from '../../interfaces/student';
 
 interface StudentDetails {
@@ -98,6 +100,9 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
 
   // Admin lifecycle extras (Student Admission Phase 1)
   enrollmentHistory: EnrollmentHistoryItem[] = [];
+  /** Read-only Guardians panel (admin). null = not loaded / Parent Portal not available. */
+  guardians: GuardianLink[] | null = null;
+  private readonly parentPortal = inject(ParentPortalService);
   enrollmentHistoryFailed = false;
   loginStatus: StudentLoginStatus | null = null;
   lifecycleBusy = false;
@@ -543,6 +548,24 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
       next: status => { this.loginStatus = status; this.cdr.markForCheck(); },
       error: () => { this.loginStatus = null; this.cdr.markForCheck(); }
     });
+    this.parentPortal.getGuardians(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: guardians => { this.guardians = guardians; this.cdr.markForCheck(); },
+      // Parent Portal not enabled for this school (or unavailable): the panel stays hidden.
+      error: () => { this.guardians = null; this.cdr.markForCheck(); }
+    });
+  }
+
+  guardianAccessSummary(g: GuardianLink): string {
+    const granted = [
+      g.canViewAttendance && 'Attendance', g.canViewFees && 'Fees', g.canPayFees && 'Payments',
+      g.canViewResults && 'Results', g.canViewTimetable && 'Timetable', g.canManageLeave && 'Leave',
+    ].filter(Boolean);
+    return granted.length === 6 ? 'Standard access' : granted.length ? granted.join(' · ') : 'No access';
+  }
+
+  guardianLoginLabel(g: GuardianLink): string {
+    if (!g.parentActive) return 'Account disabled';
+    return g.loginState === 'ACTIVE' ? 'Login active' : g.loginState === 'DISABLED' ? 'Login disabled' : 'No login';
   }
 
   get canCreateLogin(): boolean {

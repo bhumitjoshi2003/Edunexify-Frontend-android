@@ -33,6 +33,9 @@ import { ClassAttendanceInsightsComponent } from '../attendance-insights/class-a
 })
 export class AttendanceSummaryComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  /** Cancels in-flight summary/calendar requests whenever the report is reset — e.g. a parent
+   *  switching child — so a late answer for the previous student never lands on this one. */
+  private readonly cancelReportRequests$ = new Subject<void>();
   private loadStudentList$ = new Subject<{ className: string; sectionId: number | undefined }>();
 
   role = '';
@@ -236,6 +239,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
   }
 
   private resetCalendarState(): void {
+    this.cancelReportRequests$.next();
     this.calendarExpanded = false;
     this.calendarLoading = false;
     this.currentCalendarWeeks = [];
@@ -278,7 +282,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     this.attendanceService.getStudentSummary(this.selectedStudentId, this.buildParams())
-      .pipe(takeUntil(this.destroy$)).subscribe({
+      .pipe(takeUntil(this.destroy$), takeUntil(this.cancelReportRequests$)).subscribe({
         next: (data) => { this.studentSummary = data; this.isLoading = false; this.cdr.markForCheck(); },
         error: (err) => {
           this.logger.error('Failed to load student summary:', err);
@@ -295,7 +299,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     this.attendanceService.getClassSummary(this.selectedClass, this.buildParams(), this.selectedSectionId)
-      .pipe(takeUntil(this.destroy$)).subscribe({
+      .pipe(takeUntil(this.destroy$), takeUntil(this.cancelReportRequests$)).subscribe({
         next: (data) => { this.classSummary = data; this.isLoading = false; this.cdr.markForCheck(); },
         error: (err) => {
           this.logger.error('Failed to load class summary:', err);
@@ -330,7 +334,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
       forkJoin([
         this.attendanceService.getStudentDailyDetail(this.selectedStudentId, this.selectedMonth, this.selectedYear),
         this.holidayService.getHolidaysByRange(start, end)
-      ]).pipe(takeUntil(this.destroy$)).subscribe({
+      ]).pipe(takeUntil(this.destroy$), takeUntil(this.cancelReportRequests$)).subscribe({
           next: ([detail, holidays]) => {
             this.dailyDetailCache.set(key, detail);
             const hMap = new Map<string, string>();
@@ -406,7 +410,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     forkJoin([
       this.attendanceService.getStudentDailyDetail(this.selectedStudentId, monthNum, row.year),
       this.holidayService.getHolidaysByRange(start, end)
-    ]).pipe(takeUntil(this.destroy$)).subscribe({
+    ]).pipe(takeUntil(this.destroy$), takeUntil(this.cancelReportRequests$)).subscribe({
         next: ([detail, holidays]) => {
           this.dailyDetailCache.set(key, detail);
           const hMap = new Map<string, string>();

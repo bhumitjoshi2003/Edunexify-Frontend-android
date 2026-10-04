@@ -25,6 +25,9 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 })
 export class ApplyLeaveComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private readonly leavesRequest$ = new Subject<void>();
+  /** A deep-linked child this parent can no longer access: nothing is loaded or submitted for it. */
+  childUnavailable = false;
   leaveForm: FormGroup;
   errorMessage: string = '';
   studentId: string = '';
@@ -116,10 +119,16 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       }
       this.parentPortalService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe({
         next: profile => {
-          const child = profile.children.find(item => item.studentId === requestedStudentId && item.canManageLeave);
+          const linked = profile.children.find(item => item.studentId === requestedStudentId);
+          const child = linked?.canManageLeave ? linked : undefined;
           if (!child) {
+            // Keep the requested id so the child switcher says this child is unavailable and
+            // offers the others — never silently shows another child's leave.
+            this.studentId = requestedStudentId;
+            this.childUnavailable = true;
             this.isLoading = false;
-            this.toast.error('Leave access unavailable', 'Please contact the school administrator.');
+            if (linked) this.toast.error('Leave access unavailable', 'Please contact the school administrator.');
+            else this.toast.error('Student unavailable', 'You no longer have access to this student.');
             this.cdr.markForCheck();
             return;
           }
@@ -153,10 +162,14 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
   }
 
   loadStudentLeaves(): void {
+    if (this.childUnavailable) return;
+    // Latest request wins: a page turn, or a parent switching child, cancels the previous load,
+    // so a late answer for the previous child never fills this child's list.
+    this.leavesRequest$.next();
     this.isLoading = true;
     this.cdr.markForCheck();
     this.leaveService.getLeavesByStudentId(this.studentId, this.currentPage, this.pageSize)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$), takeUntil(this.leavesRequest$))
       .subscribe({
         next: (response: PaginatedResponse<any>) => {
           this.leaves = response.content.map((leave: any) => ({
@@ -186,6 +199,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       this.toast.error('Leave access unavailable', 'Please contact the school administrator.');
       return;
     }
+    this.childUnavailable = false;
     this.studentId = child.studentId;
     this.studentName = child.studentName;
     this.className = child.className;
@@ -328,6 +342,10 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
         leaveDate: formattedLeaveDate,
         reason: finalReason,
       };
+      if (this.authStateService.getUserRole() === 'PARENT' && this.childUnavailable) {
+        this.toast.error('Student unavailable', 'You no longer have access to this student.');
+        return;
+      }
       const parentStudentId = this.authStateService.getUserRole() === 'PARENT' ? this.studentId : undefined;
       this.leaveService.applyLeave(leaveRequest, parentStudentId).pipe(takeUntil(this.destroy$)).subscribe({
         next: (response) => {

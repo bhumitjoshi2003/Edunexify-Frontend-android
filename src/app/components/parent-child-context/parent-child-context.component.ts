@@ -54,7 +54,7 @@ export class ParentChildContextComponent implements OnChanges {
         this.child ? this.context.select(this.child) : this.context.clear();
         this.cdr.markForCheck();
       },
-      error: () => { this.context.clear(); this.invalid = true; this.cdr.markForCheck(); }
+      error: () => { this.children = []; this.child = null; this.context.clear(); this.invalid = true; this.cdr.markForCheck(); }
     });
   }
 

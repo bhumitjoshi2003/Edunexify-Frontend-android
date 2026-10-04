@@ -31,6 +31,8 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 })
 export class ReportCardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  /** Fires when a parent switches child: cancels the previous child's card / PDF requests. */
+  private readonly cardRequest$ = new Subject<void>();
 
   studentId = '';
   session = '';
@@ -137,6 +139,11 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       this.toast.error('Results access unavailable', 'Please contact the school administrator.');
       return;
     }
+    this.cardRequest$.next();
+    this.revokeInline();
+    this.inlineState = 'idle';
+    this.allResults = [];
+    this.displayResults = [];
     this.studentId = child.studentId;
     this.loading = true;
     this.reportCardData = null;
@@ -163,7 +170,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     this.ambiguousCandidates = null;
     this.rcTemplateService
       .getReportCard(this.studentId, this.templateId!, this.session, this.selectedClassId)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$), takeUntil(this.cardRequest$))
       .subscribe({
         next: (data) => {
           this.reportCardData = data;
@@ -214,7 +221,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   private loadLegacyMode(): void {
     this.marksService.getStudentResults(this.studentId, this.session)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$), takeUntil(this.cardRequest$))
       .subscribe({
         next: (data) => {
           this.allResults = data;
@@ -453,7 +460,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     if (!request) return;
     this.inlineState = 'loading';
     this.cdr.markForCheck();
-    request.pipe(takeUntil(this.destroy$)).subscribe({
+    request.pipe(takeUntil(this.destroy$), takeUntil(this.cardRequest$)).subscribe({
       next: (blob) => {
         this.revokeInline();
         this.inlineObjectUrl = URL.createObjectURL(blob);

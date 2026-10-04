@@ -288,3 +288,5 @@ app-parent-child-context { display: block; margin-bottom: 2px; }
   .student-hero .primary-badge { margin-left: 0; }
   .hero-icon { display: none; }
 }
+
+.no-active-badge { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #92400e; background: #fef3c7; white-space: nowrap; }

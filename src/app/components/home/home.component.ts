@@ -265,8 +265,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.showForgotForm = false;
         this.cdr.markForCheck();
         this.toast.confirm({
-          title: 'Reset Link Sent!',
-          html: `<p style="color:#64748b;font-size:.88rem;line-height:1.6">A password reset link has been sent to <strong style="color:#1e3a5f">${email}</strong>. Check your inbox and follow the link to set your new password.</p>`,
+          title: 'Check Your Email',
+          html: `<p style="color:#64748b;font-size:.88rem;line-height:1.6">If the User ID and email match an account, a password reset link has been sent to <strong style="color:#1e3a5f">${email}</strong>. Check your inbox (and spam folder) and follow the link to set your new password.</p>`,
           confirmText: 'Got it!',
           icon: 'success',
         });

@@ -59,3 +59,4 @@
   .child-tab-text strong { font-size: 0.8rem; max-width: 100px; }
   .child-tab-text small { display: none; }
 }
+.child-context.invalid span { display: block; margin-top: 2px; font-size: 12px; }

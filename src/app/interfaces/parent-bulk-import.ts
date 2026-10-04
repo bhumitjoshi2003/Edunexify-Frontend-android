@@ -11,7 +11,9 @@ export type RowStatus =
   | 'STUDENT_EXITED'
   | 'MISSING_REQUIRED_FIELD'
   | 'DUPLICATE_ROW_IN_FILE'
-  | 'ALREADY_LINKED';
+  | 'ALREADY_LINKED'
+  /** The matched parent's link to this student ended — re-opened only if the admin chooses Restore. */
+  | 'RESTORABLE';
 
 export interface ParentImportRowPreview {
   row: number;
@@ -38,7 +40,7 @@ export interface ParentImportPreviewResponse {
   duplicateCount: number;
 }
 
-export type RowAction = 'CREATE_NEW' | 'LINK_EXISTING' | 'SKIP';
+export type RowAction = 'CREATE_NEW' | 'LINK_EXISTING' | 'SKIP' | 'RESTORE';
 
 export interface RowResolution {
   action: RowAction;
@@ -62,6 +64,16 @@ export interface ParentImportConfirmResponse {
   skipped: number;
   created: ParentImportConfirmedRow[];
   skippedRows: ParentImportRowPreview[];
+  /** Per row: SUCCESS (linked / restored), WARNING (nothing written) or ERROR. Each row commits on its own. */
+  results?: ParentImportRowResult[];
+}
+
+export interface ParentImportRowResult {
+  row: number;
+  outcome: 'SUCCESS' | 'WARNING' | 'ERROR';
+  message: string;
+  parentId: string | null;
+  studentId: string;
 }
 
 /** Rows the admin can act on — everything else auto-proceeds (VALID_NEW_PARENT /
@@ -71,4 +83,5 @@ export interface ParentImportConfirmResponse {
 export const RESOLVABLE_STATUSES: RowStatus[] = [
   'CONFLICT_PHONE_MATCH_EMAIL_DIFFERS',
   'CONFLICT_EMAIL_MATCH_PHONE_DIFFERS',
+  'RESTORABLE',
 ];

@@ -1,5 +1,5 @@
 export type ParentStatusFilter = 'ALL' | 'ACTIVE' | 'DISABLED';
-export type ParentLinkedFilter = 'ALL' | 'LINKED' | 'UNLINKED';
+export type ParentLinkedFilter = 'ALL' | 'LINKED' | 'UNLINKED' | 'NO_ACTIVE_CHILDREN';
 
 export interface ParentSummary {
   parentId: string;
@@ -8,6 +8,8 @@ export interface ParentSummary {
   phoneNumber: string;
   active: boolean;
   linkedChildren: number;
+  /** Had linked children, but every link has ended (operational info — never auto-deactivated). */
+  noActiveChildren?: boolean;
 }
 
 export interface ChildAccess {
@@ -38,6 +40,36 @@ export interface ParentDirectoryStats {
   activeParents: number;
   linkedStudents: number;
   unlinkedParents: number;
+  parentsWithoutActiveChildren?: number;
+}
+
+/** Name, email and phone only — the parent ID, school, status, links and login aren't editable here. */
+export interface UpdateParentRequest {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
+
+/** One guardian of a student, for the admin's Student Details (no password/security data). */
+export interface GuardianLink {
+  relationshipId: number;
+  parentId: string;
+  parentName: string;
+  phoneNumber: string;
+  email: string | null;
+  relationshipType: string;
+  primaryGuardian: boolean;
+  linkStatus: 'ACTIVE' | 'UPCOMING' | 'ENDED';
+  effectiveFrom: string;
+  effectiveUntil: string | null;
+  canViewAttendance: boolean;
+  canViewFees: boolean;
+  canPayFees: boolean;
+  canViewResults: boolean;
+  canViewTimetable: boolean;
+  canManageLeave: boolean;
+  parentActive: boolean;
+  loginState: 'ACTIVE' | 'DISABLED' | 'MISSING';
 }
 
 /** parentId is never supplied by the caller — Edunexify generates it (par_YYnnnnnn).
@@ -61,4 +93,6 @@ export interface LinkStudentRequest {
   canManageLeave: boolean;
   effectiveFrom: string;
   effectiveUntil?: string | null;
+  /** True once the admin confirmed taking primary over from the current primary guardian. */
+  replacePrimary?: boolean;
 }

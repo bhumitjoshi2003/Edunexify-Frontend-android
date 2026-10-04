@@ -12,11 +12,21 @@ export class ParentChildContextService {
 
   constructor(private authState: AuthStateService) {}
 
+  /**
+   * Picks the selected child. An explicitly requested child (a deep link) is used only if this
+   * parent can still access it — otherwise nothing is selected (null), never silently another
+   * child: the page shows "You no longer have access to this student." and lets the parent choose.
+   * Without a request, the last selected child (same parent) or the first one is used.
+   */
   reconcile(profile: ParentProfile, requestedStudentId?: string | null): ChildAccess | null {
     const validChildren = profile.children;
+    if (requestedStudentId) {
+      const requested = validChildren.find(child => child.studentId === requestedStudentId) ?? null;
+      requested ? this.select(requested) : this.selectedSubject.next(null);
+      return requested;
+    }
     const stored = this.readStored();
-    const selected = validChildren.find(child => child.studentId === requestedStudentId)
-      ?? (stored?.parentId === profile.parent.parentId
+    const selected = (stored?.parentId === profile.parent.parentId
         ? validChildren.find(child => child.studentId === stored.studentId)
         : undefined)
       ?? validChildren[0]

@@ -22,6 +22,8 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 })
 export class BusFeesComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  /** Latest applicable-fee request wins — a parent switching child cancels the previous child's. */
+  private readonly applicableRequest$ = new Subject<void>();
   sessions: AcademicSession[] = [];
   currentSession: AcademicSession | null = null;
   busFeeStructures: BusFee[] = [];
@@ -64,11 +66,13 @@ export class BusFeesComponent implements OnInit, OnDestroy {
       this.subjectStudentId = requestedStudentId;
       this.parentPortalService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe({
         next: profile => {
-          const allowed = profile.children.some(child => child.studentId === this.subjectStudentId && child.canViewFees);
-          if (!allowed) {
-            this.subjectStudentId = '';
+          const linked = profile.children.find(child => child.studentId === this.subjectStudentId);
+          if (!linked?.canViewFees) {
+            // The requested id stays, so the child switcher says this child is unavailable and
+            // offers the others — never silently another child's fee.
             this.accessDenied = true;
-            this.toast.error('Bus fees access unavailable', 'Please contact the school administrator.');
+            if (linked) this.toast.error('Bus fees access unavailable', 'Please contact the school administrator.');
+            else this.toast.error('Student unavailable', 'You no longer have access to this student.');
             this.cdr.markForCheck();
           } else if (this.currentSession) {
             this.loadApplicableBusFee();
@@ -95,6 +99,8 @@ export class BusFeesComponent implements OnInit, OnDestroy {
       replaceUrl: true,
     });
     if (!child.canViewFees) {
+      this.applicableRequest$.next();
+      this.applicableBusFee = null;
       this.accessDenied = true;
       this.toast.error('Bus fees access unavailable', 'Please contact the school administrator.');
       this.cdr.markForCheck();
@@ -156,12 +162,13 @@ export class BusFeesComponent implements OnInit, OnDestroy {
    *  always backend-computed (FeeCalculationService.loadBusFee), never matched against the
    *  slab table on the frontend. */
   private loadApplicableBusFee(): void {
+    this.applicableRequest$.next();
     if (!this.currentSession || !this.subjectStudentId) return;
     this.applicableLoading = true;
     this.applicableBusFee = null;
     this.cdr.markForCheck();
     this.busFeesService.getApplicableBusFee(this.subjectStudentId, this.currentSession.label)
-      .pipe(takeUntil(this.destroy$)).subscribe({
+      .pipe(takeUntil(this.destroy$), takeUntil(this.applicableRequest$)).subscribe({
         next: (applicable) => {
           this.applicableBusFee = applicable;
           this.applicableLoading = false;

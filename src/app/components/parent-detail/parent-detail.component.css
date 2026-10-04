@@ -185,3 +185,5 @@ app-parent-access-editor { display: block; margin-top: 14px; }
   .reset-field { max-width: none; }
   .form-actions button { flex: 1; }
 }
+
+.edit-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }

@@ -16,7 +16,7 @@
     <label>Access starts<input formControlName="effectiveFrom" type="date"></label>
   </div>
 
-  <label class="primary-guardian-field"><input type="checkbox" formControlName="primaryGuardian"><span><strong>Primary guardian</strong><small>Main school contact for this student</small></span></label>
+  <label class="primary-guardian-field"><input type="checkbox" formControlName="primaryGuardian"><span><strong>Primary guardian</strong><small *ngIf="!currentPrimary">Main school contact for this student</small><small *ngIf="currentPrimary" class="current-primary">{{ currentPrimary.parentName }} is the current primary guardian — ticking this asks to replace them.</small></span></label>
 
   <div class="permission-heading"><div><span class="step-number">02</span><h3>Choose access</h3><p *ngIf="customizingAccess">Only checked items will be visible.</p></div></div>
 

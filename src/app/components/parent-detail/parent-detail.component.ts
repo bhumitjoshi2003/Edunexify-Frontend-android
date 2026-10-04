@@ -1,5 +1,6 @@
 import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -11,7 +12,7 @@ import { ParentAccessEditorComponent } from '../parent-access-editor/parent-acce
 @Component({
   selector: 'app-parent-detail',
   standalone: true,
-  imports: [CommonModule, MatIconModule, ParentAccessEditorComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, ParentAccessEditorComponent],
   templateUrl: './parent-detail.component.html',
   styleUrl: './parent-detail.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +34,11 @@ export class ParentDetailComponent implements OnInit, OnDestroy {
   showResetPassword = false;
   resettingPassword = false;
   resetPasswordError: string | null = null;
+  showEditDetails = false;
+  savingDetails = false;
+  detailsError: string | null = null;
+  editDetails = { name: '', email: '', phoneNumber: '' };
+  resendingSetupLink = false;
 
   ngOnInit(): void {
     this.parentId = this.route.snapshot.paramMap.get('parentId') ?? '';
@@ -54,7 +60,14 @@ export class ParentDetailComponent implements OnInit, OnDestroy {
 
   goBack(): void { this.location.back(); }
 
-  startLinking(): void { this.editingChild = null; this.showAccessEditor = true; }
+  startLinking(): void {
+    if (this.profile && !this.profile.parent.active) {
+      this.toast.warning('Parent account is disabled', 'Reactivate this parent account before linking a student.');
+      return;
+    }
+    this.editingChild = null;
+    this.showAccessEditor = true;
+  }
   editChild(child: ChildAccess): void { this.editingChild = child; this.showAccessEditor = true; }
   cancelEdit(): void { this.showAccessEditor = false; this.editingChild = null; }
 
@@ -100,6 +113,72 @@ export class ParentDetailComponent implements OnInit, OnDestroy {
         next: () => { this.toast.success('Access removed'); this.loadProfile(); },
         error: () => this.toast.error('Could not remove access'),
       });
+  }
+
+  openEditDetails(): void {
+    if (!this.profile) return;
+    const parent = this.profile.parent;
+    this.editDetails = { name: parent.name, email: parent.email ?? '', phoneNumber: parent.phoneNumber };
+    this.detailsError = null;
+    this.showEditDetails = true;
+    this.showResetPassword = false;
+  }
+
+  cancelEditDetails(): void { this.showEditDetails = false; this.detailsError = null; }
+
+  saveDetails(): void {
+    if (!this.profile || this.savingDetails) return;
+    const request = {
+      name: this.editDetails.name.trim(), email: this.editDetails.email.trim(), phoneNumber: this.editDetails.phoneNumber.trim(),
+    };
+    if (!request.name || !request.email || !request.phoneNumber) {
+      this.detailsError = 'Name, email and phone are all required.';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.email)) { this.detailsError = 'Enter a valid email address.'; return; }
+    const emailChanged = request.email.toLowerCase() !== (this.profile.parent.email ?? '').toLowerCase();
+    this.savingDetails = true;
+    this.detailsError = null;
+    this.parentService.updateParent(this.profile.parent.parentId, request).pipe(takeUntil(this.destroy$)).subscribe({
+      next: profile => {
+        this.profile = profile;
+        this.savingDetails = false;
+        this.showEditDetails = false;
+        this.toast.success('Details saved', emailChanged
+          ? 'The login email changed too. Any earlier setup link no longer works — resend it if needed.' : undefined);
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        this.savingDetails = false;
+        this.detailsError = err?.error?.message || (typeof err?.error === 'string' ? err.error : 'Could not save the details.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  async resendSetupLink(): Promise<void> {
+    if (!this.profile || this.resendingSetupLink) return;
+    const parent = this.profile.parent;
+    const confirmed = await this.toast.confirm({
+      title: 'Resend setup link?',
+      message: `A new account setup link (valid for 72 hours) will be emailed to ${parent.email}. Any earlier link stops working. The current password is not changed.`,
+      confirmText: 'Send link', cancelText: 'Cancel', icon: 'question',
+    });
+    if (!confirmed) return;
+    this.resendingSetupLink = true;
+    this.cdr.markForCheck();
+    this.parentService.resendSetupLink(parent.parentId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.resendingSetupLink = false;
+        this.toast.success('Setup link sent', `${parent.name} can set their password from the email within 72 hours.`);
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        this.resendingSetupLink = false;
+        this.toast.error('Could not send the link', err?.error?.message || 'Please try again.');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   toggleResetPassword(): void {

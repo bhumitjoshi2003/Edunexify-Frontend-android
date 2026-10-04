@@ -26,6 +26,10 @@ import { ParentChildContextComponent } from '../parent-child-context/parent-chil
 })
 export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChecked {
   private destroy$ = new Subject<void>();
+  /** Latest results request wins — a session change or a parent switching child cancels the previous one. */
+  private readonly resultsRequest$ = new Subject<void>();
+  /** A deep-linked child this parent can no longer access: nothing is loaded for it. */
+  childUnavailable = false;
   private charts: Map<number, Chart> = new Map();
   private chartsNeedRender = false;
   private progressChart: Chart | null = null;
@@ -65,10 +69,16 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
       this.studentId = requestedStudentId;
       this.parentPortalService.getMyProfile().pipe(takeUntil(this.destroy$)).subscribe({
         next: profile => {
-          const allowed = profile.children.some(child => child.studentId === this.studentId && child.canViewResults);
-          if (!allowed) {
-            this.studentId = '';
-            this.toast.error('Results access unavailable', 'Please contact the school administrator.');
+          const linked = profile.children.find(child => child.studentId === this.studentId);
+          if (!linked?.canViewResults) {
+            // The requested id stays, so the child switcher says this child is unavailable and
+            // offers the others — never silently another child's results.
+            this.childUnavailable = true;
+            this.resultsRequest$.next();
+            this.results = [];
+            this.loading = false;
+            if (linked) this.toast.error('Results access unavailable', 'Please contact the school administrator.');
+            else this.toast.error('Student unavailable', 'You no longer have access to this student.');
             this.cdr.markForCheck();
           }
         },
@@ -109,6 +119,8 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
   }
 
   loadResults(): void {
+    this.resultsRequest$.next();
+    if (this.childUnavailable) { this.loading = false; return; }
     this.loading = true;
     this.results = [];
     this.expandedExamId = null;
@@ -117,7 +129,7 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
     if (this.progressChart) { this.progressChart.destroy(); this.progressChart = null; }
 
     this.marksService.getStudentResults(this.studentId, this.selectedSession)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$), takeUntil(this.resultsRequest$))
       .subscribe({
         next: (data) => {
           this.results = data;
@@ -140,6 +152,7 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
       this.toast.error('Results access unavailable', 'Please contact the school administrator.');
       return;
     }
+    this.childUnavailable = false;
     this.studentId = child.studentId;
     this.router.navigate([], {
       relativeTo: this.route,

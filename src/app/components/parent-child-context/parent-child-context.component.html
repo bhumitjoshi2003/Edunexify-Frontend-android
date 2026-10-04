@@ -12,7 +12,17 @@
   </button>
 </nav>
 
-<aside class="child-context invalid" *ngIf="isParent && invalid" aria-live="polite">
+<aside class="child-context invalid" *ngIf="isParent && invalid" aria-live="polite" role="alert">
   <div class="child-context-icon"><mat-icon>link_off</mat-icon></div>
-  <strong>This child is no longer available to this account.</strong>
+  <div>
+    <strong>You no longer have access to this student.</strong>
+    <span *ngIf="visibleChildren.length">Choose one of your children to continue:</span>
+    <span *ngIf="!visibleChildren.length">Please contact the school if you think this is a mistake.</span>
+  </div>
 </aside>
+<nav class="child-tabs" *ngIf="isParent && invalid && visibleChildren.length" aria-label="Choose a child">
+  <button type="button" *ngFor="let c of visibleChildren; trackBy: trackByStudentId" class="child-tab" (click)="selectChild(c)">
+    <span class="child-tab-avatar">{{ c.studentName.charAt(0) }}</span>
+    <span class="child-tab-text"><strong>{{ c.studentName }}</strong><small>Class {{ c.className }}{{ c.sectionName ? ' · ' + c.sectionName : '' }}</small></span>
+  </button>
+</nav>
