@@ -138,6 +138,26 @@
       </table>
     </div>
 
+    <div class="error-table-wrapper" *ngIf="result.warnings?.length">
+      <h3 class="error-table__title">Imported with Warnings</h3>
+      <table class="error-table">
+        <thead>
+          <tr>
+            <th>Row</th>
+            <th>Name</th>
+            <th>Warning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let w of result.warnings">
+            <td>{{ w.row }}</td>
+            <td>{{ w.studentId || '—' }}</td>
+            <td class="error-reason">{{ w.reason }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="error-table-wrapper" *ngIf="result.errors.length > 0">
       <h3 class="error-table__title">Failed Rows</h3>
       <table class="error-table">

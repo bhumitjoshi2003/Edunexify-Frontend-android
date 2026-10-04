@@ -214,3 +214,8 @@
 }
 
 @keyframes tl-spin { to { transform: rotate(360deg); } }
+
+/* Teacher Lifecycle Phase 1: status hint */
+.tl-card-status { display: inline-block; margin-top: 2px; padding: 1px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; background: #dbeafe; color: #1d4ed8; width: fit-content; }
+.tl-card-status.is-left { background: #fee2e2; color: #b91c1c; }
+.tl-card-status.is-leaving { background: #fff7ed; color: #9a3412; }

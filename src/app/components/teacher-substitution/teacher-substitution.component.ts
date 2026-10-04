@@ -309,6 +309,8 @@ export class TeacherSubstitutionComponent implements OnInit, OnDestroy {
       case 'APPROVED_LEAVE': return 'Approved leave';
       case 'ABSENT': return 'Absent';
       case 'ON_LEAVE': return 'On leave';
+      case 'LEFT': return 'Left school — reassign in timetable';
+      case 'NOT_JOINED': return 'Not joined yet';
       default: return '';
     }
   }

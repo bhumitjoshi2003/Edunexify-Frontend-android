@@ -12,6 +12,10 @@ interface Teacher {
   teacherId: string;
   name: string;
   phoneNumber?: string;
+  status?: 'ACTIVE' | 'UPCOMING' | 'LEFT';
+  joiningDate?: string | null;
+  rejoinDate?: string | null;
+  leavingDate?: string | null;
 }
 
 @Component({

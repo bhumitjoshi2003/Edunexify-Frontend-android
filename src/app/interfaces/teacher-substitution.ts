@@ -37,7 +37,7 @@ export interface TeacherSubstitution {
 }
 
 export type SubstitutionState = 'NEEDS_SUBSTITUTE' | 'COVERED' | 'NO_LONGER_NEEDED';
-export type UnavailabilityReason = 'APPROVED_LEAVE' | 'ABSENT' | 'ON_LEAVE';
+export type UnavailabilityReason = 'APPROVED_LEAVE' | 'ABSENT' | 'ON_LEAVE' | 'LEFT' | 'NOT_JOINED';
 
 export interface UncoveredPeriod {
   timetableEntryId: number;

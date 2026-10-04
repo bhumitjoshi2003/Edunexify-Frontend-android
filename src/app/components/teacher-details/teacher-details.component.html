@@ -115,21 +115,76 @@
         <button
           type="button"
           class="td-btn td-btn-exit"
-          *ngIf="getUserRole() === 'ADMIN' && teacherDetails.status !== 'LEFT' && !isEditing"
+          *ngIf="getUserRole() === 'ADMIN' && teacherDetails.status !== 'LEFT' && !overview?.exitScheduled && !isEditing"
           (click)="openExitModal()"
         >
           Mark as Left
         </button>
         <button
           type="button"
+          class="td-btn td-btn-exit"
+          *ngIf="getUserRole() === 'ADMIN' && overview?.exitScheduled && !isEditing"
+          (click)="cancelScheduledExit()"
+        >
+          Cancel Scheduled Exit
+        </button>
+        <button
+          type="button"
           class="td-btn td-btn-reactivate"
           *ngIf="getUserRole() === 'ADMIN' && teacherDetails.status === 'LEFT' && !isEditing"
-          (click)="reactivateTeacher()"
+          (click)="openRejoinModal()"
         >
-          Re-activate
+          Rejoin
+        </button>
+        <button
+          type="button"
+          class="td-btn td-btn-reactivate"
+          *ngIf="canCreateLogin && !isEditing"
+          (click)="createMissingLogin()"
+          [disabled]="lifecycleBusy"
+        >
+          Create Login
         </button>
       </div>
     </div>
+
+    <!-- ── Lifecycle & responsibilities (admin, read-only) ─────────────── -->
+    <div class="td-card td-overview-card" *ngIf="getUserRole() === 'ADMIN' && overview">
+      <div class="td-card-heading">
+        <div class="td-card-icon"><mat-icon>assignment_ind</mat-icon></div>
+        <div><span>Status &amp; responsibilities</span><p>Current lifecycle, login and teaching load.</p></div>
+        <span class="td-status-chip" [class.is-upcoming]="overview.status === 'UPCOMING'" [class.is-left]="overview.status === 'LEFT'">
+          {{ statusLabel(overview.status) }}
+        </span>
+      </div>
+      <div class="td-overview-notice" *ngIf="overview.status === 'UPCOMING' && overview.startsOn">
+        <mat-icon>event_upcoming</mat-icon>Joins on {{ overview.startsOn | date: "d MMMM yyyy" }} — login and attendance start that day.
+      </div>
+      <div class="td-overview-notice is-warning" *ngIf="overview.exitScheduled">
+        <mat-icon>event_busy</mat-icon>Leaves after {{ overview.leavingDate | date: "d MMMM yyyy" }} (last working day). Access ends the next day.
+      </div>
+      <div class="td-overview-notice is-warning" *ngIf="overview.status === 'LEFT' && overview.timetablePeriods.length">
+        <mat-icon>warning_amber</mat-icon>{{ overview.timetablePeriods.length }} timetable period(s) are still assigned to this teacher — reassign them in the timetable.
+      </div>
+      <dl class="td-overview-grid">
+        <div><dt>Joined</dt><dd>{{ overview.joiningDate ? (overview.joiningDate | date: "d MMM yyyy") : "—" }}<ng-container *ngIf="overview.rejoinDate"> · rejoined {{ overview.rejoinDate | date: "d MMM yyyy" }}</ng-container></dd></div>
+        <div><dt>Class teacher</dt><dd>{{ overview.classTeacher ? ("Class " + overview.classTeacher + (overview.classTeacherSectionName ? " - " + overview.classTeacherSectionName : "")) : "Not assigned" }}</dd></div>
+        <div><dt>Login</dt><dd>{{ !overview.login.exists ? "No login" : (overview.login.active ? "Active" : "Inactive") }}</dd></div>
+        <div><dt>Pending leave</dt><dd>{{ overview.pendingLeaveCount }}</dd></div>
+        <div><dt>Upcoming covers</dt><dd>{{ overview.upcomingCoverCount }}</dd></div>
+        <div><dt>Timetable periods</dt><dd>{{ overview.timetablePeriods.length }}</dd></div>
+      </dl>
+      <ul class="td-period-list" *ngIf="overview.timetablePeriods.length">
+        <li *ngFor="let p of overview.timetablePeriods | slice: 0 : 12">
+          {{ dayLabel(p.day) }} P{{ p.periodNumber }} · Class {{ p.className }}<ng-container *ngIf="p.sectionName"> - {{ p.sectionName }}</ng-container> · {{ p.subjectName }}
+        </li>
+        <li *ngIf="overview.timetablePeriods.length > 12" class="td-period-more">+ {{ overview.timetablePeriods.length - 12 }} more</li>
+      </ul>
+      <p class="td-overview-grants" *ngIf="overview.grants.length">
+        Extra class access: <ng-container *ngFor="let g of overview.grants; let last = last">Class {{ g.className }}<ng-container *ngIf="g.sectionName"> - {{ g.sectionName }}</ng-container>{{ last ? "" : ", " }}</ng-container>
+      </p>
+    </div>
+    <p class="td-overview-error" *ngIf="getUserRole() === 'ADMIN' && overviewFailed">Status and responsibilities are unavailable right now.</p>
 
     <div class="td-card td-exit-card" *ngIf="teacherDetails.status === 'LEFT'">
       <div class="td-card-heading">
@@ -412,8 +467,13 @@
     </div>
     <div class="cp-field">
       <label class="cp-label">Leaving date *</label>
-      <input type="date" class="cp-input exit-input" [(ngModel)]="exitRequest.leavingDate" [max]="todayStr" />
+      <input type="date" class="cp-input exit-input" [(ngModel)]="exitRequest.leavingDate" />
+      <small class="exit-hint" *ngIf="exitIsScheduled">A future date schedules the exit: the teacher keeps working and keeps their login through this day.</small>
     </div>
+    <p class="exit-impact" *ngIf="overview && !exitIsScheduled && (overview.pendingLeaveCount || overview.upcomingCoverCount || overview.timetablePeriods.length)">
+      On exit: {{ overview.pendingLeaveCount }} pending leave request(s) and {{ overview.upcomingCoverCount }} upcoming cover(s) will be cancelled;
+      {{ overview.timetablePeriods.length }} timetable period(s) stay assigned until you reassign them.
+    </p>
     <div class="cp-field">
       <label class="cp-label">Remarks</label>
       <textarea class="cp-input exit-input exit-remarks" rows="3" [(ngModel)]="exitRequest.exitRemarks" placeholder="Optional notes..."></textarea>
@@ -421,6 +481,41 @@
     <div class="cp-actions">
       <button class="cp-btn-cancel" (click)="closeExitModal()">Cancel</button>
       <button class="cp-btn-submit exit-submit" (click)="submitExit()" [disabled]="exitLoading">{{ exitLoading ? "Processing…" : "Confirm" }}</button>
+    </div>
+  </div>
+</div>
+
+<div class="cp-overlay" *ngIf="showRejoinModal" (click)="closeRejoinModal()">
+  <div class="cp-modal exit-modal" (click)="$event.stopPropagation()">
+    <h3 class="cp-title">Rejoin Teacher</h3>
+    <p class="exit-help">Reuses the same teacher record and ID; earlier history is unchanged. A future date keeps the teacher inactive until then.</p>
+    <div class="cp-field">
+      <label class="cp-label">Rejoining date *</label>
+      <input type="date" class="cp-input exit-input" [(ngModel)]="rejoinDate" />
+    </div>
+    <div class="cp-field">
+      <label class="cp-label">Class teacher of (optional)</label>
+      <select class="cp-input exit-input" [(ngModel)]="rejoinClassTeacher" (ngModelChange)="onRejoinClassChange($event)">
+        <option value="">Not assigned</option>
+        <option *ngFor="let c of managedClasses" [value]="c.name">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="cp-field" *ngIf="rejoinClassTeacher && rejoinSections.length">
+      <label class="cp-label">Section *</label>
+      <select class="cp-input exit-input" [(ngModel)]="rejoinSectionId">
+        <option [ngValue]="null" disabled>Select section...</option>
+        <option *ngFor="let sec of rejoinSections" [ngValue]="sec.id">{{ sec.name }}</option>
+      </select>
+    </div>
+    <div class="rejoin-review" *ngIf="overview && (overview.timetablePeriods.length || overview.grants.length)">
+      <strong><mat-icon>fact_check</mat-icon>Review before rejoining</strong>
+      <span *ngIf="overview.timetablePeriods.length">{{ overview.timetablePeriods.length }} old timetable period(s) are still assigned to this teacher and will apply again.</span>
+      <span *ngIf="overview.grants.length">{{ overview.grants.length }} extra class access grant(s) will apply again — remove any that no longer fit.</span>
+      <span>The previous class-teacher role is not restored automatically.</span>
+    </div>
+    <div class="cp-actions">
+      <button class="cp-btn-cancel" (click)="closeRejoinModal()">Cancel</button>
+      <button class="cp-btn-submit" (click)="submitRejoin()" [disabled]="rejoinLoading">{{ rejoinLoading ? "Processing…" : "Rejoin" }}</button>
     </div>
   </div>
 </div>

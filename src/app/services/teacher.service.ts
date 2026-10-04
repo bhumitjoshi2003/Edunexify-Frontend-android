@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Teacher, TeacherExitRequest } from '../interfaces/teacher';
+import { Teacher, TeacherExitRequest, TeacherRejoinRequest, TeacherOverview, TeacherLoginStatus, ClassTeacherConfigurationStatus } from '../interfaces/teacher';
 import { UploadRequestResponse, UploadCompleteResponse } from '../interfaces/upload';
 import { BulkImportResult } from './student.service';
 
@@ -119,7 +119,30 @@ export class TeacherService {
     return this.http.post<Teacher>(`${this.baseUrl}/${teacherId}/exit`, request);
   }
 
-  reactivateTeacher(teacherId: string): Observable<Teacher> {
-    return this.http.post<Teacher>(`${this.baseUrl}/${teacherId}/reactivate`, {});
+  reactivateTeacher(teacherId: string, request: TeacherRejoinRequest = {}): Observable<Teacher> {
+    return this.http.post<Teacher>(`${this.baseUrl}/${teacherId}/reactivate`, request);
+  }
+
+  /** Cancels an exit that is scheduled for a future date and hasn't taken effect yet. */
+  cancelScheduledExit(teacherId: string): Observable<Teacher> {
+    return this.http.delete<Teacher>(`${this.baseUrl}/${teacherId}/scheduled-exit`);
+  }
+
+  getOverview(teacherId: string): Observable<TeacherOverview> {
+    return this.http.get<TeacherOverview>(`${this.baseUrl}/${teacherId}/overview`);
+  }
+
+  getLoginStatus(teacherId: string): Observable<TeacherLoginStatus> {
+    return this.http.get<TeacherLoginStatus>(`${this.baseUrl}/${teacherId}/login`);
+  }
+
+  /** Creates the login for a teacher who has none; refused (409) when one already exists. */
+  createMissingLogin(teacherId: string): Observable<TeacherLoginStatus> {
+    return this.http.post<TeacherLoginStatus>(`${this.baseUrl}/${teacherId}/login`, {});
+  }
+
+  /** Whether the current session has class-teacher configuration that "Activate" would apply. */
+  getClassTeacherConfiguration(): Observable<ClassTeacherConfigurationStatus> {
+    return this.http.get<ClassTeacherConfigurationStatus>(`${this.baseUrl}/class-teacher-configuration`);
   }
 }

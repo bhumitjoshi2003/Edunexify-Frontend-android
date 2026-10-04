@@ -54,6 +54,9 @@
         <div class="tl-card-info">
           <span class="tl-card-name">{{ t.name }}</span>
           <span class="tl-card-id">{{ t.teacherId }}</span>
+          <span class="tl-card-status" *ngIf="t.status === 'UPCOMING'">Joins {{ (t.rejoinDate || t.joiningDate) | date: 'd MMM' }}</span>
+          <span class="tl-card-status is-left" *ngIf="t.status === 'LEFT'">Left</span>
+          <span class="tl-card-status is-leaving" *ngIf="t.status === 'ACTIVE' && t.leavingDate">Leaves after {{ t.leavingDate | date: 'd MMM' }}</span>
         </div>
         <span class="tl-arrow">›</span>
       </div>

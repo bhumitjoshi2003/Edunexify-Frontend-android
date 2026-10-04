@@ -955,3 +955,44 @@
     justify-content: center;
   }
 }
+
+/* ── Teacher Lifecycle Phase 1: status & responsibilities, rejoin review ── */
+.td-overview-card .td-card-heading { align-items: center; }
+.td-status-chip {
+  margin-left: auto; padding: 4px 12px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 800; background: #dcfce7; color: #15803d;
+}
+.td-status-chip.is-upcoming { background: #dbeafe; color: #1d4ed8; }
+.td-status-chip.is-left { background: #fee2e2; color: #b91c1c; }
+.td-overview-notice {
+  display: flex; align-items: center; gap: 8px; margin: 10px 0;
+  padding: 10px 12px; border-radius: 10px; background: #eff6ff; color: #1e3a8a; font-size: 0.82rem;
+}
+.td-overview-notice.is-warning { background: #fff7ed; color: #9a3412; }
+.td-overview-notice mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+.td-overview-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 16px; margin: 12px 0 0;
+}
+.td-overview-grid div { min-width: 0; }
+.td-overview-grid dt { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; }
+.td-overview-grid dd { margin: 2px 0 0; font-size: 0.86rem; font-weight: 700; color: #0f172a; }
+.td-period-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.td-period-list li {
+  padding: 4px 10px; border-radius: 999px; background: #f1f5f9; color: #334155; font-size: 0.74rem; font-weight: 600;
+}
+.td-period-list li.td-period-more { background: transparent; color: #64748b; }
+.td-overview-grants { margin: 10px 0 0; font-size: 0.8rem; color: #475569; }
+.td-overview-error { font-size: 0.8rem; color: #64748b; margin: 0 0 12px; }
+.exit-hint { display: block; margin-top: 4px; font-size: 0.74rem; color: #1d4ed8; }
+.exit-impact { font-size: 0.8rem; color: #9a3412; background: #fff7ed; border-radius: 10px; padding: 10px 12px; margin: 4px 0 12px; }
+.rejoin-review {
+  display: flex; flex-direction: column; gap: 4px; margin: 4px 0 12px;
+  padding: 10px 12px; border-radius: 10px; background: #fff7ed; color: #9a3412; font-size: 0.8rem;
+}
+.rejoin-review strong { display: flex; align-items: center; gap: 6px; }
+.rejoin-review mat-icon { font-size: 18px; width: 18px; height: 18px; }
+@media (max-width: 600px) {
+  .td-status-chip { margin-left: 0; }
+  .td-overview-grid { grid-template-columns: 1fr 1fr; }
+}

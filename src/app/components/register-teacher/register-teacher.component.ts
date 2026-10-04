@@ -6,10 +6,9 @@ import { Router } from '@angular/router';
 import { ToastService } from '../../services/toast.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { AuthService } from '../../auth/auth.service';
 import { AuthStateService } from '../../auth/auth-state.service';
-import { EMPTY, Subject, forkJoin, takeUntil } from 'rxjs';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { finalize, tap } from 'rxjs/operators';
 import { SchoolClass, SchoolService } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
@@ -37,7 +36,6 @@ export class RegisterTeacherComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private teacherService: TeacherService,
     private router: Router,
-    private authService: AuthService,
     private authState: AuthStateService,
     private logger: LoggerService,
     private toast: ToastService,
@@ -158,20 +156,14 @@ export class RegisterTeacherComponent implements OnInit, OnDestroy {
           ? this.sectionControl.value
           : null
       };
+      // One call: the backend generates the Employee ID and creates the teacher and their login
+      // (initial password = date of birth, YYYYMMDD) in a single transaction.
+      let joinsLater = false;
       this.teacherService.addTeacher(payload).pipe(
-        switchMap((response: { teacherId: string }) => {
+        takeUntil(this.destroy$),
+        tap((response: { teacherId: string; status?: string }) => {
           generatedTeacherId = response.teacherId;
-          return this.authService.register({
-            userId: response.teacherId,
-            role: 'TEACHER',
-            email: this.teacherForm.value.email
-          }).pipe(
-            catchError((authError) => {
-              this.logger.error('Error registering user in auth service:', authError);
-              this.toast.error('Error', 'Teacher record created but account setup failed. Please retry.');
-              return EMPTY;
-            })
-          );
+          joinsLater = response.status === 'UPCOMING';
         }),
         finalize(() => {
           this.isSubmitting = false;
@@ -180,13 +172,15 @@ export class RegisterTeacherComponent implements OnInit, OnDestroy {
       ).subscribe({
         next: () => {
           this.toast.success('Teacher Registered!', `Edunexify Employee ID: ${generatedTeacherId}. Initial password: Date of birth in YYYYMMDD format. ` +
-            'Example: 23 May 1990 → 19900523. The user must create a new password during their first login.');
+            'Example: 23 May 1990 → 19900523. The user must create a new password during their first login.' +
+            (joinsLater ? ' The login activates on the joining date.' : ''));
           this.teacherForm.reset();
         },
         error: (error) => {
           this.logger.error('Error registering teacher:', error);
           let errorMessage = 'Failed to register new teacher.';
-          if (error.status === 409) {
+          if ((error.status === 409 || error.status === 400) && typeof error.error === 'string' && error.error) {
+            // e.g. the class/section already has a class teacher — nothing was created.
             errorMessage = error.error;
           }
           this.toast.error('Error!', errorMessage);

@@ -172,6 +172,8 @@ export interface BulkImportResult {
   /** Non-null only when the uploaded CSV still had a legacy ID column — accepted for
    *  backward compatibility but its values were never used. */
   notice: string | null;
+  /** Non-blocking notes on imported rows (teacher import: email/phone already used). */
+  warnings?: BulkImportError[];
 }
 
 @Injectable({

@@ -23,7 +23,7 @@ import { SchoolClass, SchoolService } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
 import { MatIconModule } from '@angular/material/icon';
-import { TeacherExitRequest } from '../../interfaces/teacher';
+import { TeacherExitRequest, TeacherOverview } from '../../interfaces/teacher';
 
 interface TeacherDetails {
   teacherId?: string;
@@ -34,7 +34,10 @@ interface TeacherDetails {
   classTeacher?: string | null;
   classTeacherSectionId?: number | null;
   photoUrl?: string;
-  status?: 'ACTIVE' | 'LEFT';
+  gender?: string;
+  joiningDate?: string;
+  rejoinDate?: string | null;
+  status?: 'ACTIVE' | 'UPCOMING' | 'LEFT';
   leavingDate?: string;
   reasonForLeaving?: string;
   exitRemarks?: string;
@@ -102,6 +105,19 @@ export class TeacherDetailsComponent implements OnInit, OnDestroy {
     leavingDate: new Date().toISOString().slice(0, 10),
     exitRemarks: '',
   };
+  /** Admin-only lifecycle/responsibility overview (status, dates, timetable, grants, login). */
+  overview: TeacherOverview | null = null;
+  overviewFailed = false;
+  lifecycleBusy = false;
+
+  // Rejoin modal state
+  showRejoinModal = false;
+  rejoinLoading = false;
+  rejoinDate = '';
+  rejoinClassTeacher = '';
+  rejoinSectionId: number | null = null;
+  rejoinSections: Section[] = [];
+
   readonly exitReasons = [
     'Resigned',
     'Contract completed',
@@ -186,7 +202,10 @@ export class TeacherDetailsComponent implements OnInit, OnDestroy {
           this.teacherDetails = details;
           this.updatedDetails = { ...details };
           this.loadSectionsForClass(details.classTeacher ?? null, true);
-          if (this.role === 'ADMIN') this.loadScheduleHistory();
+          if (this.role === 'ADMIN') {
+            this.loadScheduleHistory();
+            this.loadOverview();
+          }
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -428,33 +447,47 @@ export class TeacherDetailsComponent implements OnInit, OnDestroy {
     }
 
     // Proceeds normally if form is valid
+    const classChanged = (this.updatedDetails?.classTeacher || null) !== (this.teacherDetails?.classTeacher || null)
+      || (this.updatedDetails?.classTeacherSectionId ?? null) !== (this.teacherDetails?.classTeacherSectionId ?? null);
+    const configurationWarning = classChanged && this.overview?.classTeacherConfigurationExists;
     this.toast
       .confirm({
         title: 'Are you sure?',
-        message: 'Do you want to save the changes?',
+        message: configurationWarning
+          ? 'This session has a class-teacher configuration. Running "Activate" on the Class Teachers page will replace this direct assignment with the configured one. Save anyway?'
+          : 'Do you want to save the changes?',
+        icon: configurationWarning ? 'warning' : undefined,
         confirmText: 'Yes, save it!',
       })
       .then((confirmed) => {
         if (confirmed) {
           if (this.updatedDetails) {
+            // Only the admin-editable fields — never status, exit details or the (signed) photo URL.
+            const d = this.updatedDetails;
             const payload = {
-              ...this.updatedDetails,
+              name: d.name,
+              email: d.email,
+              phoneNumber: d.phoneNumber,
+              dob: d.dob,
+              gender: d.gender,
+              classTeacher: d.classTeacher || null,
               // Belt-and-braces: a class with no sections must never carry a sectionId.
               classTeacherSectionId:
-                this.sections.length > 0
-                  ? (this.updatedDetails.classTeacherSectionId ?? null)
+                this.sections.length > 0 && d.classTeacher
+                  ? (d.classTeacherSectionId ?? null)
                   : null,
             };
             this.teacherService
               .updateTeacher(this.teacherId, payload)
               .pipe(takeUntil(this.ngUnsubscribe))
               .subscribe({
-                next: () => {
-                  this.updatedDetails = { ...payload };
-                  this.teacherDetails = { ...payload };
+                next: (saved) => {
+                  this.teacherDetails = { ...this.teacherDetails, ...saved, photoUrl: this.teacherDetails?.photoUrl };
+                  this.updatedDetails = { ...this.teacherDetails };
+                  this.loadOverview();
                   this.isEditing = false;
                   // The ambiguity is resolved (or has moved to a new class) — recompute.
-                  this.loadSectionsForClass(payload.classTeacher ?? null, true);
+                  this.loadSectionsForClass(this.teacherDetails.classTeacher ?? null, true);
                   this.cdr.markForCheck();
                   this.toast.success(
                     'Success!',
@@ -463,10 +496,7 @@ export class TeacherDetailsComponent implements OnInit, OnDestroy {
                 },
                 error: (error) => {
                   this.logger.error('Error updating teacher details:', error);
-                  this.toast.error(
-                    'Error!',
-                    'Failed to update teacher details.',
-                  );
+                  this.toast.error('Error!', this.serverMessage(error, 'Failed to update teacher details.'));
                 },
               });
           }
@@ -626,50 +656,185 @@ export class TeacherDetailsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** A future leaving date schedules the exit; the teacher keeps working through that day. */
+  get exitIsScheduled(): boolean {
+    return !!this.exitRequest.leavingDate && this.exitRequest.leavingDate > this.todayStr
+      && this.teacherDetails?.status === 'ACTIVE';
+  }
+
   submitExit(): void {
     if (!this.exitRequest.reasonForLeaving || !this.exitRequest.leavingDate) {
       this.toast.error('Required', 'Please select a reason and leaving date.');
       return;
     }
+    const scheduled = this.exitIsScheduled;
     this.exitLoading = true;
     this.teacherService.exitTeacher(this.teacherId, this.exitRequest)
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe({
         next: (teacher) => {
-          this.teacherDetails = teacher;
-          this.updatedDetails = { ...teacher };
+          this.teacherDetails = { ...teacher, photoUrl: this.teacherDetails?.photoUrl };
+          this.updatedDetails = { ...this.teacherDetails };
           this.exitLoading = false;
           this.showExitModal = false;
+          this.loadOverview();
           this.cdr.markForCheck();
-          this.toast.success('Teacher marked as left', 'Historical records have been preserved.');
+          if (scheduled) {
+            this.toast.success('Exit scheduled', `The teacher keeps working through ${this.exitRequest.leavingDate}; access ends the next day.`);
+          } else {
+            this.toast.success('Teacher marked as left', 'Pending leave and upcoming covers were cancelled. Historical records have been preserved.');
+          }
         },
         error: (err) => {
           this.exitLoading = false;
           this.cdr.markForCheck();
-          this.toast.error('Unable to update teacher', typeof err?.error === 'string' ? err.error : 'Please try again.');
+          this.toast.error('Unable to update teacher', this.serverMessage(err, 'Please try again.'));
         },
       });
   }
 
   reactivateTeacher(): void {
+    this.openRejoinModal();
+  }
+
+  // ── Lifecycle (Teacher Lifecycle Phase 1) ──────────────────────────
+
+  loadOverview(): void {
+    if (this.role !== 'ADMIN' || !this.teacherId) return;
+    this.teacherService.getOverview(this.teacherId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: (overview) => { this.overview = overview; this.overviewFailed = false; this.cdr.markForCheck(); },
+      error: () => { this.overview = null; this.overviewFailed = true; this.cdr.markForCheck(); },
+    });
+  }
+
+  get canCreateLogin(): boolean {
+    return this.role === 'ADMIN' && !!this.overview && !this.overview.login.exists && this.overview.status !== 'LEFT';
+  }
+
+  statusLabel(status?: string | null): string {
+    switch (status) {
+      case 'UPCOMING': return 'Not joined yet';
+      case 'LEFT': return 'Left';
+      default: return 'Active';
+    }
+  }
+
+  dayLabel(day?: string | null): string {
+    return day ? day.charAt(0) + day.slice(1, 3).toLowerCase() : '';
+  }
+
+  createMissingLogin(): void {
+    const upcoming = this.overview?.status === 'UPCOMING';
     this.toast.confirm({
-      title: 'Re-activate teacher?',
-      message: `This will make ${this.teacherDetails?.name} an active staff member again.`,
-      confirmText: 'Re-activate',
+      title: 'Create login?',
+      message: `Creates the login for ${this.teacherDetails?.name}. Initial password: date of birth (YYYYMMDD); it must be changed at first sign-in.`
+        + (upcoming ? ' The login stays inactive until the joining date.' : ''),
+      confirmText: 'Create login',
       cancelText: 'Cancel',
     }).then((confirmed) => {
       if (!confirmed) return;
-      this.teacherService.reactivateTeacher(this.teacherId)
-        .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe({
-          next: (teacher) => {
-            this.teacherDetails = teacher;
-            this.updatedDetails = { ...teacher };
-            this.cdr.markForCheck();
-            this.toast.success('Teacher re-activated');
-          },
-          error: (err) => this.toast.error('Unable to re-activate teacher', typeof err?.error === 'string' ? err.error : 'Please try again.'),
-        });
+      this.lifecycleBusy = true;
+      this.cdr.markForCheck();
+      this.teacherService.createMissingLogin(this.teacherId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: () => {
+          this.lifecycleBusy = false;
+          this.loadOverview();
+          this.toast.success('Login created', upcoming ? 'It activates on the joining date.' : 'Initial password is the date of birth (YYYYMMDD).');
+        },
+        error: (err) => {
+          this.lifecycleBusy = false;
+          this.loadOverview();
+          this.toast.error('Unable to create login', this.serverMessage(err, 'Please try again.'));
+        },
+      });
     });
+  }
+
+  cancelScheduledExit(): void {
+    this.toast.confirm({
+      title: 'Cancel scheduled exit?',
+      message: `${this.teacherDetails?.name} will stay on as active staff.`,
+      confirmText: 'Cancel exit',
+      cancelText: 'Keep it',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      this.teacherService.cancelScheduledExit(this.teacherId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: (teacher) => {
+          this.teacherDetails = { ...teacher, photoUrl: this.teacherDetails?.photoUrl };
+          this.updatedDetails = { ...this.teacherDetails };
+          this.loadOverview();
+          this.cdr.markForCheck();
+          this.toast.success('Scheduled exit cancelled');
+        },
+        error: (err) => this.toast.error('Unable to cancel', this.serverMessage(err, 'Please try again.')),
+      });
+    });
+  }
+
+  openRejoinModal(): void {
+    this.rejoinDate = this.todayStr;
+    this.rejoinClassTeacher = '';
+    this.rejoinSectionId = null;
+    this.rejoinSections = [];
+    this.showRejoinModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeRejoinModal(): void {
+    this.showRejoinModal = false;
+    this.cdr.markForCheck();
+  }
+
+  onRejoinClassChange(className: string): void {
+    this.rejoinSectionId = null;
+    this.rejoinSections = [];
+    const cls = this.managedClasses.find((c) => c.name === className);
+    if (!cls) { this.cdr.markForCheck(); return; }
+    this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: (sections) => { this.rejoinSections = sections; this.cdr.markForCheck(); },
+      error: () => { this.rejoinSections = []; this.cdr.markForCheck(); },
+    });
+  }
+
+  submitRejoin(): void {
+    if (!this.rejoinDate) {
+      this.toast.error('Required', 'Choose the rejoining date.');
+      return;
+    }
+    if (this.rejoinClassTeacher && this.rejoinSections.length && this.rejoinSectionId == null) {
+      this.toast.error('Required', 'Choose the section for the class-teacher role.');
+      return;
+    }
+    const future = this.rejoinDate > this.todayStr;
+    this.rejoinLoading = true;
+    this.cdr.markForCheck();
+    this.teacherService.reactivateTeacher(this.teacherId, {
+      rejoinDate: this.rejoinDate,
+      classTeacher: this.rejoinClassTeacher || null,
+      classTeacherSectionId: this.rejoinClassTeacher && this.rejoinSections.length ? this.rejoinSectionId : null,
+    }).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: (teacher) => {
+        this.rejoinLoading = false;
+        this.showRejoinModal = false;
+        this.teacherDetails = { ...teacher, photoUrl: this.teacherDetails?.photoUrl };
+        this.updatedDetails = { ...this.teacherDetails };
+        this.loadSectionsForClass(teacher.classTeacher ?? null, true);
+        this.loadOverview();
+        this.cdr.markForCheck();
+        this.toast.success(future ? 'Rejoin scheduled' : 'Teacher re-activated',
+          future ? `${teacher.name} becomes active on ${this.rejoinDate}.` : `${teacher.name} is active again.`);
+      },
+      error: (err) => {
+        this.rejoinLoading = false;
+        this.cdr.markForCheck();
+        this.toast.error('Unable to rejoin teacher', this.serverMessage(err, 'Please try again.'));
+      },
+    });
+  }
+
+  private serverMessage(err: any, fallback: string): string {
+    const e = err?.error;
+    if (typeof e === 'string' && e) return e;
+    return e?.message || e?.detail || fallback;
   }
 }
