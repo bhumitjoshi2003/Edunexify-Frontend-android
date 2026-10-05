@@ -272,25 +272,36 @@ describe('AdminDashboardComponent — Daily Action Center (Phase 1)', () => {
     id: 1, title: 'Event', description: '', startDate: '2026-09-22', category: 'GENERAL', targetAudience: [], ...overrides,
   });
 
-  it('renders the nearest upcoming event for the current month', () => {
-    configure('ADMIN', { events: [event({ title: 'Sooner', startDate: '2026-09-24' }), event({ id: 2, title: 'Later', startDate: '2026-09-28' })] });
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Sooner');
-    expect(eventService.getEventsForMonthAndYear).toHaveBeenCalledTimes(1);
-  });
+  // The fixtures are September 2026 events and the component reads the real clock for "now",
+  // so pin it to 22 Sep 2026 to keep current-month / next-month fallback independent of the run date.
+  describe('with the clock pinned to 22 Sep 2026', () => {
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(2026, 8, 22, 10, 0, 0));
+    });
 
-  it('falls back to next month when the current month has no upcoming event', () => {
-    configure('ADMIN', { events: [event({ title: 'Past', startDate: '2026-09-01' })] });
-    fixture.detectChanges();
-    expect(eventService.getEventsForMonthAndYear).toHaveBeenCalledTimes(2);
-  });
+    afterEach(() => jasmine.clock().uninstall());
 
-  it('shows a no-event state and Staff Adoption still remains below daily content', () => {
-    configure('ADMIN', { events: [] });
-    fixture.detectChanges();
-    const text: string = fixture.nativeElement.textContent;
-    expect(text).toContain('No upcoming events this month.');
-    expect(text.indexOf('Upcoming Event')).toBeLessThan(text.lastIndexOf('Staff Adoption'));
+    it('renders the nearest upcoming event for the current month', () => {
+      configure('ADMIN', { events: [event({ title: 'Sooner', startDate: '2026-09-24' }), event({ id: 2, title: 'Later', startDate: '2026-09-28' })] });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Sooner');
+      expect(eventService.getEventsForMonthAndYear).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back to next month when the current month has no upcoming event', () => {
+      configure('ADMIN', { events: [event({ title: 'Past', startDate: '2026-09-01' })] });
+      fixture.detectChanges();
+      expect(eventService.getEventsForMonthAndYear).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows a no-event state and Staff Adoption still remains below daily content', () => {
+      configure('ADMIN', { events: [] });
+      fixture.detectChanges();
+      const text: string = fixture.nativeElement.textContent;
+      expect(text).toContain('No upcoming events this month.');
+      expect(text.indexOf('Upcoming Event')).toBeLessThan(text.lastIndexOf('Staff Adoption'));
+    });
   });
 
   it('isolates an event-load failure — other sections stay intact', () => {

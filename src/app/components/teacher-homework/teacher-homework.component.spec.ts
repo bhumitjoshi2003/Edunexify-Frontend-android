@@ -18,8 +18,11 @@ describe('TeacherHomeworkComponent', () => {
   let toast: jasmine.SpyObj<ToastService>;
   let queryEntry: string | null;
 
-  const today = localDateKey(new Date());
-  const day = todayDayCode(new Date());
+  // A fixed Wednesday: the component reads the real clock for "today", so pin it to keep the
+  // weekday filtering (period 101 is on SUNDAY) independent of the day the suite runs.
+  const NOW = new Date(2026, 9, 7, 10, 0, 0);
+  const today = localDateKey(NOW);
+  const day = todayDayCode(NOW);
 
   const post = (overrides: Partial<HomeworkClasswork> = {}): HomeworkClasswork => ({
     id: 500, workDate: today, classId: 8, className: '8', sectionId: 3, sectionName: 'A', subjectName: 'Science',
@@ -71,7 +74,13 @@ describe('TeacherHomeworkComponent', () => {
     component = fixture.componentInstance;
   }
 
-  beforeEach(() => { queryEntry = null; });
+  beforeEach(() => {
+    queryEntry = null;
+    jasmine.clock().install();
+    jasmine.clock().mockDate(NOW);
+  });
+
+  afterEach(() => jasmine.clock().uninstall());
 
   it("lists today's own periods and covered periods, not other weekdays", () => {
     build();

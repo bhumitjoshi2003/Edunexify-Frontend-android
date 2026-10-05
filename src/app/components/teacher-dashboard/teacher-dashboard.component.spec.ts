@@ -753,9 +753,15 @@ describe('TeacherDashboardComponent layout order', () => {
       })
       .compileComponents();
 
+    // The monthly tile is titled from the real clock ("<Month> attendance"); pin it to September
+    // so the ordering assertion below does not depend on the month the suite runs in.
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(2026, 8, 17, 9, 30, 0));
     fixture = TestBed.createComponent(TeacherDashboardComponent);
     fixture.detectChanges();
   });
+
+  afterEach(() => jasmine.clock().uninstall());
 
   it('keeps Check-in and Today\'s Classes near the top, above Getting Started', () => {
     const text: string = fixture.nativeElement.textContent;

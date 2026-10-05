@@ -66,6 +66,10 @@ describe('TeacherCheckinComponent', () => {
   });
 
   it('preserves successful check-in behavior', async () => {
+    // After check-in the component reloads the month and keeps the record dated "today", so the
+    // clock must be on the record's date (2026-09-17) for this to hold on any run day.
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date(2026, 8, 17, 8, 5, 0));
     const record = {
       id: 1, teacherId: 'T1', teacherName: 'Teacher', schoolId: 1,
       date: '2026-09-17', checkInTime: '08:05:00', checkOutTime: null,
@@ -82,5 +86,9 @@ describe('TeacherCheckinComponent', () => {
 
     expect(toast.success).toHaveBeenCalledWith('Checked In', 'You are on time! Have a great day.');
     expect(component.todayRecord).toEqual(record);
+  });
+
+  afterEach(() => {
+    try { jasmine.clock().uninstall(); } catch { /* only the check-in spec installs the clock */ }
   });
 });
