@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { StudentDetailsComponent } from './student-details.component';
 import { StudentService } from '../../services/student.service';
 import { AuthService } from '../../auth/auth.service';
+import { AuthStateService } from '../../auth/auth-state.service';
 import { LoggerService } from '../../services/logger.service';
 import { SchoolService } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
@@ -65,6 +66,7 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
         { provide: Location, useValue: jasmine.createSpyObj('Location', ['back']) },
         { provide: StudentService, useValue: students },
         { provide: AuthService, useValue: auth },
+        { provide: AuthStateService, useValue: { hasFeature: () => true } },
         { provide: LoggerService, useValue: jasmine.createSpyObj('LoggerService', ['error', 'info', 'warn']) },
         { provide: SchoolService, useValue: school },
         { provide: SectionService, useValue: sections },

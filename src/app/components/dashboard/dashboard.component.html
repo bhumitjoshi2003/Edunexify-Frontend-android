@@ -27,7 +27,8 @@
 
       <!-- ── STUDENT ── -->
       <ng-container *ngIf="isStudent()">
-        <div class="nav-section-label">Main</div>
+        <app-nav-group>
+          <div class="nav-section-label">Main</div>
 
         <a class="nav-item" routerLink="/dashboard/student-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Dashboard">
@@ -42,7 +43,9 @@
           <mat-icon>bar_chart</mat-icon><span>Attendance Summary</span>
         </a>
 
-        <div class="nav-section-label">Academics</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Academics</div>
 
         <a class="nav-item" routerLink="/dashboard/timetable" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Timetable">
@@ -69,7 +72,9 @@
           <mat-icon>workspace_premium</mat-icon><span>Report Cards</span>
         </a>
 
-        <div class="nav-section-label">Fees</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Fees</div>
 
         <a class="nav-item" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fees" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Fees">
@@ -88,7 +93,9 @@
           <mat-icon>directions_bus</mat-icon><span>Bus Fees</span>
         </a>
 
-        <div class="nav-section-label">Communication</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Communication</div>
 
         <a class="nav-item" routerLink="/dashboard/notice" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Notice Board">
@@ -102,6 +109,7 @@
            (click)="closeSidebarOnMobile()" title="Holiday Calendar">
           <mat-icon>beach_access</mat-icon><span>Holiday Calendar</span>
         </a>
+        </app-nav-group>
       </ng-container>
 
       <!-- ── PARENT ──
@@ -109,14 +117,17 @@
            (dashboard.component.ts childCan()) — they appear/disappear as the parent switches
            between linked children with different access, per-child, on every navigation. -->
       <ng-container *ngIf="isParent()">
-        <div class="nav-section-label">Child</div>
+        <app-nav-group>
+          <div class="nav-section-label">Child</div>
         <a class="nav-item" routerLink="/dashboard/parent-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Children">
           <mat-icon>family_restroom</mat-icon><span>My Children</span>
         </a>
 
+        </app-nav-group>
         <ng-container *ngIf="selectedChild">
-          <div class="nav-section-label">Academics</div>
+          <app-nav-group>
+            <div class="nav-section-label">Academics</div>
           <a class="nav-item" *ngIf="childCan('canViewAttendance')" routerLink="/dashboard/attendance-summary"
              [queryParams]="{ studentId: selectedChild.studentId, className: selectedChild.className }"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Attendance">
@@ -143,39 +154,45 @@
             <mat-icon>event_note</mat-icon><span>Leave</span>
           </a>
 
-          <div class="nav-section-label" *ngIf="childCan('canViewFees')">Fees</div>
-          <a class="nav-item" *ngIf="childCan('canViewFees')" routerLink="/dashboard/fees/{{ selectedChild.studentId }}"
+        </app-nav-group>
+          <app-nav-group>
+            <div class="nav-section-label">Fees</div>
+          <a class="nav-item" *ngIf="childCan('canViewFees') && hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fees/{{ selectedChild.studentId }}"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My Fees">
             <mat-icon>account_balance_wallet</mat-icon><span>My Fees</span>
           </a>
-          <a class="nav-item" *ngIf="childCan('canViewFees')" routerLink="/dashboard/payment-history/{{ selectedChild.studentId }}"
+          <a class="nav-item" *ngIf="childCan('canViewFees') && hasFeature('ONLINE_PAYMENTS')" routerLink="/dashboard/payment-history/{{ selectedChild.studentId }}"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Payment History">
             <mat-icon>receipt_long</mat-icon><span>Payment History</span>
           </a>
-          <a class="nav-item" *ngIf="childCan('canViewFees')" routerLink="/dashboard/fee-structure"
+          <a class="nav-item" *ngIf="childCan('canViewFees') && hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fee-structure"
              [queryParams]="{ studentId: selectedChild.studentId }"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Fee Structure">
             <mat-icon>list_alt</mat-icon><span>Fee Structure</span>
           </a>
-          <a class="nav-item" *ngIf="childCan('canViewFees')" routerLink="/dashboard/bus-fees"
+          <a class="nav-item" *ngIf="childCan('canViewFees') && hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/bus-fees"
              [queryParams]="{ studentId: selectedChild.studentId }"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Bus Fees">
             <mat-icon>directions_bus</mat-icon><span>Bus Fees</span>
           </a>
+        </app-nav-group>
         </ng-container>
 
-        <div class="nav-section-label">School</div>
+        <app-nav-group>
+          <div class="nav-section-label">School</div>
         <a class="nav-item" routerLink="/dashboard/notice" routerLinkActive="active"
            (click)="closeSidebarOnMobile()"><mat-icon>campaign</mat-icon><span>Notice Board</span></a>
         <a class="nav-item" *ngIf="hasFeature('EVENT_CALENDAR')" routerLink="/dashboard/event-calendar" routerLinkActive="active"
            (click)="closeSidebarOnMobile()"><mat-icon>calendar_month</mat-icon><span>Events</span></a>
         <a class="nav-item" routerLink="/dashboard/holiday-calendar" routerLinkActive="active"
            (click)="closeSidebarOnMobile()"><mat-icon>beach_access</mat-icon><span>Holidays</span></a>
+        </app-nav-group>
       </ng-container>
 
       <!-- ── TEACHER ── -->
       <ng-container *ngIf="isTeacher()">
-        <div class="nav-section-label">Main</div>
+        <app-nav-group>
+          <div class="nav-section-label">Main</div>
 
         <a class="nav-item" routerLink="/dashboard/teacher-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Dashboard">
@@ -190,7 +207,9 @@
           <mat-icon>event_note</mat-icon><span>My Leave</span>
         </a>
 
-        <div class="nav-section-label">My Class</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">My Class</div>
 
         <a class="nav-item" routerLink="/dashboard/student-list" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Students">
@@ -209,7 +228,9 @@
           <mat-icon>bar_chart</mat-icon><span>Attendance Summary</span>
         </a>
 
-        <div class="nav-section-label">Academics</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Academics</div>
 
         <a class="nav-item" *ngIf="hasFeature('EXAM_MARKS')" routerLink="/dashboard/mark-entry" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Mark Entry">
@@ -236,7 +257,9 @@
           <mat-icon>event_note</mat-icon><span>Assessments</span>
         </a>
 
-        <div class="nav-section-label">Report Cards</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Report Cards</div>
 
 
         <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active"
@@ -248,7 +271,9 @@
           <mat-icon>preview</mat-icon><span>Generate &amp; Preview</span>
         </a>
 
-        <div class="nav-section-label">Communication</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Communication</div>
 
         <a class="nav-item" routerLink="/dashboard/notice" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Notice Board">
@@ -262,11 +287,13 @@
            (click)="closeSidebarOnMobile()" title="Holiday Calendar">
           <mat-icon>beach_access</mat-icon><span>Holiday Calendar</span>
         </a>
+        </app-nav-group>
       </ng-container>
 
       <!-- ── ADMIN / SUB_ADMIN ── -->
       <ng-container *ngIf="isAdmin()">
-        <div class="nav-section-label">Overview</div>
+        <app-nav-group>
+          <div class="nav-section-label">Overview</div>
 
         <a class="nav-item" routerLink="/dashboard/admin-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Dashboard">
@@ -277,7 +304,9 @@
           <mat-icon>insights</mat-icon><span>Analytics</span>
         </a>
 
-        <div class="nav-section-label">People</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">People</div>
 
         <a class="nav-item" routerLink="/dashboard/student-search" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Student Search">
@@ -309,7 +338,9 @@
           <mat-icon>person_add</mat-icon><span>Register</span>
         </a>
 
-        <div class="nav-section-label">Attendance</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Attendance</div>
 
         <!-- Marking is TEACHER/ADMIN only (route + API); SUB_ADMIN shares this menu but cannot mark. -->
         <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/teacher-attendance" routerLinkActive="active"
@@ -333,7 +364,9 @@
           <mat-icon>event_note</mat-icon><span>Teacher Leave</span>
         </a>
 
-        <div class="nav-section-label">Academics</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Academics</div>
 
         <a class="nav-item" *ngIf="hasFeature('EXAM_MARKS')" routerLink="/dashboard/mark-entry" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Mark Entry">
@@ -372,7 +405,9 @@
           <mat-icon>event_note</mat-icon><span>Assessments</span>
         </a>
 
-        <div class="nav-section-label">Report Cards</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Report Cards</div>
 
 
         <a class="nav-item" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/setup" routerLinkActive="active"
@@ -397,7 +432,9 @@
           <mat-icon>picture_as_pdf</mat-icon><span>Published Report Cards</span>
         </a>
 
-        <div class="nav-section-label">Fees</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Fees</div>
 
         <a class="nav-item" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fee-structure" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Fee Structure">
@@ -420,7 +457,9 @@
           <mat-icon>notifications_active</mat-icon><span>Fee Reminders</span>
         </a>
 
-        <div class="nav-section-label">Communication</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Communication</div>
 
         <a class="nav-item" routerLink="/dashboard/notice" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Notice Board">
@@ -439,7 +478,9 @@
           <mat-icon>beach_access</mat-icon><span>Holiday Calendar</span>
         </a>
 
-        <div class="nav-section-label">System</div>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">System</div>
 
         <a class="nav-item" routerLink="/dashboard/class-management" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Class Management">
@@ -461,13 +502,15 @@
            (click)="closeSidebarOnMobile()" title="Audit Logs">
           <mat-icon>history</mat-icon><span>Audit Logs</span>
         </a>
+        </app-nav-group>
       </ng-container>
 
       <!-- ── SUB_ADMIN extra nav (class management) shown inside admin block already ── -->
 
       <!-- ── SUPER_ADMIN ── -->
       <ng-container *ngIf="isSuperAdmin()">
-        <div class="nav-section-label">Platform</div>
+        <app-nav-group>
+          <div class="nav-section-label">Platform</div>
 
         <a class="nav-item" routerLink="/dashboard/super-admin-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Dashboard">
@@ -485,13 +528,15 @@
            (click)="closeSidebarOnMobile()" title="Support Tickets">
           <mat-icon>support_agent</mat-icon><span>Support Tickets</span>
         </a>
+        </app-nav-group>
       </ng-container>
 
       <!-- Help & Support — every normal role (Student/Teacher/Parent/Admin/Sub-admin).
            SUPER_ADMIN is the recipient of these tickets, so gets only the global
            "Support Tickets" queue above, never Report a Problem / My Support Requests. -->
       <ng-container *ngIf="!isSuperAdmin()">
-        <div class="nav-section-label">Support</div>
+        <app-nav-group>
+          <div class="nav-section-label">Support</div>
         <a class="nav-item" routerLink="/dashboard/report-problem" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Report a Technical Problem">
           <mat-icon>report_problem</mat-icon><span>Report a Problem</span>
@@ -500,6 +545,7 @@
            (click)="closeSidebarOnMobile()" title="My Support Requests">
           <mat-icon>list_alt</mat-icon><span>My Support Requests</span>
         </a>
+        </app-nav-group>
       </ng-container>
 
     </nav>

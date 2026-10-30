@@ -71,7 +71,7 @@
         <div class="an-stat-bg">📚</div>
       </div>
 
-      <div class="an-stat-card" style="--c1:#059669;--c2:#34d399">
+      <div class="an-stat-card" *ngIf="feeAnalyticsEnabled" style="--c1:#059669;--c2:#34d399">
         <div class="an-stat-icon">💰</div>
         <div class="an-stat-info">
           <span class="an-stat-value an-stat-value--sm">₹{{ latestMonthFee | number }}</span>
@@ -86,7 +86,7 @@
     <div class="an-charts-row">
 
       <!-- Fee trend -->
-      <div class="an-chart-card">
+      <div class="an-chart-card" *ngIf="feeAnalyticsEnabled">
         <div class="an-chart-header">
           <div>
             <h3 class="an-chart-title">Monthly Fee Collection</h3>

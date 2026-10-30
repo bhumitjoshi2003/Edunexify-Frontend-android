@@ -226,7 +226,7 @@
         <span class="sd-action-icon">📊</span>
         <span>Attendance</span>
       </button>
-      <button *ngIf="getUserRole() === 'ADMIN'" class="sd-action-btn" (click)="viewPaymentHistory()">
+      <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('ONLINE_PAYMENTS')" class="sd-action-btn" (click)="viewPaymentHistory()">
         <span class="sd-action-icon">💳</span>
         <span>Payments</span>
       </button>
@@ -234,7 +234,7 @@
         <span class="sd-action-icon">🗓</span>
         <span>Leaves</span>
       </button>
-      <button *ngIf="getUserRole() === 'ADMIN'" class="sd-action-btn" (click)="viewFeeDetails()">
+      <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('FEE_MANAGEMENT')" class="sd-action-btn" (click)="viewFeeDetails()">
         <span class="sd-action-icon">💰</span>
         <span>Fee Details</span>
       </button>
