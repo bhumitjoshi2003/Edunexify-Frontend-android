@@ -38,6 +38,23 @@ export class AuthInterceptor implements HttpInterceptor {
     return AuthInterceptor.PUBLIC_ROUTES.some(publicPath => path === publicPath || path.startsWith(publicPath + '/'));
   }
 
+  /**
+   * Public API operations a visitor with no session performs. They never need an access token, so a
+   * 401/403 from them must not start the refresh-token flow, sign anyone out or navigate away —
+   * the caller just gets the error and shows it. Matched by method AND exact path, so the
+   * authenticated operations on the same resources (e.g. the admin demo-request list) keep the
+   * normal auth handling.
+   */
+  private static readonly PUBLIC_API_OPERATIONS: ReadonlyArray<{ method: string; path: string }> = [
+    { method: 'POST', path: '/demo-requests' },
+  ];
+
+  private isPublicOperation(request: HttpRequest<any>): boolean {
+    const url = request.url.split('?')[0].replace(/\/+$/, '');
+    return AuthInterceptor.PUBLIC_API_OPERATIONS.some(op =>
+      request.method === op.method && url === `${environment.apiUrl}${op.path}`);
+  }
+
   private isRefreshing = false;
   /**
    * While isRefreshing=true, queued requests wait on this Subject.
@@ -71,11 +88,12 @@ export class AuthInterceptor implements HttpInterceptor {
     // can validate that the stored school slug matches the JWT's schoolId.
     // The Android app talks to the absolute API URL so the Host header never carries
     // a subdomain — the backend reads X-School-Slug instead.
+    const isPublicOperation = isOwnApi && this.isPublicOperation(request);
     let clonedReq: HttpRequest<any>;
     if (isOwnApi) {
       const slug = this.tenantService.slug;
       clonedReq = request.clone({
-        withCredentials: true,
+        withCredentials: !isPublicOperation,
         setHeaders: { ...(slug ? { 'X-School-Slug': slug } : {}), [REQUEST_ID_HEADER]: requestId },
       });
     } else {
@@ -85,6 +103,8 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(clonedReq).pipe(
       catchError((error: HttpErrorResponse) => {
         if (isOwnApi) this.injector.get(ObservabilityService).reportHttpFailure(error, request.method, requestId);
+        // Public operation: no session to refresh or end — surface the error to the caller only.
+        if (isPublicOperation) return throwError(() => error);
         // 401 = missing/expired/invalid token → attempt refresh (once)
         // 403 = valid token but wrong role, OR resource limit exceeded
         if (error.status === 401 && !isAuthUrl) {

@@ -7,8 +7,8 @@ import { PushNotificationService } from '../../services/push-notification.servic
 import { TenantService } from '../../services/tenant.service';
 
 import { FormsModule } from '@angular/forms';
-import { DemoService } from '../../services/demo.service';
-import { Subject, takeUntil, timeout, TimeoutError } from 'rxjs';
+import { DemoService, demoSubmissionError } from '../../services/demo.service';
+import { defer, finalize, Subject, takeUntil, timeout } from 'rxjs';
 
 import { ToastService } from '../../services/toast.service';
 import { consumeIntendedRoute, clearIntendedRoute } from '../../auth/redirect-url.util';
@@ -180,6 +180,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   submitDemo() {
+    if (this.sendingDemo) return;
     const { schoolName, contactName, email, phone } = this.demo;
     if (!schoolName.trim() || !contactName.trim() || !email.trim() || !phone.trim()) {
       this.toast.warning('Required Fields', 'Please fill in School Name, Contact Name, Email and Phone.');
@@ -193,7 +194,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.sendingDemo = true;
     this.cdr.markForCheck();
 
-    this.demoService.submitRequest({
+    // defer(): even a synchronous throw while building the request ends in the error path below.
+    defer(() => this.demoService.submitRequest({
       schoolName:       this.demo.schoolName.trim(),
       contactName:      this.demo.contactName.trim(),
       email:            this.demo.email.trim(),
@@ -201,22 +203,22 @@ export class HomeComponent implements OnInit, OnDestroy {
       numberOfStudents: this.demo.students.trim() || undefined,
       city:             this.demo.city.trim() || undefined,
       message:          this.demo.message.trim() || undefined
-    }).pipe(timeout(20000), takeUntil(this.destroy$)).subscribe({
+    })).pipe(
+      timeout(20000),
+      takeUntil(this.destroy$),
+      // The one place the busy state is cleared: success, any error, timeout or an unexpected throw.
+      finalize(() => { this.sendingDemo = false; this.cdr.markForCheck(); })
+    ).subscribe({
       next: () => {
-        this.sendingDemo = false;
         this.showDemoForm = false;
         this.demo = { schoolName: '', contactName: '', email: '', phone: '', students: '', city: '', message: '' };
         this.cdr.markForCheck();
         this.toast.confirm({ title: 'Demo Request Received!', html: '<p style="color:#64748b;font-size:.88rem;line-height:1.6">Thank you! Our team will reach out within <strong style="color:#1e3a5f">24 hours</strong> to schedule your personalised demo.</p>', confirmText: 'Awesome, Thanks!', icon: 'success' });
       },
       error: (err) => {
-        this.sendingDemo = false;
-        this.cdr.markForCheck();
         this.logger.error('Demo request failed:', err);
-        const isTimeout = err instanceof TimeoutError;
-        isTimeout
-          ? this.toast.error('Request Timed Out', 'The server took too long to respond. Please check your connection and try again.')
-          : this.toast.error('Submission Failed', 'Could not send your request. Please try again or contact us directly.');
+        const { title, message } = demoSubmissionError(err);
+        this.toast.error(title, message);
       }
     });
   }
