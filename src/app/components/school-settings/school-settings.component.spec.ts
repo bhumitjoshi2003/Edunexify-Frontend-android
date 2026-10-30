@@ -295,7 +295,7 @@ describe('School Settings — Notification Channels UI removed', () => {
     };
     const academicSessionService = { getAllSessions: jasmine.createSpy().and.returnValue(of([])) };
     const feeWorkflowService = { getSettings: jasmine.createSpy().and.returnValue(of(null)) };
-    const authStateService = { getUser: () => ({ role: 'ADMIN' }) };
+    const authStateService = { getUser: () => ({ role: 'ADMIN' }), hasFeature: () => true };
     const tenantService = { getLogoUrl: (u: string) => u };
     const toast = jasmine.createSpyObj('ToastService', ['success', 'error', 'warning']);
     const logger = jasmine.createSpyObj('LoggerService', ['error']);

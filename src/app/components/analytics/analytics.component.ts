@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { Subject, forkJoin, of, takeUntil } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables, ChartConfiguration, ChartData } from 'chart.js';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../../services/dashboard-analytics.service';
 import { SchoolService } from '../../services/school.service';
 import { LoggerService } from '../../services/logger.service';
+import { AuthStateService } from '../../auth/auth-state.service';
 
 Chart.register(...registerables);
 
@@ -147,7 +148,13 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     private schoolService: SchoolService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
+    private authState: AuthStateService,
   ) {}
+
+  /** Fee collection analytics belong to Fee Management: not requested or shown without it. */
+  get feeAnalyticsEnabled(): boolean {
+    return this.authState.hasFeature('FEE_MANAGEMENT');
+  }
 
   ngOnInit(): void {
     this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
@@ -171,7 +178,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   loadAll(): void {
     this.isLoading = true;
     forkJoin([
-      this.analyticsService.getFeeTrend(),
+      this.feeAnalyticsEnabled ? this.analyticsService.getFeeTrend() : of<FeeTrend[]>([]),
       this.analyticsService.getClassStats(),
     ]).pipe(takeUntil(this.destroy$)).subscribe({
       next: ([feeTrend, classStats]) => {

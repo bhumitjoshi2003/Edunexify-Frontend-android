@@ -75,7 +75,7 @@
         <div class="ad-stat-bg">🏫</div>
       </div>
 
-      <div class="ad-stat-card" style="--c1:#059669;--c2:#34d399">
+      <div class="ad-stat-card" *ngIf="hasFeature('FEE_MANAGEMENT')" style="--c1:#059669;--c2:#34d399">
         <div class="ad-stat-icon">💰</div>
         <div class="ad-stat-info">
           <span class="ad-stat-value ad-stat-value--sm">₹{{ stats.feesCollectedThisMonth | number }}</span>
@@ -84,7 +84,7 @@
         <div class="ad-stat-bg">💳</div>
       </div>
 
-      <div class="ad-stat-card" style="--c1:#dc2626;--c2:#f87171">
+      <div class="ad-stat-card" *ngIf="hasFeature('FEE_MANAGEMENT')" style="--c1:#dc2626;--c2:#f87171">
         <div class="ad-stat-icon">⚠️</div>
         <div class="ad-stat-info">
           <span class="ad-stat-value">{{ stats.overdueStudents }}</span>

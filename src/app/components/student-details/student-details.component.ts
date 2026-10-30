@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
+import { AuthStateService } from '../../auth/auth-state.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 import { CommonModule } from '@angular/common';
@@ -103,6 +104,7 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
   /** Read-only Guardians panel (admin). null = not loaded / Parent Portal not available. */
   guardians: GuardianLink[] | null = null;
   private readonly parentPortal = inject(ParentPortalService);
+  private readonly authState = inject(AuthStateService);
   enrollmentHistoryFailed = false;
   loginStatus: StudentLoginStatus | null = null;
   lifecycleBusy = false;
@@ -190,6 +192,10 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
 
   getUserRole(): string {
     return this.role;
+  }
+
+  hasFeature(featureKey: string): boolean {
+    return this.authState.hasFeature(featureKey);
   }
 
   enableEditMode(): void {
@@ -675,6 +681,8 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     this.showExitModal = true;
     this.cdr.markForCheck();
 
+    // Outstanding dues are a Fee Management concept: without it there is nothing to check.
+    if (!this.hasFeature('FEE_MANAGEMENT')) return;
     this.studentService.checkPendingDues(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
       next: (dues) => { this.pendingDues = dues; this.cdr.markForCheck(); },
       error: () => {}

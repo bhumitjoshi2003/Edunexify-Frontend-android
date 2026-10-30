@@ -22,6 +22,7 @@ import { filter } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
 import { AppUpdate, AppUpdateAvailability } from '@capawesome/capacitor-app-update';
 import { AiCopilotComponent } from '../ai-copilot/ai-copilot.component';
+import { NavGroupComponent, NavItemDirective } from '../nav-group/nav-group.component';
 import { ParentPortalService } from '../../services/parent-portal.service';
 import { ParentChildContextService } from '../../services/parent-child-context.service';
 import { ChildAccess } from '../../interfaces/parent-portal';
@@ -43,6 +44,8 @@ import { ToastService } from '../../services/toast.service';
     CommonModule,
     MatBadgeModule,
     AiCopilotComponent,
+    NavGroupComponent,
+    NavItemDirective,
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
