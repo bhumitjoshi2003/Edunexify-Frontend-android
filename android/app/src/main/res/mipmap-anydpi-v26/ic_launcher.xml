@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon. The foreground PNGs (mipmap-*/ic_launcher_foreground.png) are full 108dp layers with
+  the logo already inside the 66dp safe zone, so they are used as-is — no inset, no scaling. The
+  background is a flat colour, not an image. Generated rasters: scripts/generate-android-brand-assets.py.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background>
-        <inset android:drawable="@mipmap/ic_launcher_background" android:inset="16.7%" />
-    </background>
-    <foreground>
-        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="16.7%" />
-    </foreground>
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>

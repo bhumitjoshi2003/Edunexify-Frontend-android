@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy splash (window background / Capacitor SplashScreen fallback): flat splash colour with the
+  splash icon centred at its natural size. No full-screen raster with a logo baked in.
+  On Android 12+ the system splash uses windowSplashScreenAnimatedIcon (see styles.xml) instead.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <color android:color="@color/splash_background" />
+    </item>
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_icon" />
+    </item>
+</layer-list>

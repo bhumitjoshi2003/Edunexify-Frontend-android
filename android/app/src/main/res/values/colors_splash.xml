@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash background (Android 12+ system splash, androidx compat splash, legacy window background).
+         White in light AND dark mode: the logo's navy and blue elements would not read on a dark background. -->
+    <color name="splash_background">#FFFFFF</color>
+</resources>

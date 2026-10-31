@@ -15,7 +15,7 @@
     "cap:sync": "npx cap sync android",
     "cap:open": "npx cap open android",
     "cap:build": "npm run build:android && npx cap sync android",
-    "cap:assets": "npx @capacitor/assets generate --android"
+    "assets:android": "python3 scripts/generate-android-brand-assets.py"
   },
   "private": true,
   "dependencies": {
