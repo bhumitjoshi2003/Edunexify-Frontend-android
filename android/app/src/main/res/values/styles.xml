@@ -20,5 +20,9 @@
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <!-- Android 12+ system splash (and the androidx compat splash on API 24-30): the Edunexify mark
+             on a flat background, instead of the launcher icon masked into a circle. -->
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
     </style>
 </resources>

@@ -19,7 +19,9 @@ const config: CapacitorConfig = {
       launchAutoHide: false,
       backgroundColor: '#ffffff',
       androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      // The splash is now a centred mark on a flat colour (no full-screen raster), so it must not be
+      // cropped/zoomed to fill the screen.
+      androidScaleType: 'CENTER',
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
