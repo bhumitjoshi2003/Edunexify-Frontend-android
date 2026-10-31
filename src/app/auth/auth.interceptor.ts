@@ -5,6 +5,7 @@ import {
   HttpHandler,
   HttpEvent,
   HttpErrorResponse,
+  HttpResponse,
 } from '@angular/common/http';
 
 import { Injector } from '@angular/core';
@@ -18,9 +19,10 @@ import { classifyAuthFailure } from './auth-failure-classifier';
 import { saveIntendedRoute } from './redirect-url.util';
 import { ObservabilityService } from '../core/observability.service';
 import { newRequestId, REQUEST_ID_HEADER, validRequestId } from '../core/request-id';
+import { ANDROID_PLATFORM, CLIENT_PLATFORM_HEADER, nativeSession, REFRESH_TIMEOUT_MS } from '../core/native-session';
 
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
+import { catchError, filter, switchMap, take, tap, timeout } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthInterceptor implements HttpInterceptor {
@@ -94,13 +96,25 @@ export class AuthInterceptor implements HttpInterceptor {
       const slug = this.tenantService.slug;
       clonedReq = request.clone({
         withCredentials: !isPublicOperation,
-        setHeaders: { ...(slug ? { 'X-School-Slug': slug } : {}), [REQUEST_ID_HEADER]: requestId },
+        setHeaders: {
+          ...(slug ? { 'X-School-Slug': slug } : {}),
+          // Lets the backend give the Android app its longer session lifetime (lifetime only).
+          ...(nativeSession.isAndroidShell() ? { [CLIENT_PLATFORM_HEADER]: ANDROID_PLATFORM } : {}),
+          [REQUEST_ID_HEADER]: requestId,
+        },
       });
     } else {
       clonedReq = request;
     }
 
     return next.handle(clonedReq).pipe(
+      // A login or refresh just issued new session cookies: persist them to disk right away so an
+      // app kill cannot leave the WebView holding a refresh token the server has already retired.
+      tap(event => {
+        if (event instanceof HttpResponse && (clonedReq.url.includes('/auth/login') || clonedReq.url.includes('/auth/refresh-token'))) {
+          void nativeSession.flushCookies();
+        }
+      }),
       catchError((error: HttpErrorResponse) => {
         if (isOwnApi) this.injector.get(ObservabilityService).reportHttpFailure(error, request.method, requestId);
         // Public operation: no session to refresh or end — surface the error to the caller only.
@@ -163,16 +177,27 @@ export class AuthInterceptor implements HttpInterceptor {
       this.isRefreshing = true;
       this.refreshDone$.next(false);
 
+      let settled = false;
+
       return this.authService.refreshToken().pipe(
+        // Bounded: a refresh that started just before the network dropped or the app was frozen can
+        // stay pending forever. Timing out fails it as TRANSIENT (no logout) and — via the catchError
+        // below — releases every request queued behind it instead of leaving them waiting.
+        timeout(REFRESH_TIMEOUT_MS),
         tap((userInfo) => {
           this.authStateService.setUser(userInfo);
         }),
         switchMap(() => {
+          settled = true;
           this.isRefreshing = false;
           this.refreshDone$.next(true);
           return next.handle(request);
         }),
         catchError((refreshError) => {
+          // Already settled: the refresh succeeded and this is the RETRIED request's own error —
+          // that request's failure, never a logout.
+          if (settled) return throwError(() => refreshError);
+          settled = true;
           // Either way there is nothing left to retry queued requests with — release them
           // with an error (never let them hang) via error(), which bypasses
           // filter(done => done === true) and propagates immediately to each waiter.
