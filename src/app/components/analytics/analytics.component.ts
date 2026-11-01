@@ -16,18 +16,11 @@ import { AuthStateService } from '../../auth/auth-state.service';
 
 Chart.register(...registerables);
 
-// Presentation only: Edunexify navy/teal family for categorical series. Red/amber/green are reserved
-// for attendance status (see attendanceStatusColor) so colour always carries meaning.
 const PALETTE = [
-  '#1e3a5f', '#0f766e', '#4d7aa8', '#14b8a6',
-  '#7aa2c9', '#5b6b80', '#2f6f8f', '#7dd3c8',
-  '#334155', '#94a3b8', '#0d9488', '#a9c1da',
+  '#6366f1', '#0891b2', '#059669', '#d97706',
+  '#dc2626', '#7c3aed', '#db2777', '#0284c7',
+  '#65a30d', '#ea580c', '#0d9488', '#8b5cf6',
 ];
-const AXIS_FONT = { family: "'Inter', 'Segoe UI', system-ui, sans-serif", size: 12 };
-const AXIS_COLOR = '#5b6b80';
-const GRID_COLOR = 'rgba(15, 23, 42, 0.06)';
-const attendanceStatusColor = (rate: number): string =>
-  rate >= 85 ? '#0f766e' : rate >= 70 ? '#d97706' : rate > 0 ? '#dc2626' : '#94a3b8';
 
 @Component({
   selector: 'app-analytics',
@@ -54,17 +47,16 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#0f172a', padding: 10, cornerRadius: 8, titleFont: AXIS_FONT, bodyFont: AXIS_FONT,
         callbacks: { label: ctx => `₹${Number(ctx.parsed.y).toLocaleString('en-IN')}` }
       }
     },
     scales: {
       y: {
         beginAtZero: true,
-        grid: { color: GRID_COLOR }, border: { display: false },
-        ticks: { color: AXIS_COLOR, font: AXIS_FONT, callback: val => `₹${Number(val).toLocaleString('en-IN')}` }
+        grid: { color: 'rgba(0,0,0,0.04)' },
+        ticks: { callback: val => `₹${Number(val).toLocaleString('en-IN')}` }
       },
-      x: { grid: { display: false }, border: { display: false }, ticks: { color: AXIS_COLOR, font: AXIS_FONT } }
+      x: { grid: { display: false } }
     }
   };
 
@@ -76,16 +68,15 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: {
-        backgroundColor: '#0f172a', padding: 10, cornerRadius: 8, titleFont: AXIS_FONT, bodyFont: AXIS_FONT, callbacks: { label: ctx => `${Number(ctx.parsed.x).toFixed(1)}%` } }
+      tooltip: { callbacks: { label: ctx => `${Number(ctx.parsed.x).toFixed(1)}%` } }
     },
     scales: {
       x: {
         beginAtZero: true, max: 100,
-        grid: { color: GRID_COLOR }, border: { display: false },
-        ticks: { color: AXIS_COLOR, font: AXIS_FONT, callback: val => `${val}%` }
+        grid: { color: 'rgba(0,0,0,0.04)' },
+        ticks: { callback: val => `${val}%` }
       },
-      y: { grid: { display: false }, border: { display: false }, ticks: { color: AXIS_COLOR, font: AXIS_FONT } }
+      y: { grid: { display: false } }
     }
   };
 
@@ -95,7 +86,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'rectRounded', padding: 14, color: AXIS_COLOR, font: AXIS_FONT } },
+      legend: { position: 'right', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } },
       tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} students` } }
     },
     cutout: '62%',
@@ -137,18 +128,17 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: {
-        backgroundColor: '#0f172a', padding: 10, cornerRadius: 8, titleFont: AXIS_FONT, bodyFont: AXIS_FONT, callbacks: { label: ctx => `${Number(ctx.parsed.y).toFixed(1)}%` } }
+      tooltip: { callbacks: { label: ctx => `${Number(ctx.parsed.y).toFixed(1)}%` } }
     },
     scales: {
       y: {
         beginAtZero: false,
         min: 0,
         max: 100,
-        grid: { color: GRID_COLOR }, border: { display: false },
-        ticks: { color: AXIS_COLOR, font: AXIS_FONT, callback: val => `${val}%` }
+        grid: { color: 'rgba(0,0,0,0.04)' },
+        ticks: { callback: val => `${val}%` }
       },
-      x: { grid: { display: false }, border: { display: false }, ticks: { color: AXIS_COLOR, font: AXIS_FONT, maxRotation: 45, minRotation: 30 } }
+      x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 30 } }
     },
     elements: { line: { tension: 0.35 }, point: { radius: 4, hoverRadius: 6 } }
   };
@@ -224,11 +214,11 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       datasets: [{
         data: this.rawFeeTrend.map(d => d.amount),
         backgroundColor: this.rawFeeTrend.map((_, i) =>
-          i === this.rawFeeTrend.length - 1 ? '#1e3a5f' : 'rgba(30, 58, 95, 0.28)'),
-        borderWidth: 0,
-        borderRadius: 6,
+          `rgba(99,102,241,${0.4 + (i / Math.max(this.rawFeeTrend.length - 1, 1)) * 0.55})`),
+        borderColor: '#6366f1',
+        borderWidth: 2,
+        borderRadius: 8,
         borderSkipped: false,
-        maxBarThickness: 44,
       }]
     };
   }
@@ -239,11 +229,11 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       labels: data.map(d => `Cl. ${d.className}`),
       datasets: [{
         data: data.map(d => d.attendanceRate),
-        backgroundColor: data.map(d => attendanceStatusColor(d.attendanceRate)),
-        borderWidth: 0,
+        backgroundColor: data.map((_, i) => PALETTE[i % PALETTE.length] + 'bb'),
+        borderColor: data.map((_, i) => PALETTE[i % PALETTE.length]),
+        borderWidth: 2,
         borderRadius: 6,
         borderSkipped: false,
-        maxBarThickness: 22,
       }]
     };
   }
@@ -276,15 +266,17 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   private buildAttendanceTrend(data: AttendanceTrend[]): void {
     const hasData = data.some(d => d.attendanceRate > 0);
-    const color = '#0f766e';
+    const color = '#059669';
     this.attendanceTrendData = {
       labels: data.map(d => d.period),
       datasets: [{
         data: data.map(d => d.attendanceRate),
         borderColor: color,
-        backgroundColor: hasData ? 'rgba(15,118,110,0.08)' : 'transparent',
+        backgroundColor: hasData ? 'rgba(5,150,105,0.10)' : 'transparent',
         fill: true,
-        pointBackgroundColor: data.map(d => attendanceStatusColor(d.attendanceRate)),
+        pointBackgroundColor: data.map(d =>
+          d.attendanceRate >= 85 ? '#059669' : d.attendanceRate >= 70 ? '#d97706' : d.attendanceRate > 0 ? '#dc2626' : '#94a3b8'
+        ),
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
       }]
@@ -299,7 +291,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         backgroundColor: PALETTE.slice(0, data.length),
         borderWidth: 2,
         borderColor: '#fff',
-        hoverOffset: 6,
+        hoverOffset: 10,
       }]
     };
   }
