@@ -1,12 +1,30 @@
-<div class="sd-page ds-page" *ngIf="studentDetails && updatedDetails">
+<div class="sd-page" *ngIf="studentDetails && updatedDetails">
 
-  <div class="sd-topbar">
-    <button class="ds-btn is-secondary is-icon sd-back-icon" (click)="goBack()" title="Back" aria-label="Back"><span class="material-icons" aria-hidden="true">arrow_back</span></button>
-  </div>
+  <!-- ── Profile Hero ─────────────────────────────────────────── -->
+  <div class="sd-hero">
+    <div class="sd-blob sd-blob-1"></div>
+    <div class="sd-blob sd-blob-2"></div>
 
-  <!-- ── Identity header ──────────────────────────────────────── -->
-  <header class="sd-identity ds-card">
-    <div class="sd-id-main">
+    <div class="sd-hero-bar">
+      <button class="sd-back-icon" (click)="goBack()" title="Back">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="sd-hero-btns">
+        <button *ngIf="getUserRole() === 'ADMIN' && !isEditing" class="sd-pill" (click)="enableEditMode()">✏ Edit</button>
+        <ng-container *ngIf="getUserRole() === 'ADMIN' && isEditing">
+          <button class="sd-pill sd-pill-green" (click)="saveStudentDetails()">✓ Save</button>
+          <button class="sd-pill sd-pill-red" (click)="cancelEditMode()">✕</button>
+        </ng-container>
+        <button *ngIf="getUserRole() !== 'TEACHER'" class="sd-pill-icon" (click)="openPasswordModal()" title="Change Password">🔐</button>
+        <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'ACTIVE' && !isEditing" class="sd-pill sd-pill-exit" (click)="openExitModal()">Mark as Left</button>
+        <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" class="sd-pill sd-pill-green" (click)="openReadmitModal()">Re-admit</button>
+        <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'UPCOMING' && !isEditing" class="sd-pill sd-pill-exit"
+          (click)="cancelAdmission()" [disabled]="lifecycleBusy">Cancel Admission</button>
+        <button *ngIf="canCreateLogin && !isEditing" class="sd-pill" (click)="createMissingLogin()" [disabled]="lifecycleBusy">Create Login</button>
+      </div>
+    </div>
+
+    <div class="sd-hero-center">
       <div class="sd-photo-ring" [class.uploadable]="canUploadPhoto()" (click)="canUploadPhoto() && triggerPhotoUpload()">
         <img *ngIf="studentDetails.photoUrl && !photoLoadFailed" [src]="getPhotoUrl(studentDetails.photoUrl)" alt=""
           class="sd-photo" (error)="onPhotoError()">
@@ -19,57 +37,20 @@
       </div>
       <input type="file" #photoInput accept="image/*" (change)="onPhotoSelected($event)" style="display:none">
       <div class="sd-hero-identity">
-        <p class="ds-eyebrow">Student profile</p>
-        <h1 class="ds-title sd-hero-name">{{ studentDetails.name }}</h1>
+        <h1 class="sd-hero-name">{{ studentDetails.name }}</h1>
         <div class="sd-hero-chips">
-          <span class="ds-badge is-navy">Class {{ studentDetails.className }}<ng-container *ngIf="studentDetails.sectionName"> - {{ studentDetails.sectionName }}</ng-container></span>
-          <span class="ds-badge">{{ studentDetails.studentId }}</span>
-          <span *ngIf="studentDetails.status === 'ACTIVE'" class="ds-badge is-success">Active</span>
-          <span *ngIf="isExitStatus()" class="ds-badge is-warning sd-chip-exit">{{ statusLabel(studentDetails.status) }}</span>
-          <span *ngIf="studentDetails.status === 'UPCOMING'" class="ds-badge is-teal">Upcoming</span>
+          <span class="sd-hero-chip">Class {{ studentDetails.className }}<ng-container *ngIf="studentDetails.sectionName"> - {{ studentDetails.sectionName }}</ng-container></span>
+          <span class="sd-hero-chip">{{ studentDetails.studentId }}</span>
+          <span *ngIf="isExitStatus()" class="sd-hero-chip sd-chip-exit">{{ statusLabel(studentDetails.status) }}</span>
+          <span *ngIf="studentDetails.status === 'UPCOMING'" class="sd-hero-chip">Upcoming</span>
         </div>
       </div>
     </div>
-    <div class="sd-hero-btns">
-      <button *ngIf="getUserRole() === 'ADMIN' && !isEditing" class="ds-btn is-secondary sd-pill" (click)="enableEditMode()"><span class="material-icons" aria-hidden="true">edit</span>Edit</button>
-      <ng-container *ngIf="getUserRole() === 'ADMIN' && isEditing">
-        <button class="ds-btn is-primary sd-pill sd-pill-green" (click)="saveStudentDetails()"><span class="material-icons" aria-hidden="true">check</span>Save</button>
-        <button class="ds-btn is-secondary is-icon sd-pill sd-pill-red" (click)="cancelEditMode()" aria-label="Cancel editing" title="Cancel"><span class="material-icons" aria-hidden="true">close</span></button>
-      </ng-container>
-      <button *ngIf="getUserRole() !== 'TEACHER'" class="ds-btn is-secondary is-icon sd-pill-icon" (click)="openPasswordModal()" title="Change Password" aria-label="Change password"><span class="material-icons" aria-hidden="true">lock</span></button>
-      <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'ACTIVE' && !isEditing" class="ds-btn is-danger sd-pill sd-pill-exit" (click)="openExitModal()">Mark as Left</button>
-      <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" class="ds-btn is-primary sd-pill sd-pill-green" (click)="openReadmitModal()">Re-admit</button>
-      <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'UPCOMING' && !isEditing" class="ds-btn is-danger sd-pill sd-pill-exit"
-        (click)="cancelAdmission()" [disabled]="lifecycleBusy">Cancel Admission</button>
-      <button *ngIf="canCreateLogin && !isEditing" class="ds-btn is-secondary sd-pill" (click)="createMissingLogin()" [disabled]="lifecycleBusy">Create Login</button>
-    </div>
-  </header>
-
-  <!-- ── Quick Actions ──────────────────────────────────────────── -->
-  <section class="sd-quick" *ngIf="getUserRole() !== 'STUDENT'" aria-label="Quick access">
-    <div class="sd-actions-grid">
-      <button class="sd-action-btn ds-card is-link" (click)="viewAttendanceSummary()">
-        <span class="sd-action-icon ds-icon is-sm"><span class="material-icons" aria-hidden="true">fact_check</span></span>
-        <span>Attendance</span>
-      </button>
-      <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('ONLINE_PAYMENTS')" class="sd-action-btn ds-card is-link" (click)="viewPaymentHistory()">
-        <span class="sd-action-icon ds-icon is-sm"><span class="material-icons" aria-hidden="true">payments</span></span>
-        <span>Payments</span>
-      </button>
-      <button class="sd-action-btn ds-card is-link" (click)="viewLeaves()">
-        <span class="sd-action-icon ds-icon is-sm"><span class="material-icons" aria-hidden="true">event_note</span></span>
-        <span>Leaves</span>
-      </button>
-      <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('FEE_MANAGEMENT')" class="sd-action-btn ds-card is-link" (click)="viewFeeDetails()">
-        <span class="sd-action-icon ds-icon is-sm"><span class="material-icons" aria-hidden="true">receipt_long</span></span>
-        <span>Fee Details</span>
-      </button>
-    </div>
-  </section>
+  </div>
 
   <!-- ── Personal Info ─────────────────────────────────────────── -->
-  <div class="sd-section ds-card">
-    <h2 class="sd-section-title">Personal Information</h2>
+  <div class="sd-section">
+    <p class="sd-section-title">Personal Information</p>
     <div class="sd-grid">
       <div class="sd-item">
         <span class="sd-item-label">Name</span>
@@ -119,8 +100,8 @@
   </div>
 
   <!-- ── Family ─────────────────────────────────────────────────── -->
-  <div class="sd-section ds-card" *ngIf="isEditing || hasFamilyInfo()">
-    <h2 class="sd-section-title">Family</h2>
+  <div class="sd-section" *ngIf="isEditing || hasFamilyInfo()">
+    <p class="sd-section-title">Family</p>
     <div class="sd-grid">
       <div class="sd-item sd-item-parent" *ngIf="isEditing || hasValue(studentDetails.fatherName)">
         <span class="sd-item-label">Father</span>
@@ -138,8 +119,8 @@
   </div>
 
   <!-- ── Admin Details ──────────────────────────────────────────── -->
-  <div class="sd-section ds-card" *ngIf="getUserRole() === 'ADMIN'">
-    <h2 class="sd-section-title">Admin Details</h2>
+  <div class="sd-section" *ngIf="getUserRole() === 'ADMIN'">
+    <p class="sd-section-title">Admin Details</p>
     <div class="sd-grid">
       <div class="sd-item">
         <span class="sd-item-label">Uses Bus</span>
@@ -170,8 +151,8 @@
   </div>
 
   <!-- ── Exit Info (shown when student has exited) ────────────────── -->
-  <div class="sd-section ds-card sd-exit-info" *ngIf="isExitStatus()">
-    <h2 class="sd-section-title">Exit Details</h2>
+  <div class="sd-section sd-exit-info" *ngIf="isExitStatus()">
+    <p class="sd-section-title">Exit Details</p>
     <div class="sd-grid">
       <div class="sd-item">
         <span class="sd-item-label">Exit Type</span>
@@ -202,8 +183,8 @@
   </div>
 
   <!-- ── Enrollment History (admin, read-only) ─────────────────────── -->
-  <div class="sd-section ds-card" *ngIf="getUserRole() === 'ADMIN' && (enrollmentHistory.length || enrollmentHistoryFailed)">
-    <h2 class="sd-section-title">Enrollment History</h2>
+  <div class="sd-section" *ngIf="getUserRole() === 'ADMIN' && (enrollmentHistory.length || enrollmentHistoryFailed)">
+    <p class="sd-section-title">Enrollment History</p>
     <p class="sd-history-empty" *ngIf="enrollmentHistoryFailed">Enrollment history is unavailable right now.</p>
     <ol class="sd-history" *ngIf="enrollmentHistory.length">
       <li *ngFor="let item of enrollmentHistory" class="sd-history-row" [ngClass]="'is-' + item.state.toLowerCase()">
@@ -220,32 +201,45 @@
   </div>
 
   <!-- ── Guardians (admin, read-only) ─────────────────────────────── -->
-  <div class="sd-section ds-card" *ngIf="getUserRole() === 'ADMIN' && guardians">
-    <h2 class="sd-section-title">Guardians</h2>
+  <div class="sd-section" *ngIf="getUserRole() === 'ADMIN' && guardians">
+    <p class="sd-section-title">Guardians</p>
     <p class="sd-history-empty" *ngIf="!guardians.length">No parent or guardian accounts are linked to this student.</p>
     <ul class="sd-guardians" *ngIf="guardians.length">
       <li *ngFor="let g of guardians" class="sd-guardian" [ngClass]="'is-' + g.linkStatus.toLowerCase()">
-        <span class="sd-guardian-avatar" aria-hidden="true">{{ (g.parentName || g.parentId || '?').charAt(0) }}</span>
-        <div class="sd-guardian-body">
-          <div class="sd-guardian-head">
-            <strong>{{ g.parentName }}</strong>
-            <span class="sd-guardian-chip is-primary" *ngIf="g.primaryGuardian">Primary guardian</span>
-            <span class="sd-guardian-chip" [ngClass]="'is-' + g.linkStatus.toLowerCase()">{{ g.linkStatus === 'ACTIVE' ? 'Linked' : g.linkStatus === 'UPCOMING' ? 'Starts ' + (g.effectiveFrom | date:'d MMM y') : 'Ended' }}</span>
-          </div>
-          <dl class="sd-guardian-meta">
-            <div><dt>Relationship</dt><dd>{{ g.relationshipType | titlecase }}</dd></div>
-            <div><dt>Parent ID</dt><dd>{{ g.parentId }}</dd></div>
-            <div><dt>Phone</dt><dd>{{ g.phoneNumber }}</dd></div>
-            <div *ngIf="g.email"><dt>Email</dt><dd>{{ g.email }}</dd></div>
-            <div><dt>Linked</dt><dd>{{ g.effectiveFrom | date:'d MMM y' }} – {{ g.effectiveUntil ? (g.effectiveUntil | date:'d MMM y') : 'present' }}</dd></div>
-            <div><dt>Access</dt><dd>{{ guardianAccessSummary(g) }} · {{ guardianLoginLabel(g) }}</dd></div>
-          </dl>
+        <div class="sd-guardian-head">
+          <strong>{{ g.parentName }}</strong>
+          <span class="sd-guardian-chip is-primary" *ngIf="g.primaryGuardian">Primary guardian</span>
+          <span class="sd-guardian-chip" [ngClass]="'is-' + g.linkStatus.toLowerCase()">{{ g.linkStatus === 'ACTIVE' ? 'Linked' : g.linkStatus === 'UPCOMING' ? 'Starts ' + (g.effectiveFrom | date:'d MMM y') : 'Ended' }}</span>
         </div>
+        <small>{{ g.parentId }} · {{ g.relationshipType | titlecase }} · {{ g.phoneNumber }}<ng-container *ngIf="g.email"> · {{ g.email }}</ng-container></small>
+        <small>{{ g.effectiveFrom | date:'d MMM y' }} – {{ g.effectiveUntil ? (g.effectiveUntil | date:'d MMM y') : 'present' }} · {{ guardianAccessSummary(g) }} · {{ guardianLoginLabel(g) }}</small>
         <button type="button" class="sd-guardian-link" (click)="router.navigate(['/dashboard/parent-portal', g.parentId])">Manage access</button>
       </li>
     </ul>
   </div>
 
+  <!-- ── Quick Actions ──────────────────────────────────────────── -->
+  <div class="sd-section" *ngIf="getUserRole() !== 'STUDENT'">
+    <p class="sd-section-title">Quick Actions</p>
+    <div class="sd-actions-grid">
+      <button class="sd-action-btn" (click)="viewAttendanceSummary()">
+        <span class="sd-action-icon">📊</span>
+        <span>Attendance</span>
+      </button>
+      <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('ONLINE_PAYMENTS')" class="sd-action-btn" (click)="viewPaymentHistory()">
+        <span class="sd-action-icon">💳</span>
+        <span>Payments</span>
+      </button>
+      <button class="sd-action-btn" (click)="viewLeaves()">
+        <span class="sd-action-icon">🗓</span>
+        <span>Leaves</span>
+      </button>
+      <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('FEE_MANAGEMENT')" class="sd-action-btn" (click)="viewFeeDetails()">
+        <span class="sd-action-icon">💰</span>
+        <span>Fee Details</span>
+      </button>
+    </div>
+  </div>
 
 </div>
 
