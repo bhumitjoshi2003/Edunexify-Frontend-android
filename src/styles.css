@@ -11,8 +11,11 @@ html, body {
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--edu-font, Inter, 'Segoe UI', system-ui, -apple-system, sans-serif);
+  color: var(--edu-text, #1e293b);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Preserve the device safe area when component mobile rules reset topbar padding. */
@@ -22,104 +25,215 @@ body {
   }
 }
 
-/* ── Edunexify Color Tokens ─────────────────────────────────────── */
+/* ── Edunexify Design Tokens (v2 — derived from the public homepage) ─────────────────────
+   Navy for hierarchy, teal as the single product accent, near-white canvas, white bordered
+   surfaces. Existing token names are kept so current consumers pick the new look up
+   automatically. Light only. Mirror any change here in the Android repo's styles.css. */
 :root {
-  --edu-navy:         #0f172a;
+  /* Brand */
+  --edu-navy:         #0f172a;   /* ink / sidebar */
   --edu-dark:         #1e293b;
-  --edu-blue:         #1e3a5f;
-  --edu-teal:         #4fbdbd;
-  --edu-teal-dark:    #0f766e;
+  --edu-blue:         #1e3a5f;   /* brand navy — primary actions */
+  --edu-blue-hover:   #17436b;
+  --edu-teal:         #4fbdbd;   /* accent fills, rings, active indicators */
+  --edu-teal-dark:    #0f766e;   /* accent as text / icons on light surfaces */
   --edu-teal-mid:     #0d9488;
-  --edu-bg:           #f0f4f8;
-  --edu-bg-light:     #f8fafc;
+  --edu-teal-tint:    #e8f6f6;   /* soft accent surface */
+  --edu-teal-tint-border: #cfe9e9;
+
+  /* Surfaces */
+  --edu-bg:           #f6f9fb;   /* app canvas */
+  --edu-bg-light:     #f8fafc;   /* inset / table header surface */
+  --edu-surface:      #ffffff;
   --edu-border:       #e2e8f0;
-  --edu-text:         #1e293b;
-  --edu-text-sec:     #64748b;
-  --edu-text-muted:   #94a3b8;
-  --edu-shadow-sm:    0 2px 12px rgba(30, 58, 95, 0.07);
-  --edu-shadow-md:    0 4px 18px rgba(30, 58, 95, 0.14);
-  --edu-shadow-lg:    0 8px 40px rgba(30, 58, 95, 0.14);
+  --edu-border-strong:#cbd5e1;
 
-  /* ── Typography scale ─────────────────────────────── */
-  --edu-text-xs:      0.75rem;   /* badges, micro labels */
-  --edu-text-sm:      0.82rem;   /* subtitles, secondary */
-  --edu-text-base:    0.88rem;   /* body, buttons */
-  --edu-text-md:      1rem;      /* card titles, empty state titles */
-  --edu-text-lg:      1.25rem;   /* hero titles (standard) */
-  --edu-text-xl:      1.5rem;    /* hero titles (dashboards/lists) */
+  /* Text */
+  --edu-text:         #0f172a;
+  --edu-text-sec:     #475569;
+  --edu-text-muted:   #64748b;   /* AA on white */
+  --edu-text-faint:   #94a3b8;   /* decorative only */
 
-  /* ── Border radius ─────────────────────────────────── */
-  --edu-radius-sm:    8px;       /* inputs, small badges */
-  --edu-radius-md:    12px;      /* buttons, stat cards */
-  --edu-radius-lg:    16px;      /* content cards, hero mobile */
-  --edu-radius-xl:    20px;      /* hero sections, profile cards */
+  /* Status (restrained: used as small badges / tinted tiles, never full-bleed) */
+  --edu-danger:            #dc2626;
+  --edu-danger-light:      #f87171;
+  --edu-danger-bg:         #fef2f2;
+  --edu-danger-border:     #fecaca;
+  --edu-danger-ink:        #b91c1c;
+  --edu-success:           #059669;
+  --edu-success-light:     #34d399;
+  --edu-success-bg:        #ecfdf5;
+  --edu-success-border:    #a7f3d0;
+  --edu-success-ink:       #047857;
+  --edu-warning:           #d97706;
+  --edu-warning-light:     #fbbf24;
+  --edu-warning-bg:        #fffbeb;
+  --edu-warning-border:    #fde68a;
+  --edu-warning-ink:       #b45309;
+  --edu-info:              #1e3a5f;
+  --edu-info-bg:           #eef4fb;
+  --edu-info-border:       #d3e1f1;
+  --edu-info-ink:          #1e3a5f;
 
-  /* ── Box shadows ───────────────────────────────────── */
-  --edu-shadow-card:  0 2px 12px rgba(0, 0, 0, 0.06);
-  --edu-shadow-stat:  0 2px 8px rgba(0, 0, 0, 0.05);
-  --edu-shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.25);
+  /* Data visualisation (categorical order; first = brand teal) */
+  --edu-chart-1: #0f766e;
+  --edu-chart-2: #1e3a5f;
+  --edu-chart-3: #4fbdbd;
+  --edu-chart-4: #d97706;
+  --edu-chart-5: #64748b;
+  --edu-chart-6: #be5a64;
+  --edu-chart-grid: #e2e8f0;
 
-  /* ── Hero tokens ───────────────────────────────────── */
-  --edu-hero-radius:       20px;
-  --edu-hero-padding:      22px 24px;
-  --edu-hero-title-size:   1.25rem;
+  /* Typography */
+  --edu-font:         Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --edu-text-xs:      0.75rem;
+  --edu-text-sm:      0.8125rem;
+  --edu-text-base:    0.875rem;
+  --edu-text-md:      1rem;
+  --edu-text-lg:      1.25rem;
+  --edu-text-xl:      1.5rem;
+  --edu-text-2xl:     1.75rem;   /* KPI numerals */
+
+  /* Spacing */
+  --edu-space-1: 4px;
+  --edu-space-2: 8px;
+  --edu-space-3: 12px;
+  --edu-space-4: 16px;
+  --edu-space-5: 20px;
+  --edu-space-6: 24px;
+  --edu-space-8: 32px;
+  --edu-page-max: 1320px;
+
+  /* Radii: controls 8 · cards 12 · hero / modal 16 · pills */
+  --edu-radius-sm:    8px;
+  --edu-radius-md:    10px;
+  --edu-radius-lg:    12px;
+  --edu-radius-xl:    16px;
+  --edu-radius-pill:  999px;
+
+  /* Shadows: borders do most of the work; shadows stay faint */
+  --edu-shadow-xs:    0 1px 2px rgba(15, 23, 42, 0.04);
+  --edu-shadow-sm:    0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px -6px rgba(15, 23, 42, 0.08);
+  --edu-shadow-md:    0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 24px -12px rgba(15, 23, 42, 0.18);
+  --edu-shadow-lg:    0 24px 48px -20px rgba(15, 23, 42, 0.28);
+  --edu-shadow-card:  var(--edu-shadow-sm);
+  --edu-shadow-stat:  var(--edu-shadow-xs);
+  --edu-shadow-modal: 0 24px 56px -16px rgba(15, 23, 42, 0.35);
+
+  /* Focus + motion */
+  --edu-focus:        #4fbdbd;
+  --edu-focus-ring:   0 0 0 3px rgba(79, 189, 189, 0.32);
+  --edu-ease:         cubic-bezier(0.2, 0.7, 0.2, 1);
+  --edu-dur-fast:     120ms;
+  --edu-dur:          180ms;
+
+  /* ── Hero (role home pages only) ─────────────────────── */
+  --edu-hero-bg:           radial-gradient(520px 220px at 92% 0%, rgba(79, 189, 189, 0.22), transparent 70%), linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  --edu-hero-radius:       16px;
+  --edu-hero-padding:      24px 28px;
+  --edu-hero-title-size:   1.5rem;
   --edu-hero-title-weight: 800;
-  --edu-hero-sub-size:     0.78rem;
-  --edu-hero-icon-size:    52px;
-  --edu-hero-icon-font:    1.7rem;
-  --edu-hero-icon-radius:  14px;
-  --edu-hero-icon-bg:      rgba(255, 255, 255, 0.18);
+  --edu-hero-sub-size:     0.8125rem;
+  --edu-hero-icon-size:    48px;
+  --edu-hero-icon-font:    1.5rem;
+  --edu-hero-icon-radius:  12px;
+  --edu-hero-icon-bg:      rgba(255, 255, 255, 0.12);
   --edu-hero-blob1-size:   130px;
   --edu-hero-blob2-size:   80px;
 
-  /* ── Button tokens ─────────────────────────────────── */
+  /* ── Button tokens ───────────────────────────────────── */
   --edu-btn-sm-padding:    6px 14px;
-  --edu-btn-sm-font:       0.78rem;
+  --edu-btn-sm-font:       0.8125rem;
   --edu-btn-sm-radius:     8px;
   --edu-btn-md-padding:    9px 18px;
-  --edu-btn-md-font:       0.85rem;
-  --edu-btn-md-radius:     12px;
+  --edu-btn-md-font:       0.875rem;
+  --edu-btn-md-radius:     10px;
   --edu-btn-lg-padding:    12px 24px;
-  --edu-btn-lg-font:       0.92rem;
+  --edu-btn-lg-font:       0.9375rem;
   --edu-btn-lg-radius:     12px;
-  --edu-btn-weight:        700;
+  --edu-btn-weight:        600;
+  --edu-btn-h-sm:          32px;
+  --edu-btn-h-md:          40px;
+  --edu-btn-h-lg:          48px;
 
-  /* ── Input tokens ──────────────────────────────────── */
+  /* ── Input tokens ────────────────────────────────────── */
   --edu-input-padding:     9px 12px;
-  --edu-input-border:      1.5px solid #e2e8f0;
-  --edu-input-radius:      10px;
-  --edu-input-font:        0.88rem;
+  --edu-input-border:      1px solid #cbd5e1;
+  --edu-input-radius:      8px;
+  --edu-input-font:        0.875rem;
+  --edu-input-height:      40px;
   --edu-input-focus-shadow: 0 0 0 3px;
 
-  /* ── Empty state tokens ────────────────────────────── */
+  /* ── Empty state tokens ──────────────────────────────── */
   --edu-empty-icon-size:   2.5rem;
   --edu-empty-title-size:  1rem;
-  --edu-empty-sub-size:    0.85rem;
-  --edu-empty-title-color: #374151;
-  --edu-empty-sub-color:   #94a3b8;
+  --edu-empty-sub-size:    0.875rem;
+  --edu-empty-title-color: #0f172a;
+  --edu-empty-sub-color:   #64748b;
 
-  /* ── Card tokens ───────────────────────────────────── */
-  --edu-card-radius:       16px;
+  /* ── Card tokens ─────────────────────────────────────── */
+  --edu-card-radius:       12px;
   --edu-card-padding:      20px;
   --edu-card-bg:           #fff;
 
-  /* ── Modal tokens ──────────────────────────────────── */
+  /* ── Modal tokens ────────────────────────────────────── */
   --edu-modal-radius:      16px;
   --edu-modal-padding:     28px 24px 22px;
   --edu-modal-max-width:   440px;
-  --edu-modal-overlay:     rgba(0, 0, 0, 0.55);
-
-  /* ── Danger colors ─────────────────────────────────── */
-  --edu-danger:            #dc2626;
-  --edu-danger-light:      #f87171;
-  --edu-success:           #059669;
-  --edu-success-light:     #34d399;
-  --edu-warning:           #d97706;
-  --edu-warning-light:     #fbbf24;
+  --edu-modal-overlay:     rgba(15, 23, 42, 0.55);
 
   /* Touch target minimum */
   --edu-touch-min:    44px;
+
+  /* ── Angular Material: re-skin the prebuilt Azure theme to the brand ─────────────────── */
+  --mat-sys-primary:                 #1e3a5f;
+  --mat-sys-on-primary:              #ffffff;
+  --mat-sys-primary-container:       #e8f6f6;
+  --mat-sys-on-primary-container:    #0b3b3d;
+  --mat-sys-secondary:               #0f766e;
+  --mat-sys-on-secondary:            #ffffff;
+  --mat-sys-secondary-container:     #e8f6f6;
+  --mat-sys-on-secondary-container:  #0b3b3d;
+  --mat-sys-tertiary:                #0f766e;
+  --mat-sys-tertiary-container:      #e8f6f6;
+  --mat-sys-on-tertiary-container:   #0b3b3d;
+  --mat-sys-surface-tint:            #1e3a5f;
+  --mat-sys-background:              #f6f9fb;
+  --mat-sys-surface:                 #ffffff;
+  --mat-sys-surface-bright:          #ffffff;
+  --mat-sys-surface-container-lowest:#ffffff;
+  --mat-sys-surface-container-low:   #f8fafc;
+  --mat-sys-surface-container:       #ffffff;
+  --mat-sys-surface-container-high:  #f1f5f9;
+  --mat-sys-surface-container-highest:#e2e8f0;
+  --mat-sys-on-surface:              #0f172a;
+  --mat-sys-on-surface-variant:      #475569;
+  --mat-sys-outline:                 #94a3b8;
+  --mat-sys-outline-variant:         #e2e8f0;
+  --mat-sys-error:                   #dc2626;
+  --mat-sys-error-container:         #fef2f2;
+  --mat-sys-on-error-container:      #b91c1c;
+  --mat-sys-corner-extra-small:      8px;
+  --mat-sys-corner-small:            8px;
+  --mat-sys-corner-medium:           12px;
+  --mat-sys-corner-large:            16px;
+  --mat-sys-corner-extra-large:      16px;
+  --mat-menu-container-shape:        12px;
+  --mat-dialog-container-shape:      16px;
+  --mat-body-font:                   var(--edu-font);
+  --mat-sys-body-large-font:         var(--edu-font);
+  --mat-sys-body-medium-font:        var(--edu-font);
+  --mat-sys-body-small-font:         var(--edu-font);
+  --mat-sys-label-large-font:        var(--edu-font);
+  --mat-sys-label-medium-font:       var(--edu-font);
+  --mat-sys-label-small-font:        var(--edu-font);
+  --mat-sys-title-large-font:        var(--edu-font);
+  --mat-sys-title-medium-font:       var(--edu-font);
+  --mat-sys-title-small-font:        var(--edu-font);
+  --mat-sys-headline-small-font:     var(--edu-font);
+  --mat-sys-headline-medium-font:    var(--edu-font);
 }
+
 
 /* ── edu-dialog: shared panel class for confirm / select-month dialogs ── */
 .edu-dialog .mat-mdc-dialog-container .mdc-dialog__surface {
@@ -199,6 +313,103 @@ body {
   border-radius: 6px;
   display: block;
 }
+
+/* ══ Edunexify shared UI (v2) ═════════════════════════════════════════════════════════
+   Small, token-driven primitives shared by every authenticated page: focus ring, buttons,
+   form controls, badges, card surface and the Material re-skin. Page-specific layout stays in
+   each component. Keep this block identical in the Web and Android repos. */
+
+button, input, select, textarea { font-family: inherit; }
+
+/* Visible keyboard focus everywhere; :where() keeps specificity at zero so any component
+   rule that deliberately styles its own focus still wins. */
+:where(a, button, summary, select, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--edu-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────────────── */
+.edu-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: var(--edu-btn-h-md); padding: 0 16px;
+  border: 1px solid transparent; border-radius: var(--edu-btn-md-radius);
+  font: var(--edu-btn-weight) var(--edu-btn-md-font)/1 var(--edu-font);
+  letter-spacing: -0.005em; white-space: nowrap; text-decoration: none; cursor: pointer;
+  transition: background var(--edu-dur) var(--edu-ease), border-color var(--edu-dur) var(--edu-ease),
+              box-shadow var(--edu-dur) var(--edu-ease), transform var(--edu-dur-fast) var(--edu-ease);
+}
+.edu-btn:disabled, .edu-btn[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
+.edu-btn .material-icons, .edu-btn mat-icon { font-size: 18px; width: 18px; height: 18px; line-height: 18px; }
+.edu-btn:active:not(:disabled) { transform: translateY(1px); }
+.edu-btn-sm { height: var(--edu-btn-h-sm); padding: 0 12px; font-size: var(--edu-btn-sm-font); border-radius: var(--edu-btn-sm-radius); }
+.edu-btn-lg { height: var(--edu-btn-h-lg); padding: 0 24px; font-size: var(--edu-btn-lg-font); border-radius: var(--edu-btn-lg-radius); }
+.edu-btn-primary { background: linear-gradient(135deg, #1e3a5f, #17436b); color: #fff; box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 8px 16px -10px rgba(30, 58, 95, .7); }
+.edu-btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #234875, #1c4f7c); box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 12px 20px -10px rgba(30, 58, 95, .75); }
+.edu-btn-secondary { background: #fff; color: var(--edu-text); border-color: var(--edu-border-strong); }
+.edu-btn-secondary:hover:not(:disabled) { background: var(--edu-bg-light); border-color: var(--edu-blue); }
+.edu-btn-ghost { background: transparent; color: var(--edu-text-sec); }
+.edu-btn-ghost:hover:not(:disabled) { background: #eef2f6; color: var(--edu-text); }
+.edu-btn-danger { background: var(--edu-danger); color: #fff; }
+.edu-btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.edu-btn-icon { width: var(--edu-btn-h-md); padding: 0; }
+.edu-btn-icon.edu-btn-sm { width: var(--edu-btn-h-sm); }
+
+/* ── Form controls ─────────────────────────────────────────────────────────────────── */
+.edu-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.edu-label { font-size: var(--edu-text-sm); font-weight: 600; color: var(--edu-text); }
+.edu-label .edu-req { color: var(--edu-danger); margin-left: 2px; }
+.edu-help { font-size: var(--edu-text-xs); color: var(--edu-text-muted); }
+.edu-error-text { font-size: var(--edu-text-xs); color: var(--edu-danger-ink); font-weight: 500; }
+.edu-input, .edu-select {
+  height: var(--edu-input-height); padding: 0 12px; min-width: 0;
+  border: var(--edu-input-border); border-radius: var(--edu-input-radius);
+  background-color: #fff; color: var(--edu-text); font: 400 var(--edu-input-font)/1.2 var(--edu-font);
+  transition: border-color var(--edu-dur) var(--edu-ease), box-shadow var(--edu-dur) var(--edu-ease);
+}
+.edu-input::placeholder { color: var(--edu-text-faint); }
+.edu-input:hover:not(:disabled), .edu-select:hover:not(:disabled) { border-color: #94a3b8; }
+.edu-input:focus, .edu-select:focus { outline: none; border-color: var(--edu-teal-dark); box-shadow: var(--edu-focus-ring); }
+.edu-input:disabled, .edu-select:disabled { background-color: var(--edu-bg-light); color: var(--edu-text-faint); cursor: not-allowed; }
+.edu-input.is-invalid, .edu-input[aria-invalid='true'] { border-color: var(--edu-danger); }
+.edu-select {
+  appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+
+/* ── Badges / status ───────────────────────────────────────────────────────────────── */
+.edu-badge {
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
+  border-radius: var(--edu-radius-pill); border: 1px solid var(--edu-border);
+  background: #f1f5f9; color: var(--edu-text-sec);
+  font: 600 var(--edu-text-xs)/1 var(--edu-font); letter-spacing: 0.01em; white-space: nowrap;
+}
+.edu-badge.is-success { background: var(--edu-success-bg); border-color: var(--edu-success-border); color: var(--edu-success-ink); }
+.edu-badge.is-warning { background: var(--edu-warning-bg); border-color: var(--edu-warning-border); color: var(--edu-warning-ink); }
+.edu-badge.is-danger  { background: var(--edu-danger-bg);  border-color: var(--edu-danger-border);  color: var(--edu-danger-ink); }
+.edu-badge.is-info    { background: var(--edu-info-bg);    border-color: var(--edu-info-border);    color: var(--edu-info-ink); }
+.edu-badge.is-brand   { background: var(--edu-teal-tint);  border-color: var(--edu-teal-tint-border); color: var(--edu-teal-dark); }
+
+/* ── Surfaces ──────────────────────────────────────────────────────────────────────── */
+.edu-card { background: var(--edu-card-bg); border: 1px solid var(--edu-border); border-radius: var(--edu-card-radius); box-shadow: var(--edu-shadow-xs); }
+.edu-card-title { margin: 0; font: 700 var(--edu-text-md)/1.3 var(--edu-font); letter-spacing: -0.01em; color: var(--edu-text); }
+
+/* ── Angular Material re-skin (menus, dialogs, tabs, fields, snackbars) ─────────────── */
+.mat-mdc-menu-panel { border: 1px solid var(--edu-border); box-shadow: var(--edu-shadow-md) !important; }
+.mat-mdc-menu-item .mat-mdc-menu-item-text { font-size: var(--edu-text-base); font-weight: 500; }
+.mat-mdc-dialog-container .mdc-dialog__surface { box-shadow: var(--edu-shadow-modal); }
+.cdk-overlay-dark-backdrop { background: var(--edu-modal-overlay); }
+.mat-mdc-tab .mdc-tab__text-label { font-family: var(--edu-font); font-weight: 600; letter-spacing: -0.005em; }
+.mat-mdc-tab-header { --mdc-tab-indicator-active-indicator-color: var(--edu-teal-dark); --mat-tab-header-active-label-text-color: var(--edu-blue); --mat-tab-header-active-focus-label-text-color: var(--edu-blue); --mat-tab-header-active-hover-label-text-color: var(--edu-blue); --mat-tab-header-inactive-label-text-color: var(--edu-text-muted); }
+.mat-mdc-form-field { font-family: var(--edu-font); }
+.mat-mdc-form-field-focus-overlay { background: transparent; }
+.mat-mdc-form-field.mat-focused .mdc-notched-outline > * { border-color: var(--edu-teal-dark) !important; }
+.mat-mdc-snack-bar-container { --mdc-snackbar-container-color: var(--edu-navy); --mat-snack-bar-button-color: var(--edu-teal); }
+.mat-mdc-badge-content, .mat-badge-content { font-family: var(--edu-font); font-weight: 700; }
 
 /* ── Print: hide dashboard shell, show only the report card ── */
 @media print {

@@ -1,18 +1,9 @@
 <div class="as-page">
   <app-parent-child-context *ngIf="role === 'PARENT'" [studentId]="selectedStudentId" requiredPermission="canViewAttendance" (childSelected)="onChildTabSelected($event)"></app-parent-child-context>
 
-  <!-- ── Hero ─────────────────────────────────────────────────── -->
-  <div class="as-hero no-print">
-    <div class="as-hero-left">
-      <div class="as-hero-icon">📊</div>
-      <div>
-        <h1 class="as-hero-title">Attendance Summary</h1>
-        <p class="as-hero-sub">Track daily presence and monthly breakdown</p>
-      </div>
-    </div>
-    <div class="as-blob as-blob-1"></div>
-    <div class="as-blob as-blob-2"></div>
-  </div>
+  <!-- ── Page header ───────────────────────────────────────────── -->
+  <app-page-header class="no-print" icon="fact_check" title="Attendance Summary"
+    subtitle="Track daily presence and monthly breakdown"></app-page-header>
 
   <!-- ── Attendance Insights (read-only, current session) ──────── -->
   <app-student-attendance-insights class="no-print" *ngIf="role === 'STUDENT'"></app-student-attendance-insights>
@@ -46,42 +37,42 @@
       </div>
 
       <ng-container *ngIf="periodType === 'month'">
-        <select [(ngModel)]="selectedMonth" aria-label="Select month" class="as-select">
+        <select [(ngModel)]="selectedMonth" aria-label="Select month" class="as-select edu-select">
           <option *ngFor="let m of months" [ngValue]="m.value">{{ m.label }}</option>
         </select>
-        <select [(ngModel)]="selectedYear" aria-label="Select year" class="as-select">
+        <select [(ngModel)]="selectedYear" aria-label="Select year" class="as-select edu-select">
           <option *ngFor="let y of years" [ngValue]="y">{{ y }}</option>
         </select>
       </ng-container>
 
       <ng-container *ngIf="periodType === 'year'">
-        <select [(ngModel)]="selectedSession" aria-label="Select session" class="as-select">
+        <select [(ngModel)]="selectedSession" aria-label="Select session" class="as-select edu-select">
           <option *ngFor="let s of sessions" [value]="s">{{ s }}</option>
         </select>
       </ng-container>
 
       <!-- Class selector -->
       <select *ngIf="canChangeClass()" [(ngModel)]="selectedClass" (ngModelChange)="onClassChange()"
-        aria-label="Select class" class="as-select">
+        aria-label="Select class" class="as-select edu-select">
         <option value="">-- Class --</option>
         <option *ngFor="let c of classList" [value]="c">Class {{ c }}</option>
       </select>
 
       <!-- Section filter -->
       <select *ngIf="sections.length > 0" [(ngModel)]="selectedSectionId" (ngModelChange)="onSectionSelect($event)"
-        aria-label="Select section" class="as-select">
+        aria-label="Select section" class="as-select edu-select">
         <option [ngValue]="null">All Sections</option>
         <option *ngFor="let sec of sections" [ngValue]="sec.id">{{ sec.name }}</option>
       </select>
 
       <!-- Student selector (student view only) -->
       <select *ngIf="viewMode === 'student'" [(ngModel)]="selectedStudentId" aria-label="Select student"
-        class="as-select" [disabled]="studentList.length === 0">
+        class="as-select edu-select" [disabled]="studentList.length === 0">
         <option value="">-- Student --</option>
         <option *ngFor="let s of studentList" [value]="s.studentId">{{ s.name }}</option>
       </select>
 
-      <button class="as-load-btn" (click)="loadReport()" [disabled]="isLoading">
+      <button class="as-load-btn edu-btn edu-btn-primary" (click)="loadReport()" [disabled]="isLoading">
         {{ isLoading ? 'Loading…' : 'Load Report' }}
       </button>
     </div>
@@ -96,21 +87,21 @@
       </div>
 
       <ng-container *ngIf="periodType === 'month'">
-        <select [(ngModel)]="selectedMonth" aria-label="Select month" class="as-select">
+        <select [(ngModel)]="selectedMonth" aria-label="Select month" class="as-select edu-select">
           <option *ngFor="let m of months" [ngValue]="m.value">{{ m.label }}</option>
         </select>
-        <select [(ngModel)]="selectedYear" aria-label="Select year" class="as-select">
+        <select [(ngModel)]="selectedYear" aria-label="Select year" class="as-select edu-select">
           <option *ngFor="let y of years" [ngValue]="y">{{ y }}</option>
         </select>
       </ng-container>
 
       <ng-container *ngIf="periodType === 'year'">
-        <select [(ngModel)]="selectedSession" aria-label="Select session" class="as-select">
+        <select [(ngModel)]="selectedSession" aria-label="Select session" class="as-select edu-select">
           <option *ngFor="let s of sessions" [value]="s">{{ s }}</option>
         </select>
       </ng-container>
 
-      <button class="as-load-btn" (click)="loadReport()" [disabled]="isLoading">
+      <button class="as-load-btn edu-btn edu-btn-primary" (click)="loadReport()" [disabled]="isLoading">
         {{ isLoading ? 'Loading…' : 'Load Report' }}
       </button>
     </div>
@@ -134,42 +125,34 @@
       <div>
         <h3 class="as-student-name">{{ studentSummary.studentName }}</h3>
       </div>
-      <button class="as-print-btn no-print" (click)="printReport()" aria-label="Download PDF">
-        ⬇ Download PDF
+      <button class="as-print-btn edu-btn edu-btn-secondary edu-btn-sm no-print" (click)="printReport()" aria-label="Download PDF">
+        <mat-icon aria-hidden="true">download</mat-icon> Download PDF
       </button>
     </div>
 
     <!-- Stat cards -->
     <div class="as-stats">
-      <div class="as-stat-card">
-        <span class="as-stat-value">{{ studentSummary.totalWorkingDays }}</span>
-        <span class="as-stat-label">Working Days</span>
-      </div>
-      <div class="as-stat-card as-stat-present">
-        <span class="as-stat-value">{{ studentSummary.daysPresent }}</span>
-        <span class="as-stat-label">Present</span>
-      </div>
-      <div class="as-stat-card as-stat-absent">
-        <span class="as-stat-value">{{ studentSummary.daysAbsent }}</span>
-        <span class="as-stat-label">Absent</span>
-        <span class="as-stat-note" *ngIf="studentSummary.approvedLeaveDays > 0">incl. {{ studentSummary.approvedLeaveDays }} on approved leave</span>
-      </div>
-      <div class="as-stat-card">
-        <span class="as-stat-value" [ngClass]="getAttendanceClass(studentSummary.attendancePercentage, studentSummary.totalWorkingDays)">
+      <app-stat-card label="Working Days" icon="event_available" tone="neutral">{{ studentSummary.totalWorkingDays }}</app-stat-card>
+      <app-stat-card label="Present" icon="check_circle" tone="success">{{ studentSummary.daysPresent }}</app-stat-card>
+      <app-stat-card label="Absent" icon="cancel" tone="danger">
+        {{ studentSummary.daysAbsent }}
+        <span scFoot class="as-stat-note" *ngIf="studentSummary.approvedLeaveDays > 0">incl. {{ studentSummary.approvedLeaveDays }} on approved leave</span>
+      </app-stat-card>
+      <app-stat-card label="Attendance" icon="percent" tone="brand">
+        <span [ngClass]="getAttendanceClass(studentSummary.attendancePercentage, studentSummary.totalWorkingDays)">
           {{ studentSummary.attendancePercentage }}%
         </span>
-        <span class="as-stat-label">Attendance</span>
-        <span class="as-badge" [ngClass]="getAttendanceClass(studentSummary.attendancePercentage, studentSummary.totalWorkingDays)">
+        <span scFoot class="as-badge" [ngClass]="getAttendanceClass(studentSummary.attendancePercentage, studentSummary.totalWorkingDays)">
           {{ getAttendanceLabel(studentSummary.attendancePercentage, studentSummary.totalWorkingDays) }}
         </span>
-      </div>
+      </app-stat-card>
     </div>
 
     <!-- ── Month view: Day-by-Day calendar toggle ── -->
     <div class="as-calendar-section" *ngIf="periodType === 'month'">
-      <button class="as-expand-toggle no-print" (click)="toggleMonthCalendar()" [attr.aria-expanded]="calendarExpanded"
+      <button class="as-expand-toggle edu-btn edu-btn-secondary edu-btn-sm no-print" (click)="toggleMonthCalendar()" [attr.aria-expanded]="calendarExpanded"
         aria-label="Toggle day-by-day calendar view">
-        <span class="as-expand-icon">{{ calendarExpanded ? '▲' : '▼' }}</span>
+        <mat-icon class="as-expand-icon" aria-hidden="true">{{ calendarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
         {{ calendarExpanded ? 'Hide Day-by-Day' : 'Show Day-by-Day' }}
       </button>
 
@@ -217,16 +200,16 @@
       <div class="as-breakdown-header">
         <h4 class="as-breakdown-title">Month-by-Month Breakdown</h4>
         <div class="as-breakdown-actions no-print" *ngIf="periodType === 'year'">
-          <button class="as-collapse-all-btn" *ngIf="expandAllActive" (click)="collapseAll()">
-            ▲ Collapse All
+          <button class="as-collapse-all-btn edu-btn edu-btn-secondary edu-btn-sm" *ngIf="expandAllActive" (click)="collapseAll()">
+            <mat-icon aria-hidden="true">unfold_less</mat-icon> Collapse All
           </button>
-          <button class="as-expand-all-btn" *ngIf="!expandAllActive" (click)="expandAll()">
-            ▼ Expand All
+          <button class="as-expand-all-btn edu-btn edu-btn-secondary edu-btn-sm" *ngIf="!expandAllActive" (click)="expandAll()">
+            <mat-icon aria-hidden="true">unfold_more</mat-icon> Expand All
           </button>
         </div>
       </div>
 
-      <div class="as-table-wrap">
+      <div class="as-table-wrap" tabindex="0" role="region" aria-label="Attendance table">
         <table class="as-table">
           <thead>
             <tr>
@@ -254,7 +237,7 @@
                   <button class="as-row-expand-btn" (click)="toggleRowCalendar(row)" [class.active]="isRowExpanded(row)"
                     [attr.aria-label]="'Toggle calendar for ' + row.month + ' ' + row.year"
                     [attr.aria-expanded]="isRowExpanded(row)">
-                    {{ isRowExpanded(row) ? '▲' : '▼' }}
+                    <mat-icon aria-hidden="true">{{ isRowExpanded(row) ? 'expand_less' : 'expand_more' }}</mat-icon>
                   </button>
                 </td>
               </tr>
@@ -313,12 +296,12 @@
         <p class="as-sub">{{ getPeriodLabel() }} &nbsp;·&nbsp; {{ classSummary.length }} students (sorted by lowest
           first)</p>
       </div>
-      <button class="as-print-btn no-print" (click)="printReport()" aria-label="Download PDF">
-        ⬇ Download PDF
+      <button class="as-print-btn edu-btn edu-btn-secondary edu-btn-sm no-print" (click)="printReport()" aria-label="Download PDF">
+        <mat-icon aria-hidden="true">download</mat-icon> Download PDF
       </button>
     </div>
 
-    <div class="as-table-wrap">
+    <div class="as-table-wrap" tabindex="0" role="region" aria-label="Attendance table">
       <table class="as-table">
         <thead>
           <tr>
@@ -350,7 +333,7 @@
 
   <!-- Empty state -->
   <div class="as-empty" *ngIf="!isLoading && !studentSummary && classSummary.length === 0 && !error">
-    <div class="as-empty-icon">📅</div>
+    <div class="as-empty-icon" aria-hidden="true"><mat-icon>event_note</mat-icon></div>
     <p class="as-empty-title">No report loaded yet</p>
     <p class="as-empty-sub">Select the filters above and tap <strong>Load Report</strong> to view the attendance summary.</p>
   </div>

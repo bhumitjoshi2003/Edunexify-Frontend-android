@@ -17,7 +17,7 @@
           {{ tenantService.school!.name }}
         </span>
       </div>
-      <button class="sidebar-collapse-btn" (click)="toggleSidebar()" title="Collapse sidebar">
+      <button class="sidebar-collapse-btn" (click)="toggleSidebar()" title="Collapse sidebar" aria-label="Collapse sidebar">
         <mat-icon>chevron_left</mat-icon>
       </button>
     </div>
@@ -563,7 +563,7 @@
 
     <!-- Top bar -->
     <header class="topbar">
-      <button class="topbar-hamburger" (click)="toggleSidebar()" title="Toggle sidebar">
+      <button class="topbar-hamburger" (click)="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">
         <mat-icon>{{ menuIcon }}</mat-icon>
       </button>
 

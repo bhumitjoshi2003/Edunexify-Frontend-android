@@ -22,11 +22,14 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 import { attendanceHealth } from '../../interfaces/attendance-insights';
 import { StudentAttendanceInsightsComponent } from '../attendance-insights/student-attendance-insights.component';
 import { ClassAttendanceInsightsComponent } from '../attendance-insights/class-attendance-insights.component';
+import { MatIconModule } from '@angular/material/icon';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
+import { StatCardComponent } from '../ui/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-attendance-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, ParentChildContextComponent, StudentAttendanceInsightsComponent, ClassAttendanceInsightsComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, PageHeaderComponent, StatCardComponent, ParentChildContextComponent, StudentAttendanceInsightsComponent, ClassAttendanceInsightsComponent],
   templateUrl: './attendance-summary.component.html',
   styleUrl: './attendance-summary.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
