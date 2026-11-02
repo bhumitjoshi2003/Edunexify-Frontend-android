@@ -1,49 +1,44 @@
 <app-wisdom-cards *ngIf="hasFeature('WISDOM')"></app-wisdom-cards>
 <div class="parent-page">
-  <section class="hero" [class.parent-hero]="!isAdmin">
-    <div class="hero-left">
-      <div class="hero-icon"><mat-icon>{{ isAdmin ? 'family_restroom' : 'home' }}</mat-icon></div>
-      <div class="hero-copy">
-        <h1>{{ isAdmin ? 'Parents' : 'Parent Portal' }}</h1>
-        <p>{{ isAdmin ? 'Manage parent accounts, linked students and access.' : 'View your children’s school information from one secure place.' }}</p>
-      </div>
-    </div>
-    <div class="hero-actions" *ngIf="isAdmin">
-      <button type="button" class="hero-button hero-button--secondary" (click)="goToBulkImport()">
+  <app-page-header [variant]="isAdmin ? 'plain' : 'hero'" [icon]="isAdmin ? 'family_restroom' : ''"
+    [title]="isAdmin ? 'Parents' : 'Parent Portal'"
+    [subtitle]="isAdmin ? 'Manage parent accounts, linked students and access.' : 'View your children’s school information from one secure place.'">
+    <ng-container *ngIf="isAdmin">
+      <button type="button" class="edu-btn edu-btn-secondary" (click)="goToBulkImport()">
         <mat-icon>upload_file</mat-icon>
         Bulk Import
       </button>
-      <button type="button" class="hero-button" (click)="toggleCreatePanel()">
+      <button type="button" class="edu-btn edu-btn-primary" (click)="toggleCreatePanel()">
         <mat-icon>{{ showCreatePanel ? 'close' : 'person_add' }}</mat-icon>
         {{ showCreatePanel ? 'Close' : 'Add parent' }}
       </button>
-    </div>
-  </section>
+    </ng-container>
+  </app-page-header>
 
   <div class="loading-card" *ngIf="loading"><span class="spinner"></span> Loading parent portal…</div>
 
   <ng-container *ngIf="!loading && isAdmin">
     <section class="summary-grid" aria-label="Parent account summary">
-      <article><span class="summary-icon teal"><mat-icon>family_restroom</mat-icon></span><div><strong>{{ stats?.totalParents ?? 0 }}</strong><span>Total parents</span></div></article>
-      <article><span class="summary-icon green"><mat-icon>verified_user</mat-icon></span><div><strong>{{ stats?.activeParents ?? 0 }}</strong><span>Active accounts</span></div></article>
-      <article><span class="summary-icon blue"><mat-icon>school</mat-icon></span><div><strong>{{ stats?.linkedStudents ?? 0 }}</strong><span>Linked students</span></div></article>
-      <article [class.needs-action]="(stats?.unlinkedParents ?? 0) > 0"><span class="summary-icon amber"><mat-icon>link_off</mat-icon></span><div><strong>{{ stats?.unlinkedParents ?? 0 }}</strong><span>Without student links</span></div></article>
+      <app-stat-card label="Total parents" icon="family_restroom" tone="brand">{{ stats?.totalParents ?? 0 }}</app-stat-card>
+      <app-stat-card label="Active accounts" icon="verified_user" tone="success">{{ stats?.activeParents ?? 0 }}</app-stat-card>
+      <app-stat-card label="Linked students" icon="school" tone="info">{{ stats?.linkedStudents ?? 0 }}</app-stat-card>
+      <app-stat-card label="Without student links" icon="link_off" [tone]="(stats?.unlinkedParents ?? 0) > 0 ? 'warning' : 'neutral'">{{ stats?.unlinkedParents ?? 0 }}</app-stat-card>
     </section>
 
     <section class="panel create-drawer" *ngIf="showCreatePanel">
       <div class="section-heading">
         <div class="title-icon"><mat-icon>person_add</mat-icon></div>
         <div>
-          <span class="eyebrow dark">NEW ACCOUNT</span>
+          <span class="eyebrow dark">New account</span>
           <h2>Create parent or guardian<button type="button" class="hint-toggle" (click)="toggleIdHint()" [attr.aria-expanded]="showIdHint" aria-label="How the account is created"><mat-icon>info</mat-icon></button></h2>
           <p class="create-parent-hint" *ngIf="showIdHint">Parent ID is generated automatically. They'll receive an email to set their password.</p>
         </div>
       </div>
       <form [formGroup]="createForm" (ngSubmit)="createParent()" class="form-grid">
-        <label>Full name<input formControlName="name"><small *ngIf="createForm.controls.name.touched && createForm.controls.name.invalid">Full name is required</small></label>
-        <label>Phone number<input formControlName="phoneNumber" inputmode="tel"><small *ngIf="createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid">Enter a valid phone number</small></label>
-        <label>Email<input formControlName="email" type="email"><small *ngIf="createForm.controls.email.touched && createForm.controls.email.invalid">A valid email is required — it's how the parent receives their account setup link</small></label>
-        <div class="form-actions"><button class="text-button" type="button" (click)="toggleCreatePanel()">Cancel</button><button class="primary" type="submit" [disabled]="working"><mat-icon>person_add</mat-icon>{{ working ? 'Creating…' : 'Create account' }}</button></div>
+        <label>Full name<input class="edu-input" formControlName="name"><small *ngIf="createForm.controls.name.touched && createForm.controls.name.invalid">Full name is required</small></label>
+        <label>Phone number<input class="edu-input" formControlName="phoneNumber" inputmode="tel"><small *ngIf="createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid">Enter a valid phone number</small></label>
+        <label>Email<input class="edu-input" formControlName="email" type="email"><small *ngIf="createForm.controls.email.touched && createForm.controls.email.invalid">A valid email is required — it's how the parent receives their account setup link</small></label>
+        <div class="form-actions"><button class="edu-btn edu-btn-ghost" type="button" (click)="toggleCreatePanel()">Cancel</button><button class="edu-btn edu-btn-primary" type="submit" [disabled]="working"><mat-icon>person_add</mat-icon>{{ working ? 'Creating…' : 'Create account' }}</button></div>
       </form>
     </section>
 
@@ -55,14 +50,14 @@
       </div>
 
       <div class="directory-filters">
-        <label class="search-field"><mat-icon>search</mat-icon><input aria-label="Search parents" [value]="searchTerm" (input)="updateDirectorySearch($event)" placeholder="Search name, ID or phone"></label>
-        <select aria-label="Filter by account status" [value]="statusFilter" (change)="updateStatusFilter($event)">
+        <label class="search-field"><mat-icon>search</mat-icon><input class="edu-input" aria-label="Search parents" [value]="searchTerm" (input)="updateDirectorySearch($event)" placeholder="Search name, ID or phone"></label>
+        <select class="edu-select" aria-label="Filter by account status" [value]="statusFilter" (change)="updateStatusFilter($event)">
           <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="DISABLED">Disabled</option>
         </select>
-        <select aria-label="Filter by linked students" [value]="linkedFilter" (change)="updateLinkedFilter($event)">
+        <select class="edu-select" aria-label="Filter by linked students" [value]="linkedFilter" (change)="updateLinkedFilter($event)">
           <option value="ALL">All students</option><option value="LINKED">Linked</option><option value="UNLINKED">Unlinked</option><option value="NO_ACTIVE_CHILDREN">No active children</option>
         </select>
-        <button type="button" class="text-button" *ngIf="hasActiveFilters" (click)="clearFilters()"><mat-icon>filter_alt_off</mat-icon>Clear filters</button>
+        <button type="button" class="edu-btn edu-btn-ghost" *ngIf="hasActiveFilters" (click)="clearFilters()"><mat-icon>filter_alt_off</mat-icon>Clear filters</button>
       </div>
 
       <ng-container *ngIf="parents.length; else directoryEmpty">
@@ -100,13 +95,13 @@
           <mat-icon>family_restroom</mat-icon>
           <strong>Add your first parent</strong>
           <span>Create a guardian account and link a student to get started.</span>
-          <button type="button" class="primary" (click)="toggleCreatePanel()"><mat-icon>person_add</mat-icon>Add parent</button>
+          <button type="button" class="edu-btn edu-btn-primary" (click)="toggleCreatePanel()"><mat-icon>person_add</mat-icon>Add parent</button>
         </div>
         <div class="empty" *ngIf="hasActiveFilters">
           <mat-icon>person_search</mat-icon>
           <strong>No parents found</strong>
           <span>Try a different search or filter.</span>
-          <button type="button" class="text-button" (click)="clearFilters()">Clear filters</button>
+          <button type="button" class="edu-btn edu-btn-ghost" (click)="clearFilters()">Clear filters</button>
         </div>
       </ng-template>
 

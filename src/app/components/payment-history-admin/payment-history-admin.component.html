@@ -20,22 +20,9 @@
     <!-- ── Main content ────────────────────────────────────────────── -->
     <div class="pha-page">
 
-      <!-- ── Hero ──────────────────────────────────────────────────── -->
-      <div class="pha-hero">
-        <div class="pha-hero-left">
-          <div class="pha-hero-icon">💰</div>
-          <div>
-            <h1 class="pha-hero-title">Payment History</h1>
-            <p class="pha-hero-sub">All student fee transactions</p>
-          </div>
-        </div>
-        <div class="pha-hero-stat" *ngIf="totalElements > 0">
-          <span class="pha-hero-num">{{ totalElements }}</span>
-          <span class="pha-hero-lbl">Payments</span>
-        </div>
-        <div class="pha-blob pha-blob-1"></div>
-        <div class="pha-blob pha-blob-2"></div>
-      </div>
+      <app-page-header icon="payments" title="Payment History" subtitle="All student fee transactions">
+        <span class="edu-badge" *ngIf="totalElements > 0">{{ totalElements }} payment{{ totalElements === 1 ? '' : 's' }}</span>
+      </app-page-header>
 
       <!-- ── Filters ────────────────────────────────────────────────── -->
       <div class="pha-filter-card">

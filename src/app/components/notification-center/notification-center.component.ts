@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,7 +17,7 @@ type InboxFilter = 'ALL' | 'UNREAD';
 interface InboxRequest { page: number; reset: boolean; isRead?: boolean; category?: string; }
 
 @Component({ selector: 'app-notification-center', standalone: true,
-  imports: [CommonModule, MatIconModule, FormsModule, TruncationCheckDirective], templateUrl: './notification-center.component.html',
+  imports: [CommonModule, MatIconModule, FormsModule, TruncationCheckDirective, PageHeaderComponent], templateUrl: './notification-center.component.html',
   styleUrl: './notification-center.component.css', changeDetection: ChangeDetectionStrategy.OnPush })
 export class NotificationCenterComponent implements OnInit, OnDestroy {
   notifications: UserNotification[] = [];

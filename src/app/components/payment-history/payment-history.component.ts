@@ -1,3 +1,4 @@
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { HttpClient } from '@angular/common/http';
@@ -28,7 +29,7 @@ import { ChildAccess } from '../../interfaces/parent-portal';
   templateUrl: './payment-history.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [PageHeaderComponent, 
     ComingSoonComponent,
     CommonModule,
     FormsModule,

@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -18,7 +20,7 @@ import { EditNoticeDialogComponent } from '../edit-notice-dialog/edit-notice-dia
 @Component({
   selector: 'app-notice',
   standalone: true,
-  imports: [CommonModule, FormsModule, TruncationCheckDirective],
+  imports: [CommonModule, FormsModule, MatIconModule, PageHeaderComponent, TruncationCheckDirective],
   templateUrl: './notice.component.html',
   styleUrl: './notice.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

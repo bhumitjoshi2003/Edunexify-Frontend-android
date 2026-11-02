@@ -130,7 +130,7 @@ body {
   /* ── Hero (role home pages only) ─────────────────────── */
   --edu-hero-bg:           radial-gradient(520px 220px at 92% 0%, rgba(79, 189, 189, 0.22), transparent 70%), linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
   --edu-hero-radius:       16px;
-  --edu-hero-padding:      24px 28px;
+  --edu-hero-padding:      20px 24px;
   --edu-hero-title-size:   1.5rem;
   --edu-hero-title-weight: 800;
   --edu-hero-sub-size:     0.8125rem;
@@ -397,6 +397,48 @@ button, input, select, textarea { font-family: inherit; }
 /* ── Surfaces ──────────────────────────────────────────────────────────────────────── */
 .edu-card { background: var(--edu-card-bg); border: 1px solid var(--edu-border); border-radius: var(--edu-card-radius); box-shadow: var(--edu-shadow-xs); }
 .edu-card-title { margin: 0; font: 700 var(--edu-text-md)/1.3 var(--edu-font); letter-spacing: -0.01em; color: var(--edu-text); }
+
+/* ── Segmented control, chips, tables, alerts, empty state ─────────────────────────── */
+.edu-segmented { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: #f1f5f9; border: 1px solid var(--edu-border); max-width: 100%; }
+.edu-segmented button {
+  min-height: 32px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--edu-text-sec);
+  font: 600 var(--edu-text-sm)/1 var(--edu-font); white-space: nowrap; cursor: pointer;
+  transition: background var(--edu-dur) var(--edu-ease), color var(--edu-dur) var(--edu-ease), box-shadow var(--edu-dur) var(--edu-ease);
+}
+.edu-segmented button:hover:not(.is-active):not(.active) { color: var(--edu-text); }
+.edu-segmented button.is-active, .edu-segmented button.active { background: #fff; color: var(--edu-text); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), 0 0 0 1px var(--edu-border); }
+
+.edu-chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--edu-radius-pill);
+  border: 1px solid var(--edu-border-strong); background: #fff; color: var(--edu-text-sec);
+  font: 600 var(--edu-text-sm)/1 var(--edu-font); white-space: nowrap; cursor: pointer;
+  transition: background var(--edu-dur) var(--edu-ease), border-color var(--edu-dur) var(--edu-ease), color var(--edu-dur) var(--edu-ease);
+}
+.edu-chip:hover { border-color: var(--edu-blue); color: var(--edu-text); }
+.edu-chip.is-active, .edu-chip.active { background: var(--edu-blue); border-color: var(--edu-blue); color: #fff; }
+
+.edu-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--edu-border); border-radius: 10px; }
+.edu-table { width: 100%; border-collapse: collapse; font-size: var(--edu-text-base); }
+.edu-table th {
+  padding: 10px 16px; text-align: left; white-space: nowrap; background: var(--edu-bg-light); color: var(--edu-text-muted);
+  font: 600 var(--edu-text-xs)/1.2 var(--edu-font); letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 1px solid var(--edu-border);
+}
+.edu-table td { padding: 11px 16px; color: var(--edu-text); border-bottom: 1px solid #eef2f6; font-variant-numeric: tabular-nums; }
+.edu-table tbody tr:hover { background: var(--edu-bg-light); }
+.edu-table tbody tr:last-child td { border-bottom: 0; }
+.edu-table .num { text-align: right; }
+
+.edu-alert { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--edu-info-border); background: var(--edu-info-bg); color: var(--edu-info-ink); font-size: var(--edu-text-base); line-height: 1.45; }
+.edu-alert.is-success { background: var(--edu-success-bg); border-color: var(--edu-success-border); color: var(--edu-success-ink); }
+.edu-alert.is-warning { background: var(--edu-warning-bg); border-color: var(--edu-warning-border); color: var(--edu-warning-ink); }
+.edu-alert.is-danger  { background: var(--edu-danger-bg);  border-color: var(--edu-danger-border);  color: var(--edu-danger-ink); }
+.edu-alert .material-icons, .edu-alert mat-icon { flex-shrink: 0; font-size: 20px; width: 20px; height: 20px; }
+
+.edu-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 48px 20px; text-align: center; background: var(--edu-card-bg); border: 1px dashed var(--edu-border-strong); border-radius: var(--edu-card-radius); color: var(--edu-text-muted); }
+.edu-empty-icon { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 8px; border-radius: 14px; background: var(--edu-teal-tint); border: 1px solid var(--edu-teal-tint-border); color: var(--edu-teal-dark); }
+.edu-empty-icon .material-icons, .edu-empty-icon mat-icon { font-size: 26px; width: 26px; height: 26px; }
+.edu-empty-title { margin: 0; font: 700 var(--edu-text-md)/1.3 var(--edu-font); color: var(--edu-text); }
+.edu-empty p { margin: 0; max-width: 340px; font-size: var(--edu-text-base); line-height: 1.5; }
 
 /* ── Angular Material re-skin (menus, dialogs, tabs, fields, snackbars) ─────────────── */
 .mat-mdc-menu-panel { border: 1px solid var(--edu-border); box-shadow: var(--edu-shadow-md) !important; }

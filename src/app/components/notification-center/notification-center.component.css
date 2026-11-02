@@ -113,3 +113,47 @@
   .nc-row, .nc-tabs button, .nc-mark-all, .nc-load-more, .nc-category select { transition: none; }
   .nc-shimmer::after { animation: none; display: none; }
 }
+
+/* ══ Design system v2 overrides (plain PageHeader, shared control look) ══ */
+:host { --nc-accent: var(--edu-teal-dark); --nc-accent-soft: var(--edu-teal-tint); }
+.nc-shell { font-family: var(--edu-font); }
+.nc-shell > app-page-header { margin-bottom: 20px; }
+.nc-toolbar { border-radius: var(--edu-card-radius); background: #fff; box-shadow: var(--edu-shadow-xs); padding: 8px; }
+.nc-tabs { background: #f1f5f9; border: 1px solid var(--edu-border); border-radius: 10px; padding: 3px; gap: 2px; }
+.nc-tabs button { border-radius: 7px; font-weight: 600; font-size: var(--edu-text-sm); }
+.nc-tabs button.active { color: var(--edu-text); background: #fff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), 0 0 0 1px var(--edu-border); }
+.nc-tabs span, .nc-tabs button.active span { background: var(--edu-warning-bg); border: 1px solid var(--edu-warning-border); color: var(--edu-warning-ink); font-weight: 700; }
+.nc-tabs button:not(.active) span { background: var(--edu-warning-bg); color: var(--edu-warning-ink); }
+.nc-category select {
+  appearance: none; -webkit-appearance: none; border: var(--edu-input-border); border-radius: var(--edu-input-radius); background-color: #fff; color: var(--edu-text);
+  font-size: var(--edu-text-base); font-weight: 500; padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.nc-category select:hover { border-color: #94a3b8; background-color: #fff; }
+.nc-category select:focus-visible { border-color: var(--edu-teal-dark); box-shadow: var(--edu-focus-ring); }
+.nc-category mat-icon { color: var(--edu-text-muted); }
+
+.nc-row { border-radius: var(--edu-card-radius); border-color: var(--edu-border); box-shadow: var(--edu-shadow-xs); }
+.nc-row:hover { transform: none; box-shadow: var(--edu-shadow-sm); border-color: var(--edu-border-strong); }
+.nc-row:active { transform: none; }
+.nc-row.unread { background: linear-gradient(90deg, color-mix(in srgb, var(--card-tint) 55%, #fff) 0%, #fff 45%); box-shadow: var(--edu-shadow-sm); }
+.nc-title { color: var(--edu-text-sec); font-weight: 600; font-size: var(--edu-text-md); }
+.nc-row.unread .nc-title { color: var(--edu-text); font-weight: 700; }
+.nc-message { color: var(--edu-text-muted); font-size: var(--edu-text-base); }
+.nc-icon { border-radius: 10px; }
+.nc-arrow { background: #fff; }
+.nc-row:hover .nc-arrow { transform: none; }
+
+.nc-state { color: var(--edu-text-muted); }
+.nc-state h2 { color: var(--edu-text); font-weight: 700; letter-spacing: -0.01em; }
+.nc-error, .nc-empty { border: 1px dashed var(--edu-border-strong); border-radius: var(--edu-card-radius); background: #fff; box-shadow: none; }
+.nc-empty-icon { background: var(--edu-teal-tint); color: var(--edu-teal-dark); border: 1px solid var(--edu-teal-tint-border); box-shadow: none; width: 56px; height: 56px; border-radius: 14px; }
+.nc-error > mat-icon { color: var(--edu-text-faint); }
+.nc-mark-all, .nc-load-more, .nc-error button { font-weight: 600; font-size: var(--edu-text-sm); }
+.nc-error button, .nc-load-more { border-color: var(--edu-border-strong); }
+.nc-load-more:hover:not(:disabled), .nc-error button:hover { border-color: var(--edu-blue); background: var(--edu-bg-light); }
+.nc-skeleton-card { border-radius: var(--edu-card-radius); background: #fff; border-color: var(--edu-border); }
+.nc-load-more, .nc-error button { min-height: 44px; padding: 0 18px; border: 1px solid var(--edu-border-strong); border-radius: var(--edu-radius-md); background: #fff; color: var(--edu-text); font: 600 var(--edu-text-sm)/1 var(--edu-font); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto; }
+.nc-load-more { margin-top: 6px; border-radius: 999px; }
+.nc-load-more:disabled { opacity: 0.55; cursor: not-allowed; }

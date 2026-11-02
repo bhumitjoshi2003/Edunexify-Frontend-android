@@ -1,437 +1,146 @@
-.pt-page {
-  font-family: 'Segoe UI', sans-serif;
-  padding-bottom: 140px;
-}
+/* Fee payment — plain PageHeader, white bordered month tiles, semantic status tints only. */
+.pt-page { font-family: var(--edu-font); color: var(--edu-text); display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+.pt-page > app-page-header { margin-bottom: 4px; }
 
-/* ── Hero ─────────────────────────────────────────────────────────── */
-.pt-hero {
-  position: relative;
-  background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 55%, #3b82f6 100%);
-  border-radius: 20px;
-  padding: 22px 24px;
-  margin: 0 0 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  overflow: hidden;
-  color: #fff;
-}
-.pt-blob {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.12;
-  pointer-events: none;
-}
-.pt-blob-1 { width: 130px; height: 130px; background: #fff; top: -30px; right: -20px; }
-.pt-blob-2 { width: 80px; height: 80px; background: #bfdbfe; bottom: -20px; left: 35%; }
-.pt-hero-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  position: relative;
-  z-index: 1;
-}
-.pt-hero-icon { font-size: 1.7rem; width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.pt-hero-title { font-size: 1.25rem; font-weight: 800; margin: 0; color: #fff; letter-spacing: -0.3px; line-height: 1.2; }
-.pt-hero-sub { font-size: 0.78rem; font-weight: 500; color: rgba(255,255,255,0.8); margin: 3px 0 0; }
-.pt-hero-session { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
-.pt-hero-session-label { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.4px; }
-.pt-hero-session-select {
-  padding: 7px 12px;
-  border: 1.5px solid rgba(255,255,255,0.35);
-  border-radius: 8px;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-.pt-hero-session-select:disabled { opacity: 0.6; cursor: not-allowed; }
-.pt-hero-session-select option { background: #1d4ed8; color: #fff; }
+.pt-session { display: flex; align-items: center; gap: 8px; }
+.pt-session-label { font: 600 var(--edu-text-sm)/1 var(--edu-font); color: var(--edu-text-muted); }
+.pt-session-select { min-width: 130px; }
 
-.pt-title {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin: 0 0 2px;
-  letter-spacing: -0.2px;
-}
+/* ── Alert banners ────────────────────────────────────────────── */
+.pt-alert { display: flex; gap: 12px; align-items: flex-start; border-radius: 10px; padding: 12px 14px; border: 1px solid var(--edu-info-border); background: var(--edu-info-bg); color: var(--edu-info-ink); }
+.pt-alert--overdue  { background: var(--edu-danger-bg);  border-color: var(--edu-danger-border);  color: var(--edu-danger-ink); }
+.pt-alert--reminder { background: var(--edu-warning-bg); border-color: var(--edu-warning-border); color: var(--edu-warning-ink); }
+.pt-alert--confirming { background: var(--edu-success-bg); border-color: var(--edu-success-border); color: var(--edu-success-ink); }
+.pt-alert--review { background: var(--edu-warning-bg); border-color: var(--edu-warning-border); color: var(--edu-warning-ink); }
+.pt-alert-icon { flex-shrink: 0; display: grid; place-items: center; width: 22px; height: 22px; }
+.pt-alert-icon mat-icon { font-size: 20px; width: 20px; height: 20px; }
+.pt-alert-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pt-alert-title { font: 600 var(--edu-text-base)/1.35 var(--edu-font); color: var(--edu-text); }
+.pt-alert-text { font-size: var(--edu-text-sm); font-weight: 500; line-height: 1.45; color: inherit; }
+.pt-alert-ref { font-variant-numeric: tabular-nums; opacity: 0.85; word-break: break-all; }
+.pt-alert-action { align-self: flex-start; margin-top: 6px; padding: 0 14px; min-height: 34px; border: 1px solid currentColor; border-radius: 8px; background: #fff; color: inherit; font: 600 var(--edu-text-sm)/1 var(--edu-font); cursor: pointer; }
+.pt-alert-action:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.pt-subtitle {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  font-weight: 500;
-  margin: 0;
-}
+/* ── Selected total strip ─────────────────────────────────────── */
+.pt-summary { display: flex; align-items: center; justify-content: space-between; background: var(--edu-blue); border-radius: 10px; padding: 12px 18px; color: #fff; }
+.pt-summary-label { font-size: var(--edu-text-sm); font-weight: 600; color: rgba(255, 255, 255, 0.8); }
+.pt-summary-amount { font: 800 var(--edu-text-lg)/1 var(--edu-font); letter-spacing: -0.02em; color: #fff; font-variant-numeric: tabular-nums; }
 
-.pt-session-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
-  flex-shrink: 0;
-}
-
-.pt-session-label {
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.pt-session-select {
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 7px 28px 7px 10px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #1e293b;
-  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2364748b' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 8px center;
-  appearance: none;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.pt-session-select:focus {
-  outline: none;
-  border-color: #0369a1;
-}
-
-.pt-session-select:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ── Alert Banners ────────────────────────────────────────────────── */
-.pt-alert {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
-}
-
-.pt-alert--overdue {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-}
-
-.pt-alert--reminder {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-}
-
-.pt-alert-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.pt-alert-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.pt-alert-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.pt-alert--overdue .pt-alert-text { color: #be123c; }
-.pt-alert--reminder .pt-alert-text { color: #92400e; }
-
-.pt-alert-text {
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-/* ── Summary Strip ────────────────────────────────────────────────── */
-.pt-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #0c4a6e, #0369a1);
-  border-radius: 14px;
-  padding: 12px 16px;
-  margin-bottom: 14px;
-}
-
-.pt-summary-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.8);
-}
-
-.pt-summary-amount {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.3px;
-}
-
-/* ── Month Grid ───────────────────────────────────────────────────── */
-.pt-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
+/* ── Month grid ───────────────────────────────────────────────── */
+.pt-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 .pt-month {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 14px 8px 12px;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  border: 1.5px solid transparent;
-  position: relative;
-  overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 8px 14px; border-radius: 12px; cursor: pointer;
+  background: #fff; border: 1px solid var(--edu-border); box-shadow: var(--edu-shadow-xs); position: relative; overflow: hidden;
+  transition: border-color var(--edu-dur) var(--edu-ease), box-shadow var(--edu-dur) var(--edu-ease), background var(--edu-dur) var(--edu-ease);
 }
+.pt-month:hover { border-color: var(--edu-border-strong); box-shadow: var(--edu-shadow-sm); }
+.pt-month:active { box-shadow: var(--edu-shadow-xs); }
 
-.pt-month:active { transform: scale(0.94); }
+.pt-month--paid   { background: var(--edu-success-bg); border-color: var(--edu-success-border); cursor: not-allowed; }
+.pt-month--manual { background: var(--edu-success-bg); border-color: var(--edu-success-border); cursor: not-allowed; }
+.pt-month--late   { background: var(--edu-danger-bg); border-color: var(--edu-danger-border); }
+.pt-month--unpaid { background: #fff; }
+.pt-month--selected { background: var(--edu-teal-tint) !important; border-color: var(--edu-blue) !important; box-shadow: 0 0 0 1px var(--edu-blue), var(--edu-shadow-sm) !important; }
+.pt-month--paid:hover, .pt-month--manual:hover { box-shadow: var(--edu-shadow-xs); border-color: var(--edu-success-border); }
 
-/* ── Month States ─────────────────────────────────────────────────── */
-.pt-month--paid {
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-  border-color: #86efac;
-  cursor: not-allowed;
-}
+.pt-month-icon { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; background: #e9eef4; color: var(--edu-text-muted); }
+.pt-month-icon mat-icon { font-size: 17px; width: 17px; height: 17px; }
+.pt-month--paid     .pt-month-icon { background: var(--edu-success); color: #fff; }
+.pt-month--manual   .pt-month-icon { background: var(--edu-success-ink); color: #fff; }
+.pt-month--late     .pt-month-icon { background: var(--edu-danger); color: #fff; }
+.pt-month--selected .pt-month-icon { background: var(--edu-blue); color: #fff; }
 
-.pt-month--manual {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  border-color: #6ee7b7;
-  cursor: not-allowed;
-}
+.pt-month-name { font: 700 var(--edu-text-base)/1.2 var(--edu-font); color: var(--edu-text); text-align: center; }
+.pt-month--paid .pt-month-name, .pt-month--manual .pt-month-name { color: var(--edu-success-ink); }
+.pt-month--late .pt-month-name { color: var(--edu-danger-ink); }
+.pt-month-amount { font: 700 var(--edu-text-sm)/1.2 var(--edu-font); color: var(--edu-text-sec); text-align: center; font-variant-numeric: tabular-nums; }
+.pt-month--paid .pt-month-amount, .pt-month--manual .pt-month-amount { color: var(--edu-success-ink); }
+.pt-month--late .pt-month-amount { color: var(--edu-danger-ink); }
+.pt-month--selected .pt-month-amount { color: var(--edu-blue); }
 
-.pt-month--late {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-  border-color: #fca5a5;
-}
+.pt-month-chip { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 8px; border-radius: 999px; margin-top: 2px; background: #f1f5f9; color: var(--edu-text-muted); }
+.pt-month--paid .pt-month-chip, .pt-month--manual .pt-month-chip { background: #fff; color: var(--edu-success-ink); }
+.pt-month--late .pt-month-chip { background: #fff; color: var(--edu-danger-ink); }
+.pt-month--selected .pt-month-chip { background: #fff; color: var(--edu-blue); }
 
-.pt-month--unpaid {
-  background: #fff;
-  border-color: #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+/* Amount unknown (no fee rule / no verified snapshot): a configuration issue, not payable. */
+.pt-month--unavailable { background: var(--edu-warning-bg); border-color: var(--edu-warning-border); cursor: not-allowed; }
+.pt-month--unavailable:hover, .pt-month--unavailable:active { box-shadow: var(--edu-shadow-xs); }
+.pt-month--unavailable .pt-month-icon { background: var(--edu-warning); color: #fff; }
+.pt-month--unavailable .pt-month-name, .pt-month--unavailable .pt-month-amount { color: var(--edu-warning-ink); }
+.pt-month--unavailable .pt-month-chip { background: #fff; color: var(--edu-warning-ink); }
 
-.pt-month--selected {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
-  border-color: #60a5fa !important;
-  box-shadow: 0 4px 14px rgba(59,130,246,0.25) !important;
-}
+/* Partly paid: still payable; the balance is the amount shown. */
+.pt-month--partial { box-shadow: inset 3px 0 0 var(--edu-blue), var(--edu-shadow-xs); }
 
-/* ── Month Card Internals ─────────────────────────────────────────── */
-.pt-month-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
+.pt-month-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 2px; }
+.pt-month-chips .pt-month-chip { margin-top: 0; }
+.pt-month-chip--secondary, .pt-month--unavailable .pt-month-chip--secondary { background: var(--edu-danger-bg) !important; color: var(--edu-danger-ink) !important; }
 
-.pt-month--paid     .pt-month-icon { background: #16a34a; color: #fff; }
-.pt-month--manual   .pt-month-icon { background: #059669; color: #fff; }
-.pt-month--late     .pt-month-icon { background: #dc2626; color: #fff; }
-.pt-month--unpaid   .pt-month-icon { background: #e2e8f0; color: #64748b; }
-.pt-month--selected .pt-month-icon { background: #3b82f6; color: #fff; }
+.pt-month-note { margin: 0; width: 100%; box-sizing: border-box; font-size: 0.6875rem; font-weight: 600; line-height: 1.35; text-align: center; padding: 5px 7px; border-radius: 8px; overflow-wrap: anywhere; }
+.pt-month-note--warn { background: rgba(255, 255, 255, 0.75); border: 1px solid var(--edu-warning-border); color: var(--edu-warning-ink); }
+.pt-month-note--partial { background: var(--edu-info-bg); border: 1px solid var(--edu-info-border); color: var(--edu-info-ink); }
+.pt-month-funding { font-size: 0.6875rem; font-weight: 600; color: var(--edu-text-muted); }
 
-.pt-month-name {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: center;
-}
+/* An online payment for this month is being confirmed / needs review: not selectable. */
+.pt-month--confirming, .pt-month--confirming.pt-month--late { background: var(--edu-success-bg); border-color: var(--edu-success-border); border-style: dashed; cursor: not-allowed; }
+.pt-month--confirming:hover, .pt-month--confirming:active { box-shadow: var(--edu-shadow-xs); }
+.pt-month--confirming .pt-month-icon { background: var(--edu-success); color: #fff; }
+.pt-month--confirming .pt-month-name, .pt-month--confirming .pt-month-amount { color: var(--edu-success-ink); }
+.pt-month--confirming .pt-month-chip { background: #fff; color: var(--edu-success-ink); }
+.pt-month--confirming[data-pending="NEEDS_REVIEW"] { background: var(--edu-warning-bg); border-color: var(--edu-warning-border); }
+.pt-month--confirming[data-pending="NEEDS_REVIEW"] .pt-month-icon { background: var(--edu-warning); }
+.pt-month--confirming[data-pending="NEEDS_REVIEW"] .pt-month-name, .pt-month--confirming[data-pending="NEEDS_REVIEW"] .pt-month-amount { color: var(--edu-warning-ink); }
+.pt-month--confirming[data-pending="NEEDS_REVIEW"] .pt-month-chip { color: var(--edu-warning-ink); }
 
-.pt-month--paid   .pt-month-name,
-.pt-month--manual .pt-month-name { color: #15803d; }
-.pt-month--late   .pt-month-name { color: #b91c1c; }
+/* ── Footer (total + pay / record payment) ────────────────────── */
+.pt-footer { position: sticky; bottom: 0; background: #fff; border-radius: 12px; padding: 14px 20px; box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08); display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--edu-border); margin-top: 4px; }
+.pt-footer-total { display: flex; flex-direction: column; gap: 3px; }
+.pt-footer-label { font-size: 0.6875rem; font-weight: 600; color: var(--edu-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.pt-footer-amount { font: 800 var(--edu-text-xl)/1 var(--edu-font); color: var(--edu-text); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.pt-payment-note { display: inline-flex; align-items: center; gap: 8px; max-width: 340px; padding: 10px 14px; border-radius: 10px; background: var(--edu-warning-bg); border: 1px solid var(--edu-warning-border); color: var(--edu-warning-ink); font-size: var(--edu-text-sm); font-weight: 600; line-height: 1.45; }
+.pt-payment-note::before { content: 'i'; flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--edu-warning); color: #fff; font: italic 800 0.7rem Georgia, serif; }
 
-.pt-month-amount {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #475569;
-  text-align: center;
-}
+.pt-footer ::ng-deep .payment-container { padding: 0; }
+.pt-footer ::ng-deep .pay-btn { background: linear-gradient(135deg, #1e3a5f, #17436b); color: #fff; border: none; border-radius: 10px; min-height: 44px; padding: 0 28px; font: 600 var(--edu-text-md)/1 var(--edu-font); cursor: pointer; white-space: nowrap; box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 8px 16px -10px rgba(30, 58, 95, .7); transition: box-shadow 0.15s, transform 0.1s; max-width: none; width: auto; }
+.pt-footer ::ng-deep .pay-btn:hover { box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 12px 20px -10px rgba(30, 58, 95, .75); }
+.pt-footer ::ng-deep .pay-btn:active { transform: translateY(1px); }
+.pt-footer ::ng-deep .pay-btn:disabled { background: #e9eef4; color: var(--edu-text-faint); box-shadow: none; cursor: not-allowed; opacity: 1; }
 
-.pt-month--paid   .pt-month-amount,
-.pt-month--manual .pt-month-amount { color: #16a34a; }
-.pt-month--late   .pt-month-amount { color: #dc2626; }
-.pt-month--selected .pt-month-amount { color: #1d4ed8; }
-
-.pt-month-chip {
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  padding: 2px 7px;
-  border-radius: 20px;
-  margin-top: 2px;
-}
-
-.pt-month--paid     .pt-month-chip { background: #dcfce7; color: #15803d; }
-.pt-month--manual   .pt-month-chip { background: #d1fae5; color: #065f46; }
-.pt-month--late     .pt-month-chip { background: #fee2e2; color: #b91c1c; }
-.pt-month--unpaid   .pt-month-chip { background: #f1f5f9; color: #64748b; }
-.pt-month--selected .pt-month-chip { background: #dbeafe; color: #1d4ed8; }
-
-/* ── Fixed Footer ─────────────────────────────────────────────────── */
-.pt-footer {
-  position: fixed;
-  bottom: calc(62px + env(safe-area-inset-bottom));
-  left: 0;
-  right: 0;
-  background: #fff;
-  border-radius: 20px 20px 0 0;
-  padding: 14px 20px calc(10px + env(safe-area-inset-bottom));
-  box-shadow: 0 -6px 24px rgba(0,0,0,0.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  z-index: 50;
-  border-top: 1px solid #f1f5f9;
-}
-
-.pt-footer-total {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.pt-footer-label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.pt-footer-amount {
-  font-size: 1.45rem;
-  font-weight: 800;
-  color: #0c4a6e;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-
-/* Override payment button inside footer */
-.pt-footer ::ng-deep .payment-container {
-  padding: 0;
-}
-
-.pt-footer ::ng-deep .pay-btn {
-  background: linear-gradient(135deg, #0369a1, #0ea5e9);
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  padding: 13px 28px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(3,105,161,0.4);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  max-width: none;
-  width: auto;
-}
-
-.pt-footer ::ng-deep .pay-btn:active {
-  transform: scale(0.96);
-  opacity: 0.9;
-}
-
-.pt-footer ::ng-deep .pay-btn:disabled {
-  background: #e2e8f0;
-  color: #94a3b8;
-  box-shadow: none;
-  cursor: not-allowed;
-  opacity: 1;
-}
-
-/* Admin controls */
 .pt-admin-controls { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.pt-amount-field { display: flex; flex-direction: column; gap: 6px; }
+.pt-amount-label { font: 600 var(--edu-text-sm)/1.2 var(--edu-font); color: var(--edu-text); }
+.pt-amount-input-wrap { display: flex; align-items: center; border: var(--edu-input-border); border-radius: var(--edu-input-radius); background: #fff; overflow: hidden; height: var(--edu-input-height); transition: border-color var(--edu-dur) var(--edu-ease), box-shadow var(--edu-dur) var(--edu-ease); }
+.pt-amount-input-wrap:focus-within { border-color: var(--edu-teal-dark); box-shadow: var(--edu-focus-ring); }
+.pt-amount-prefix { padding: 0 6px 0 12px; font-size: var(--edu-text-md); font-weight: 600; color: var(--edu-text-muted); }
+.pt-amount-input { width: 110px; padding: 0 12px 0 0; height: 100%; border: none; background: transparent; font: 600 var(--edu-text-base)/1 var(--edu-font); color: var(--edu-text); outline: none; }
+input.pt-amount-input[type='text'] { width: 190px; padding: 0 12px; height: var(--edu-input-height); border: var(--edu-input-border); border-radius: var(--edu-input-radius); background: #fff; }
+input.pt-amount-input[type='text']:focus { border-color: var(--edu-teal-dark); box-shadow: var(--edu-focus-ring); }
+.pt-amount-hint { font-size: var(--edu-text-xs); color: var(--edu-text-muted); max-width: 180px; }
+.pt-amount-input::-webkit-outer-spin-button, .pt-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pt-payment-mode-select { min-width: 130px; }
+.pt-admin-controls-hint { padding: 10px 16px; border-radius: 10px; background: var(--edu-bg-light); border: 1px dashed var(--edu-border-strong); font-size: var(--edu-text-base); font-weight: 500; color: var(--edu-text-muted); }
+.pt-mark-paid-btn { min-height: var(--edu-input-height); }
 
-.pt-amount-field { display: flex; flex-direction: column; gap: 5px; }
-.pt-amount-label {
-  font-size: 0.68rem; font-weight: 700; color: #64748b;
-  text-transform: uppercase; letter-spacing: 0.4px;
-}
-.pt-amount-input-wrap {
-  display: flex; align-items: center;
-  border: 1.5px solid #e2e8f0; border-radius: 10px;
-  background: #f8fafc; overflow: hidden;
-  transition: border-color 0.15s;
-}
-.pt-amount-input-wrap:focus-within { border-color: #0369a1; box-shadow: 0 0 0 3px rgba(3,105,161,0.08); }
-.pt-amount-prefix {
-  padding: 0 8px 0 12px; font-size: 0.95rem;
-  font-weight: 700; color: #0369a1;
-}
-.pt-amount-input {
-  width: 100px; padding: 9px 12px 9px 0;
-  border: none; background: transparent;
-  font-size: 0.9rem; font-weight: 600; color: #1e293b;
-  outline: none; font-family: inherit;
-}
-.pt-amount-input::-webkit-outer-spin-button,
-.pt-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pt-month--stale { opacity: 0.7; cursor: default; }
 
-/* Dedicated style for the admin manual-payment Payment Mode select — must NOT reuse
-   .pt-hero-session-select, which is white-on-translucent for the dark hero banner and reads
-   as a blank control against this panel's light background. */
-.pt-payment-mode-select {
-  padding: 9px 12px; min-width: 120px;
-  border: 1.5px solid #e2e8f0; border-radius: 10px;
-  background: #f8fafc; color: #1e293b;
-  font-size: 0.9rem; font-weight: 600; font-family: inherit;
-  outline: none; cursor: pointer;
-  transition: border-color 0.15s;
+@media (max-width: 900px) { .pt-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .pt-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .pt-footer { flex-direction: column; align-items: stretch; gap: 10px; }
+  .pt-admin-controls { flex-direction: column; align-items: stretch; }
+  .pt-admin-controls .pt-amount-input { width: 100%; }
+  input.pt-amount-input[type='text'] { width: 100%; }
+  .pt-mark-paid-btn, .pt-footer ::ng-deep .pay-btn { width: 100%; min-height: 48px; }
+  .pt-session { width: 100%; }
+  .pt-session-select { flex: 1; height: 44px; }
 }
-.pt-payment-mode-select:focus { border-color: #0369a1; box-shadow: 0 0 0 3px rgba(3,105,161,0.08); }
-.pt-payment-mode-select option { color: #1e293b; background: #fff; }
+@media (max-width: 360px) { .pt-month-amount { font-size: 0.6875rem; } .pt-month-name { font-size: var(--edu-text-sm); } }
 
-.pt-admin-controls-hint {
-  padding: 10px 16px; border-radius: 10px;
-  background: #f8fafc; border: 1.5px dashed #cbd5e1;
-  font-size: 0.82rem; font-weight: 600; color: #64748b;
-}
-
-.pt-mark-paid-btn {
-  padding: 10px 18px; border: none; border-radius: 10px;
-  background: linear-gradient(135deg, #059669, #34d399);
-  color: #fff; font-size: 0.85rem; font-weight: 700;
-  cursor: pointer; font-family: inherit; white-space: nowrap;
-  box-shadow: 0 3px 10px rgba(5,150,105,0.3);
-  transition: opacity 0.15s, transform 0.1s;
-}
-.pt-mark-paid-btn:active { transform: scale(0.97); opacity: 0.85; }
-
-/* ── Responsive ───────────────────────────────────────────────────── */
-@media (min-width: 480px) {
-  .pt-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 360px) {
-  .pt-month-amount {
-    font-size: 0.65rem;
-  }
-  .pt-month-name {
-    font-size: 0.72rem;
-  }
+/* ── Android: fixed footer above the native bottom area; extra scroll room for it ── */
+.pt-page { padding-bottom: 140px; }
+.pt-footer {
+  position: fixed; bottom: calc(62px + env(safe-area-inset-bottom)); left: 0; right: 0; margin-top: 0;
+  border-radius: 16px 16px 0 0; padding: 14px 20px calc(10px + env(safe-area-inset-bottom));
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.12); z-index: 50; border: 0; border-top: 1px solid var(--edu-border);
 }

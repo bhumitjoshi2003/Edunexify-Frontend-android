@@ -9,25 +9,17 @@
 
   <ng-container *ngIf="!isLoading">
 
-    <!-- ── Hero ─────────────────────────────────────────────────────── -->
-    <div class="sd-hero">
-      <div class="sd-hero-left">
-        <p class="sd-greeting">{{ greeting }}</p>
-        <h1 class="sd-hero-name">{{ studentName || 'Student' }} 👋</h1>
-        <div class="sd-class-badge">
-          <mat-icon>school</mat-icon>
-          <span>Class {{ className }}</span>
-        </div>
+    <!-- ── Hero (role home: the one restrained navy banner) ─────────── -->
+    <app-page-header variant="hero" [eyebrow]="greeting" [title]="studentName || 'Student'">
+      <span phMeta class="sd-class-badge">
+        <mat-icon>school</mat-icon>
+        <span>Class {{ className }}</span>
+      </span>
+      <div class="sd-date-card">
+        <span class="sd-date-day">{{ today | date:'EEEE' }}</span>
+        <span class="sd-date-full">{{ today | date:'d MMM yyyy' }}</span>
       </div>
-      <div class="sd-hero-right">
-        <div class="sd-date-card">
-          <span class="sd-date-day">{{ today | date:'EEEE' }}</span>
-          <span class="sd-date-full">{{ today | date:'d MMM yyyy' }}</span>
-        </div>
-      </div>
-      <div class="sd-blob sd-blob-1"></div>
-      <div class="sd-blob sd-blob-2"></div>
-    </div>
+    </app-page-header>
 
     <!-- ── Attendance Ring + Stats ───────────────────────────────────── -->
     <div class="sd-attend-card">
@@ -65,7 +57,7 @@
         </div>
       </div>
       <div class="sd-attend-foot">
-        <span class="sd-attend-warn" *ngIf="lowAttendance" role="status">⚠ Below {{ lowAttendanceThreshold }}% attendance</span>
+        <span class="sd-attend-warn" *ngIf="lowAttendance" role="status">Below {{ lowAttendanceThreshold }}% attendance</span>
         <span class="sd-attend-ok" *ngIf="!lowAttendance && totalWorkingDays > 0">On track · {{ lowAttendanceThreshold }}%+ needed</span>
         <a class="sd-attend-link" routerLink="/dashboard/attendance-summary">View attendance insights →</a>
       </div>
@@ -77,70 +69,70 @@
       <div class="sd-actions-grid">
 
         <a class="sd-action-card" routerLink="/dashboard/apply-leave">
-          <div class="sd-action-icon" style="background:#fef3c7;color:#b45309">
+          <div class="sd-action-icon">
             <mat-icon>edit_calendar</mat-icon>
           </div>
           <span>Apply Leave</span>
         </a>
 
         <a class="sd-action-card" routerLink="/dashboard/attendance-summary">
-          <div class="sd-action-icon" style="background:#e0f2fe;color:#0369a1">
+          <div class="sd-action-icon">
             <mat-icon>event_available</mat-icon>
           </div>
           <span>Attendance</span>
         </a>
 
         <a class="sd-action-card" *ngIf="hasFeature('EXAM_MARKS')" routerLink="/dashboard/my-results">
-          <div class="sd-action-icon" style="background:#fdf4ff;color:#a21caf">
+          <div class="sd-action-icon">
             <mat-icon>grade</mat-icon>
           </div>
           <span>My Results</span>
         </a>
 
         <a class="sd-action-card" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-documents">
-          <div class="sd-action-icon" style="background:#f0fdf4;color:#15803d">
+          <div class="sd-action-icon">
             <mat-icon>description</mat-icon>
           </div>
           <span>Report Cards</span>
         </a>
 
         <a class="sd-action-card" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fees">
-          <div class="sd-action-icon" style="background:#fefce8;color:#a16207">
+          <div class="sd-action-icon">
             <mat-icon>receipt_long</mat-icon>
           </div>
           <span>Fees</span>
         </a>
 
         <a class="sd-action-card" routerLink="/dashboard/timetable">
-          <div class="sd-action-icon" style="background:#e0e7ff;color:#3730a3">
+          <div class="sd-action-icon">
             <mat-icon>schedule</mat-icon>
           </div>
           <span>Timetable</span>
         </a>
 
         <a class="sd-action-card" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fee-structure">
-          <div class="sd-action-icon" style="background:#ecfdf5;color:#065f46">
+          <div class="sd-action-icon">
             <mat-icon>account_balance_wallet</mat-icon>
           </div>
           <span>Fee Structure</span>
         </a>
 
         <a class="sd-action-card" *ngIf="hasFeature('PAYMENT_COLLECTION')" routerLink="/dashboard/payment-history">
-          <div class="sd-action-icon" style="background:#ede9fe;color:#7c3aed">
+          <div class="sd-action-icon">
             <mat-icon>receipt</mat-icon>
           </div>
           <span>Payment History</span>
         </a>
 
         <a class="sd-action-card" routerLink="/dashboard/notice">
-          <div class="sd-action-icon" style="background:#fff1f2;color:#be123c">
+          <div class="sd-action-icon">
             <mat-icon>campaign</mat-icon>
           </div>
           <span>Notice Board</span>
         </a>
 
         <a class="sd-action-card" routerLink="/dashboard/event-calendar">
-          <div class="sd-action-icon" style="background:#f0fdf4;color:#15803d">
+          <div class="sd-action-icon">
             <mat-icon>event</mat-icon>
           </div>
           <span>Events</span>

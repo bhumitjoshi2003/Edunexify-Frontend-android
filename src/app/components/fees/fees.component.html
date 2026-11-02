@@ -1,19 +1,12 @@
 <div *ngIf="showFeesModule; else comingSoonTemplate">
   <div class="pt-page">
     <app-parent-child-context [studentId]="studentId" requiredPermission="canViewFees" (childSelected)="onChildTabSelected($event)"></app-parent-child-context>
-    <!-- ── Hero ──────────────────────────────────────────────────────── -->
-    <div class="pt-hero">
-      <div class="pt-hero-left">
-        <div class="pt-hero-icon">💳</div>
-        <div>
-          <h1 class="pt-hero-title">Fee Payment</h1>
-          <p class="pt-hero-sub">Select months to pay your fees</p>
-        </div>
-      </div>
-      <div class="pt-hero-session">
-        <label class="pt-hero-session-label">Session</label>
+    <app-page-header icon="payments" title="Fee Payment" subtitle="Select months to pay your fees">
+      <div class="pt-session">
+        <label class="pt-session-label" for="pt-session-select">Session</label>
         <select
-          class="pt-hero-session-select"
+          id="pt-session-select"
+          class="pt-session-select edu-select"
           [disabled]="!!lastSelectedMonth"
           [(ngModel)]="session"
           (change)="onYearChange($event)"
@@ -26,16 +19,14 @@
           </option>
         </select>
       </div>
-      <div class="pt-blob pt-blob-1"></div>
-      <div class="pt-blob pt-blob-2"></div>
-    </div>
+    </app-page-header>
 
     <!-- ── Warning Banners ──────────────────────────────────────────── -->
     <div
       class="pt-alert pt-alert--overdue"
       *ngIf="pastUnpaidMonthNames.length > 0"
     >
-      <div class="pt-alert-icon">⚠️</div>
+      <div class="pt-alert-icon" aria-hidden="true"><mat-icon>warning_amber</mat-icon></div>
       <div class="pt-alert-body">
         <span class="pt-alert-title">Late Fee Applied</span>
         <span class="pt-alert-text">
@@ -54,7 +45,7 @@
     </div>
 
     <div class="pt-alert pt-alert--reminder" *ngIf="unpaidCurrentMonthName">
-      <div class="pt-alert-icon">🔔</div>
+      <div class="pt-alert-icon" aria-hidden="true"><mat-icon>notifications_active</mat-icon></div>
       <div class="pt-alert-body">
         <span class="pt-alert-title">Payment Reminder</span>
         <span class="pt-alert-text">
@@ -95,22 +86,10 @@
       >
         <!-- status icon -->
         <div class="pt-month-icon">
-          <span *ngIf="month.paid || month.manuallyPaid">✓</span>
-          <span *ngIf="isLate(month) && !month.paid && !month.manuallyPaid"
-            >!</span
-          >
-          <span
-            *ngIf="
-              !month.paid &&
-              !month.manuallyPaid &&
-              !isLate(month) &&
-              !month.selected
-            "
-            >○</span
-          >
-          <span *ngIf="month.selected && !month.paid && !month.manuallyPaid"
-            >✓</span
-          >
+          <mat-icon *ngIf="month.paid || month.manuallyPaid">check</mat-icon>
+          <mat-icon *ngIf="isLate(month) && !month.paid && !month.manuallyPaid">priority_high</mat-icon>
+          <mat-icon *ngIf="!month.paid && !month.manuallyPaid && !isLate(month) && !month.selected">radio_button_unchecked</mat-icon>
+          <mat-icon *ngIf="month.selected && !month.paid && !month.manuallyPaid">check</mat-icon>
         </div>
 
         <span class="pt-month-name">{{ month.name }}</span>
@@ -173,7 +152,7 @@
       class="pt-alert pt-alert--reminder"
       *ngIf="feesLoaded && !months.length"
     >
-      <div class="pt-alert-icon">ℹ️</div>
+      <div class="pt-alert-icon" aria-hidden="true"><mat-icon>info_outline</mat-icon></div>
       <div class="pt-alert-body">
         <span class="pt-alert-title">No fees generated yet</span>
         <span class="pt-alert-text"
@@ -246,7 +225,7 @@
             >
             <select
               id="payment-mode-select"
-              class="pt-payment-mode-select"
+              class="pt-payment-mode-select edu-select"
               [(ngModel)]="manualPaymentMode"
             >
               <option *ngFor="let mode of manualPaymentModes" [value]="mode">
@@ -263,8 +242,8 @@
               placeholder="Cheque / UTR number"
             />
           </div>
-          <button class="pt-mark-paid-btn" (click)="markAsManuallyPaid()">
-            ✓ Mark as Paid
+          <button class="pt-mark-paid-btn edu-btn edu-btn-primary" (click)="markAsManuallyPaid()">
+            <mat-icon>check</mat-icon> Mark as Paid
           </button>
         </div>
         <ng-template #selectMonthsHint>

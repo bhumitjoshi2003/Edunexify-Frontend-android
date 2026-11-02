@@ -13,11 +13,13 @@ import { LoggerService } from '../../services/logger.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
+import { MatIconModule } from '@angular/material/icon';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-class-results',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule, PageHeaderComponent],
   templateUrl: './class-results.component.html',
   styleUrl: './class-results.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

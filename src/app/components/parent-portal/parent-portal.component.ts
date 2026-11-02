@@ -4,6 +4,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestro
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
+import { StatCardComponent } from '../ui/stat-card/stat-card.component';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { catchError, debounceTime, distinctUntilChanged, finalize, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { AuthStateService } from '../../auth/auth-state.service';
@@ -25,7 +27,7 @@ import { ParentChildContextService } from '../../services/parent-child-context.s
 @Component({
   selector: 'app-parent-portal',
   standalone: true,
-  imports: [WisdomCardsComponent, CommonModule, ReactiveFormsModule, MatIconModule, ParentChildContextComponent],
+  imports: [WisdomCardsComponent, CommonModule, ReactiveFormsModule, MatIconModule, PageHeaderComponent, StatCardComponent, ParentChildContextComponent],
   templateUrl: './parent-portal.component.html',
   styleUrl: './parent-portal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

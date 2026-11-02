@@ -301,3 +301,40 @@
   .pha-filter-group { min-width: unset; width: 100%; }
   .pha-clear-btn { width: 100%; align-self: auto; margin-bottom: 0; }
 }
+
+/* ══ Design system v2 — brand retint (green payment theme → navy/teal; semantic status kept) ══ */
+.pha-container { font-family: var(--edu-font); }
+.pha-sidebar { background: var(--edu-navy); border-radius: var(--edu-card-radius) 0 0 var(--edu-card-radius); box-shadow: none; }
+.pha-sidebar-title { color: rgba(255, 255, 255, 0.64); border-bottom-color: rgba(255, 255, 255, 0.1); font-weight: 600; letter-spacing: 0.08em; }
+.pha-class-pill { border-radius: 8px; color: rgba(255, 255, 255, 0.72); }
+.pha-class-item:hover .pha-class-pill { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.pha-class-item.pha-class-active .pha-class-pill { background: rgba(79, 189, 189, 0.16); color: #fff; box-shadow: inset 3px 0 0 var(--edu-teal); }
+.pha-page > app-page-header { margin-bottom: 16px; }
+.pha-filter-card, .pha-action-bar, .pha-table-wrap, .pha-empty { border: 1px solid var(--edu-border); border-radius: var(--edu-card-radius); box-shadow: var(--edu-shadow-xs); }
+.pha-filter-label { color: var(--edu-text); font-weight: 600; font-size: var(--edu-text-sm); text-transform: none; letter-spacing: 0; }
+::ng-deep .pha-mat-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .pha-mat-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .pha-mat-field.mat-focused .mdc-notched-outline__trailing { border-color: var(--edu-teal-dark) !important; }
+.pha-clear-btn { background: #fff; border: 1px solid var(--edu-border-strong); color: var(--edu-text); min-height: 40px; font-weight: 600; }
+.pha-clear-btn:hover { background: var(--edu-bg-light); border-color: var(--edu-blue); }
+.pha-spinner { border-top-color: var(--edu-teal-dark); }
+.pha-error { background: var(--edu-danger-bg); border-color: var(--edu-danger-border); color: var(--edu-danger-ink); }
+.pha-table th { background: var(--edu-bg-light); color: var(--edu-text-muted); letter-spacing: 0.05em; border-bottom: 1px solid var(--edu-border); }
+.pha-table td { color: var(--edu-text); font-variant-numeric: tabular-nums; }
+.pha-table tbody tr:hover td { background: var(--edu-bg-light); }
+.pha-row-icon, .pha-amount-circle { background: var(--edu-teal-tint); color: var(--edu-teal-dark); border: 1px solid var(--edu-teal-tint-border); font-weight: 600; }
+.pha-row-name, .pha-student-name { color: var(--edu-text); }
+.pha-td-sid, .pha-td-date, .pha-student-id, .pha-date { color: var(--edu-text-muted); }
+.pha-td-amount, .pha-card-mid .pha-amount { color: var(--edu-text); font-variant-numeric: tabular-nums; }
+.pha-badge-success, .pha-status-success { background: var(--edu-success-bg); color: var(--edu-success-ink); }
+.pha-badge-failed, .pha-status-failed { background: var(--edu-danger-bg); color: var(--edu-danger-ink); }
+.pha-dl-btn { background: #fff; color: var(--edu-text-sec); border: 1px solid var(--edu-border); }
+.pha-dl-btn:hover { background: var(--edu-bg-light); border-color: var(--edu-blue); color: var(--edu-blue); opacity: 1; }
+.pha-card { border-radius: var(--edu-card-radius); border-color: var(--edu-border); box-shadow: var(--edu-shadow-xs); }
+.pha-empty-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--edu-teal-tint); border: 1px solid var(--edu-teal-tint-border); color: var(--edu-teal-dark); font-size: 1.5rem; margin: 0 auto 4px; }
+.pha-empty-title { color: var(--edu-text); }
+.pha-empty-sub { color: var(--edu-text-muted); }
+.pha-page-btn { background: #fff; color: var(--edu-text); border: 1px solid var(--edu-border-strong); min-height: 40px; }
+.pha-page-btn:hover:not(:disabled) { background: var(--edu-bg-light); border-color: var(--edu-blue); }
+.pha-page-btn:disabled { background: #f1f5f9; color: var(--edu-text-faint); border-color: var(--edu-border); }
+.pha-page-active { background: var(--edu-blue) !important; color: #fff !important; border-color: var(--edu-blue) !important; font-weight: 700; }

@@ -1,4 +1,5 @@
 import { WisdomCardsComponent } from '../wisdom/wisdom-cards.component';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
 import {
   ChangeDetectionStrategy, ChangeDetectorRef,
   Component, OnDestroy, OnInit
@@ -23,7 +24,7 @@ import { Assessment, countdownLabel, countdownTone, dateParts } from '../../inte
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [WisdomCardsComponent, CommonModule, RouterLink, MatIconModule],
+  imports: [WisdomCardsComponent, PageHeaderComponent, CommonModule, RouterLink, MatIconModule],
   templateUrl: './student-dashboard.component.html',
   styleUrl: './student-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

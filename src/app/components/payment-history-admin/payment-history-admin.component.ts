@@ -1,3 +1,4 @@
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { PaymentHistoryService, PaginatedResponse } from '../../services/payment-history.service';
@@ -25,7 +26,7 @@ import { ComingSoonComponent } from '../coming-soon/coming-soon.component';
   templateUrl: './payment-history-admin.component.html',
   styleUrls: ['./payment-history-admin.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [PageHeaderComponent, 
     ComingSoonComponent,
     CommonModule,
     FormsModule,

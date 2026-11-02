@@ -13,19 +13,26 @@ import {
 import { SchoolService } from '../../services/school.service';
 import { LoggerService } from '../../services/logger.service';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { MatIconModule } from '@angular/material/icon';
+import { PageHeaderComponent } from '../ui/page-header/page-header.component';
+import { StatCardComponent, StatTone } from '../ui/stat-card/stat-card.component';
 
 Chart.register(...registerables);
+// Chart.js draws on canvas, so the brand typography and neutral ink are set here once.
+Chart.defaults.font.family = "Inter, 'Segoe UI', system-ui, sans-serif";
+Chart.defaults.color = '#64748b';
 
+// Edunexify categorical palette (brand teal first, then navy and muted complements).
 const PALETTE = [
-  '#6366f1', '#0891b2', '#059669', '#d97706',
-  '#dc2626', '#7c3aed', '#db2777', '#0284c7',
-  '#65a30d', '#ea580c', '#0d9488', '#8b5cf6',
+  '#0f766e', '#1e3a5f', '#4fbdbd', '#d97706',
+  '#64748b', '#be5a64', '#3b6ea5', '#8aa5a0',
+  '#b58a3c', '#5b7c99', '#2f9e9a', '#9aa8b8',
 ];
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, BaseChartDirective, MatIconModule, PageHeaderComponent, StatCardComponent],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,7 +60,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     scales: {
       y: {
         beginAtZero: true,
-        grid: { color: 'rgba(0,0,0,0.04)' },
+        grid: { color: 'rgba(15,23,42,0.06)' },
         ticks: { callback: val => `₹${Number(val).toLocaleString('en-IN')}` }
       },
       x: { grid: { display: false } }
@@ -73,7 +80,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
     scales: {
       x: {
         beginAtZero: true, max: 100,
-        grid: { color: 'rgba(0,0,0,0.04)' },
+        grid: { color: 'rgba(15,23,42,0.06)' },
         ticks: { callback: val => `${val}%` }
       },
       y: { grid: { display: false } }
@@ -110,11 +117,12 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   get latestMonth(): string {
     return this.rawFeeTrend.length ? this.rawFeeTrend[this.rawFeeTrend.length - 1].month : '';
   }
-  get attendanceCardStyle(): string {
+  /** Same 85 / 70 thresholds as before — only the presentation (tone) changed. */
+  get attendanceTone(): StatTone {
     const r = this.avgAttendance;
-    if (r >= 85) return '--c1:#059669;--c2:#34d399';
-    if (r >= 70) return '--c1:#d97706;--c2:#fbbf24';
-    return '--c1:#dc2626;--c2:#f87171';
+    if (r >= 85) return 'success';
+    if (r >= 70) return 'warning';
+    return 'danger';
   }
 
   // ── Attendance trend (line) ───────────────────────────────────
@@ -135,7 +143,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         beginAtZero: false,
         min: 0,
         max: 100,
-        grid: { color: 'rgba(0,0,0,0.04)' },
+        grid: { color: 'rgba(15,23,42,0.06)' },
         ticks: { callback: val => `${val}%` }
       },
       x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 30 } }
@@ -214,8 +222,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       datasets: [{
         data: this.rawFeeTrend.map(d => d.amount),
         backgroundColor: this.rawFeeTrend.map((_, i) =>
-          `rgba(99,102,241,${0.4 + (i / Math.max(this.rawFeeTrend.length - 1, 1)) * 0.55})`),
-        borderColor: '#6366f1',
+          `rgba(15,118,110,${0.4 + (i / Math.max(this.rawFeeTrend.length - 1, 1)) * 0.55})`),
+        borderColor: '#0f766e',
         borderWidth: 2,
         borderRadius: 8,
         borderSkipped: false,
@@ -229,8 +237,8 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
       labels: data.map(d => `Cl. ${d.className}`),
       datasets: [{
         data: data.map(d => d.attendanceRate),
-        backgroundColor: data.map((_, i) => PALETTE[i % PALETTE.length] + 'bb'),
-        borderColor: data.map((_, i) => PALETTE[i % PALETTE.length]),
+        backgroundColor: data.map(() => 'rgba(15,118,110,0.75)'),
+        borderColor: data.map(() => '#0f766e'),
         borderWidth: 2,
         borderRadius: 6,
         borderSkipped: false,
@@ -266,13 +274,13 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
 
   private buildAttendanceTrend(data: AttendanceTrend[]): void {
     const hasData = data.some(d => d.attendanceRate > 0);
-    const color = '#059669';
+    const color = '#0f766e';
     this.attendanceTrendData = {
       labels: data.map(d => d.period),
       datasets: [{
         data: data.map(d => d.attendanceRate),
         borderColor: color,
-        backgroundColor: hasData ? 'rgba(5,150,105,0.10)' : 'transparent',
+        backgroundColor: hasData ? 'rgba(15,118,110,0.08)' : 'transparent',
         fill: true,
         pointBackgroundColor: data.map(d =>
           d.attendanceRate >= 85 ? '#059669' : d.attendanceRate >= 70 ? '#d97706' : d.attendanceRate > 0 ? '#dc2626' : '#94a3b8'

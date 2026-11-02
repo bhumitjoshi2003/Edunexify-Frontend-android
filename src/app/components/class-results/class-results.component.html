@@ -1,39 +1,28 @@
 <div class="cr-page">
 
-  <!-- ── Hero ──────────────────────────────────────────────────────── -->
-  <div class="cr-hero">
-    <div class="cr-hero-left">
-      <div class="cr-hero-icon">🏅</div>
-      <div>
-        <h1 class="cr-hero-title">Class Results</h1>
-        <p class="cr-hero-sub">Exam rankings &amp; marks overview</p>
-      </div>
-    </div>
-    <div class="cr-blob cr-blob-1"></div>
-    <div class="cr-blob cr-blob-2"></div>
-  </div>
+  <app-page-header icon="leaderboard" title="Class Results" subtitle="Exam rankings &amp; marks overview"></app-page-header>
 
   <div class="cr-card">
   <div class="cr-filters">
     <div class="cr-filter-group">
-      <label>Session</label>
-      <select [(ngModel)]="selectedSession" (ngModelChange)="loadExams()">
+      <label class="edu-label" for="cr-session">Session</label>
+      <select id="cr-session" class="edu-select" [(ngModel)]="selectedSession" (ngModelChange)="loadExams()">
         <option *ngFor="let s of sessions; trackBy: trackByIndex" [value]="s">{{ s }}</option>
       </select>
     </div>
     <div class="cr-filter-group" *ngIf="showClassDropdown">
-      <label>Class</label>
-      <select [(ngModel)]="selectedClass" (ngModelChange)="loadExams()">
+      <label class="edu-label" for="cr-class">Class</label>
+      <select id="cr-class" class="edu-select" [(ngModel)]="selectedClass" (ngModelChange)="loadExams()">
         <option *ngFor="let c of classOptions; trackBy: trackByIndex" [value]="c">Class {{ c }}</option>
       </select>
     </div>
     <div class="cr-filter-group" *ngIf="role === 'TEACHER' && selectedClass">
-      <label>Class</label>
-      <span class="cr-class-badge">{{ selectedClass }}</span>
+      <span class="edu-label">Class</span>
+      <span class="cr-class-badge edu-badge is-brand">{{ selectedClass }}</span>
     </div>
     <div class="cr-filter-group">
-      <label>Exam</label>
-      <select [(ngModel)]="selectedExamId" (ngModelChange)="onExamChange()">
+      <label class="edu-label" for="cr-exam">Exam</label>
+      <select id="cr-exam" class="edu-select" [(ngModel)]="selectedExamId" (ngModelChange)="onExamChange()">
         <option [ngValue]="null">— Select Exam —</option>
         <option *ngFor="let e of exams; trackBy: trackById" [ngValue]="e.id">{{ e.examName }}</option>
       </select>
@@ -42,7 +31,7 @@
 
   <!-- Result status of the selected exam; admins publish / unpublish -->
   <div class="cr-status" *ngIf="selectedExam" [class.cr-status-published]="examPublished">
-    <span class="cr-status-badge">{{ examPublished ? 'Published' : 'Draft' }}</span>
+    <span class="cr-status-badge edu-badge" [class.is-success]="examPublished" [class.is-warning]="!examPublished">{{ examPublished ? 'Published' : 'Draft' }}</span>
     <span class="cr-status-text">
       {{ examPublished ? 'Visible to students and parents. Marks are locked.' : 'Only staff can see these results.' }}
       <ng-container *ngIf="results.length">
@@ -50,10 +39,10 @@
       </ng-container>
     </span>
     <ng-container *ngIf="isAdmin">
-      <button type="button" class="cr-btn-publish" *ngIf="!examPublished" [disabled]="publishing" (click)="publish()">
+      <button type="button" class="cr-btn-publish edu-btn edu-btn-primary edu-btn-sm" *ngIf="!examPublished" [disabled]="publishing" (click)="publish()">
         {{ publishing ? 'Publishing…' : 'Publish Results' }}
       </button>
-      <button type="button" class="cr-btn-unpublish" *ngIf="examPublished" [disabled]="publishing" (click)="unpublish()">
+      <button type="button" class="cr-btn-unpublish edu-btn edu-btn-secondary edu-btn-sm" *ngIf="examPublished" [disabled]="publishing" (click)="unpublish()">
         {{ publishing ? 'Updating…' : 'Unpublish' }}
       </button>
     </ng-container>
@@ -61,24 +50,24 @@
 
   <!-- Section chips — admins only (a teacher always sees their own section) -->
   <div class="cr-section-chips" *ngIf="sections.length > 0 && !isTeacher">
-    <span class="section-label">Sections</span>
-    <button class="cr-sec-chip" [class.cr-sec-active]="selectedSectionId === null"
+    <span class="section-label edu-label">Sections</span>
+    <button type="button" class="cr-sec-chip edu-chip" [class.cr-sec-active]="selectedSectionId === null" [class.is-active]="selectedSectionId === null"
       (click)="onSectionSelect(null)">All Sections</button>
-    <button *ngFor="let sec of sections" class="cr-sec-chip"
-      [class.cr-sec-active]="selectedSectionId === sec.id"
+    <button type="button" *ngFor="let sec of sections" class="cr-sec-chip edu-chip"
+      [class.cr-sec-active]="selectedSectionId === sec.id" [class.is-active]="selectedSectionId === sec.id"
       (click)="onSectionSelect(sec.id!)">{{ sec.name }}</button>
   </div>
 
   <div *ngIf="loading" class="cr-loading">Loading results…</div>
 
-  <div *ngIf="!loading && selectedExamId && results.length === 0" class="cr-empty">
-    <div class="cr-empty-icon">📊</div>
-    <p class="cr-empty-title">No students found</p>
+  <div *ngIf="!loading && selectedExamId && results.length === 0" class="cr-empty edu-empty">
+    <div class="cr-empty-icon edu-empty-icon" aria-hidden="true"><mat-icon>groups</mat-icon></div>
+    <p class="cr-empty-title edu-empty-title">No students found</p>
     <p class="cr-empty-sub">No students or subjects are set up for this exam yet.</p>
   </div>
 
-  <div *ngIf="!loading && results.length > 0" class="cr-table-wrapper">
-    <table class="cr-table">
+  <div *ngIf="!loading && results.length > 0" class="cr-table-wrapper edu-table-wrap" tabindex="0" role="region" aria-label="Class results table">
+    <table class="cr-table edu-table">
       <thead>
         <tr>
           <th class="cr-th-rank">Rank</th>
@@ -122,22 +111,22 @@
           <td class="cr-cell-result">
             <ng-container *ngIf="student.complete; else pending">
               <span class="cr-grade">{{ student.grade }}</span>
-              <span class="cr-pass" [class.cr-fail]="student.passed === false">{{ student.passed ? 'Pass' : 'Fail' }}</span>
+              <span class="cr-pass edu-badge" [class.is-success]="student.passed !== false" [class.is-danger]="student.passed === false" [class.cr-fail]="student.passed === false">{{ student.passed ? 'Pass' : 'Fail' }}</span>
             </ng-container>
             <ng-template #pending><span class="cr-absent">Incomplete</span></ng-template>
           </td>
           <td class="cr-cell-action">
-            <button class="cr-btn-report" (click)="openReportCard(student.studentId, null)" title="Full Report Card">&#128438;</button>
-            <button class="cr-btn-report cr-btn-report-exam" (click)="openReportCard(student.studentId, selectedExamId)" title="This Exam">&#128196;</button>
+            <button type="button" class="cr-btn-report" (click)="openReportCard(student.studentId, null)" title="Full Report Card" [attr.aria-label]="'Full report card for ' + student.studentName"><mat-icon>description</mat-icon></button>
+            <button type="button" class="cr-btn-report cr-btn-report-exam" (click)="openReportCard(student.studentId, selectedExamId)" title="This Exam" [attr.aria-label]="'This exam report for ' + student.studentName"><mat-icon>assignment</mat-icon></button>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <div *ngIf="!selectedExamId" class="cr-empty">
-    <div class="cr-empty-icon">🔍</div>
-    <p class="cr-empty-title">View class results</p>
+  <div *ngIf="!selectedExamId" class="cr-empty edu-empty">
+    <div class="cr-empty-icon edu-empty-icon" aria-hidden="true"><mat-icon>manage_search</mat-icon></div>
+    <p class="cr-empty-title edu-empty-title">View class results</p>
     <p class="cr-empty-sub">Select a session, class, and exam to view results.</p>
   </div>
   </div><!-- /.cr-card -->

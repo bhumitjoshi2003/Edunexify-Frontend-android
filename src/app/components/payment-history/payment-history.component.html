@@ -32,22 +32,9 @@
 
     <ng-container *ngIf="!loading || paymentHistory.length > 0">
 
-      <!-- ── Hero ──────────────────────────────────────────────────── -->
-      <div class="ph-hero">
-        <div class="ph-hero-left">
-          <div class="ph-hero-icon">💳</div>
-          <div>
-            <h1 class="ph-hero-title">Payment History</h1>
-            <p class="ph-hero-sub">All your fee transactions in one place</p>
-          </div>
-        </div>
-        <div class="ph-hero-stat" *ngIf="totalElements > 0">
-          <span class="ph-hero-num">{{ totalElements }}</span>
-          <span class="ph-hero-lbl">Payments</span>
-        </div>
-        <div class="ph-blob ph-blob-1"></div>
-        <div class="ph-blob ph-blob-2"></div>
-      </div>
+      <app-page-header icon="receipt_long" title="Payment History" subtitle="All your fee transactions in one place">
+        <span class="edu-badge" *ngIf="totalElements > 0">{{ totalElements }} payment{{ totalElements === 1 ? '' : 's' }}</span>
+      </app-page-header>
 
       <!-- ── Error ─────────────────────────────────────────────────── -->
       <div class="ph-error" *ngIf="error">

@@ -210,3 +210,32 @@
   .ph-table-scroll { display: block; }
   .ph-mobile-list  { display: none; }
 }
+
+/* ══ Design system v2 — brand retint (green payment theme → navy/teal; semantic status kept) ══ */
+.ph-page { font-family: var(--edu-font); color: var(--edu-text); gap: 16px; }
+.ph-page > app-page-header { margin-bottom: 0; }
+.ph-hero { background: var(--edu-hero-bg); border-radius: var(--edu-hero-radius); padding: 20px 24px; }
+.ph-empty, .ph-card-wrap { border: 1px solid var(--edu-border); border-radius: var(--edu-card-radius); box-shadow: var(--edu-shadow-xs); }
+.ph-empty { border-style: dashed; border-color: var(--edu-border-strong); box-shadow: none; }
+.ph-empty-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--edu-teal-tint); border: 1px solid var(--edu-teal-tint-border); color: var(--edu-teal-dark); font-size: 1.5rem; }
+.ph-empty-title { color: var(--edu-text); }
+.ph-empty-sub { color: var(--edu-text-muted); }
+.ph-error { border-radius: 10px; background: var(--edu-danger-bg); border-color: var(--edu-danger-border); color: var(--edu-danger-ink); }
+.ph-card-header { background: #fff; }
+.ph-card-header-title { color: var(--edu-text); font-size: var(--edu-text-md); text-transform: none; letter-spacing: -0.01em; font-weight: 700; }
+.ph-card-header-count { color: var(--edu-text-muted); font-size: var(--edu-text-sm); }
+.ph-table th { background: var(--edu-bg-light); color: var(--edu-text-muted); letter-spacing: 0.05em; border-bottom-color: var(--edu-border); }
+.ph-table td { color: var(--edu-text); font-variant-numeric: tabular-nums; }
+.ph-table tbody tr:hover td { background: var(--edu-bg-light); }
+.ph-row-icon, .ph-m-icon { background: var(--edu-teal-tint); color: var(--edu-teal-dark); border: 1px solid var(--edu-teal-tint-border); border-radius: 10px; font-weight: 600; }
+.ph-row-id { color: var(--edu-text); }
+.ph-td-date { color: var(--edu-text-muted); }
+.ph-td-amount, .ph-m-amount { color: var(--edu-text); font-variant-numeric: tabular-nums; }
+.ph-badge { height: 22px; display: inline-flex; align-items: center; padding: 0 9px; border: 1px solid var(--edu-border); text-transform: none; letter-spacing: 0.01em; font-size: var(--edu-text-xs); font-weight: 600; }
+.ph-badge-success { background: var(--edu-success-bg); border-color: var(--edu-success-border); color: var(--edu-success-ink); }
+.ph-dl-btn { background: #fff; color: var(--edu-text-sec); border: 1px solid var(--edu-border); }
+.ph-dl-btn:hover { background: var(--edu-bg-light); border-color: var(--edu-blue); color: var(--edu-blue); }
+.ph-page-btn { background: linear-gradient(135deg, #1e3a5f, #17436b); border-radius: 10px; min-height: 40px; font-weight: 600; }
+.ph-page-btn:disabled { background: #e9eef4; color: var(--edu-text-faint); }
+.ph-page-info { color: var(--edu-text-muted); font-size: var(--edu-text-sm); }
+@media (max-width: 640px) { .ph-m-card:active { background: var(--edu-bg-light); } }

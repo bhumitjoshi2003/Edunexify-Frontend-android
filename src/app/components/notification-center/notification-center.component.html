@@ -1,8 +1,8 @@
 <main class="nc-shell">
-  <header class="nc-header">
-    <div class="nc-heading"><p class="nc-eyebrow"><mat-icon>inbox</mat-icon> Inbox</p><h1>Notifications</h1><p>{{ unreadCount ? unreadCount + ' unread notification' + (unreadCount === 1 ? '' : 's') : (filter === 'UNREAD' ? 'You’re all caught up' : 'No unread notifications') }}</p></div>
-    <button *ngIf="unreadCount" class="nc-mark-all" type="button" (click)="markAllRead()"><mat-icon>done_all</mat-icon> Mark all read</button>
-  </header>
+  <app-page-header icon="notifications" title="Notifications"
+    [subtitle]="unreadCount ? unreadCount + ' unread notification' + (unreadCount === 1 ? '' : 's') : (filter === 'UNREAD' ? 'You’re all caught up' : 'No unread notifications')">
+    <button *ngIf="unreadCount" class="nc-mark-all edu-btn edu-btn-secondary" type="button" (click)="markAllRead()"><mat-icon>done_all</mat-icon> Mark all read</button>
+  </app-page-header>
   <section class="nc-toolbar" aria-label="Notification filters">
     <div class="nc-tabs"><button type="button" [class.active]="filter === 'ALL'" (click)="setFilter('ALL')">All</button><button type="button" [class.active]="filter === 'UNREAD'" (click)="setFilter('UNREAD')">Unread <span *ngIf="unreadCount">{{ unreadCount }}</span></button></div>
     <label class="nc-category"><mat-icon aria-hidden="true">tune</mat-icon><span class="sr-only">Category</span><select aria-label="Filter notifications by category" [ngModel]="category" (ngModelChange)="setCategory($event)"><option value="ALL">All categories</option><option *ngFor="let value of categories" [value]="value">{{ value.replace('_', ' ') | titlecase }}</option></select></label>

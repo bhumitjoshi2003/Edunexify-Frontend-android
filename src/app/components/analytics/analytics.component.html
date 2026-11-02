@@ -1,85 +1,39 @@
 <div class="an-page">
 
-  <!-- ── Hero ─────────────────────────────────────────────────────── -->
-  <div class="an-hero">
-    <div class="an-hero-left">
-      <p class="an-greeting">Reports & Trends</p>
-      <h1 class="an-hero-name">Analytics</h1>
-      <p class="an-hero-sub">School-wide performance insights</p>
-    </div>
-    <div class="an-hero-right">
-      <div class="an-date-card">
-        <span class="an-date-day">{{ today | date:'EEEE' }}</span>
-        <span class="an-date-full">{{ today | date:'d MMM yyyy' }}</span>
-      </div>
-    </div>
-    <div class="an-blob an-blob-1"></div>
-    <div class="an-blob an-blob-2"></div>
-  </div>
+  <app-page-header icon="insights" title="Analytics" subtitle="School-wide performance insights"></app-page-header>
 
   <!-- ── Skeleton ─────────────────────────────────────────────────── -->
   <ng-container *ngIf="isLoading">
     <div class="an-stats-grid">
-      <div class="sk-shimmer" style="height:80px;border-radius:16px" *ngFor="let i of [1,2,3,4]"></div>
+      <div class="sk-shimmer" style="height:76px;border-radius:12px" *ngFor="let i of [1,2,3,4]"></div>
     </div>
     <div class="an-charts-row">
-      <div class="sk-shimmer" style="height:320px;border-radius:16px"></div>
-      <div class="sk-shimmer" style="height:320px;border-radius:16px"></div>
+      <div class="sk-shimmer" style="height:320px;border-radius:12px"></div>
+      <div class="sk-shimmer" style="height:320px;border-radius:12px"></div>
     </div>
-    <div class="sk-shimmer" style="height:320px;border-radius:16px"></div>
-    <div class="sk-shimmer" style="height:320px;border-radius:16px"></div>
+    <div class="sk-shimmer" style="height:320px;border-radius:12px"></div>
+    <div class="sk-shimmer" style="height:320px;border-radius:12px"></div>
   </ng-container>
 
   <p class="an-error" *ngIf="error && !isLoading">{{ error }}</p>
 
-  <div *ngIf="analyticsError && !isLoading" class="analytics-empty-state">
+  <div *ngIf="analyticsError && !isLoading" class="edu-empty analytics-empty-state">
     <p>{{ analyticsError }}</p>
   </div>
-  <div *ngIf="!analyticsError && !isLoading && !hasData" class="analytics-empty-state">
-    <p>No data to display. Add classes and record fee transactions to see analytics.</p>
+  <div *ngIf="!analyticsError && !isLoading && !hasData" class="edu-empty analytics-empty-state">
+    <span class="edu-empty-icon" aria-hidden="true"><mat-icon>insights</mat-icon></span>
+    <p class="edu-empty-title">No data to display</p>
+    <p>Add classes and record fee transactions to see analytics.</p>
   </div>
 
   <ng-container *ngIf="!isLoading && !error && hasData && !analyticsError">
 
     <!-- ── Summary Stats ─────────────────────────────────────────── -->
     <div class="an-stats-grid">
-
-      <div class="an-stat-card" style="--c1:#0369a1;--c2:#0ea5e9">
-        <div class="an-stat-icon">👨‍🎓</div>
-        <div class="an-stat-info">
-          <span class="an-stat-value">{{ totalStudents }}</span>
-          <span class="an-stat-label">Total Students</span>
-        </div>
-        <div class="an-stat-bg">🎓</div>
-      </div>
-
-      <div class="an-stat-card" [attr.style]="attendanceCardStyle">
-        <div class="an-stat-icon">📊</div>
-        <div class="an-stat-info">
-          <span class="an-stat-value">{{ avgAttendance | number:'1.0-1' }}%</span>
-          <span class="an-stat-label">Avg Attendance</span>
-        </div>
-        <div class="an-stat-bg">📈</div>
-      </div>
-
-      <div class="an-stat-card" style="--c1:#7c3aed;--c2:#a78bfa">
-        <div class="an-stat-icon">🏫</div>
-        <div class="an-stat-info">
-          <span class="an-stat-value">{{ totalClasses }}</span>
-          <span class="an-stat-label">Active Classes</span>
-        </div>
-        <div class="an-stat-bg">📚</div>
-      </div>
-
-      <div class="an-stat-card" *ngIf="feeAnalyticsEnabled" style="--c1:#059669;--c2:#34d399">
-        <div class="an-stat-icon">💰</div>
-        <div class="an-stat-info">
-          <span class="an-stat-value an-stat-value--sm">₹{{ latestMonthFee | number }}</span>
-          <span class="an-stat-label">Fee ({{ latestMonth }})</span>
-        </div>
-        <div class="an-stat-bg">💳</div>
-      </div>
-
+      <app-stat-card label="Total Students" icon="school" tone="brand">{{ totalStudents }}</app-stat-card>
+      <app-stat-card label="Avg Attendance" icon="fact_check" [tone]="attendanceTone">{{ avgAttendance | number:'1.0-1' }}%</app-stat-card>
+      <app-stat-card label="Active Classes" icon="account_tree" tone="info">{{ totalClasses }}</app-stat-card>
+      <app-stat-card *ngIf="feeAnalyticsEnabled" [label]="'Fee (' + latestMonth + ')'" icon="payments" tone="success">₹{{ latestMonthFee | number }}</app-stat-card>
     </div>
 
     <!-- ── Charts row ─────────────────────────────────────────────── -->
@@ -92,7 +46,7 @@
             <h3 class="an-chart-title">Monthly Fee Collection</h3>
             <p class="an-chart-sub">Revenue collected over the last 6 months</p>
           </div>
-          <span class="an-chart-badge an-badge-indigo">6 Months</span>
+          <span class="edu-badge is-brand">6 Months</span>
         </div>
         <div class="an-chart-body">
           <canvas baseChart [data]="feeTrendData" [options]="feeTrendOptions" type="bar"></canvas>
@@ -106,7 +60,7 @@
             <h3 class="an-chart-title">Class-wise Attendance</h3>
             <p class="an-chart-sub">Average attendance % per class this month</p>
           </div>
-          <span class="an-chart-badge an-badge-teal">Rate</span>
+          <span class="edu-badge is-brand">Rate</span>
         </div>
         <div class="an-chart-body">
           <canvas baseChart [data]="attendanceData" [options]="attendanceOptions" type="bar"></canvas>
@@ -123,12 +77,12 @@
           <p class="an-chart-sub">Attendance % over time for the selected class</p>
         </div>
         <div class="an-trend-controls">
-          <select class="an-trend-select" [(ngModel)]="selectedTrendClass" (ngModelChange)="onTrendClassChange()">
+          <select class="edu-select an-trend-select" aria-label="Class" [(ngModel)]="selectedTrendClass" (ngModelChange)="onTrendClassChange()">
             <option *ngFor="let c of classList" [value]="c">Class {{ c }}</option>
           </select>
-          <div class="an-trend-toggle">
-            <button class="an-toggle-btn" [class.an-toggle-active]="trendMode === 'monthly'" (click)="onTrendModeChange('monthly')">Monthly</button>
-            <button class="an-toggle-btn" [class.an-toggle-active]="trendMode === 'weekly'" (click)="onTrendModeChange('weekly')">Weekly</button>
+          <div class="edu-segmented" role="group" aria-label="Trend period">
+            <button type="button" [class.is-active]="trendMode === 'monthly'" (click)="onTrendModeChange('monthly')">Monthly</button>
+            <button type="button" [class.is-active]="trendMode === 'weekly'" (click)="onTrendModeChange('weekly')">Weekly</button>
           </div>
         </div>
       </div>
@@ -147,7 +101,7 @@
           <h3 class="an-chart-title">Student Distribution</h3>
           <p class="an-chart-sub">Total students across all classes</p>
         </div>
-        <span class="an-chart-badge an-badge-violet">{{ totalStudents }} Students</span>
+        <span class="edu-badge is-info">{{ totalStudents }} Students</span>
       </div>
       <div class="an-chart-body an-donut-body">
         <canvas baseChart [data]="distributionData" [options]="distributionOptions" type="doughnut"></canvas>
