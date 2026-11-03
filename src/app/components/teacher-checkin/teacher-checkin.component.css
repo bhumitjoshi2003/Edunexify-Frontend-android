@@ -105,42 +105,30 @@
 }
 
 .tc-checkin-btn {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
+  min-width: 154px;
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #0f766e, #14b8a6);
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 8px 30px rgba(15, 118, 110, 0.35);
+  box-shadow: 0 5px 16px rgba(15, 118, 110, 0.25);
   font-family: inherit;
 }
-.tc-checkin-btn:active { transform: scale(0.96); }
+.tc-checkin-btn:active { transform: scale(0.98); }
 .tc-checkin-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.tc-btn-icon { font-size: 2rem; }
+.tc-btn-icon { font-size: 1rem; }
 
-.tc-btn-pulse {
-  animation: pulse-ring 2s ease-out infinite;
-}
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.4); }
-  70% { box-shadow: 0 0 0 20px rgba(15, 118, 110, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
-}
-
-.tc-gps-note {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  margin: 0;
-}
+.tc-btn-pulse { animation: none; }
 
 .tc-checkout-btn {
   margin-top: 16px;
