@@ -504,6 +504,25 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
     }
   }
 
+  getAttendanceMethodLabel(method: string | null | undefined): string {
+    switch ((method ?? '').toUpperCase()) {
+      case 'MANUAL_ADMIN': return 'Marked by Admin';
+      case 'GPS':
+      case 'GEOLOCATION': return 'Location Check-in';
+      case 'MANUAL': return 'Marked Manually';
+      case 'SYSTEM':
+      case 'AUTO':
+      case 'AUTOMATIC': return 'Automatic';
+      default:
+        return (method ?? 'Recorded')
+          .toLowerCase()
+          .split(/[_-]+/)
+          .filter(Boolean)
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+    }
+  }
+
   getCellClass(day: CalendarDay): string {
     if (!day.date) return 'cal-empty';
     if (!day.status) return 'cal-nodata';
