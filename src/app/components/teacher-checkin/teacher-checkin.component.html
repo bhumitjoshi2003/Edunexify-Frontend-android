@@ -41,7 +41,6 @@
           <span *ngIf="!isCheckingIn">Check In</span>
           <span *ngIf="isCheckingIn">Locating...</span>
         </button>
-        <p class="tc-gps-note">GPS location will be used to verify your presence</p>
       </div>
     </ng-container>
 
@@ -57,7 +56,7 @@
         <div class="tc-status-details">
           <div class="tc-status-detail">
             <span class="tc-detail-label">Method</span>
-            <span class="tc-detail-value">{{ todayRecord!.method }}</span>
+            <span class="tc-detail-value">{{ getAttendanceMethodLabel(todayRecord!.method) }}</span>
           </div>
         </div>
       </div>
