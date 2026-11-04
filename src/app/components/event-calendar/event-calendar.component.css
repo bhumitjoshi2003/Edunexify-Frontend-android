@@ -980,7 +980,7 @@
 
 /* ── Event calendar redesign: compact month grid + agenda ───────── */
 .ec-month-events {
-    margin: 14px 16px 18px;
+    margin: 28px 16px 18px;
     padding-top: 2px;
 }
 .ec-month-events-heading {
@@ -1252,7 +1252,7 @@
     }
 
     .ec-month-events {
-        margin: 12px 10px 14px;
+        margin: 22px 10px 14px;
     }
     .ec-agenda-card {
         grid-template-columns: 62px minmax(0, 1fr) auto auto;
