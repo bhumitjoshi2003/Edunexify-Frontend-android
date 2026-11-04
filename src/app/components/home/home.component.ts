@@ -12,6 +12,7 @@ import { defer, finalize, Subject, takeUntil, timeout } from 'rxjs';
 
 import { ToastService } from '../../services/toast.service';
 import { consumeIntendedRoute, clearIntendedRoute } from '../../auth/redirect-url.util';
+import { PRIVACY_POLICY_URL, openExternalUrl } from '../../utils/legal-links';
 
 @Component({
   selector: 'app-home',
@@ -230,6 +231,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   togglePasswordVisibility() {
     this.hidePassword = !this.hidePassword;
+  }
+
+  openPrivacyPolicy(): void {
+    openExternalUrl(PRIVACY_POLICY_URL);
   }
 
   forgotPassword() {

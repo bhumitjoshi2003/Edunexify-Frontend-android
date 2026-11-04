@@ -41,3 +41,7 @@ testem.log
 .DS_Store
 Thumbs.db
 /public/observability-config.js
+
+# Android signing
+keystore.properties
+edunexify-upload-key.jks

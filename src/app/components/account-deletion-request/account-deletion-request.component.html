@@ -1,0 +1,71 @@
+<div class="adr-page">
+  <div class="adr-hero">
+    <div class="adr-hero-icon"><mat-icon>person_remove</mat-icon></div>
+    <div>
+      <h1 class="adr-hero-title">Request account deletion</h1>
+      <p class="adr-hero-sub">Ask Edunexify to delete your account and personal data.</p>
+    </div>
+  </div>
+
+  <div class="adr-card" *ngIf="loading">
+    <p class="adr-muted">Loading…</p>
+  </div>
+
+  <div class="adr-card" *ngIf="!loading && loadFailed">
+    <p class="adr-muted">We could not check for an existing request.</p>
+    <button type="button" class="adr-secondary" (click)="load()">Try again</button>
+  </div>
+
+  <ng-container *ngIf="!loading && !loadFailed">
+    <div class="adr-card adr-status" *ngIf="request" data-testid="deletion-status">
+      <div class="adr-status-row">
+        <span>Reference</span>
+        <strong>{{ request.reference }}</strong>
+      </div>
+      <div class="adr-status-row">
+        <span>Status</span>
+        <strong class="adr-chip" [attr.data-status]="request.status">{{ statusLabels[request.status] }}</strong>
+      </div>
+      <div class="adr-status-row">
+        <span>Requested</span>
+        <strong>{{ request.requestedAt | date: 'd MMM y, h:mm a' }}</strong>
+      </div>
+      <div class="adr-status-row" *ngIf="request.resolvedAt">
+        <span>Closed</span>
+        <strong>{{ request.resolvedAt | date: 'd MMM y, h:mm a' }}</strong>
+      </div>
+      <p class="adr-message" *ngIf="request.userMessage">{{ request.userMessage }}</p>
+      <p class="adr-muted" *ngIf="isOpen">
+        Your request is being handled. You do not need to submit it again.
+      </p>
+    </div>
+
+    <div class="adr-card">
+      <h2 class="adr-heading">What happens when you submit a request</h2>
+      <ul class="adr-list">
+        <li>Submitting a request <strong>does not immediately delete</strong> your account. Edunexify reviews it, with your school where needed, and confirms that the request is yours.</li>
+        <li>If the request is approved, your sign-in is deactivated. We then assess, with your school, which of your personal data can be deleted or anonymised.</li>
+        <li>Some school records may need to be kept for legitimate educational, financial or legal reasons — for example fee and payment records, marks and report cards, and attendance history.</li>
+        <li>You can follow the status of your request on this page until your sign-in is deactivated. After that, we tell you the outcome by email.</li>
+      </ul>
+      <button type="button" class="adr-link" (click)="openPrivacyPolicy()">Read the Privacy Policy</button>
+    </div>
+
+    <div class="adr-card" *ngIf="canSubmit" data-testid="deletion-form">
+      <label class="adr-field">
+        <span>Reason <small>(optional)</small></span>
+        <textarea [(ngModel)]="reason" rows="3" maxlength="1000"
+          placeholder="Anything that helps us handle your request"></textarea>
+      </label>
+
+      <label class="adr-confirm">
+        <input type="checkbox" [(ngModel)]="confirmed" name="confirmed" />
+        <span>I understand that this sends a request to delete my account, that my account is not deleted immediately, and that some school records may be kept.</span>
+      </label>
+
+      <button type="button" class="adr-submit" (click)="submit()" [disabled]="!confirmed || submitting">
+        {{ submitting ? 'Sending…' : 'Request account deletion' }}
+      </button>
+    </div>
+  </ng-container>
+</div>

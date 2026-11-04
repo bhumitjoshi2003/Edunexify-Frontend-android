@@ -68,6 +68,14 @@ describe('AuthInterceptor — refresh-failure navigation', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it('does not navigate away from the public privacy-policy and account-deletion pages', () => {
+    for (const path of ['/privacy-policy', '/account-deletion']) {
+      simulatePath(path);
+      failMeThenRefresh(`${base}/auth/me`);
+    }
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
   it('does not navigate away on home itself', () => {
     simulatePath('/home');
     failMeThenRefresh(`${base}/auth/me`);

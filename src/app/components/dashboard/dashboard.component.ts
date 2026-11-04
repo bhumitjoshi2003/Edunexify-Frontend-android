@@ -30,6 +30,7 @@ import { UserNotification } from '../../interfaces/user-notification';
 import { NotificationStateService } from '../../services/notification-state.service';
 import { NotificationNavigationService } from '../../services/notification-navigation.service';
 import { ToastService } from '../../services/toast.service';
+import { PRIVACY_POLICY_URL, openExternalUrl } from '../../utils/legal-links';
 
 @Component({
   selector: 'app-dashboard',
@@ -449,6 +450,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   closeMoreMenu(): void {
     this.showMoreMenu = false;
+  }
+
+  openPrivacyPolicy(): void {
+    openExternalUrl(PRIVACY_POLICY_URL);
   }
 
   navigateToMyProfile(): void {

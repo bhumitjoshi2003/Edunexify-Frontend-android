@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { ToastService } from '../../services/toast.service';
+import { ATTENDANCE_LOCATION_DISCLOSURE } from '../../utils/location-disclosure';
 import {
   PermissionState,
   TeacherOnboardingService,
@@ -44,6 +46,7 @@ export class TeacherGettingStartedComponent implements OnInit, OnChanges {
     private onboarding: TeacherOnboardingService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private toast: ToastService,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -85,7 +88,7 @@ export class TeacherGettingStartedComponent implements OnInit, OnChanges {
       { id: 'profile', title: 'Review your profile', description: 'Confirm your contact and school details.', icon: 'person_outline', action: 'View profile', complete: this.state.profileVisited, available: true },
       { id: 'classes', title: 'View today’s classes', description: 'See your teaching schedule and upcoming periods.', icon: 'schedule', action: 'View classes', complete: this.state.todaysClassesVisited, available: this.todaysClassesAvailable },
       { id: 'notifications', title: 'Enable notifications', description: 'Receive school announcements, attendance reminders, and leave updates.', icon: 'notifications_none', action: 'Enable', complete: this.notifications === 'granted', available: this.notifications !== 'unavailable' },
-      { id: 'location', title: 'Set up attendance location', description: 'Edunexify uses your location only when you check in for attendance.', icon: 'location_on', action: 'Set up', complete: this.location === 'granted', available: this.location !== 'unavailable' },
+      { id: 'location', title: 'Set up attendance location', description: 'Location is used only when you check in or check out for attendance — never in the background.', icon: 'location_on', action: 'Set up', complete: this.location === 'granted', available: this.location !== 'unavailable' },
       { id: 'attendance', title: 'Learn attendance check-in', description: 'Know where to check in and review your attendance.', icon: 'fingerprint', action: 'View attendance', complete: this.state.attendanceVisited, available: true },
       { id: 'leave', title: 'Explore leave requests', description: 'Apply for leave and track its approval status.', icon: 'event_note', action: 'Open leave', complete: this.state.leaveVisited, available: true },
     ].filter(item => item.available);
@@ -100,7 +103,15 @@ export class TeacherGettingStartedComponent implements OnInit, OnChanges {
     this.actionPending = item.id;
     try {
       if (item.id === 'location') {
-        this.location = await this.onboarding.requestLocation();
+        // Prominent disclosure: say what happens to location before Android asks for it.
+        const accepted = await this.toast.confirm({
+          title: 'How Edunexify uses your location',
+          message: ATTENDANCE_LOCATION_DISCLOSURE,
+          confirmText: 'Continue',
+          cancelText: 'Not now',
+          icon: 'info',
+        });
+        if (accepted) this.location = await this.onboarding.requestLocation();
       } else if (item.id === 'notifications') {
         this.notifications = await this.onboarding.enableNotifications();
       } else {
