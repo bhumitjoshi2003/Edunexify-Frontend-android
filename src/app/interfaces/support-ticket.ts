@@ -16,6 +16,7 @@ export interface CreateSupportTicketRequest {
   title: string;
   description: string;
   screenshotObjectKey?: string | null;
+  screenshotObjectKeys?: string[] | null;
   route?: string | null;
   platform: SupportPlatform;
   appVersion?: string | null;
@@ -45,6 +46,7 @@ export interface SupportTicketSummary {
 export interface SupportTicketDetail extends SupportTicketSummary {
   description: string;
   screenshotUrl: string | null;
+  screenshotUrls: string[];
   route: string | null;
   appVersion: string | null;
   internalNote: string | null;
