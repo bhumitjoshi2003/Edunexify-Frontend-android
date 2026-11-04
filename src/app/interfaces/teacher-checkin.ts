@@ -73,4 +73,5 @@ export interface TeacherAttendanceTodaySummary {
   absentCount: number;
   halfDayCount: number;
   onLeaveCount: number;
+  notCheckedInCount: number;
 }
