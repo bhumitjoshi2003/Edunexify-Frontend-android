@@ -85,6 +85,19 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     // so no separate admin-profile request is needed here.
     this.adminName = user?.name ?? '';
 
+    const initialLoads = ['upcoming-event', 'substitutions'];
+    if (this.isAdmin) {
+      initialLoads.push(
+        'stats',
+        'student-leaves',
+        'entitlement',
+        'staff-attendance',
+        'staff-adoption',
+        'teacher-leaves',
+      );
+    }
+    this.beginInitialLoad(initialLoads);
+
     this.loadUpcomingEvent();
     this.loadUncoveredSubstitutions();
     if (this.isAdmin) {
@@ -95,7 +108,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.loadStaffAdoption();
       this.loadTeacherPendingLeaveCount();
     }
-    this.isLoading = false;
   }
 
   private beginInitialLoad(keys: string[]): void {
