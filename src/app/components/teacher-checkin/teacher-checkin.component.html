@@ -36,11 +36,16 @@
     <ng-container *ngIf="todayStateResolved && !hasCheckedIn">
       <div class="tc-action-body">
         <p class="tc-action-prompt">Tap the button below to mark your attendance</p>
-        <button class="tc-checkin-btn tc-btn-pulse" (click)="checkIn()" [disabled]="isCheckingIn">
-          <span class="tc-btn-icon">📍</span>
-          <span *ngIf="!isCheckingIn">Check In</span>
-          <span *ngIf="isCheckingIn">Locating...</span>
-        </button>
+        <div class="tc-checkin-orbit" [class.tc-checkin-orbit-loading]="isCheckingIn">
+          <span class="tc-checkin-wave tc-wave-1" aria-hidden="true"></span>
+          <span class="tc-checkin-wave tc-wave-2" aria-hidden="true"></span>
+          <button class="tc-checkin-btn" (click)="checkIn()" [disabled]="isCheckingIn" type="button"
+                  [attr.aria-label]="isCheckingIn ? 'Getting your location' : 'Check in'">
+            <span class="tc-btn-icon" aria-hidden="true">{{ isCheckingIn ? '⌖' : '📍' }}</span>
+            <span class="tc-btn-label" *ngIf="!isCheckingIn">Check In</span>
+            <span class="tc-btn-label" *ngIf="isCheckingIn">Locating...</span>
+          </button>
+        </div>
       </div>
     </ng-container>
 
