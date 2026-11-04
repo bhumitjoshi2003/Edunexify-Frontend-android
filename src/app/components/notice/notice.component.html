@@ -23,8 +23,9 @@
             <span class="nb-hero-stat-lbl">Unread</span>
           </div>
         </div>
-        <button class="nb-mark-all-btn" *ngIf="unreadCount > 0" (click)="markAllRead()">
-          ✓ Mark all as read
+        <button class="nb-mark-all-btn" *ngIf="unreadCount > 0" (click)="markAllRead()" aria-label="Mark all notices as read">
+          <span class="nb-mark-all-desktop">✓ Mark all as read</span>
+          <span class="nb-mark-all-mobile" aria-hidden="true">✓</span>
         </button>
       </div>
       <!-- Decorative wave -->
