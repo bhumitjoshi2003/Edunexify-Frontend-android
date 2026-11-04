@@ -243,10 +243,22 @@
 
 </div>
 
-<div *ngIf="!studentDetails" class="sd-loading">
-  <div class="sd-spinner-wrap">
-    <div class="sd-spin"></div>
-    <p>Loading student details...</p>
+<div class="edu-page-skeleton" *ngIf="!studentDetails" aria-busy="true" aria-label="Loading student profile">
+  <div class="edu-sk-hero">
+    <span class="edu-sk-shimmer edu-sk-avatar"></span>
+    <div class="edu-sk-hero-copy">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-sm"></span>
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-lg"></span>
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+    </div>
+  </div>
+  <div class="edu-sk-grid">
+    <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+  </div>
+  <div class="edu-sk-panel">
+    <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+    <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
   </div>
 </div>
 
