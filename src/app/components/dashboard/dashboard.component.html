@@ -583,25 +583,13 @@
       <div class="topbar-spacer"></div>
 
       <!-- Notification bell -->
-      <button class="hdr-bell" [matMenuTriggerFor]="notificationMenu" (menuOpened)="loadRecentNotifications()"
+      <button class="hdr-bell" type="button" (click)="navigateToNotifications()"
         [attr.aria-label]="unreadNotificationCount ? 'Notifications, ' + unreadNotificationCount + ' unread' : 'Notifications'"
         [matBadge]="unreadNotificationCount"
         [matBadgeHidden]="unreadNotificationCount === 0"
         matBadgeColor="warn" matBadgeSize="small">
         <mat-icon>notifications_none</mat-icon>
       </button>
-
-      <mat-menu #notificationMenu="matMenu" xPosition="before" class="notification-menu">
-        <div class="np-panel" (click)="$event.stopPropagation()">
-          <div class="np-head"><div><strong>Notifications</strong><span>{{ unreadNotificationCount ? unreadNotificationCount + ' unread' : 'You’re all caught up' }}</span></div><button *ngIf="unreadNotificationCount" type="button" (click)="markAllRecentRead($event)">Mark all read</button></div>
-          <div class="np-loading" *ngIf="recentNotificationsLoading">Loading…</div>
-          <div class="np-empty" *ngIf="!recentNotificationsLoading && recentNotifications.length === 0"><mat-icon>notifications_none</mat-icon><span>No notifications yet</span></div>
-          <button class="np-item" *ngFor="let item of recentNotifications" [class.unread]="!item.isRead" [attr.data-category]="item.category || 'GENERAL'" (click)="openRecentNotification(item)">
-            <span class="np-icon"><mat-icon>{{ notificationIcon(item) }}</mat-icon></span><span class="np-copy"><span class="np-category">{{ notificationCategory(item) }}</span><strong>{{ item.title }}</strong><span class="np-message">{{ item.message }}</span><time>{{ notificationTime(item.createdAt) }}<span *ngIf="!item.isRead"> · Unread</span></time></span><i *ngIf="!item.isRead" aria-hidden="true"></i>
-          </button>
-          <a class="np-view-all" routerLink="/dashboard/notifications">View all notifications <mat-icon>arrow_forward</mat-icon></a>
-        </div>
-      </mat-menu>
 
       <!-- Profile pill -->
       <button class="hdr-profile-pill" [matMenuTriggerFor]="profileMenu">

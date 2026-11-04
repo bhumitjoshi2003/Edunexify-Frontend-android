@@ -59,6 +59,7 @@
 .rc2-hero-title { margin: 0; font-size: var(--edu-hero-title-size, 1.25rem); font-weight: var(--edu-hero-title-weight, 800); letter-spacing: -0.3px; line-height: 1.2; color: #fff; }
 .rc2-hero-sub { margin: 3px 0 0; font-size: var(--edu-hero-sub-size, 0.78rem); color: rgba(255, 255, 255, 0.8); }
 .rc2-hero-sub a { color: #fff; text-decoration: underline; }
+.rc2-hero-sub-mobile { display: none; }
 .rc2-badge-new {
   display: inline-block; margin-left: 8px; padding: 2px 9px; vertical-align: middle;
   border-radius: 999px; background: rgba(255, 255, 255, 0.22); color: #fff;
@@ -183,6 +184,8 @@
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .rc2-hero { padding: 18px 18px; border-radius: var(--edu-radius-lg, 16px); }
+  .rc2-hero-sub-desktop { display: none; }
+  .rc2-hero-sub-mobile { display: inline; }
   .rc2-card { padding: 16px; }
   .rc2-filter-bar { padding: 12px 14px; }
 }

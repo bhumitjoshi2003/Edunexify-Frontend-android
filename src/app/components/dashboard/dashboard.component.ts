@@ -12,11 +12,10 @@ import { CommonModule } from '@angular/common';
 import { StudentService } from '../../services/student.service';
 import { TeacherService } from '../../services/teacher.service';
 import { AdminService } from '../../services/admin.service';
-import { NotificationService } from '../../services/notification.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SchoolService } from '../../services/school.service';
 import { TenantService } from '../../services/tenant.service';
-import { Subject, takeUntil, interval, Subscription, firstValueFrom } from 'rxjs';
+import { Subject, takeUntil, interval, Subscription } from 'rxjs';
 import { NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
@@ -26,10 +25,7 @@ import { NavGroupComponent, NavItemDirective } from '../nav-group/nav-group.comp
 import { ParentPortalService } from '../../services/parent-portal.service';
 import { ParentChildContextService } from '../../services/parent-child-context.service';
 import { ChildAccess } from '../../interfaces/parent-portal';
-import { UserNotification } from '../../interfaces/user-notification';
 import { NotificationStateService } from '../../services/notification-state.service';
-import { NotificationNavigationService } from '../../services/notification-navigation.service';
-import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -59,8 +55,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   Class: string = '';
   ClassTeacher: string = '';
   unreadNotificationCount: number = 0;
-  recentNotifications: UserNotification[] = [];
-  recentNotificationsLoading = false;
   showMoreMenu: boolean = false;
   showUpdateBanner = false;
   latestAppVersion = '';
@@ -77,15 +71,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private studentService: StudentService,
     private teacherService: TeacherService,
     private adminService: AdminService,
-    private notificationService: NotificationService,
     private pushNotificationService: PushNotificationService,
     private schoolService: SchoolService,
     public tenantService: TenantService,
     private parentPortalService: ParentPortalService,
     private childContext: ParentChildContextService,
     private notificationState: NotificationStateService,
-    private notificationNavigation: NotificationNavigationService,
-    private toast: ToastService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
     private adoptionMetadata: AdoptionMetadataService
@@ -105,7 +96,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       takeUntil(this.ngUnsubscribe)
-    ).subscribe(() => this.fetchUnreadCount());
+    ).subscribe((event) => {
+      this.fetchUnreadCount();
+      const nav = event as NavigationEnd;
+      const path = nav.urlAfterRedirects.split('?')[0];
+      if (path === '/dashboard' || path === '/dashboard/') {
+        this.handleInitialNavigation();
+      }
+    });
     // Also poll every 60 seconds as a background fallback
     this.pollingIntervalSubscription = interval(60000)
       .pipe(takeUntil(this.ngUnsubscribe))
@@ -329,52 +327,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   fetchUnreadCount(): void {
-    if (this.Role === 'SUPER_ADMIN') return;
     this.notificationState.refreshUnread();
   }
 
-  loadRecentNotifications(): void {
-    this.recentNotificationsLoading = true;
-    this.notificationService.getUserNotifications(0, 5).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
-      next: page => { this.recentNotifications = page.content; this.recentNotificationsLoading = false; this.cdr.markForCheck(); },
-      error: () => { this.recentNotificationsLoading = false; this.cdr.markForCheck(); }
-    });
-  }
-
-  async openRecentNotification(item: UserNotification): Promise<void> {
-    if (!item.isRead) {
-      item.isRead = true; this.notificationState.notificationRead(true);
-      try {
-        await firstValueFrom(this.notificationService.markNotificationAsRead(item.inboxId ?? item.id));
-      } catch {
-        item.isRead = false; this.notificationState.refreshUnread();
-        this.toast.error('Could not mark notification as read'); this.cdr.markForCheck();
-        return;
-      }
-    }
-    await this.notificationNavigation.navigate(item);
-  }
-
-  markAllRecentRead(event: Event): void {
-    event.stopPropagation();
-    if (!this.unreadNotificationCount) return;
-    this.recentNotifications.forEach(item => item.isRead = true); this.notificationState.allRead();
-    this.notificationService.markAllNotificationsAsRead().pipe(takeUntil(this.ngUnsubscribe)).subscribe({ error: () => this.notificationState.refreshUnread() });
-  }
-
-  notificationIcon(item: UserNotification): string {
-    return ({ FEES_PAYMENTS: 'payments', LEAVE: 'event_available', ATTENDANCE: 'fact_check', ACADEMICS_RESULTS: 'school', NOTICE_ANNOUNCEMENT: 'campaign', EVENT_CALENDAR: 'event', ACCOUNT_SECURITY: 'security', SYSTEM_ADMIN: 'settings' } as Record<string,string>)[item.category ?? ''] ?? 'notifications';
-  }
-
-  notificationCategory(item: UserNotification): string {
-    return ({ FEES_PAYMENTS: 'Fees & payments', LEAVE: 'Leave', ATTENDANCE: 'Attendance', ACADEMICS_RESULTS: 'Results', NOTICE_ANNOUNCEMENT: 'Notice', EVENT_CALENDAR: 'Event', ACCOUNT_SECURITY: 'Security', SYSTEM_ADMIN: 'System' } as Record<string, string>)[item.category ?? ''] ?? 'General';
-  }
-
-  notificationTime(value: string): string {
-    const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000));
-    if (minutes < 1) return 'Just now'; if (minutes < 60) return `${minutes} min ago`;
-    if (minutes < 1440) return `${Math.floor(minutes / 60)} hr ago`;
-    return minutes < 2880 ? 'Yesterday' : `${Math.floor(minutes / 1440)} days ago`;
+  /** Open the full notification inbox directly, matching the web experience. */
+  navigateToNotifications(): void {
+    this.router.navigate(['/dashboard/notifications']);
   }
 
   navigateToStudentSearch(): void {

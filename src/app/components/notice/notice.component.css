@@ -804,9 +804,6 @@
 }
 
 @media (max-width: 390px) {
-  .nb-hero { padding: 8px 9px; gap: 5px; }
-  .nb-hero-icon-wrap { display: none; }
-  .nb-hero-title { font-size: 0.9rem; }
   .nb-hero-stat { min-width: 30px; padding: 5px 6px; }
   .nb-mark-all-btn { width: 29px; height: 29px; }
 }
@@ -898,4 +895,31 @@
 @keyframes nb-shimmer { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) {
   .nb-shimmer::after { animation: none; display: none; }
+}
+
+/* Match Holiday Calendar hero dimensions on phone screens. */
+@media (max-width: 480px) {
+  .nb-hero {
+    min-height: 0;
+    padding: 18px 16px 22px;
+    border-radius: 20px;
+    gap: 12px;
+  }
+  .nb-hero-left { gap: 16px; }
+  .nb-hero-icon-wrap {
+    display: flex;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    font-size: 1.6rem;
+  }
+  .nb-hero-title {
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+  .nb-hero-sub {
+    display: block;
+    margin: 3px 0 0;
+    font-size: 0.78rem;
+  }
 }
