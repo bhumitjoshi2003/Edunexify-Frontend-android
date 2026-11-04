@@ -426,10 +426,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
    *  safe, already-available client-side computation — never labelled "Absent". Clamped to 0
    *  defensively since stats and staffAttendance are fetched independently in the same forkJoin. */
   get notYetCheckedIn(): number {
-    if (!this.stats || !this.staffAttendance) return 0;
-    const accounted = this.staffAttendance.presentCount + this.staffAttendance.lateCount
-      + this.staffAttendance.absentCount + this.staffAttendance.halfDayCount + this.staffAttendance.onLeaveCount;
-    return Math.max(0, this.stats.totalTeachers - accounted);
+    return this.staffAttendance?.notCheckedInCount ?? 0;
+  }
+
+  get staffCheckedInCount(): number {
+    if (!this.staffAttendance) return 0;
+    return this.staffAttendance.presentCount + this.staffAttendance.lateCount + this.staffAttendance.halfDayCount;
   }
 
   hasFeature(featureKey: string): boolean {
