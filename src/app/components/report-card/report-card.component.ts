@@ -13,13 +13,20 @@ import {
 } from '../../services/report-card-template.service';
 import { LoggerService } from '../../services/logger.service';
 import { AuthStateService } from '../../auth/auth-state.service';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
 import { ToastService } from '../../services/toast.service';
 import { environment } from '../../../environments/environment';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { ChildAccess } from '../../interfaces/parent-portal';
+
+interface NativeReportCardPdfPlugin {
+  open(options: { uri: string; title: string }): Promise<void>;
+  print(options: { uri: string; title: string }): Promise<void>;
+  notifyDownload(options: { uri: string; title: string; fileName: string }): Promise<{ shown?: boolean }>;
+}
+
+const NativeReportCardPdf = registerPlugin<NativeReportCardPdfPlugin>('ReportCardPdf');
 
 @Component({
   selector: 'app-report-card',
@@ -451,10 +458,10 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   /** Whether there is a real card to show (template data, or results for the results card). */
   get hasCard(): boolean { return this.templateId ? !!this.reportCardData : this.displayResults.length > 0; }
 
-  /** In the Android app the PDF opens in the system viewer instead of inside the page. */
+  /** Android uses the native Edunexify PDF viewer; browsers render the PDF inline. */
   get isNative(): boolean { return Capacitor.isNativePlatform(); }
 
-  /** Loads the backend report-card PDF into the page (web). */
+  /** Loads the backend report-card PDF into the page on web. Android opens the same PDF in the native viewer. */
   loadInline(): void {
     if (!this.canUsePdf || this.isNative || !isPlatformBrowser(this.platformId)) return;
     const request = this.pdfRequest();
@@ -549,8 +556,9 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       next: async (blob) => {
         try {
           if (Capacitor.isNativePlatform()) {
-            await this.saveNativePdf(blob);
-            this.toast.success('PDF Downloaded', 'Saved to Documents/Edunexify on this device.');
+            const uri = await this.saveNativePdf(blob);
+            await this.notifyNativeDownload(uri);
+            this.toast.success('PDF Downloaded', 'Saved to Documents/Edunexify. Tap the download notification to open it.');
           } else {
             const url = URL.createObjectURL(blob);
             this.saveUrl(url);
@@ -586,8 +594,8 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     this.openNativePdf('print');
   }
 
-  /** Android: persist a user-requested download in Documents/Edunexify. */
-  private async saveNativePdf(blob: Blob): Promise<void> {
+  /** Android: persist a user-requested download in Documents/Edunexify and return its URI. */
+  private async saveNativePdf(blob: Blob): Promise<string> {
     const permissions = await Filesystem.checkPermissions();
     if (permissions.publicStorage !== 'granted') {
       const requested = await Filesystem.requestPermissions();
@@ -605,19 +613,50 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       directory: Directory.Documents,
       recursive: true,
     });
+    const { uri } = await Filesystem.getUri({
+      path: `Edunexify/${this.pdfFileName}`,
+      directory: Directory.Documents,
+    });
+    return uri;
   }
 
-  /** Android: cache the generated PDF and hand it to the system for viewing/printing. */
-  private async sharePdf(blob: Blob, mode: 'preview' | 'print'): Promise<void> {
-    const fileName = this.pdfFileName;
+  /** Android: cache the generated PDF and return the URI used by the native viewer/print framework. */
+  private async cacheNativePdf(blob: Blob): Promise<string> {
     const base64 = await this.blobToBase64(blob);
-    await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
-    const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
-    await Share.share({
-      title: 'Report Card',
-      files: [uri],
-      dialogTitle: mode === 'print' ? 'Print report card' : 'Open report card',
+    await Filesystem.writeFile({
+      path: this.pdfFileName,
+      data: base64,
+      directory: Directory.Cache,
     });
+    const { uri } = await Filesystem.getUri({
+      path: this.pdfFileName,
+      directory: Directory.Cache,
+    });
+    return uri;
+  }
+
+  /** Android: open inside Edunexify for Preview/Open, or invoke the real Android print UI for Print. */
+  private async presentNativePdf(blob: Blob, mode: 'preview' | 'print'): Promise<void> {
+    const uri = await this.cacheNativePdf(blob);
+    if (mode === 'print') {
+      await NativeReportCardPdf.print({ uri, title: this.pdfFileName });
+    } else {
+      await NativeReportCardPdf.open({ uri, title: 'Report Card' });
+    }
+  }
+
+  /** Android: show a device download-complete notification. Tapping it opens the saved PDF in Edunexify. */
+  private async notifyNativeDownload(uri: string): Promise<void> {
+    try {
+      await NativeReportCardPdf.notifyDownload({
+        uri,
+        title: 'Report card downloaded',
+        fileName: this.pdfFileName,
+      });
+    } catch (e) {
+      // The file is already saved; notification failure must never turn a successful download into an error.
+      this.logger.warn('Could not show report-card download notification', e);
+    }
   }
 
   private openNativePdf(mode: 'preview' | 'print'): void {
@@ -629,15 +668,13 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     this.pdfRequest().pipe(takeUntil(this.destroy$)).subscribe({
       next: async (blob) => {
         try {
-          await this.sharePdf(blob, mode);
+          await this.presentNativePdf(blob, mode);
         } catch (e: any) {
-          if (e?.message !== 'Share canceled') {
-            this.logger.error(`PDF ${mode} failed`, e);
-            this.toast.error(
-              mode === 'print' ? 'Print Failed' : 'Preview Failed',
-              mode === 'print' ? 'Could not open printing options.' : 'Could not open the PDF.'
-            );
-          }
+          this.logger.error(`PDF ${mode} failed`, e);
+          this.toast.error(
+            mode === 'print' ? 'Print Failed' : 'Preview Failed',
+            mode === 'print' ? 'Could not open Android printing options.' : 'Could not open the report card.'
+          );
         } finally {
           if (mode === 'preview') this.previewingPdf = false;
           else this.printingPdf = false;
