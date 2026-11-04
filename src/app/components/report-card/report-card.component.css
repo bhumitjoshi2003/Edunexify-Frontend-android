@@ -14,6 +14,7 @@
 ════════════════════════════════════════════════════════════════════════ */
 .rc-hero {
   position: relative;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: linear-gradient(135deg, #0f4c81 0%, #1565c0 55%, #1e88e5 100%);
   border-radius: 16px;
   padding: 18px 22px;
@@ -59,6 +60,39 @@
 }
 .rc-btn-pdf:hover:not(:disabled) { opacity: 0.88; }
 .rc-btn-pdf:disabled { opacity: 0.5; cursor: default; }
+
+.rc-action-btn {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+}
+.rc-action-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.rc-action-btn:disabled { opacity: .58; cursor: default; transform: none; }
+.rc-action-download {
+  color: #fff;
+  background: #10b981;
+  box-shadow: 0 4px 12px rgba(16,185,129,.24);
+}
+.rc-action-preview {
+  color: #0f4c81;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15,76,129,.12);
+}
+.rc-action-print {
+  color: #fff;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.36);
+}
 
 /* ── Demo mode banner ────────────────────────────────────────────────── */
 .rc-demo-banner {
@@ -767,21 +801,29 @@
   .rc-hero-title { font-size: 1.05rem; }
   .rc-hero-sub   { font-size: 0.72rem; }
 
-  .rc-hero-actions { width: 100%; gap: 10px; }
-
-  /* Primary — the main path for a parent on a phone. Full width, 48px tap target. */
-  .rc-btn-pdf {
-    order: 1;
-    flex: 0 0 100%;
+  .rc-hero-actions {
     width: 100%;
-    min-height: 48px;
-    font-size: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
   }
-  /* Secondary — Back and Preview & Print share the row beneath it. */
-  .rc-btn-back  { order: 2; flex: 1 1 0; min-height: 42px; font-size: 0.85rem; }
-  .rc-btn-print { order: 3; flex: 1 1 0; min-height: 42px; font-size: 0.85rem; }
+  .rc-action-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+    line-height: 1.15;
+  }
+  .rc-action-btn svg { flex: 0 0 auto; }
+  .rc-action-btn span { min-width: 0; white-space: normal; text-align: center; }
+  .rc-btn-pdf {
+    width: 100%;
+    min-height: 46px;
+    font-size: 0.9rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+  }
 
   /* ── Status states ─────────────────────────────────────────────────── */
   .rc-loading { padding: 48px 24px; }
