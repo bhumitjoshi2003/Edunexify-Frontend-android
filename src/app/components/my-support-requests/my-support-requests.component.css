@@ -47,7 +47,8 @@
 .msr-detail { padding: 0 16px 16px; border-top: 1px solid #eef1f5; }
 .msr-detail-meta { display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: 0.76rem; color: #64748b; margin: 12px 0 8px; }
 .msr-detail-description { font-size: 0.85rem; color: #334155; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 10px; }
-.msr-detail-screenshot { max-width: min(260px, 100%); max-height: 180px; border-radius: 10px; border: 1.5px solid #e2e8f0; display: block; }
+.msr-detail-screenshots { display: flex; flex-wrap: wrap; gap: 10px; }
+.msr-detail-screenshot { max-width: min(260px, 100%); max-height: 180px; border-radius: 10px; border: 1.5px solid #e2e8f0; display: block; object-fit: cover; }
 .msr-detail-loading { display: flex; justify-content: center; padding: 12px 0; }
 
 .msr-loading, .msr-state {
