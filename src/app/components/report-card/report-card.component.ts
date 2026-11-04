@@ -421,6 +421,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   downloadingPdf = false;
   previewingPdf = false;
+  printingPdf = false;
   pdfPreviewUrl: SafeResourceUrl | null = null;
   private pdfObjectUrl: string | null = null;
   private pendingPdfAction: 'preview' | 'download' | null = null;
@@ -489,8 +490,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       } catch { /* fall back to the preview dialog below */ }
     }
     if (Capacitor.isNativePlatform()) {
-      // The app has no browser print: hand the same PDF to Android to open, print or share.
-      this.downloadPdf();
+      this.openNativePdf('preview');
       return;
     }
     this.previewingPdf = true;
@@ -549,17 +549,16 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       next: async (blob) => {
         try {
           if (Capacitor.isNativePlatform()) {
-            await this.sharePdf(blob);
+            await this.saveNativePdf(blob);
+            this.toast.success('PDF Downloaded', 'Saved to Documents/Edunexify on this device.');
           } else {
             const url = URL.createObjectURL(blob);
             this.saveUrl(url);
             URL.revokeObjectURL(url);
           }
         } catch (e: any) {
-          if (e?.message !== 'Share canceled') {
-            this.logger.error('PDF share failed', e);
-            this.toast.error('Download Failed', 'Could not generate PDF. Please try again.');
-          }
+          this.logger.error('PDF download failed', e);
+          this.toast.error('Download Failed', 'Could not save the PDF. Please try again.');
         } finally {
           this.downloadingPdf = false;
           this.cdr.markForCheck();
@@ -569,13 +568,81 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Android: save the PDF to the app cache and open the system sheet to view, print or share it. */
-  private async sharePdf(blob: Blob): Promise<void> {
+  previewPdf(): void {
+    if (!this.canUsePdf || this.previewingPdf) return;
+    if (!Capacitor.isNativePlatform()) {
+      this.print();
+      return;
+    }
+    this.openNativePdf('preview');
+  }
+
+  printPdf(): void {
+    if (!this.canUsePdf || this.printingPdf) return;
+    if (!Capacitor.isNativePlatform()) {
+      this.print();
+      return;
+    }
+    this.openNativePdf('print');
+  }
+
+  /** Android: persist a user-requested download in Documents/Edunexify. */
+  private async saveNativePdf(blob: Blob): Promise<void> {
+    const base64 = await this.blobToBase64(blob);
+    try {
+      await Filesystem.mkdir({ path: 'Edunexify', directory: Directory.Documents, recursive: true });
+    } catch { /* directory already exists */ }
+    await Filesystem.writeFile({
+      path: `Edunexify/${this.pdfFileName}`,
+      data: base64,
+      directory: Directory.Documents,
+      recursive: true,
+    });
+  }
+
+  /** Android: cache the generated PDF and hand it to the system for viewing/printing. */
+  private async sharePdf(blob: Blob, mode: 'preview' | 'print'): Promise<void> {
     const fileName = this.pdfFileName;
     const base64 = await this.blobToBase64(blob);
     await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
     const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
-    await Share.share({ title: 'Report Card', files: [uri], dialogTitle: 'Open, print, or share the report card' });
+    await Share.share({
+      title: 'Report Card',
+      files: [uri],
+      dialogTitle: mode === 'print' ? 'Print report card' : 'Open report card',
+    });
+  }
+
+  private openNativePdf(mode: 'preview' | 'print'): void {
+    if (!this.canUsePdf) return;
+    if (mode === 'preview') this.previewingPdf = true;
+    else this.printingPdf = true;
+    this.cdr.markForCheck();
+
+    this.pdfRequest().pipe(takeUntil(this.destroy$)).subscribe({
+      next: async (blob) => {
+        try {
+          await this.sharePdf(blob, mode);
+        } catch (e: any) {
+          if (e?.message !== 'Share canceled') {
+            this.logger.error(`PDF ${mode} failed`, e);
+            this.toast.error(
+              mode === 'print' ? 'Print Failed' : 'Preview Failed',
+              mode === 'print' ? 'Could not open printing options.' : 'Could not open the PDF.'
+            );
+          }
+        } finally {
+          if (mode === 'preview') this.previewingPdf = false;
+          else this.printingPdf = false;
+          this.cdr.markForCheck();
+        }
+      },
+      error: (e) => {
+        if (mode === 'preview') this.previewingPdf = false;
+        else this.printingPdf = false;
+        this.onPdfError(e, 'preview');
+      },
+    });
   }
 
   private blobToBase64(blob: Blob): Promise<string> {
