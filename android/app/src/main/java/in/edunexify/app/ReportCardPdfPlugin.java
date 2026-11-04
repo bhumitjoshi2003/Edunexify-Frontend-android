@@ -39,7 +39,7 @@ public class ReportCardPdfPlugin extends Plugin {
     @PluginMethod
     public void open(PluginCall call) {
         String uriValue = call.getString("uri");
-        if (uriValue == null || uriValue.isBlank()) {
+        if (uriValue == null || uriValue.trim().isEmpty()) {
             call.reject("Missing PDF uri");
             return;
         }
@@ -56,7 +56,7 @@ public class ReportCardPdfPlugin extends Plugin {
     @PluginMethod
     public void print(PluginCall call) {
         String uriValue = call.getString("uri");
-        if (uriValue == null || uriValue.isBlank()) {
+        if (uriValue == null || uriValue.trim().isEmpty()) {
             call.reject("Missing PDF uri");
             return;
         }
@@ -75,7 +75,7 @@ public class ReportCardPdfPlugin extends Plugin {
     @PluginMethod
     public void notifyDownload(PluginCall call) {
         String uriValue = call.getString("uri");
-        if (uriValue == null || uriValue.isBlank()) {
+        if (uriValue == null || uriValue.trim().isEmpty()) {
             call.reject("Missing PDF uri");
             return;
         }

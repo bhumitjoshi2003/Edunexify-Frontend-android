@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -32,7 +31,7 @@ public class ReportCardPdfActivity extends Activity {
 
         String uriValue = getIntent().getStringExtra(EXTRA_URI);
         String title = getIntent().getStringExtra(EXTRA_TITLE);
-        if (title == null || title.isBlank()) title = "Report Card";
+        if (title == null || title.trim().isEmpty()) title = "Report Card";
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -98,7 +97,7 @@ public class ReportCardPdfActivity extends Activity {
 
         setContentView(root);
 
-        if (uriValue == null || uriValue.isBlank()) {
+        if (uriValue == null || uriValue.trim().isEmpty()) {
             showError("Report card file is unavailable.");
             return;
         }

@@ -424,7 +424,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
   // ── PDF: the one printable document ──────────────────────────────────
   // "Preview & Print" and "Download" both use the backend-generated PDF — never window.print()
   // of this page, so no sidebar, top bar or browser page chrome ever reaches the paper. In the
-  // Android app both hand that PDF to the system (Capacitor Filesystem + Share).
+  // Android app uses the native Edunexify viewer, Android print framework, and device storage.
 
   downloadingPdf = false;
   previewingPdf = false;
@@ -655,7 +655,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       });
     } catch (e) {
       // The file is already saved; notification failure must never turn a successful download into an error.
-      this.logger.warn('Could not show report-card download notification', e);
+      this.logger.error('Could not show report-card download notification', e);
     }
   }
 
