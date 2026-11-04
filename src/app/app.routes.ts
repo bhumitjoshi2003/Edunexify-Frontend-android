@@ -296,6 +296,11 @@ export const routes: Routes = [
         canActivate: [roleGuard], data: { roles: ['STUDENT', 'TEACHER', 'ADMIN', 'SUB_ADMIN', 'PARENT'] }
       },
       {
+        path: 'account-deletion-request',
+        loadComponent: () => import('./components/account-deletion-request/account-deletion-request.component').then(m => m.AccountDeletionRequestComponent),
+        canActivate: [roleGuard], data: { roles: ['STUDENT', 'TEACHER', 'ADMIN', 'SUB_ADMIN', 'PARENT'] }
+      },
+      {
         path: 'my-support-requests',
         loadComponent: () => import('./components/my-support-requests/my-support-requests.component').then(m => m.MySupportRequestsComponent),
         canActivate: [roleGuard], data: { roles: ['STUDENT', 'TEACHER', 'ADMIN', 'SUB_ADMIN', 'PARENT'] }

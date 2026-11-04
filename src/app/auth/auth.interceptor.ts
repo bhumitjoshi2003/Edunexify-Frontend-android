@@ -27,12 +27,12 @@ import { catchError, filter, switchMap, take, tap, timeout } from 'rxjs/operator
 @Injectable({ providedIn: 'root' })
 export class AuthInterceptor implements HttpInterceptor {
 
-  /** Guard-free top-level routes in app.routes.ts (home, reset-password, verify-rc) — the
-   *  only routes usable with zero session. An anonymous visitor's failed silent-refresh here
+  /** Guard-free top-level routes in app.routes.ts (home, reset-password, verify-rc, and the
+   *  website-only privacy-policy and account-deletion pages) — the only routes usable with zero session. An anonymous visitor's failed silent-refresh here
    *  is expected (there is no session to refresh) and must never hijack navigation away from
    *  the page they're legitimately allowed to be on. Update this list if app.routes.ts's
    *  guard-free routes change. */
-  private static readonly PUBLIC_ROUTES = ['/home', '/reset-password', '/verify-rc'];
+  private static readonly PUBLIC_ROUTES = ['/home', '/reset-password', '/verify-rc', '/privacy-policy', '/account-deletion'];
 
   private isPublicRoute(): boolean {
     if (typeof window === 'undefined') return false;

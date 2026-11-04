@@ -76,6 +76,7 @@
     </button>
 
     <button class="sl-forgot-link" (click)="forgotPassword()">Forgot Password?</button>
+    <button type="button" class="sl-privacy-link" data-testid="login-privacy-link" (click)="openPrivacyPolicy()">Privacy Policy</button>
 
     <div class="sl-card-footer">
       <span class="sl-powered">
@@ -182,7 +183,10 @@
   </div>
 
   <!-- Footer -->
-  <p class="gl-footer">Powered by Edunexify · School ERP Platform</p>
+  <p class="gl-footer">
+    Powered by Edunexify · School ERP Platform ·
+    <button type="button" class="gl-privacy-link" data-testid="login-privacy-link" (click)="openPrivacyPolicy()">Privacy Policy</button>
+  </p>
 
   <!-- ── Login bottom sheet ── -->
   @if (showLoginForm) {
@@ -232,6 +236,7 @@
         <button class="lp-link-btn" (click)="cancelLogin()">Cancel</button>
         <button class="lp-link-btn lp-forgot-btn" (click)="forgotPassword()">Forgot Password?</button>
       </div>
+      <button type="button" class="lp-link-btn lp-privacy-link" data-testid="login-privacy-link" (click)="openPrivacyPolicy()">Privacy Policy</button>
     </div>
   }
 

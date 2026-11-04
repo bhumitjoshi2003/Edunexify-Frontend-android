@@ -1,5 +1,6 @@
 import { TeacherGettingStartedComponent } from './teacher-getting-started.component';
 import { TeacherOnboardingState } from '../../services/teacher-onboarding.service';
+import { ATTENDANCE_LOCATION_DISCLOSURE } from '../../utils/location-disclosure';
 
 describe('TeacherGettingStartedComponent', () => {
   const initial: TeacherOnboardingState = { profileVisited: false, todaysClassesVisited: false, attendanceVisited: false, leaveVisited: false, minimized: false, completedAt: null };
@@ -7,6 +8,7 @@ describe('TeacherGettingStartedComponent', () => {
   let onboarding: any;
   let router: any;
   let cdr: any;
+  let toast: any;
   let component: TeacherGettingStartedComponent;
 
   beforeEach(() => {
@@ -21,7 +23,9 @@ describe('TeacherGettingStartedComponent', () => {
     router = jasmine.createSpyObj('Router', ['navigateByUrl']);
     router.navigateByUrl.and.resolveTo(true);
     cdr = jasmine.createSpyObj('ChangeDetectorRef', ['markForCheck']);
-    component = new TeacherGettingStartedComponent(auth, onboarding, router, cdr);
+    toast = jasmine.createSpyObj('ToastService', ['confirm']);
+    toast.confirm.and.resolveTo(true);
+    component = new TeacherGettingStartedComponent(auth, onboarding, router, cdr, toast);
   });
 
   it('shows the six-item checklist only to a teacher and reports progress', async () => {
@@ -32,7 +36,7 @@ describe('TeacherGettingStartedComponent', () => {
     expect(component.progressPercent).toBe(0);
 
     auth.getUser = () => ({ userId: 'A1', role: 'ADMIN' });
-    const admin = new TeacherGettingStartedComponent(auth, onboarding, router, cdr);
+    const admin = new TeacherGettingStartedComponent(auth, onboarding, router, cdr, toast);
     await admin.ngOnInit();
     expect(admin.visible).toBeFalse();
   });
@@ -63,7 +67,7 @@ describe('TeacherGettingStartedComponent', () => {
     expect(component.visible).toBeTrue();
 
     onboarding.load.and.resolveTo({ ...component.state!, completedAt: new Date().toISOString() });
-    const later = new TeacherGettingStartedComponent(auth, onboarding, router, cdr);
+    const later = new TeacherGettingStartedComponent(auth, onboarding, router, cdr, toast);
     await later.ngOnInit();
     expect(later.visible).toBeFalse();
   });
@@ -72,5 +76,28 @@ describe('TeacherGettingStartedComponent', () => {
     onboarding.load.and.rejectWith(new Error('storage failed'));
     await component.ngOnInit();
     expect(component.visible).toBeFalse();
+  });
+  it('shows the location disclosure before Android is asked for permission', async () => {
+    let requestedWhileDialogOpen = false;
+    toast.confirm.and.callFake(async () => {
+      requestedWhileDialogOpen = onboarding.requestLocation.calls.count() > 0;
+      return true;
+    });
+    await component.ngOnInit();
+    await component.run(component.items.find(item => item.id === 'location')!);
+
+    expect(toast.confirm).toHaveBeenCalledWith(jasmine.objectContaining({ message: ATTENDANCE_LOCATION_DISCLOSURE }));
+    expect(requestedWhileDialogOpen).toBeFalse();
+    expect(onboarding.requestLocation).toHaveBeenCalledTimes(1);
+    expect(component.location).toBe('granted');
+  });
+
+  it('does not ask for location when the disclosure is declined', async () => {
+    toast.confirm.and.resolveTo(false);
+    await component.ngOnInit();
+    await component.run(component.items.find(item => item.id === 'location')!);
+
+    expect(onboarding.requestLocation).not.toHaveBeenCalled();
+    expect(component.location).toBe('prompt');
   });
 });

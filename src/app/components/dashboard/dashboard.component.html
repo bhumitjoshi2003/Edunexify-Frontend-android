@@ -644,6 +644,17 @@
             <span>View profile</span>
           </button>
 
+          <button mat-menu-item class="pm-action" data-testid="privacy-policy-link" (click)="openPrivacyPolicy()">
+            <mat-icon>policy</mat-icon>
+            <span>Privacy Policy</span>
+          </button>
+
+          <button mat-menu-item class="pm-action" data-testid="account-deletion-link" *ngIf="!isSuperAdmin()"
+          routerLink="/dashboard/account-deletion-request">
+            <mat-icon>person_remove</mat-icon>
+            <span>Request account deletion</span>
+          </button>
+
           <button mat-menu-item class="pm-action pm-logout" (click)="logout()">
             <mat-icon>logout</mat-icon>
             <span>Sign out</span>

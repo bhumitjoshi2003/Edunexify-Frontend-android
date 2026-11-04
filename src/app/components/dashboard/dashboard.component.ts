@@ -26,6 +26,7 @@ import { ParentPortalService } from '../../services/parent-portal.service';
 import { ParentChildContextService } from '../../services/parent-child-context.service';
 import { ChildAccess } from '../../interfaces/parent-portal';
 import { NotificationStateService } from '../../services/notification-state.service';
+import { PRIVACY_POLICY_URL, openExternalUrl } from '../../utils/legal-links';
 
 @Component({
   selector: 'app-dashboard',
@@ -407,6 +408,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   closeMoreMenu(): void {
     this.showMoreMenu = false;
+  }
+
+  openPrivacyPolicy(): void {
+    openExternalUrl(PRIVACY_POLICY_URL);
   }
 
   navigateToMyProfile(): void {
