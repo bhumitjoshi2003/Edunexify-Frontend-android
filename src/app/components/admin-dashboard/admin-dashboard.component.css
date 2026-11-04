@@ -45,7 +45,12 @@
 /* ── Hero ───────────────────────────────────────────────────────── */
 .ad-hero {
   position: relative;
-  background: linear-gradient(135deg, #0f172a 0%, #172033 48%, #1e293b 100%);
+  background: radial-gradient(
+      circle at 87% 5%,
+      rgba(255, 255, 255, 0.18) 0 74px,
+      transparent 75px
+    ),
+    linear-gradient(118deg, #123b46, #087e88 58%, #11aaa8);
   border-radius: 20px;
   padding: 22px 24px;
   margin: 0 0 20px;
@@ -54,6 +59,7 @@
   align-items: flex-start;
   overflow: hidden;
   color: #fff;
+  box-shadow: 0 16px 35px rgba(15, 118, 110, 0.16);
 }
 
 .ad-blob {
@@ -71,7 +77,7 @@
 
 .ad-blob-2 {
   width: 80px; height: 80px;
-  background: #a5b4fc;
+  background: #fff;
   bottom: -20px; left: 30%;
 }
 
