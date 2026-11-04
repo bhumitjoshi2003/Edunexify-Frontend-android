@@ -47,9 +47,15 @@
   </div>
 
   <!-- ── Loading ───────────────────────────────────────────────────── -->
-  <div class="ag-loading" *ngIf="loading">
-    <div class="ag-spinner"></div>
-    <span>Loading groups…</span>
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading assessment groups">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
   </div>
 
   <!-- ── Empty ─────────────────────────────────────────────────────── -->

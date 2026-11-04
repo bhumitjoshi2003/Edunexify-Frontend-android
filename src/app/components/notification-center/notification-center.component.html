@@ -1,7 +1,22 @@
 <main class="nc-shell">
   <header class="nc-header">
-    <div class="nc-heading"><p class="nc-eyebrow"><mat-icon>inbox</mat-icon> Inbox</p><h1>Notifications</h1><p>{{ unreadCount ? unreadCount + ' unread notification' + (unreadCount === 1 ? '' : 's') : (filter === 'UNREAD' ? 'You’re all caught up' : 'No unread notifications') }}</p></div>
-    <button *ngIf="unreadCount" class="nc-mark-all" type="button" (click)="markAllRead()"><mat-icon>done_all</mat-icon> Mark all read</button>
+    <span class="nc-orb nc-orb-1" aria-hidden="true"></span>
+    <span class="nc-orb nc-orb-2" aria-hidden="true"></span>
+    <div class="nc-heading">
+      <span class="nc-hero-icon" aria-hidden="true">
+        <mat-icon>notifications</mat-icon>
+        <i class="nc-hero-ping" *ngIf="unreadCount"></i>
+      </span>
+      <div class="nc-heading-copy">
+        <p class="nc-eyebrow"><mat-icon>inbox</mat-icon> Inbox</p>
+        <h1>Notifications</h1>
+        <p>{{ unreadCount ? unreadCount + ' unread notification' + (unreadCount === 1 ? '' : 's') : (filter === 'UNREAD' ? 'You’re all caught up' : 'No unread notifications') }}</p>
+      </div>
+    </div>
+    <button *ngIf="unreadCount" class="nc-mark-all" type="button" (click)="markAllRead()">
+      <mat-icon>done_all</mat-icon>
+      Mark all read
+    </button>
   </header>
   <section class="nc-toolbar" aria-label="Notification filters">
     <div class="nc-tabs"><button type="button" [class.active]="filter === 'ALL'" (click)="setFilter('ALL')">All</button><button type="button" [class.active]="filter === 'UNREAD'" (click)="setFilter('UNREAD')">Unread <span *ngIf="unreadCount">{{ unreadCount }}</span></button></div>

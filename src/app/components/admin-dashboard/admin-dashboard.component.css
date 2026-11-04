@@ -798,3 +798,98 @@
 .ad-attention-list a.is-update { background:#f7f8fe; border-color:#d9def4; }
 .ad-attention-list a.is-update mat-icon { color:#5365ad; }
 .ad-attention-list a.is-update strong { background:#e8ebf8; color:#3f4f91; }
+
+
+/* ── Initial dashboard skeleton ───────────────────────────────────
+   Keeps the complete page footprint stable while the dashboard APIs load,
+   preventing sections from jumping as independent requests settle. */
+.ad-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+.ad-sk-hero,
+.ad-sk-card {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 18px;
+}
+.ad-sk-hero {
+  min-height: 146px;
+  padding: 26px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%);
+}
+.ad-sk-copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ad-sk-card { padding: 20px; }
+.ad-sk-thought { min-height: 104px; }
+.ad-sk-attention { min-height: 116px; }
+.ad-sk-section { min-height: 156px; }
+.ad-sk-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.ad-sk-stat {
+  height: 112px;
+  border-radius: 16px;
+}
+.ad-sk-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ad-sk-row-fill > * { flex: 1; }
+.ad-sk-line { display: block; height: 12px; border-radius: 999px; }
+.ad-sk-line-sm { width: 92px; }
+.ad-sk-line-md { width: 180px; }
+.ad-sk-line-lg { width: min(320px, 58%); height: 24px; }
+.ad-sk-line-xl { width: min(520px, 82%); margin-top: 14px; }
+.ad-sk-pill { width: 132px; height: 30px; border-radius: 999px; }
+.ad-sk-date { width: 112px; height: 62px; border-radius: 14px; flex: 0 0 auto; }
+.ad-sk-chip { width: 170px; height: 42px; border-radius: 12px; }
+.ad-sk-block { height: 72px; border-radius: 14px; }
+.ad-sk-wide-block { display: block; height: 78px; border-radius: 14px; margin-top: 18px; }
+
+.ad-sk-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: #e8edf2;
+}
+.ad-sk-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.72), transparent);
+  animation: ad-skeleton-shimmer 1.25s ease-in-out infinite;
+}
+@keyframes ad-skeleton-shimmer {
+  to { transform: translateX(100%); }
+}
+@media (max-width: 900px) {
+  .ad-sk-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .ad-skeleton { gap: 12px; }
+  .ad-sk-hero { min-height: 132px; padding: 20px 16px; gap: 12px; }
+  .ad-sk-date { width: 84px; height: 56px; }
+  .ad-sk-card { padding: 16px; }
+  .ad-sk-stat { height: 96px; }
+  .ad-sk-row { gap: 8px; }
+  .ad-sk-chip { width: 31%; }
+  .ad-sk-section { min-height: 140px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ad-sk-shimmer::after { animation: none; }
+}

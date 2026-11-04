@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // Plugins must be registered before super.onCreate() initialises the bridge.
         registerPlugin(CookieFlushPlugin.class);
+        registerPlugin(ReportCardPdfPlugin.class);
         super.onCreate(savedInstanceState);
         // Android 15+ (targetSdk 35+) forces edge-to-edge layout by default, which pushes
         // the WebView content under the status bar regardless of the StatusBar plugin's

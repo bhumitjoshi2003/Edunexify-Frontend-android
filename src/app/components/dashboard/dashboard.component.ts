@@ -310,10 +310,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  dismissUpdateBanner(): void {
-    this.showUpdateBanner = false;
-    this.cdr.markForCheck();
-  }
 
   async logout(): Promise<void> {
     await this.pushNotificationService.clearToken().catch(() => {}); // Don't block logout on push failure

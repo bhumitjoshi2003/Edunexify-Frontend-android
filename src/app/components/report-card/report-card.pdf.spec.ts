@@ -225,11 +225,11 @@ describe('ReportCardComponent — Android PDF delivery', () => {
     fixture.detectChanges();
   });
 
-  it('Preview in the app fetches the backend PDF and opens the Android document chooser', async () => {
+  it('Preview in the app fetches the backend PDF and opens the native Edunexify viewer', async () => {
     const { Capacitor } = await import('@capacitor/core');
     spyOn(Capacitor, 'isNativePlatform').and.returnValue(true);
     const printSpy = spyOn(window, 'print');
-    const share = spyOn<any>(component, 'sharePdf').and.resolveTo();
+    const present = spyOn<any>(component, 'presentNativePdf').and.resolveTo();
     const blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
     rc.downloadResultsPdf.and.returnValue(of(blob));
 
@@ -237,29 +237,29 @@ describe('ReportCardComponent — Android PDF delivery', () => {
     await new Promise(r => setTimeout(r));
 
     expect(rc.downloadResultsPdf).toHaveBeenCalledWith('S1', '2026-2027', 7, null);
-    expect(share).toHaveBeenCalledWith(blob, 'preview');
+    expect(present).toHaveBeenCalledWith(blob, 'preview');
     expect(component.pdfPreviewUrl).toBeNull();
     expect(printSpy).not.toHaveBeenCalled();
   });
 
-  it('Print in the app fetches the backend PDF and opens Android printing options', async () => {
+  it('Print in the app fetches the backend PDF and opens the real Android printing UI', async () => {
     const { Capacitor } = await import('@capacitor/core');
     spyOn(Capacitor, 'isNativePlatform').and.returnValue(true);
-    const share = spyOn<any>(component, 'sharePdf').and.resolveTo();
+    const present = spyOn<any>(component, 'presentNativePdf').and.resolveTo();
     const blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
     rc.downloadResultsPdf.and.returnValue(of(blob));
 
     component.printPdf();
     await new Promise(r => setTimeout(r));
 
-    expect(share).toHaveBeenCalledWith(blob, 'print');
+    expect(present).toHaveBeenCalledWith(blob, 'print');
   });
 
   it('Download in the app saves the PDF instead of routing through the share sheet', async () => {
     const { Capacitor } = await import('@capacitor/core');
     spyOn(Capacitor, 'isNativePlatform').and.returnValue(true);
-    const save = spyOn<any>(component, 'saveNativePdf').and.resolveTo();
-    const share = spyOn<any>(component, 'sharePdf').and.resolveTo();
+    const save = spyOn<any>(component, 'saveNativePdf').and.resolveTo('file:///Documents/Edunexify/report.pdf');
+    const notify = spyOn<any>(component, 'notifyNativeDownload').and.resolveTo();
     const blob = new Blob(['%PDF'], { type: 'application/pdf' });
     rc.downloadResultsPdf.and.returnValue(of(blob));
 
@@ -267,7 +267,7 @@ describe('ReportCardComponent — Android PDF delivery', () => {
     await new Promise(r => setTimeout(r));
 
     expect(save).toHaveBeenCalledWith(blob);
-    expect(share).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith('file:///Documents/Edunexify/report.pdf');
   });
 
   it('does not render the old Back action in the report-card toolbar', () => {

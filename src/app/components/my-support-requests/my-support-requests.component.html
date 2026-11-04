@@ -12,7 +12,16 @@
     </div>
   </div>
 
-  <div class="msr-loading" *ngIf="loading"><span class="spinner"></span>Loading your requests…</div>
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading support requests">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
 
   <div class="msr-state error" *ngIf="!loading && failed">
     <mat-icon>cloud_off</mat-icon>

@@ -14,9 +14,15 @@
   </div>
 
   <!-- ── Loading ───────────────────────────────────────────────────── -->
-  <div class="cm-loading" *ngIf="isLoading">
-    <div class="cm-spinner"></div>
-    <p>Loading classes…</p>
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="isLoading" aria-busy="true" aria-label="Loading classes">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
   </div>
 
   <ng-container *ngIf="!isLoading">

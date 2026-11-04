@@ -690,19 +690,27 @@
 
       <app-ai-copilot *ngIf="hasFeature('AI_COPILOT')"></app-ai-copilot>
 
-      <!-- App update banner (Capacitor Android only) -->
-      <div class="app-update-banner" *ngIf="showUpdateBanner">
+      <!-- Persistent app update card (Capacitor Android only). Intentionally not dismissible. -->
+      <section class="app-update-banner" *ngIf="showUpdateBanner" aria-label="Edunexify update available">
         <div class="app-update-left">
-          <mat-icon>system_update</mat-icon>
-          <span>New version (v{{ latestAppVersion }}) available</span>
+          <div class="app-update-icon-wrap" aria-hidden="true">
+            <mat-icon>system_update_alt</mat-icon>
+          </div>
+
+          <div class="app-update-copy">
+            <strong>Update available</strong>
+            <span>
+              New version ready
+              <ng-container *ngIf="latestAppVersion"> · v{{ latestAppVersion }}</ng-container>
+            </span>
+          </div>
         </div>
-        <div class="app-update-actions">
-          <button class="app-update-btn" (click)="openPlayStore()">Update</button>
-          <button class="app-update-dismiss" (click)="dismissUpdateBanner()">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-      </div>
+
+        <button class="app-update-btn" type="button" (click)="openPlayStore()" aria-label="Update Edunexify from Google Play">
+          <span>Update</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </section>
     </main>
   </div>
 </div>

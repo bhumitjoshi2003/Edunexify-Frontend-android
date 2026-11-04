@@ -70,9 +70,15 @@
   </div>
 
   <!-- ── Loading ────────────────────────────────────────────────────── -->
-  <div *ngIf="loading" class="rc-loading no-print" role="status" aria-live="polite" aria-busy="true">
-    <div class="rc-loading-spinner" aria-hidden="true"></div>
-    <span>Loading report card…</span>
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading report card">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
   </div>
 
   <!-- ── Not Published (student view) ─────────────────────────────── -->

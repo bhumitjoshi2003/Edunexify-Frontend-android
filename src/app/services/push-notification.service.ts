@@ -59,19 +59,19 @@ export class PushNotificationService {
   }
 
   private async registerAndListen(): Promise<void> {
-
-    await PushNotifications.register();
-
-    // Token received — send to backend
+    // Attach listeners before asking the native plugin to register. The registration
+    // callback can arrive immediately on a warm app start, so registering first risks
+    // missing the token event entirely.
     await PushNotifications.addListener('registration', (token) => {
       const fcmToken = token.value;
-      const stored = localStorage.getItem(this.tokenKey);
 
-      // Only register if token is new or changed
-      if (fcmToken !== stored) {
-        this.registerToken(fcmToken);
-        localStorage.setItem(this.tokenKey, fcmToken);
-      }
+      // Always register the current installation token for the CURRENT authenticated
+      // account. The same phone/app installation usually keeps the same FCM token when
+      // switching between accounts, so comparing only against localStorage can leave the
+      // token assigned to the previous user on the backend. The backend endpoint is
+      // idempotent and safely reassigns an existing token to the authenticated user.
+      this.registerToken(fcmToken);
+      localStorage.setItem(this.tokenKey, fcmToken);
     });
 
     // Token error
@@ -90,6 +90,7 @@ export class PushNotificationService {
       void this.handleAction(event.notification.data ?? {});
     });
 
+    await PushNotifications.register();
     await this.continuePendingAction();
   }
 

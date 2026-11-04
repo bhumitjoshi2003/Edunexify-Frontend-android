@@ -7,12 +7,12 @@
 .al-hero {
   position: relative;
   background: linear-gradient(135deg, #134e4a 0%, #0f766e 55%, #2dd4bf 100%);
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 22px 24px;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   overflow: hidden;
   color: #fff;
 }

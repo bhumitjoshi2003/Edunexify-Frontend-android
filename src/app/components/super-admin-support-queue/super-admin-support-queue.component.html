@@ -34,7 +34,16 @@
     <button type="button" class="saq-apply" (click)="applyFilters()">Apply</button>
   </div>
 
-  <div class="saq-loading" *ngIf="loading"><span class="spinner"></span>Loading tickets…</div>
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading support tickets">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
   <div class="saq-state error" *ngIf="!loading && failed">
     <mat-icon>cloud_off</mat-icon><strong>Support tickets are temporarily unavailable.</strong>
     <button type="button" (click)="load(currentPage)">Retry</button>

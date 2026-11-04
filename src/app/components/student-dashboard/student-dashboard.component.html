@@ -2,9 +2,23 @@
 <div class="sd-page">
 
   <!-- ── Loading ──────────────────────────────────────────────────── -->
-  <div class="sd-loading" *ngIf="isLoading">
-    <div class="sd-spinner"></div>
-    <span>Loading your dashboard…</span>
+  <div class="edu-page-skeleton" *ngIf="isLoading" aria-busy="true" aria-label="Loading student dashboard">
+    <div class="edu-sk-hero">
+      <span class="edu-sk-shimmer edu-sk-avatar"></span>
+      <div class="edu-sk-hero-copy">
+        <span class="edu-sk-shimmer edu-sk-line edu-sk-line-sm"></span>
+        <span class="edu-sk-shimmer edu-sk-line edu-sk-line-lg"></span>
+        <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      </div>
+    </div>
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
   </div>
 
   <ng-container *ngIf="!isLoading">

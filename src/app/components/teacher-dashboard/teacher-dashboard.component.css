@@ -767,13 +767,14 @@
     font-size: 0.72rem;
   }
   .td-hero-meta {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: nowrap;
     gap: 6px;
   }
   .td-hero-meta span {
-    width: fit-content;
-    max-width: 100%;
+    width: auto;
+    max-width: none;
+    white-space: nowrap;
   }
   .td-panel,
   .td-priorities {
