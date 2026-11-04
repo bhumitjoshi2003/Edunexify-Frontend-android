@@ -3,9 +3,47 @@
 <div class="ad-page">
 
   <!-- ── Loading ──────────────────────────────────────────────────── -->
-  <div class="ad-loading" *ngIf="isLoading">
-    <div class="ad-spinner"></div>
-    <span>Loading dashboard…</span>
+  <div class="ad-skeleton" *ngIf="isLoading" aria-busy="true" aria-label="Loading dashboard">
+    <div class="ad-sk-hero">
+      <div class="ad-sk-copy">
+        <span class="ad-sk-shimmer ad-sk-line ad-sk-line-sm"></span>
+        <span class="ad-sk-shimmer ad-sk-line ad-sk-line-lg"></span>
+        <span class="ad-sk-shimmer ad-sk-pill"></span>
+      </div>
+      <span class="ad-sk-shimmer ad-sk-date"></span>
+    </div>
+
+    <div class="ad-sk-card ad-sk-thought">
+      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
+      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-xl"></span>
+    </div>
+
+    <div class="ad-sk-card ad-sk-attention">
+      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
+      <div class="ad-sk-row">
+        <span class="ad-sk-shimmer ad-sk-chip"></span>
+        <span class="ad-sk-shimmer ad-sk-chip"></span>
+        <span class="ad-sk-shimmer ad-sk-chip"></span>
+      </div>
+    </div>
+
+    <div class="ad-sk-stats">
+      <div class="ad-sk-shimmer ad-sk-stat" *ngFor="let _ of [1,2,3,4,5,6]"></div>
+    </div>
+
+    <div class="ad-sk-card ad-sk-section">
+      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
+      <div class="ad-sk-row ad-sk-row-fill">
+        <span class="ad-sk-shimmer ad-sk-block"></span>
+        <span class="ad-sk-shimmer ad-sk-block"></span>
+        <span class="ad-sk-shimmer ad-sk-block"></span>
+      </div>
+    </div>
+
+    <div class="ad-sk-card ad-sk-section">
+      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
+      <span class="ad-sk-shimmer ad-sk-wide-block"></span>
+    </div>
   </div>
 
   <ng-container *ngIf="!isLoading">
