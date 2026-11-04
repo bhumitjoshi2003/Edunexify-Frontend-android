@@ -46,7 +46,7 @@ export interface SupportTicketSummary {
 export interface SupportTicketDetail extends SupportTicketSummary {
   description: string;
   screenshotUrl: string | null;
-  screenshotUrls: string[];
+  screenshotUrls?: string[];
   route: string | null;
   appVersion: string | null;
   internalNote: string | null;
