@@ -155,248 +155,79 @@
       <a class="ad-view-all" routerLink="/dashboard/event-calendar">View Events <mat-icon>arrow_forward</mat-icon></a>
     </div>
 
-    <!-- ── Staff Adoption (repositioned below daily operations) ─────── -->
-    <section class="ad-adoption" *ngIf="staffAdoption || staffAdoptionError">
-      <div class="ad-adoption-icon"><mat-icon>groups</mat-icon></div>
-      <div class="ad-adoption-copy"><h2>Staff Adoption</h2><p *ngIf="staffAdoption">{{staffAdoption.startedTeachers}} of {{staffAdoption.totalTeachers}} teachers started · {{staffAdoption.attendanceUsedTeachers}} have used attendance</p><p *ngIf="staffAdoptionError">Staff adoption is temporarily unavailable.</p></div>
-      <a *ngIf="staffAdoption" routerLink="/dashboard/staff-adoption">View<mat-icon>arrow_forward</mat-icon></a>
-      <button *ngIf="staffAdoptionError" (click)="loadStaffAdoption()">Retry</button>
+
+    <!-- ── School & plan ─────────────────────────────────────────────── -->
+    <section class="ad-secondary-panel" *ngIf="isAdmin">
+      <div class="ad-section-heading">
+        <div>
+          <h2>School & plan</h2>
+          <p>Secondary health checks, kept compact until something needs attention.</p>
+        </div>
+      </div>
+
+      <a class="ad-secondary-row" *ngIf="setupHealth" routerLink="/dashboard/school-setup">
+        <mat-icon>task_alt</mat-icon>
+        <div>
+          <strong>School setup</strong>
+          <span>{{ setupHealth.completionPercentage }}% complete · {{ setupHealth.completedRequired }} of {{ setupHealth.totalRequired }} essentials ready</span>
+        </div>
+        <mat-icon>chevron_right</mat-icon>
+      </a>
+
+      <a class="ad-secondary-row" *ngIf="staffAdoption" routerLink="/dashboard/staff-adoption">
+        <mat-icon>groups</mat-icon>
+        <div>
+          <strong>Staff adoption</strong>
+          <span>{{ staffAdoption.startedTeachers }} of {{ staffAdoption.totalTeachers }} teachers started</span>
+        </div>
+        <mat-icon>chevron_right</mat-icon>
+      </a>
+
+      <a class="ad-secondary-row" *ngIf="entitlement" routerLink="/dashboard/school-settings">
+        <mat-icon>workspace_premium</mat-icon>
+        <div>
+          <strong>{{ entitlement.planName || 'School plan' }}</strong>
+          <span>
+            {{ entitlement.subscriptionStatus || 'ACTIVE' }}
+            <ng-container *ngIf="countdownLabel()"> · {{ countdownLabel() }}</ng-container>
+          </span>
+        </div>
+        <mat-icon>chevron_right</mat-icon>
+      </a>
+
+      <div class="ad-secondary-row is-error" *ngIf="setupHealthError || staffAdoptionError || entitlementFailed">
+        <mat-icon>info_outline</mat-icon>
+        <div>
+          <strong>Some school status data is unavailable</strong>
+          <span>You can still use the rest of the dashboard normally.</span>
+        </div>
+      </div>
     </section>
 
-    <!-- ── Plan Usage ────────────────────────────────────────────────── -->
-    <div class="ad-section" *ngIf="isAdmin && entitlementFailed">
-      <h2 class="ad-section-title">Plan Usage</h2>
-      <div class="ad-empty-leaves">
-        <mat-icon>cloud_off</mat-icon>
-        <p>Plan usage is temporarily unavailable.</p>
-      </div>
-      <button class="ad-view-all" type="button" style="border:0;background:transparent;cursor:pointer;width:100%" (click)="loadEntitlement()">Retry</button>
-    </div>
-
-    <div class="ad-plan-section" *ngIf="entitlement">
-
-      <!-- Plan Identity Banner -->
-      <div class="ad-plan-banner">
-        <div class="ad-plan-banner-left">
-          <div class="ad-plan-icon-wrap">
-            <mat-icon>workspace_premium</mat-icon>
-          </div>
-          <div class="ad-plan-identity">
-            <span class="ad-plan-name">{{ entitlement.planName || 'Starter Plan' }}</span>
-            <div class="ad-plan-meta-row">
-              <span class="ad-pill-status ad-pill-{{ (entitlement.subscriptionStatus || 'trial').toLowerCase() }}">
-                {{ entitlement.subscriptionStatus || 'TRIAL' }}
-              </span>
-              <span class="ad-plan-expiry" *ngIf="entitlement.subscriptionStatus === 'TRIAL' && entitlement.trialEndsAt">
-                Trial ends {{ entitlement.trialEndsAt | date:'d MMM yyyy' }}
-              </span>
-              <span class="ad-plan-expiry" *ngIf="entitlement.subscriptionStatus === 'ACTIVE' && entitlement.expiresAt">
-                Expires {{ entitlement.expiresAt | date:'d MMM yyyy' }}
-              </span>
-              <span class="ad-plan-expiry" *ngIf="entitlement.subscriptionStatus === 'GRACE' && entitlement.graceEndsAt">
-                Grace ends {{ entitlement.graceEndsAt | date:'d MMM yyyy' }}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="ad-plan-feat-chip">
-          <span class="ad-plan-feat-num">{{ entitlement.featureCount }}</span>
-          <span class="ad-plan-feat-lbl">features</span>
-        </div>
-        <div class="ad-plan-countdown ad-plan-countdown--{{ countdownUrgency() }}"
-             *ngIf="countdownLabel()">
-          <mat-icon>schedule</mat-icon>
-          <span>{{ countdownLabel() }}</span>
-        </div>
-        <a class="ad-plan-upgrade-btn" routerLink="/dashboard/school-settings"
-           *ngIf="showUpgradeCta()">
-          <mat-icon>rocket_launch</mat-icon>
-          Upgrade Now
-        </a>
-      </div>
-
-      <!-- Usage Meters -->
-      <div class="ad-usage-meters">
-
-        <!-- Students -->
-        <div class="ad-meter-card" *ngIf="entitlement.maxStudents"
-          [class.ad-meter-warn]="usagePctRaw(entitlement.activeStudents, entitlement.maxStudents) >= (entitlement.studentSoftLimitPct ?? 90) && usagePctRaw(entitlement.activeStudents, entitlement.maxStudents) < (entitlement.studentHardLimitPct ?? 105)"
-          [class.ad-meter-critical]="usagePctRaw(entitlement.activeStudents, entitlement.maxStudents) >= (entitlement.studentHardLimitPct ?? 105)">
-          <div class="ad-meter-header">
-            <div class="ad-meter-icon-box"><mat-icon>group</mat-icon></div>
-            <div class="ad-meter-text">
-              <span class="ad-meter-label">Students</span>
-              <span class="ad-meter-fraction">{{ entitlement.activeStudents }} / {{ entitlement.maxStudents }}</span>
-            </div>
-            <div class="ad-meter-pct">{{ usagePct(entitlement.activeStudents, entitlement.maxStudents) }}<small>%</small></div>
-          </div>
-          <div class="ad-meter-bar-track">
-            <div class="ad-meter-bar-fill"
-              [style.width.%]="usagePct(entitlement.activeStudents, entitlement.maxStudents)"
-              [style.background]="usageBarColor(usagePctRaw(entitlement.activeStudents, entitlement.maxStudents), entitlement.studentSoftLimitPct, entitlement.studentHardLimitPct)">
-            </div>
-          </div>
-          <div class="ad-meter-alert ad-meter-alert--critical"
-            *ngIf="usagePctRaw(entitlement.activeStudents, entitlement.maxStudents) >= (entitlement.studentHardLimitPct ?? 105)">
-            <mat-icon>block</mat-icon> Hard limit reached — registrations blocked
-          </div>
-          <div class="ad-meter-alert ad-meter-alert--warn"
-            *ngIf="usagePctRaw(entitlement.activeStudents, entitlement.maxStudents) >= (entitlement.studentSoftLimitPct ?? 90) && usagePctRaw(entitlement.activeStudents, entitlement.maxStudents) < (entitlement.studentHardLimitPct ?? 105)">
-            <mat-icon>warning_amber</mat-icon> Approaching student limit
-          </div>
-        </div>
-
-        <!-- Staff -->
-        <div class="ad-meter-card" *ngIf="entitlement.maxStaff"
-          [class.ad-meter-warn]="usagePctRaw(entitlement.totalStaff, entitlement.maxStaff) >= (entitlement.staffSoftLimitPct ?? 90) && usagePctRaw(entitlement.totalStaff, entitlement.maxStaff) < (entitlement.staffHardLimitPct ?? 105)"
-          [class.ad-meter-critical]="usagePctRaw(entitlement.totalStaff, entitlement.maxStaff) >= (entitlement.staffHardLimitPct ?? 105)">
-          <div class="ad-meter-header">
-            <div class="ad-meter-icon-box"><mat-icon>badge</mat-icon></div>
-            <div class="ad-meter-text">
-              <span class="ad-meter-label">Staff</span>
-              <span class="ad-meter-fraction">{{ entitlement.totalStaff }} / {{ entitlement.maxStaff }}</span>
-            </div>
-            <div class="ad-meter-pct">{{ usagePct(entitlement.totalStaff, entitlement.maxStaff) }}<small>%</small></div>
-          </div>
-          <div class="ad-meter-bar-track">
-            <div class="ad-meter-bar-fill"
-              [style.width.%]="usagePct(entitlement.totalStaff, entitlement.maxStaff)"
-              [style.background]="usageBarColor(usagePctRaw(entitlement.totalStaff, entitlement.maxStaff), entitlement.staffSoftLimitPct, entitlement.staffHardLimitPct)">
-            </div>
-          </div>
-          <div class="ad-meter-alert ad-meter-alert--critical"
-            *ngIf="usagePctRaw(entitlement.totalStaff, entitlement.maxStaff) >= (entitlement.staffHardLimitPct ?? 105)">
-            <mat-icon>block</mat-icon> Hard limit reached — staff blocked
-          </div>
-          <div class="ad-meter-alert ad-meter-alert--warn"
-            *ngIf="usagePctRaw(entitlement.totalStaff, entitlement.maxStaff) >= (entitlement.staffSoftLimitPct ?? 90) && usagePctRaw(entitlement.totalStaff, entitlement.maxStaff) < (entitlement.staffHardLimitPct ?? 105)">
-            <mat-icon>warning_amber</mat-icon> Approaching staff limit
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ── Quick Actions ─────────────────────────────────────────────── -->
-    <div class="ad-section">
-      <h2 class="ad-section-title">Quick Actions</h2>
-      <div class="ad-actions-grid">
-
-        <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/student-list">
-          <div class="ad-action-icon" style="background:#e0f2fe;color:#0369a1">
-            <mat-icon>group</mat-icon>
-          </div>
-          <span>Students</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/teacher-list">
-          <div class="ad-action-icon" style="background:#d1fae5;color:#065f46">
-            <mat-icon>school</mat-icon>
-          </div>
-          <span>Teachers</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/view-leaves">
-          <div class="ad-action-icon" style="background:#fef3c7;color:#b45309">
-            <mat-icon>assignment_late</mat-icon>
-          </div>
-          <span>Leaves</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('ONLINE_PAYMENTS')" routerLink="/dashboard/payment-history-admin">
-          <div class="ad-action-icon" style="background:#ede9fe;color:#7c3aed">
-            <mat-icon>payments</mat-icon>
-          </div>
-          <span>Payments</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('FEE_REMINDERS')" routerLink="/dashboard/fee-reminders">
-          <div class="ad-action-icon" style="background:#fee2e2;color:#dc2626">
-            <mat-icon>notifications_active</mat-icon>
-          </div>
-          <span>Fee Reminders</span>
-        </a>
+    <!-- ── Shortcuts ─────────────────────────────────────────────────── -->
+    <section class="ad-section ad-shortcuts">
+      <h2 class="ad-section-title">Shortcuts</h2>
+      <div class="ad-actions-grid ad-actions-grid--compact">
         <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/register">
-          <div class="ad-action-icon" style="background:#ecfdf5;color:#059669">
-            <mat-icon>person_add</mat-icon>
-          </div>
-          <span>Register</span>
+          <div class="ad-action-icon"><mat-icon>person_add</mat-icon></div><span>Register</span>
         </a>
         <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/notice">
-          <div class="ad-action-icon" style="background:#fff1f2;color:#be123c">
-            <mat-icon>campaign</mat-icon>
-          </div>
-          <span>Notice Board</span>
+          <div class="ad-action-icon"><mat-icon>campaign</mat-icon></div><span>Send Notice</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('ANALYTICS')" routerLink="/dashboard/analytics">
-          <div class="ad-action-icon" style="background:#fdf4ff;color:#a21caf">
-            <mat-icon>bar_chart</mat-icon>
-          </div>
-          <span>Analytics</span>
+        <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/view-leaves">
+          <div class="ad-action-icon"><mat-icon>assignment_late</mat-icon></div><span>Leave Approvals</span>
         </a>
         <a class="ad-action-card" routerLink="/dashboard/attendance-summary">
-          <div class="ad-action-icon" style="background:#e0e7ff;color:#3730a3">
-            <mat-icon>summarize</mat-icon>
-          </div>
-          <span>Attendance</span>
+          <div class="ad-action-icon"><mat-icon>summarize</mat-icon></div><span>Attendance</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fee-structure">
-          <div class="ad-action-icon" style="background:#f0fdf4;color:#15803d">
-            <mat-icon>receipt_long</mat-icon>
-          </div>
-          <span>Fee Structure</span>
-        </a>
-        <a class="ad-action-card" routerLink="/dashboard/event-calendar">
-          <div class="ad-action-icon" style="background:#fefce8;color:#a16207">
-            <mat-icon>event</mat-icon>
-          </div>
-          <span>Events</span>
-        </a>
-        <a class="ad-action-card" *ngIf="hasFeature('AUDIT_LOGS')" routerLink="/dashboard/audit-logs">
-          <div class="ad-action-icon" style="background:#f1f5f9;color:#475569">
-            <mat-icon>history</mat-icon>
-          </div>
-          <span>Audit Logs</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/student-promotion">
-          <div class="ad-action-icon" style="background:#dcfce7;color:#14532d">
-            <mat-icon>upgrade</mat-icon>
-          </div>
-          <span>Promotion</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/setup">
-          <div class="ad-action-icon" style="background:#ede9fe;color:#4338ca">
-            <mat-icon>tune</mat-icon>
-          </div>
-          <span>Report Card Setup</span>
-        </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/remarks">
-          <div class="ad-action-icon" style="background:#f5f3ff;color:#7c3aed">
-            <mat-icon>edit_note</mat-icon>
-          </div>
-          <span>Remarks</span>
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fee-reminders">
+          <div class="ad-action-icon"><mat-icon>payments</mat-icon></div><span>Fees</span>
         </a>
         <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/generate">
-          <div class="ad-action-icon" style="background:#fdf2f8;color:#be185d">
-            <mat-icon>preview</mat-icon>
-          </div>
-          <span>Generate &amp; Preview</span>
+          <div class="ad-action-icon"><mat-icon>description</mat-icon></div><span>Report Cards</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/design">
-          <div class="ad-action-icon" style="background:#e0f2fe;color:#0369a1">
-            <mat-icon>palette</mat-icon>
-          </div>
-          <span>Report Card Design</span>
-        </a>
-
-        <a class="ad-action-card" *ngIf="!isAdmin" routerLink="/dashboard/class-management">
-          <div class="ad-action-icon" style="background:#ecfeff;color:#0e7490"><mat-icon>account_tree</mat-icon></div>
-          <span>Classes</span>
-        </a>
-        <a class="ad-action-card" *ngIf="!isAdmin" routerLink="/dashboard/timetable">
-          <div class="ad-action-icon" style="background:#eef2ff;color:#4338ca"><mat-icon>calendar_view_week</mat-icon></div>
-          <span>Timetable</span>
-        </a>
-
       </div>
-    </div>
-
+    </section>
 
     <section class="ad-thought" *ngIf="hasFeature('THOUGHT_OF_THE_DAY')">
       <app-wisdom-cards></app-wisdom-cards>
