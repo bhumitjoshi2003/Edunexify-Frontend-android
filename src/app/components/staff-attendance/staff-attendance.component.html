@@ -81,10 +81,16 @@
     </div>
 
     <!-- Loading -->
-    <div *ngIf="isLoading" class="sa-loading">
-      <div class="sa-spinner"></div>
-      <span>Loading records...</span>
+    <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="isLoading" aria-busy="true" aria-label="Loading staff attendance">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
     </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
 
     <!-- Empty -->
     <div *ngIf="!isLoading && records.length === 0" class="sa-empty-card">
