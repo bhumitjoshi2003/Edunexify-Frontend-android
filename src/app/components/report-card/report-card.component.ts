@@ -588,6 +588,13 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   /** Android: persist a user-requested download in Documents/Edunexify. */
   private async saveNativePdf(blob: Blob): Promise<void> {
+    const permissions = await Filesystem.checkPermissions();
+    if (permissions.publicStorage !== 'granted') {
+      const requested = await Filesystem.requestPermissions();
+      if (requested.publicStorage !== 'granted') {
+        throw new Error('Storage permission denied');
+      }
+    }
     const base64 = await this.blobToBase64(blob);
     try {
       await Filesystem.mkdir({ path: 'Edunexify', directory: Directory.Documents, recursive: true });
