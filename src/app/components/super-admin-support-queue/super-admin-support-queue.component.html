@@ -90,7 +90,10 @@
         </div>
 
         <p class="saq-drawer-description">{{ detail.description }}</p>
-        <img *ngIf="detail.screenshotUrl" [src]="detail.screenshotUrl" alt="Attached screenshot" class="saq-drawer-screenshot" />
+        <div class="saq-drawer-screenshots" *ngIf="(detail.screenshotUrls?.length || detail.screenshotUrl)">
+          <img *ngFor="let url of (detail.screenshotUrls?.length ? detail.screenshotUrls : [detail.screenshotUrl])"
+            [src]="url" alt="Attached screenshot" class="saq-drawer-screenshot" />
+        </div>
 
         <div class="saq-drawer-controls">
           <label class="saq-field">
