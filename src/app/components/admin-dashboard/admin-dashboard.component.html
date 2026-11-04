@@ -2,51 +2,6 @@
 
 <div class="ad-page">
 
-  <!-- ── Loading ──────────────────────────────────────────────────── -->
-  <div class="ad-skeleton" *ngIf="isLoading" aria-busy="true" aria-label="Loading dashboard">
-    <div class="ad-sk-hero">
-      <div class="ad-sk-copy">
-        <span class="ad-sk-shimmer ad-sk-line ad-sk-line-sm"></span>
-        <span class="ad-sk-shimmer ad-sk-line ad-sk-line-lg"></span>
-        <span class="ad-sk-shimmer ad-sk-pill"></span>
-      </div>
-      <span class="ad-sk-shimmer ad-sk-date"></span>
-    </div>
-
-    <div class="ad-sk-card ad-sk-thought">
-      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
-      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-xl"></span>
-    </div>
-
-    <div class="ad-sk-card ad-sk-attention">
-      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
-      <div class="ad-sk-row">
-        <span class="ad-sk-shimmer ad-sk-chip"></span>
-        <span class="ad-sk-shimmer ad-sk-chip"></span>
-        <span class="ad-sk-shimmer ad-sk-chip"></span>
-      </div>
-    </div>
-
-    <div class="ad-sk-stats">
-      <div class="ad-sk-shimmer ad-sk-stat" *ngFor="let _ of [1,2,3,4,5,6]"></div>
-    </div>
-
-    <div class="ad-sk-card ad-sk-section">
-      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
-      <div class="ad-sk-row ad-sk-row-fill">
-        <span class="ad-sk-shimmer ad-sk-block"></span>
-        <span class="ad-sk-shimmer ad-sk-block"></span>
-        <span class="ad-sk-shimmer ad-sk-block"></span>
-      </div>
-    </div>
-
-    <div class="ad-sk-card ad-sk-section">
-      <span class="ad-sk-shimmer ad-sk-line ad-sk-line-md"></span>
-      <span class="ad-sk-shimmer ad-sk-wide-block"></span>
-    </div>
-  </div>
-
-  <ng-container *ngIf="!isLoading">
 
     <!-- ── Hero ─────────────────────────────────────────────────────── -->
     <div class="ad-hero">
@@ -90,6 +45,10 @@
     <div class="ad-stats-error" *ngIf="isAdmin && statsFailed">
       <span>⚠️</span>
       <p>Could not load dashboard stats. Please refresh to try again.</p>
+    </div>
+
+    <div class="ad-inline-stats-skeleton" *ngIf="isAdmin && statsLoading" aria-busy="true" aria-label="Loading dashboard statistics">
+      <span class="ad-inline-shimmer ad-inline-stat" *ngFor="let _ of [1,2,3,4,5,6]"></span>
     </div>
 
     <!-- ── Stat Cards ────────────────────────────────────────────────── -->
@@ -149,6 +108,13 @@
         <div class="ad-stat-bg">📬</div>
       </div>
 
+    </div>
+
+    <div class="ad-section ad-inline-attendance-skeleton" *ngIf="isAdmin && !staffAttendance && !staffAttendanceFailed" aria-busy="true" aria-label="Loading staff attendance">
+      <h2 class="ad-section-title">Staff Attendance Today</h2>
+      <div class="ad-staff-att-grid">
+        <span class="ad-inline-shimmer ad-inline-att-pill" *ngFor="let _ of [1,2,3,4,5,6]"></span>
+      </div>
     </div>
 
     <!-- ── Staff Attendance Today ───────────────────────────────────── -->
@@ -286,6 +252,14 @@
     <!-- ── Upcoming Event ────────────────────────────────────────────── -->
     <div class="ad-section">
       <h2 class="ad-section-title">Upcoming Event</h2>
+      <div class="ad-inline-event-skeleton" *ngIf="upcomingEventLoading" aria-busy="true" aria-label="Loading upcoming event">
+        <span class="ad-inline-shimmer ad-inline-event-icon"></span>
+        <div class="ad-inline-event-copy">
+          <span class="ad-inline-shimmer ad-inline-line ad-inline-line-lg"></span>
+          <span class="ad-inline-shimmer ad-inline-line ad-inline-line-sm"></span>
+        </div>
+      </div>
+
       <div class="ad-event-card" *ngIf="!upcomingEventLoading && upcomingEvent">
         <div class="ad-event-icon"><mat-icon>event</mat-icon></div>
         <div class="ad-event-copy">
@@ -550,5 +524,4 @@
       </div>
     </div>
 
-  </ng-container>
 </div>
