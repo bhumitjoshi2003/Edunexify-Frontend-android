@@ -181,10 +181,15 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   }
 
   private initCategoryColors(): void {
-    const defaultColor = '#696969';
+    const defaultColor = '#16a34a';
     const colors = [
-      '#FF6347', '#4682B4', '#32CD32', '#FFD700', '#8A2BE2', '#FF4500',
-      '#20B2AA', '#ADFF2F', '#BA55D3', '#40E0D0', '#DAA520', '#C71585'
+      '#16a34a', // Academic — green
+      '#f59e0b', // Sports — amber
+      '#eab308', // Cultural — yellow
+      '#22c55e', // Social — bright green
+      '#f97316', // Holiday — orange
+      '#ef4444', // Meeting — red
+      '#14b8a6'  // Other — teal
     ];
     this.categories.forEach((cat, index) => {
       this.categoryColors.set(cat, colors[index % colors.length]);
@@ -324,6 +329,36 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
 
   getEventColor(category: string): string {
     return this.categoryColors.get(category) || this.categoryColors.get('Default')!;
+  }
+
+  get monthEvents(): CalendarEvent[] {
+    return [...this.allEvents].sort((a, b) => {
+      const aTime = new Date(`${a.startDate}T${a.startTime || '00:00:00'}`).getTime();
+      const bTime = new Date(`${b.startDate}T${b.startTime || '00:00:00'}`).getTime();
+      return aTime - bTime;
+    });
+  }
+
+  eventDateLabel(ev: CalendarEvent): string {
+    const start = new Date(ev.startDate);
+    const end = ev.endDate ? new Date(ev.endDate) : start;
+    const sameDay = format(start, 'yyyy-MM-dd') === format(end, 'yyyy-MM-dd');
+    if (sameDay) return format(start, 'd MMM').toUpperCase();
+    if (start.getMonth() === end.getMonth()) {
+      return `${format(start, 'd')}–${format(end, 'd MMM')}`.toUpperCase();
+    }
+    return `${format(start, 'd MMM')} – ${format(end, 'd MMM')}`.toUpperCase();
+  }
+
+  eventMeta(ev: CalendarEvent): string {
+    const parts = [ev.category || 'School event'];
+    if (ev.location) parts.push(ev.location);
+    if (ev.startTime) parts.push(this.formatTimeDisplay(ev.startTime));
+    return parts.join(' · ');
+  }
+
+  visibleEventDots(dayCell: DayCell): CalendarEvent[] {
+    return dayCell.events.slice(0, 3);
   }
 
   openDayPopover(evt: MouseEvent, date: Date): void {

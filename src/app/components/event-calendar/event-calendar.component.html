@@ -79,13 +79,11 @@
                     </div>
 
                     <ng-container *ngIf="isMobileView">
-                        <div *ngIf="dayCell.events.length" class="mobile-event-list"
-                            [class.expanded]="dayCell.expanded">
-                            <div *ngFor="let ev of dayCell.events; trackBy: trackByEvent" class="event-item"
-                                [ngStyle]="{'background-color': getEventColor(ev.category || 'Default')}"
-                                (click)="showEventDetails(ev, $event)">
-                                {{ ev.title }}
-                            </div>
+                        <div *ngIf="dayCell.events.length" class="ec-day-dots" aria-label="Events on this date">
+                            <span *ngFor="let ev of visibleEventDots(dayCell); trackBy: trackByEvent"
+                                  class="ec-event-dot"
+                                  [style.background-color]="getEventColor(ev.category || 'Default')"></span>
+                            <span *ngIf="dayCell.events.length > 3" class="ec-more-dot">+{{ dayCell.events.length - 3 }}</span>
                         </div>
                     </ng-container>
 
@@ -101,6 +99,34 @@
             </div>
         </ng-container>
     </div>
+
+</div><!-- /.calendar-container -->
+
+<section class="ec-month-events" *ngIf="monthEvents.length">
+        <div class="ec-month-events-heading">
+            <div>
+                <span class="ec-eyebrow">THIS MONTH</span>
+                <h3>Events &amp; activities</h3>
+            </div>
+            <span class="ec-event-count">{{ monthEvents.length }}</span>
+        </div>
+
+        <button type="button"
+                class="ec-agenda-card"
+                *ngFor="let ev of monthEvents; trackBy: trackByEvent"
+                (click)="showEventDetails(ev, $event)">
+            <span class="ec-agenda-accent" [style.background-color]="getEventColor(ev.category || 'Default')"></span>
+            <span class="ec-agenda-date">{{ eventDateLabel(ev) }}</span>
+            <span class="ec-agenda-copy">
+                <strong>{{ ev.title }}</strong>
+                <small>{{ eventMeta(ev) }}</small>
+            </span>
+            <span class="ec-agenda-thumb" *ngIf="ev.imageUrl">
+                <img [src]="getFullImageUrl(ev.imageUrl)" [alt]="ev.title">
+            </span>
+            <span class="ec-agenda-arrow" aria-hidden="true">›</span>
+        </button>
+    </section>
 
     <div *ngIf="showSidebar" class="backdrop" (click)="closeSidebar()"></div>
     <div *ngIf="showSidebar && selectedEvent" class="event-sidebar visible" (click)="$event.stopPropagation()">
@@ -238,6 +264,5 @@
             </ng-container>
         </div>
     </div>
-</div>
 
 </div><!-- /.ec-page -->
