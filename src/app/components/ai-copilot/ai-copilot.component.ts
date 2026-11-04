@@ -114,6 +114,8 @@ export class AiCopilotComponent implements OnInit, OnDestroy, AfterViewChecked {
   ngOnDestroy(): void {
     window.visualViewport?.removeEventListener('resize', this.visualViewportHandler);
     window.visualViewport?.removeEventListener('scroll', this.visualViewportHandler);
+    document.documentElement.style.removeProperty('--cp-viewport-top');
+    document.documentElement.style.removeProperty('--cp-viewport-height');
     this.destroy$.next();
     this.destroy$.complete();
   }
