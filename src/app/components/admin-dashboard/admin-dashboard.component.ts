@@ -167,9 +167,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   get hasAdminAttention(): boolean {
     return this.uncoveredSubstitutionCount > 0 || (this.isAdmin && (
-      this.notYetCheckedIn > 0 || (this.staffAttendance?.onLeaveCount ?? 0) > 0
-      || (this.teacherPendingLeaveCount ?? 0) > 0 || this.studentPendingLeaves > 0
-      || this.staffAdoptionNotStarted > 0 || this.adoptionOnboardingIncomplete > 0 || this.adoptionOutdatedApp > 0
+      this.notYetCheckedIn > 0
+      || (this.teacherPendingLeaveCount ?? 0) > 0
+      || this.studentPendingLeaves > 0
+      || this.staffAdoptionNotStarted > 0
+      || this.adoptionOutdatedApp > 0
     ));
   }
 
