@@ -90,7 +90,14 @@
         </div>
 
         <p class="saq-drawer-description">{{ detail.description }}</p>
-        <img *ngIf="detail.screenshotUrl" [src]="detail.screenshotUrl" alt="Attached screenshot" class="saq-drawer-screenshot" />
+        <div class="saq-drawer-screenshots" *ngIf="detail.screenshotUrls?.length; else legacyAdminScreenshot">
+          <img *ngFor="let url of detail.screenshotUrls" [src]="url"
+            alt="Attached screenshot" class="saq-drawer-screenshot" />
+        </div>
+        <ng-template #legacyAdminScreenshot>
+          <img *ngIf="detail.screenshotUrl" [src]="detail.screenshotUrl"
+            alt="Attached screenshot" class="saq-drawer-screenshot" />
+        </ng-template>
 
         <div class="saq-drawer-controls">
           <label class="saq-field">

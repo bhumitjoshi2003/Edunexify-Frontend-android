@@ -70,6 +70,7 @@ describe('ReportSupportTicketComponent', () => {
       title: 'Cannot log in',
       description: 'Password reset email never arrives.',
       screenshotObjectKey: null,
+      screenshotObjectKeys: [],
       platform: 'ANDROID',
     }));
   });
@@ -128,15 +129,42 @@ describe('ReportSupportTicketComponent', () => {
     component.category = 'OTHER';
     component.title = 'Broken image';
     component.description = 'Screenshot attached.';
-    component.selectedFile = new File(['x'], 'shot.png', { type: 'image/png' });
+    component.selectedFiles = [new File(['x'], 'shot.png', { type: 'image/png' })];
     supportTicketService.uploadScreenshotDirect.and.returnValue(of({ objectKey: 'schools/1/support-tickets/new/screenshots/x.png', displayUrl: '' }));
     supportTicketService.createTicket.and.returnValue(of({} as any));
 
     component.submit();
 
-    expect(supportTicketService.uploadScreenshotDirect).toHaveBeenCalledWith(component.selectedFile);
+    expect(supportTicketService.uploadScreenshotDirect).toHaveBeenCalledWith(component.selectedFiles[0]);
     expect(supportTicketService.createTicket).toHaveBeenCalledWith(jasmine.objectContaining({
       screenshotObjectKey: 'schools/1/support-tickets/new/screenshots/x.png',
+      screenshotObjectKeys: ['schools/1/support-tickets/new/screenshots/x.png'],
+    }));
+  });
+
+  it('uploads multiple screenshots and sends every returned object key', () => {
+    component.category = 'OTHER';
+    component.title = 'Two images';
+    component.description = 'Both screenshots are needed.';
+    component.selectedFiles = [
+      new File(['a'], 'one.png', { type: 'image/png' }),
+      new File(['b'], 'two.png', { type: 'image/png' }),
+    ];
+    supportTicketService.uploadScreenshotDirect.and.returnValues(
+      of({ objectKey: 'schools/1/support-tickets/new/screenshots/one.png', displayUrl: '' }),
+      of({ objectKey: 'schools/1/support-tickets/new/screenshots/two.png', displayUrl: '' }),
+    );
+    supportTicketService.createTicket.and.returnValue(of({} as any));
+
+    component.submit();
+
+    expect(supportTicketService.uploadScreenshotDirect).toHaveBeenCalledTimes(2);
+    expect(supportTicketService.createTicket).toHaveBeenCalledWith(jasmine.objectContaining({
+      screenshotObjectKey: 'schools/1/support-tickets/new/screenshots/one.png',
+      screenshotObjectKeys: [
+        'schools/1/support-tickets/new/screenshots/one.png',
+        'schools/1/support-tickets/new/screenshots/two.png',
+      ],
     }));
   });
 
@@ -144,7 +172,7 @@ describe('ReportSupportTicketComponent', () => {
     component.category = 'OTHER';
     component.title = 'Broken image';
     component.description = 'Screenshot attached.';
-    component.selectedFile = new File(['x'], 'shot.png', { type: 'image/png' });
+    component.selectedFiles = [new File(['x'], 'shot.png', { type: 'image/png' })];
     supportTicketService.uploadScreenshotDirect.and.returnValue(throwError(() => new Error('upload failed')));
 
     component.submit();
@@ -162,7 +190,7 @@ describe('ReportSupportTicketComponent', () => {
 
     component.onFileSelected({ target: input } as unknown as Event);
 
-    expect(component.selectedFile).toBeNull();
+    expect(component.selectedFiles).toEqual([]);
     expect(toast.error).toHaveBeenCalled();
   });
 
@@ -174,17 +202,17 @@ describe('ReportSupportTicketComponent', () => {
 
     component.onFileSelected({ target: input } as unknown as Event);
 
-    expect(component.selectedFile).toBeNull();
+    expect(component.selectedFiles).toEqual([]);
     expect(toast.error).toHaveBeenCalled();
   });
 
   it('removeScreenshot clears the selected file and preview', () => {
-    component.selectedFile = new File(['x'], 'shot.png', { type: 'image/png' });
+    component.selectedFiles = [new File(['x'], 'shot.png', { type: 'image/png' })];
     component.imagePreviewUrl = 'data:image/png;base64,x';
 
     component.removeScreenshot();
 
-    expect(component.selectedFile).toBeNull();
+    expect(component.selectedFiles).toEqual([]);
     expect(component.imagePreviewUrl).toBeNull();
   });
 });

@@ -16,28 +16,32 @@
         <p class="rc-hero-sub">{{ demoMode ? 'Indra Academy Style · Sample report card' : 'Official school report card · Ready for printing' }}</p>
       </div>
     </div>
-    <div class="rc-hero-actions">
-      <button class="rc-btn-back" (click)="goBack()" aria-label="Go back">&#8592; Back</button>
-      <button *ngIf="canUsePdf" class="rc-btn-print" (click)="print()" [disabled]="previewingPdf"
-              aria-label="Preview and print report card" [attr.aria-busy]="previewingPdf"
-              title="Opens the report card PDF to preview and print.">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-             style="vertical-align:middle;margin-right:5px">
-          <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-          <rect x="6" y="14" width="12" height="8"/>
-        </svg>
-        {{ previewingPdf ? 'Preparing…' : 'Preview & Print' }}
-      </button>
-      <button *ngIf="canUsePdf" class="rc-btn-pdf" (click)="downloadPdf()" [disabled]="downloadingPdf"
-              aria-label="Download PDF" [attr.aria-busy]="downloadingPdf">
-        <svg *ngIf="!downloadingPdf" width="15" height="15" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             aria-hidden="true" style="vertical-align:middle;margin-right:4px">
+    <div class="rc-hero-actions" *ngIf="canUsePdf">
+      <button class="rc-action-btn rc-action-download" (click)="downloadPdf()" [disabled]="downloadingPdf"
+              aria-label="Download report card PDF" [attr.aria-busy]="downloadingPdf">
+        <svg *ngIf="!downloadingPdf" width="17" height="17" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        <span *ngIf="!downloadingPdf">Download PDF</span>
-        <span *ngIf="downloadingPdf">Generating…</span>
+        <span>{{ downloadingPdf ? 'Saving…' : 'Download PDF' }}</span>
+      </button>
+
+      <button class="rc-action-btn rc-action-preview" (click)="previewPdf()" [disabled]="previewingPdf"
+              aria-label="Preview report card PDF" [attr.aria-busy]="previewingPdf">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span>{{ previewingPdf ? 'Opening…' : 'Preview' }}</span>
+      </button>
+
+      <button class="rc-action-btn rc-action-print" (click)="printPdf()" [disabled]="printingPdf"
+              aria-label="Print report card PDF" [attr.aria-busy]="printingPdf">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        <span>{{ printingPdf ? 'Opening…' : 'Print' }}</span>
       </button>
     </div>
   </div>
@@ -306,8 +310,8 @@
       </div>
       <div class="rc-viewer-state" *ngIf="isNative">
         <span>Your report card is ready.</span>
-        <button type="button" class="rc-btn-pdf" (click)="downloadPdf()" [disabled]="downloadingPdf">
-          {{ downloadingPdf ? 'Opening…' : 'Open report card' }}
+        <button type="button" class="rc-btn-pdf" (click)="previewPdf()" [disabled]="previewingPdf">
+          {{ previewingPdf ? 'Opening…' : 'Open report card' }}
         </button>
       </div>
     </div>
