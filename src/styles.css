@@ -222,3 +222,85 @@ body {
     height: auto !important;
   }
 }
+
+
+/* ══ Edunexify shared page/content loading skeleton ═════════════════
+   Full-page/content loads use this stable shimmer. Small action-level
+   operations (save/import/upload/etc.) intentionally keep compact spinners. */
+.edu-page-skeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.edu-sk-hero,
+.edu-sk-panel {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: var(--edu-card-radius, 16px);
+}
+.edu-sk-hero {
+  min-height: 136px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+.edu-sk-hero-copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.edu-sk-panel { padding: 20px; }
+.edu-sk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.edu-sk-shimmer {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: #e8edf2;
+  border-radius: 10px;
+}
+.edu-sk-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.76), transparent);
+  animation: edu-shimmer 1.25s ease-in-out infinite;
+}
+.edu-sk-avatar { width: 54px; height: 54px; border-radius: 16px; flex: 0 0 54px; }
+.edu-sk-line { height: 12px; border-radius: 999px; }
+.edu-sk-line-sm { width: 92px; }
+.edu-sk-line-md { width: min(220px, 52%); }
+.edu-sk-line-lg { width: min(420px, 78%); height: 20px; }
+.edu-sk-card { min-height: 102px; border-radius: 16px; }
+.edu-sk-row { display: flex; gap: 10px; align-items: center; }
+.edu-sk-row + .edu-sk-row { margin-top: 12px; }
+.edu-sk-row .edu-sk-shimmer { flex: 1; height: 52px; }
+.edu-sk-table-line { height: 48px; border-radius: 12px; margin-top: 10px; }
+@keyframes edu-shimmer {
+  to { transform: translateX(100%); }
+}
+@media (max-width: 900px) {
+  .edu-sk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .edu-page-skeleton { gap: 12px; }
+  .edu-sk-hero { min-height: 118px; padding: 18px 16px; }
+  .edu-sk-panel { padding: 16px; }
+  .edu-sk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .edu-sk-card { min-height: 86px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .edu-sk-shimmer::after { animation: none; }
+}
