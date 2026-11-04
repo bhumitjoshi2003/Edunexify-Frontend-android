@@ -19,7 +19,7 @@
 
   <!-- ── Skeleton ─────────────────────────────────────────────────── -->
   <ng-container *ngIf="isLoading">
-    <div class="an-stats-grid">
+    <div class="an-stats-grid" [class.an-stats-grid--three]="!feeAnalyticsEnabled">
       <div class="sk-shimmer" style="height:80px;border-radius:16px" *ngFor="let i of [1,2,3,4]"></div>
     </div>
     <div class="an-charts-row">
@@ -100,7 +100,7 @@
       </div>
 
       <!-- Class attendance -->
-      <div class="an-chart-card">
+      <div class="an-chart-card" [class.an-chart-card--wide]="!feeAnalyticsEnabled">
         <div class="an-chart-header">
           <div>
             <h3 class="an-chart-title">Class-wise Attendance</h3>

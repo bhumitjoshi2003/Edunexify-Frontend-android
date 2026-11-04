@@ -133,6 +133,10 @@
   gap: 12px;
 }
 
+.an-stats-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .an-stat-card {
   position: relative;
   background: linear-gradient(135deg, var(--c1), var(--c2));
@@ -196,6 +200,14 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.an-chart-card--wide {
+  grid-column: 1 / -1;
+}
+
+.an-chart-card--wide .an-chart-body {
+  height: 300px;
 }
 
 .an-chart-card {
@@ -307,11 +319,14 @@
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .an-charts-row { grid-template-columns: 1fr; }
-  .an-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .an-stats-grid,
+  .an-stats-grid--three { grid-template-columns: repeat(2, 1fr); }
+  .an-chart-card--wide .an-chart-body { height: 260px; }
 }
 
 @media (max-width: 768px) {
   .an-hero { padding: 24px 18px 28px; }
+  .an-chart-card--wide .an-chart-body { height: 220px; }
   .an-hero-name { font-size: 1.25rem; }
   .an-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .an-stat-value { font-size: 1.2rem; }

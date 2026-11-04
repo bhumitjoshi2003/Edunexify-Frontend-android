@@ -1,30 +1,99 @@
 <main class="sa-page">
-  <a class="sa-back" routerLink="/dashboard/admin-dashboard"><mat-icon>arrow_back</mat-icon> Admin dashboard</a>
-  <header class="sa-header"><div class="sa-header-icon"><mat-icon>groups</mat-icon></div><div><h1>Staff Adoption</h1><p>Teacher access and rollout readiness</p></div><button type="button" class="sa-reminder-toggle" (click)="toggleReminderPanel()"><mat-icon>campaign</mat-icon> Remind</button></header>
-  <section class="sa-reminder-panel" *ngIf="reminderPanelOpen">
-    <div class="sa-reminder-head"><mat-icon>notifications_active</mat-icon><div><h2>Send a reminder</h2><p>A professional nudge to help staff finish setting up Edunexify.</p></div></div>
-    <div class="sa-reminder-options">
-      <label class="sa-reminder-option" *ngFor="let option of reminderOptions" [class.selected]="selectedReminderType === option.type">
-        <input type="radio" name="reminderType" [value]="option.type" [(ngModel)]="selectedReminderType" />
-        <span><strong>{{option.label}}</strong><small>{{option.description}}</small></span>
-      </label>
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading staff adoption">
+    <span class="edu-sr-only">Loading staff adoption</span>
+    <div class="edu-sk-hero"></div>
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
     </div>
-    <p class="sa-reminder-error" *ngIf="reminderError">{{reminderError}}</p>
-    <div class="sa-reminder-actions">
-      <button type="button" class="sa-reminder-cancel" (click)="toggleReminderPanel()" [disabled]="reminderPreviewLoading || reminderSendLoading">Cancel</button>
-      <button type="button" class="sa-reminder-preview" (click)="previewAndSendReminder()" [disabled]="reminderPreviewLoading || reminderSendLoading">
-        <span *ngIf="!reminderPreviewLoading && !reminderSendLoading">Preview &amp; Send</span>
-        <span *ngIf="reminderPreviewLoading">Loading&hellip;</span>
-        <span *ngIf="reminderSendLoading">Sending&hellip;</span>
-      </button>
-    </div>
-  </section>
-  <div class="sa-state" *ngIf="loading"><span class="sa-spinner"></span>Loading staff adoption…</div>
-  <div class="sa-state sa-error" *ngIf="error"><mat-icon>cloud_off</mat-icon><strong>Staff adoption could not be loaded</strong><span>Please check your connection and try again.</span><button (click)="load()">Retry</button></div>
+    <div class="edu-sk-panel"><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span></div>
+  </div>
+
+  <div class="sa-error-state" *ngIf="error">
+    <div class="sa-error-icon"><mat-icon>cloud_off</mat-icon></div>
+    <h2>Staff adoption could not be loaded</h2>
+    <p>Please check your connection and try again.</p>
+    <button type="button" (click)="load()">Retry</button>
+  </div>
+
   <ng-container *ngIf="data as d">
-    <section class="sa-summary"><div><strong>{{d.summary.totalTeachers}}</strong><span>Teachers</span></div><div><strong>{{d.summary.startedTeachers}}</strong><span>Started</span></div><div><strong>{{d.summary.attendanceUsedTeachers}}</strong><span>Attendance used</span></div><div><strong>{{d.summary.notStartedTeachers + d.summary.disabledTeachers}}</strong><span>Not started</span></div></section>
-    <section class="sa-controls" *ngIf="d.teachers.length"><label><mat-icon>search</mat-icon><input [(ngModel)]="searchTerm" placeholder="Search name or teacher ID" /></label><select [(ngModel)]="filter" aria-label="Filter teachers"><option value="ALL">All teachers</option><option value="STARTED">Started</option><option value="NOT_STARTED">Not started</option><option value="USED">Attendance used</option><option value="NOT_USED">Attendance not yet used</option></select></section>
-    <section class="sa-list" *ngIf="rows.length; else empty"><article class="sa-card" *ngFor="let t of rows"><div class="sa-person"><span class="sa-avatar">{{t.name.charAt(0)}}</span><div><h2>{{t.name}}</h2><p>{{t.teacherId}}</p></div><span class="sa-chip" [class.started]="t.accountStatus === 'STARTED'">{{status(t)}}</span></div><div class="sa-details"><div><span>Last active</span><strong>{{relative(t.lastActiveAt)}}</strong></div><div><span>Attendance</span><strong>{{t.hasUsedAttendance ? 'Used' : 'Not yet used'}}</strong></div><div><span>Onboarding</span><strong>{{t.onboardingStatus === 'COMPLETED' ? 'Completed' : 'Not reported'}}</strong></div><div><span>App</span><strong>{{t.appVersionName || 'Unknown'}}</strong><small>{{app(t)}}</small></div></div></article></section>
-    <ng-template #empty><div class="sa-empty"><mat-icon>groups</mat-icon><p>{{d.teachers.length ? 'No teachers match your search or filter.' : 'No teachers have been added yet.'}}</p></div></ng-template>
+    <header class="sa-hero">
+      <div class="sa-hero-copy">
+        <p class="sa-eyebrow">Team rollout</p>
+        <h1>Staff Adoption</h1>
+        <p>See how your teaching staff are getting started with Edunexify.</p>
+      </div>
+      <div class="sa-hero-score">
+        <strong>{{ d.summary.totalTeachers ? ((d.summary.startedTeachers / d.summary.totalTeachers) * 100 | number:'1.0-0') : 0 }}%</strong>
+        <span>started</span>
+      </div>
+      <button type="button" class="sa-reminder-toggle" (click)="toggleReminderPanel()">
+        <mat-icon>campaign</mat-icon><span>Send Reminder</span>
+      </button>
+      <div class="sa-hero-progress"><span [style.width.%]="d.summary.totalTeachers ? (d.summary.startedTeachers / d.summary.totalTeachers) * 100 : 0"></span></div>
+      <div class="sa-blob sa-blob-1"></div><div class="sa-blob sa-blob-2"></div>
+    </header>
+
+    <section class="sa-reminder-panel" *ngIf="reminderPanelOpen">
+      <div class="sa-section-head">
+        <div class="sa-section-icon"><mat-icon>notifications_active</mat-icon></div>
+        <div><h2>Send a reminder</h2><p>Choose who needs a professional nudge to continue their setup.</p></div>
+      </div>
+      <div class="sa-reminder-options">
+        <label class="sa-reminder-option" *ngFor="let option of reminderOptions" [class.selected]="selectedReminderType === option.type">
+          <input type="radio" name="reminderType" [value]="option.type" [(ngModel)]="selectedReminderType" />
+          <span><strong>{{option.label}}</strong><small>{{option.description}}</small></span>
+        </label>
+      </div>
+      <p class="sa-reminder-error" *ngIf="reminderError">{{reminderError}}</p>
+      <div class="sa-reminder-actions">
+        <button type="button" class="sa-reminder-cancel" (click)="toggleReminderPanel()" [disabled]="reminderPreviewLoading || reminderSendLoading">Cancel</button>
+        <button type="button" class="sa-reminder-preview" (click)="previewAndSendReminder()" [disabled]="reminderPreviewLoading || reminderSendLoading">
+          <span *ngIf="!reminderPreviewLoading && !reminderSendLoading">Preview &amp; Send</span>
+          <span *ngIf="reminderPreviewLoading">Loading recipients…</span>
+          <span *ngIf="reminderSendLoading">Sending…</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="sa-summary-grid">
+      <div class="sa-summary-card" style="--c1:#0369a1;--c2:#0ea5e9"><div class="sa-summary-icon"><mat-icon>groups</mat-icon></div><div><strong>{{d.summary.totalTeachers}}</strong><span>Teachers</span></div></div>
+      <div class="sa-summary-card" style="--c1:#059669;--c2:#34d399"><div class="sa-summary-icon"><mat-icon>check_circle</mat-icon></div><div><strong>{{d.summary.startedTeachers}}</strong><span>Started</span></div></div>
+      <div class="sa-summary-card" style="--c1:#0f766e;--c2:#14b8a6"><div class="sa-summary-icon"><mat-icon>fingerprint</mat-icon></div><div><strong>{{d.summary.attendanceUsedTeachers}}</strong><span>Attendance Used</span></div></div>
+      <div class="sa-summary-card" style="--c1:#b45309;--c2:#f59e0b"><div class="sa-summary-icon"><mat-icon>hourglass_empty</mat-icon></div><div><strong>{{d.summary.notStartedTeachers + d.summary.disabledTeachers}}</strong><span>Not Started</span></div></div>
+    </section>
+
+    <section class="sa-directory" *ngIf="d.teachers.length">
+      <div class="sa-directory-head">
+        <div><h2>Teacher Adoption</h2><p>Account activity, attendance usage, onboarding and app readiness.</p></div>
+        <span>{{ rows.length }} of {{ d.teachers.length }}</span>
+      </div>
+      <div class="sa-controls">
+        <label class="sa-search"><mat-icon>search</mat-icon><input [(ngModel)]="searchTerm" placeholder="Search name or teacher ID" /></label>
+        <select [(ngModel)]="filter" aria-label="Filter teachers">
+          <option value="ALL">All teachers</option><option value="STARTED">Started</option><option value="NOT_STARTED">Not started</option><option value="USED">Attendance used</option><option value="NOT_USED">Attendance not yet used</option>
+        </select>
+      </div>
+
+      <div class="sa-list" *ngIf="rows.length; else empty">
+        <article class="sa-card" *ngFor="let t of rows">
+          <div class="sa-person">
+            <span class="sa-avatar">{{t.name.charAt(0)}}</span>
+            <div class="sa-person-copy"><h3>{{t.name}}</h3><p>{{t.teacherId}}</p></div>
+            <span class="sa-chip" [class.started]="t.accountStatus === 'STARTED'">{{status(t)}}</span>
+          </div>
+          <div class="sa-details">
+            <div><span>Last active</span><strong>{{relative(t.lastActiveAt)}}</strong></div>
+            <div><span>Attendance</span><strong>{{t.hasUsedAttendance ? 'Used' : 'Not yet used'}}</strong></div>
+            <div><span>Onboarding</span><strong>{{t.onboardingStatus === 'COMPLETED' ? 'Completed' : 'Not reported'}}</strong></div>
+            <div><span>App</span><strong>{{t.appVersionName || 'Unknown'}}</strong><small>{{app(t)}}</small></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <ng-template #empty>
+      <div class="sa-empty"><div class="sa-empty-icon"><mat-icon>search_off</mat-icon></div><h3>No matching teachers</h3><p>{{d.teachers.length ? 'Try changing your search or filter.' : 'No teachers have been added yet.'}}</p></div>
+    </ng-template>
   </ng-container>
 </main>
