@@ -1289,9 +1289,29 @@
 }
 
 @media (max-width: 390px) {
-    .ec-hero-sub { display: none; }
-    .ec-hero { min-height: 62px; }
     .calendar-day { min-height: 52px !important; }
     .ec-agenda-thumb { display: none; }
     .ec-agenda-card { grid-template-columns: 58px minmax(0, 1fr) auto; }
+}
+
+/* Match Holiday Calendar hero dimensions on phone screens. */
+@media (max-width: 480px) {
+    .ec-hero {
+        min-height: 0;
+        padding: 18px 16px 22px;
+        border-radius: 20px;
+    }
+    .ec-hero-left { gap: 16px; }
+    .ec-hero-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.6rem;
+        border-radius: 14px;
+    }
+    .ec-hero-title { font-size: 1.15rem; }
+    .ec-hero-sub {
+        display: block;
+        margin: 3px 0 0;
+        font-size: 0.78rem;
+    }
 }
