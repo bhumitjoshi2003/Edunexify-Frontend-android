@@ -796,196 +796,120 @@
 /* ══ App Update Banner ══ */
 .app-update-banner {
   position: fixed;
-  left: max(14px, env(safe-area-inset-left, 0px));
-  right: max(14px, env(safe-area-inset-right, 0px));
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   z-index: 1000;
+  min-height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  overflow: hidden;
-  padding: 15px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 8% 15%, rgba(45, 212, 191, 0.24), transparent 30%),
-    linear-gradient(135deg, #102a43 0%, #153e75 52%, #155e75 100%);
+  gap: 12px;
+  padding: 9px 10px 9px 11px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 17px;
+  background: #155e75;
   color: #fff;
-  box-shadow:
-    0 16px 42px rgba(15, 23, 42, 0.30),
-    0 4px 12px rgba(15, 23, 42, 0.18);
-  isolation: isolate;
-}
-.app-update-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(2px);
-  pointer-events: none;
-  z-index: -1;
-}
-.app-update-glow-one {
-  width: 120px;
-  height: 120px;
-  right: 22%;
-  top: -80px;
-  background: rgba(45, 212, 191, 0.14);
-}
-.app-update-glow-two {
-  width: 90px;
-  height: 90px;
-  left: 38%;
-  bottom: -70px;
-  background: rgba(96, 165, 250, 0.14);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .22);
 }
 .app-update-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 .app-update-icon-wrap {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 13px;
-  background: linear-gradient(145deg, rgba(255,255,255,.20), rgba(255,255,255,.08));
-  border: 1px solid rgba(255,255,255,.16);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.16);
+  border-radius: 11px;
+  background: rgba(255,255,255,.13);
+  border: 1px solid rgba(255,255,255,.12);
 }
 .app-update-icon-wrap mat-icon {
-  width: 22px;
-  height: 22px;
-  font-size: 22px;
-  color: #99f6e4;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  color: #ccfbf1;
 }
 .app-update-copy {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
-.app-update-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #99f6e4;
-  font-size: .62rem;
-  font-weight: 850;
-  letter-spacing: .08em;
-  line-height: 1;
-}
-.app-update-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #2dd4bf;
-  box-shadow: 0 0 0 4px rgba(45,212,191,.12);
-}
-.app-update-version {
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.10);
-  color: #e6fffb;
-  letter-spacing: 0;
-}
 .app-update-copy strong {
-  margin-top: 2px;
   color: #fff;
-  font-size: .92rem;
-  font-weight: 820;
-  line-height: 1.2;
-  letter-spacing: -.01em;
+  font-size: .82rem;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
 }
-.app-update-copy > span {
+.app-update-copy span {
   color: rgba(255,255,255,.72);
-  font-size: .72rem;
-  line-height: 1.3;
+  font-size: .65rem;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 .app-update-btn {
-  min-height: 42px;
+  min-height: 38px;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 17px;
+  gap: 5px;
+  padding: 0 13px;
   border: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2dd4bf, #14b8a6);
-  color: #073b3a;
+  border-radius: 11px;
+  background: #fff;
+  color: #0f5f69;
   font-family: inherit;
-  font-size: .80rem;
+  font-size: .76rem;
   font-weight: 850;
   cursor: pointer;
-  box-shadow: 0 7px 18px rgba(20,184,166,.30);
-  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+  box-shadow: 0 3px 9px rgba(0,0,0,.12);
+  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
 .app-update-btn mat-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
 }
 .app-update-btn:hover {
-  filter: brightness(1.04);
-  box-shadow: 0 9px 22px rgba(20,184,166,.38);
+  background: #f0fdfa;
+  box-shadow: 0 4px 12px rgba(0,0,0,.16);
   transform: translateY(-1px);
 }
 .app-update-btn:active { transform: translateY(0); }
 .app-update-btn:focus-visible {
-  outline: 3px solid rgba(153,246,228,.46);
+  outline: 3px solid rgba(153,246,228,.5);
   outline-offset: 2px;
 }
 
-@media (max-width: 600px) {
-  .app-update-banner {
-    left: 10px;
-    right: 10px;
-    bottom: calc(9px + env(safe-area-inset-bottom, 0px));
-    gap: 10px;
-    padding: 12px;
-    border-radius: 17px;
-  }
-  .app-update-left { gap: 10px; }
-  .app-update-icon-wrap {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
-    border-radius: 12px;
-  }
-  .app-update-copy strong { font-size: .82rem; }
-  .app-update-copy > span {
-    max-width: 180px;
-    font-size: .65rem;
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-  .app-update-eyebrow { font-size: .56rem; }
-  .app-update-version { padding: 2px 6px; }
-  .app-update-btn {
-    min-height: 40px;
-    padding: 0 12px;
-    border-radius: 11px;
-    font-size: .74rem;
-  }
-  .app-update-btn mat-icon {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-  }
-}
-
 @media (max-width: 390px) {
-  .app-update-copy > span { display: none; }
-  .app-update-icon-wrap { display: none; }
-  .app-update-banner { gap: 8px; }
-  .app-update-btn { padding: 0 10px; }
+  .app-update-banner {
+    left: 9px;
+    right: 9px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    min-height: 54px;
+    padding: 8px 9px;
+    gap: 8px;
+  }
+  .app-update-icon-wrap {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+  .app-update-copy strong { font-size: .78rem; }
+  .app-update-copy span { font-size: .61rem; }
+  .app-update-btn {
+    min-height: 36px;
+    padding: 0 11px;
+    font-size: .72rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

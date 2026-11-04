@@ -692,27 +692,22 @@
 
       <!-- Persistent app update card (Capacitor Android only). Intentionally not dismissible. -->
       <section class="app-update-banner" *ngIf="showUpdateBanner" aria-label="Edunexify update available">
-        <div class="app-update-glow app-update-glow-one" aria-hidden="true"></div>
-        <div class="app-update-glow app-update-glow-two" aria-hidden="true"></div>
-
         <div class="app-update-left">
           <div class="app-update-icon-wrap" aria-hidden="true">
-            <mat-icon>rocket_launch</mat-icon>
+            <mat-icon>system_update_alt</mat-icon>
           </div>
 
           <div class="app-update-copy">
-            <div class="app-update-eyebrow">
-              <span class="app-update-dot"></span>
-              NEW UPDATE
-              <span class="app-update-version" *ngIf="latestAppVersion">v{{ latestAppVersion }}</span>
-            </div>
-            <strong>Upgrade your Edunexify experience</strong>
-            <span>Get the latest fixes, improvements and the newest app experience.</span>
+            <strong>Update available</strong>
+            <span>
+              New version ready
+              <ng-container *ngIf="latestAppVersion"> · v{{ latestAppVersion }}</ng-container>
+            </span>
           </div>
         </div>
 
         <button class="app-update-btn" type="button" (click)="openPlayStore()" aria-label="Update Edunexify from Google Play">
-          <span>Update now</span>
+          <span>Update</span>
           <mat-icon>arrow_forward</mat-icon>
         </button>
       </section>
