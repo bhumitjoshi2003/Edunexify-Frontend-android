@@ -62,10 +62,16 @@
       </div>
 
       <!-- ── Loading / Error ───────────────────────────────────────── -->
-      <div class="pha-loading" *ngIf="loading">
-        <div class="pha-spinner"></div>
-        <span>Loading payments…</span>
-      </div>
+      <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading payments">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
       <div class="pha-error" *ngIf="error">⚠️ {{ error }}</div>
 
       <!-- ── Action Bar ─────────────────────────────────────────────── -->
