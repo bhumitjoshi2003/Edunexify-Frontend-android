@@ -59,6 +59,16 @@ export class NotificationNavigationService {
     const queryStart = route.indexOf('?');
     const path = queryStart >= 0 ? route.slice(0, queryStart) : route;
     const query = queryStart >= 0 ? route.slice(queryStart) : '';
+
+    // Historical support notifications were persisted with the old generic
+    // /dashboard/support-tickets target. Route them according to the user who
+    // is opening the notification so existing inbox rows remain useful.
+    if (path === '/dashboard/support-tickets') {
+      return (this.auth.getUserRole() === 'SUPER_ADMIN'
+        ? '/dashboard/support-queue'
+        : '/dashboard/my-support-requests') + query;
+    }
+
     return `${this.historicalRouteAliases[path] ?? path}${query}`;
   }
 
