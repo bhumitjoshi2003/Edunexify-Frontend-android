@@ -1,9 +1,23 @@
     <app-wisdom-cards *ngIf="hasFeature('WISDOM')"></app-wisdom-cards>
 
 <div class="td-page">
-  <div class="td-loading" *ngIf="isLoading">
-    <div class="td-spinner"></div>
-    <span>Preparing your workspace…</span>
+  <div class="edu-page-skeleton" *ngIf="isLoading" aria-busy="true" aria-label="Loading teacher dashboard">
+    <div class="edu-sk-hero">
+      <span class="edu-sk-shimmer edu-sk-avatar"></span>
+      <div class="edu-sk-hero-copy">
+        <span class="edu-sk-shimmer edu-sk-line edu-sk-line-sm"></span>
+        <span class="edu-sk-shimmer edu-sk-line edu-sk-line-lg"></span>
+        <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      </div>
+    </div>
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
   </div>
   <ng-container *ngIf="!isLoading">
     <header class="td-hero">
