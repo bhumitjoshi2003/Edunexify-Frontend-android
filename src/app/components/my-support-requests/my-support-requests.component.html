@@ -48,10 +48,14 @@
             <span>Updated: <strong>{{ detail.updatedAt | date:'d MMM yyyy, h:mm a' }}</strong></span>
           </div>
           <p class="msr-detail-description">{{ detail.description }}</p>
-          <div class="msr-detail-screenshots" *ngIf="(detail.screenshotUrls?.length || detail.screenshotUrl)">
-            <img *ngFor="let url of (detail.screenshotUrls?.length ? detail.screenshotUrls : [detail.screenshotUrl])"
-              [src]="url" alt="Attached screenshot" class="msr-detail-screenshot" />
+          <div class="msr-detail-screenshots" *ngIf="detail.screenshotUrls?.length; else legacyScreenshot">
+            <img *ngFor="let url of detail.screenshotUrls" [src]="url"
+              alt="Attached screenshot" class="msr-detail-screenshot" />
           </div>
+          <ng-template #legacyScreenshot>
+            <img *ngIf="detail.screenshotUrl" [src]="detail.screenshotUrl"
+              alt="Attached screenshot" class="msr-detail-screenshot" />
+          </ng-template>
         </ng-container>
       </div>
     </article>
