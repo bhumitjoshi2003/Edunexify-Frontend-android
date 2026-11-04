@@ -101,12 +101,12 @@
 
 .cp-panel {
   position: fixed;
-  top: 0;
+  top: var(--cp-viewport-top, 0px);
   right: 0;
   z-index: 400;
 
   width: 420px;
-  height: 100dvh;
+  height: var(--cp-viewport-height, 100dvh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -127,6 +127,8 @@
   .cp-panel {
     width: 100vw;
   }
+  .cp-hint-desktop { display: none; }
+  .cp-hint-mobile { display: inline; }
 }
 
 @media (max-width: 420px) {
@@ -749,6 +751,7 @@
   text-align: center;
   font-weight: 500;
 }
+.cp-hint-mobile { display: none; }
 
 
 /* ── Markdown content inside bubbles ──────────────────────────────────────── */
