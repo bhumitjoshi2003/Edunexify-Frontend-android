@@ -25,6 +25,7 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   cancellingIds: Set<number> = new Set();
   isSubmitting = false;
+  formSubmitted = false;
   calendarReady = false;
   private workingDays = new Set<string>();
   private holidays: SchoolHoliday[] = [];
@@ -118,6 +119,11 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
     }
   }
 
+  onFieldChange(): void {
+    if (!this.formSubmitted) return;
+    this.check();
+  }
+
   check(): void {
     if (this.leaveForm.get('startDate')?.hasError('required')) {
       this.errorMessage = 'Please choose a start date.';
@@ -136,6 +142,7 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
   }
 
   applyLeave(): void {
+    this.formSubmitted = true;
     if (this.leaveForm.invalid) {
       this.check();
       return;
@@ -158,6 +165,8 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.leaveForm.reset();
+        this.formSubmitted = false;
+        this.errorMessage = '';
         this.toast.success('Leave Applied!', 'Your leave application has been submitted.');
         this.currentPage = 0;
         this.loadMyLeaves();
