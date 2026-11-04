@@ -1,4 +1,3 @@
-    <app-wisdom-cards *ngIf="hasFeature('WISDOM')"></app-wisdom-cards>
 
 <div class="ad-page">
 
@@ -23,231 +22,105 @@
       <div class="ad-blob ad-blob-2"></div>
     </div>
 
-    <section class="ad-attention">
-      <div class="ad-attention-head"><div><h2>Today's Attention</h2></div><span *ngIf="attentionLoading">Checking…</span></div>
-      <div class="ad-attention-list" *ngIf="!attentionLoading && hasAdminAttention">
-        <a class="is-attendance" *ngIf="isAdmin && notYetCheckedIn > 0" routerLink="/dashboard/staff-attendance"><mat-icon>schedule</mat-icon><span>Teachers not checked in</span><strong>{{ notYetCheckedIn }}</strong></a>
-        <a class="is-leave" *ngIf="isAdmin && (staffAttendance?.onLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests"><mat-icon>event_busy</mat-icon><span>Teachers on approved leave</span><strong>{{ staffAttendance?.onLeaveCount }}</strong></a>
-        <a class="is-substitution" *ngIf="uncoveredSubstitutionCount > 0" routerLink="/dashboard/teacher-substitutions"><mat-icon>swap_horiz</mat-icon><span>Uncovered substitution periods</span><strong>{{ uncoveredSubstitutionCount }}</strong></a>
-        <a class="is-leave" *ngIf="isAdmin && (teacherPendingLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests"><mat-icon>approval</mat-icon><span>Teacher leave requests</span><strong>{{ teacherPendingLeaveCount }}</strong></a>
-        <a class="is-leave" *ngIf="isAdmin && studentPendingLeaves > 0" routerLink="/dashboard/view-leaves"><mat-icon>assignment_late</mat-icon><span>Student leave requests</span><strong>{{ studentPendingLeaves }}</strong></a>
-        <a class="is-adoption" *ngIf="isAdmin && staffAdoptionNotStarted > 0" routerLink="/dashboard/staff-adoption"><mat-icon>person_off</mat-icon><span>Staff adoption not started</span><strong>{{ staffAdoptionNotStarted }}</strong></a>
-        <a class="is-adoption" *ngIf="isAdmin && adoptionOnboardingIncomplete > 0" routerLink="/dashboard/staff-adoption"><mat-icon>pending_actions</mat-icon><span>Staff onboarding incomplete</span><strong>{{ adoptionOnboardingIncomplete }}</strong></a>
-        <a class="is-update" *ngIf="isAdmin && adoptionOutdatedApp > 0" routerLink="/dashboard/staff-adoption"><mat-icon>system_update</mat-icon><span>Staff app update needed</span><strong>{{ adoptionOutdatedApp }}</strong></a>
+
+    <!-- ── Today at a glance ─────────────────────────────────────────── -->
+    <section class="ad-today" *ngIf="isAdmin">
+      <div class="ad-section-heading">
+        <div>
+          <h2>Today at a glance</h2>
+          <p>The school status you need in one quick scan.</p>
+        </div>
       </div>
-      <div class="ad-attention-ok" *ngIf="!attentionLoading && !hasAdminAttention && !attentionDataFailed"><mat-icon>task_alt</mat-icon><span>Everything looks good for today.</span></div>
-      <div class="ad-attention-ok is-muted" *ngIf="!attentionLoading && attentionDataFailed"><mat-icon>info_outline</mat-icon><span>Some attention data is temporarily unavailable.</span></div>
+
+      <div class="ad-today-grid" *ngIf="stats || staffAttendance; else todayLoading">
+        <a class="ad-today-cell" routerLink="/dashboard/attendance-summary">
+          <span class="ad-today-label">Students present</span>
+          <strong *ngIf="stats && stats.todayAttendanceRate > 0">{{ stats.todayAttendanceRate | number:'1.0-1' }}%</strong>
+          <strong class="is-muted" *ngIf="stats && stats.todayAttendanceRate === 0">Not marked yet</strong>
+          <strong class="is-muted" *ngIf="!stats">—</strong>
+          <small *ngIf="stats">{{ stats.totalStudents | number }} enrolled</small>
+          <small *ngIf="!stats">Attendance unavailable</small>
+        </a>
+
+        <a class="ad-today-cell" routerLink="/dashboard/staff-attendance">
+          <span class="ad-today-label">Staff present</span>
+          <strong *ngIf="staffAttendance && stats">{{ staffCheckedInCount }} / {{ stats.totalTeachers }}</strong>
+          <strong class="is-muted" *ngIf="!staffAttendance || !stats">—</strong>
+          <small *ngIf="staffAttendance">
+            <ng-container *ngIf="notYetCheckedIn > 0">{{ notYetCheckedIn }} not checked in</ng-container>
+            <ng-container *ngIf="notYetCheckedIn > 0 && staffAttendance.lateCount > 0"> · </ng-container>
+            <ng-container *ngIf="staffAttendance.lateCount > 0">{{ staffAttendance.lateCount }} late</ng-container>
+            <ng-container *ngIf="notYetCheckedIn === 0 && staffAttendance.lateCount === 0">All expected staff accounted for</ng-container>
+          </small>
+          <small *ngIf="!staffAttendance">Staff attendance unavailable</small>
+        </a>
+
+        <div class="ad-today-cell">
+          <span class="ad-today-label">Staff on leave</span>
+          <strong>{{ staffAttendance?.onLeaveCount ?? '—' }}</strong>
+          <small>Approved leave today</small>
+        </div>
+
+        <a class="ad-today-cell" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/payment-history-admin">
+          <span class="ad-today-label">Fees this month</span>
+          <strong *ngIf="stats">₹{{ stats.feesCollectedThisMonth | number }}</strong>
+          <strong class="is-muted" *ngIf="!stats">—</strong>
+          <small *ngIf="stats">{{ stats.overdueStudents }} overdue student{{ stats.overdueStudents === 1 ? '' : 's' }}</small>
+          <small *ngIf="!stats">Fee summary unavailable</small>
+        </a>
+
+        <a class="ad-today-cell" *ngIf="!hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/view-leaves">
+          <span class="ad-today-label">Pending approvals</span>
+          <strong>{{ studentPendingLeaves + (teacherPendingLeaveCount ?? 0) }}</strong>
+          <small>Student & teacher leave requests</small>
+        </a>
+      </div>
+
+      <ng-template #todayLoading>
+        <div class="ad-today-grid" aria-busy="true" aria-label="Loading today's summary">
+          <span class="ad-today-cell ad-inline-shimmer" *ngFor="let _ of [1,2,3,4]"></span>
+        </div>
+      </ng-template>
+    </section>
+
+    <!-- ── Needs your attention ──────────────────────────────────────── -->
+    <section class="ad-attention">
+      <div class="ad-attention-head">
+        <div>
+          <h2>Needs your attention</h2>
+          <p>Only items that need an action from you.</p>
+        </div>
+        <span *ngIf="attentionLoading">Checking…</span>
+      </div>
+      <div class="ad-attention-list" *ngIf="!attentionLoading && hasAdminAttention">
+        <a class="is-urgent" *ngIf="uncoveredSubstitutionCount > 0" routerLink="/dashboard/teacher-substitutions">
+          <mat-icon>warning_amber</mat-icon><span>Periods have no substitute</span><strong>{{ uncoveredSubstitutionCount }}</strong>
+        </a>
+        <a class="is-warning" *ngIf="isAdmin && notYetCheckedIn > 0" routerLink="/dashboard/staff-attendance">
+          <mat-icon>schedule</mat-icon><span>Teachers not checked in</span><strong>{{ notYetCheckedIn }}</strong>
+        </a>
+        <a class="is-todo" *ngIf="isAdmin && (teacherPendingLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests">
+          <mat-icon>approval</mat-icon><span>Teacher leave requests</span><strong>{{ teacherPendingLeaveCount }}</strong>
+        </a>
+        <a class="is-todo" *ngIf="isAdmin && studentPendingLeaves > 0" routerLink="/dashboard/view-leaves">
+          <mat-icon>assignment_late</mat-icon><span>Student leave requests</span><strong>{{ studentPendingLeaves }}</strong>
+        </a>
+        <a class="is-low" *ngIf="isAdmin && staffAdoptionNotStarted > 0" routerLink="/dashboard/staff-adoption">
+          <mat-icon>person_off</mat-icon><span>Staff haven't started using the app</span><strong>{{ staffAdoptionNotStarted }}</strong>
+        </a>
+        <a class="is-low" *ngIf="isAdmin && adoptionOutdatedApp > 0" routerLink="/dashboard/staff-adoption">
+          <mat-icon>system_update</mat-icon><span>Staff app update needed</span><strong>{{ adoptionOutdatedApp }}</strong>
+        </a>
+      </div>
+      <div class="ad-attention-ok" *ngIf="!attentionLoading && !hasAdminAttention && !attentionDataFailed">
+        <mat-icon>task_alt</mat-icon><span>Nothing needs your attention right now.</span>
+      </div>
+      <div class="ad-attention-ok is-muted" *ngIf="!attentionLoading && attentionDataFailed">
+        <mat-icon>info_outline</mat-icon><span>Some attention data is temporarily unavailable.</span>
+      </div>
     </section>
 
     <app-on-leave-today *ngIf="isAdmin"></app-on-leave-today>
-
-    <!-- ── Stats error ──────────────────────────────────────────────── -->
-    <div class="ad-stats-error" *ngIf="isAdmin && statsFailed">
-      <span>⚠️</span>
-      <p>Could not load dashboard stats. Please refresh to try again.</p>
-    </div>
-
-    <div class="ad-inline-stats-skeleton" *ngIf="isAdmin && statsLoading" aria-busy="true" aria-label="Loading dashboard statistics">
-      <span class="ad-inline-shimmer ad-inline-stat" *ngFor="let _ of [1,2,3,4,5,6]"></span>
-    </div>
-
-    <!-- ── Stat Cards ────────────────────────────────────────────────── -->
-    <div class="ad-stats-grid" *ngIf="isAdmin && stats">
-
-      <div class="ad-stat-card" style="--c1:#0369a1;--c2:#0ea5e9">
-        <div class="ad-stat-icon">👨‍🎓</div>
-        <div class="ad-stat-info">
-          <span class="ad-stat-value">{{ stats.totalStudents }}</span>
-          <span class="ad-stat-label">Total Students</span>
-        </div>
-        <div class="ad-stat-bg">🎓</div>
-      </div>
-
-      <div class="ad-stat-card" style="--c1:#0f766e;--c2:#14b8a6">
-        <div class="ad-stat-icon">👨‍🏫</div>
-        <div class="ad-stat-info">
-          <span class="ad-stat-value">{{ stats.totalTeachers }}</span>
-          <span class="ad-stat-label">Total Teachers</span>
-        </div>
-        <div class="ad-stat-bg">🏫</div>
-      </div>
-
-      <div class="ad-stat-card" *ngIf="hasFeature('FEE_MANAGEMENT')" style="--c1:#059669;--c2:#34d399">
-        <div class="ad-stat-icon">💰</div>
-        <div class="ad-stat-info">
-          <span class="ad-stat-value ad-stat-value--sm">₹{{ stats.feesCollectedThisMonth | number }}</span>
-          <span class="ad-stat-label">Fees This Month</span>
-        </div>
-        <div class="ad-stat-bg">💳</div>
-      </div>
-
-      <div class="ad-stat-card" *ngIf="hasFeature('FEE_MANAGEMENT')" style="--c1:#dc2626;--c2:#f87171">
-        <div class="ad-stat-icon">⚠️</div>
-        <div class="ad-stat-info">
-          <span class="ad-stat-value">{{ stats.overdueStudents }}</span>
-          <span class="ad-stat-label">Overdue Students</span>
-        </div>
-        <div class="ad-stat-bg">📌</div>
-      </div>
-
-      <div class="ad-stat-card" [attr.style]="attendanceGradient">
-        <div class="ad-stat-icon">📊</div>
-        <div class="ad-stat-info">
-          <span class="ad-stat-value">{{ stats.todayAttendanceRate | number:'1.0-1' }}%</span>
-          <span class="ad-stat-label">Today's Attendance</span>
-        </div>
-        <div class="ad-stat-bg">📈</div>
-      </div>
-
-      <div class="ad-stat-card" style="--c1:#b45309;--c2:#f59e0b">
-        <div class="ad-stat-icon">📝</div>
-        <div class="ad-stat-info">
-          <span class="ad-stat-value">{{ stats.pendingLeaves }}</span>
-          <span class="ad-stat-label">Pending Leaves</span>
-        </div>
-        <div class="ad-stat-bg">📬</div>
-      </div>
-
-    </div>
-
-    <div class="ad-section ad-inline-attendance-skeleton" *ngIf="isAdmin && !staffAttendance && !staffAttendanceFailed" aria-busy="true" aria-label="Loading staff attendance">
-      <h2 class="ad-section-title">Staff Attendance Today</h2>
-      <div class="ad-staff-att-grid">
-        <span class="ad-inline-shimmer ad-inline-att-pill" *ngFor="let _ of [1,2,3,4,5,6]"></span>
-      </div>
-    </div>
-
-    <!-- ── Staff Attendance Today ───────────────────────────────────── -->
-    <div class="ad-section" *ngIf="isAdmin && staffAttendance">
-      <h2 class="ad-section-title">
-        Staff Attendance Today
-        <span class="ad-staff-att-date">{{ staffAttendance.date | date:'d MMM' }}</span>
-      </h2>
-
-      <div class="ad-staff-att-grid">
-        <div class="ad-staff-att-pill" style="--pc:#059669">
-          <span class="ad-staff-att-value">{{ staffAttendance.presentCount }}</span>
-          <span class="ad-staff-att-label">Present</span>
-        </div>
-        <div class="ad-staff-att-pill" style="--pc:#d97706">
-          <span class="ad-staff-att-value">{{ staffAttendance.lateCount }}</span>
-          <span class="ad-staff-att-label">Late</span>
-        </div>
-        <div class="ad-staff-att-pill" style="--pc:#dc2626">
-          <span class="ad-staff-att-value">{{ staffAttendance.absentCount }}</span>
-          <span class="ad-staff-att-label">Absent</span>
-        </div>
-        <div class="ad-staff-att-pill" style="--pc:#0369a1">
-          <span class="ad-staff-att-value">{{ staffAttendance.halfDayCount }}</span>
-          <span class="ad-staff-att-label">Half-Day</span>
-        </div>
-        <div class="ad-staff-att-pill" style="--pc:#0f766e">
-          <span class="ad-staff-att-value">{{ staffAttendance.onLeaveCount }}</span>
-          <span class="ad-staff-att-label">On Leave</span>
-        </div>
-        <div class="ad-staff-att-pill" style="--pc:#64748b" *ngIf="stats">
-          <span class="ad-staff-att-value">{{ notYetCheckedIn }}</span>
-          <span class="ad-staff-att-label">Not Yet Checked In</span>
-        </div>
-      </div>
-
-      <a class="ad-view-all" routerLink="/dashboard/staff-attendance">
-        View full staff attendance
-        <mat-icon>arrow_forward</mat-icon>
-      </a>
-    </div>
-
-    <div class="ad-section" *ngIf="isAdmin && staffAttendanceFailed">
-      <h2 class="ad-section-title">Staff Attendance Today</h2>
-      <div class="ad-empty-leaves">
-        <mat-icon>cloud_off</mat-icon>
-        <p>Staff attendance is temporarily unavailable.</p>
-      </div>
-      <button class="ad-view-all" type="button" style="border:0;background:transparent;cursor:pointer;width:100%" (click)="loadStaffAttendance()">Retry</button>
-    </div>
-
-    <!-- ── Pending Leave Requests ────────────────────────────────────── -->
-    <div class="ad-section" *ngIf="isAdmin">
-      <h2 class="ad-section-title">Pending Leave Requests</h2>
-
-      <div class="ad-leave-breakdown">
-        <div class="ad-leave-type-pill" style="--pc:#0369a1">
-          <div class="ad-leave-type-icon"><mat-icon>school</mat-icon></div>
-          <div class="ad-leave-type-copy">
-            <span class="ad-leave-type-value" *ngIf="!statsFailed">{{ statsLoading ? '—' : studentPendingLeaves }}</span>
-            <span class="ad-leave-type-value" *ngIf="statsFailed">—</span>
-            <span class="ad-leave-type-label" *ngIf="!statsFailed">Student{{ studentPendingLeaves === 1 ? '' : 's' }} pending</span>
-            <span class="ad-leave-type-label" *ngIf="statsFailed">Unavailable</span>
-          </div>
-          <a class="ad-leave-type-cta" routerLink="/dashboard/view-leaves"><mat-icon>arrow_forward</mat-icon></a>
-        </div>
-        <div class="ad-leave-type-pill" style="--pc:#0f766e" *ngIf="isAdmin">
-          <div class="ad-leave-type-icon"><mat-icon>groups</mat-icon></div>
-          <div class="ad-leave-type-copy">
-            <span class="ad-leave-type-value" *ngIf="!teacherPendingLeaveFailed">{{ teacherPendingLeaveLoading ? '—' : (teacherPendingLeaveCount ?? 0) }}</span>
-            <span class="ad-leave-type-value" *ngIf="teacherPendingLeaveFailed">—</span>
-            <span class="ad-leave-type-label" *ngIf="!teacherPendingLeaveFailed">Teacher{{ teacherPendingLeaveCount === 1 ? '' : 's' }} pending</span>
-            <span class="ad-leave-type-label" *ngIf="teacherPendingLeaveFailed">Unavailable</span>
-          </div>
-          <a class="ad-leave-type-cta" routerLink="/dashboard/teacher-leave-requests"><mat-icon>arrow_forward</mat-icon></a>
-        </div>
-      </div>
-
-      <div class="ad-empty-leaves" *ngIf="!studentLeavesFailed && recentLeaves.length === 0">
-        <mat-icon>check_circle_outline</mat-icon>
-        <p>No pending leave requests</p>
-      </div>
-
-      <div class="ad-empty-leaves" *ngIf="studentLeavesFailed">
-        <mat-icon>cloud_off</mat-icon>
-        <p>Unable to load leave requests right now.</p>
-        <button class="ad-view-all" type="button" style="border:0;background:transparent;cursor:pointer" (click)="loadStudentLeaves()">Retry</button>
-      </div>
-
-      <div class="ad-leave-list" *ngIf="!studentLeavesFailed && recentLeaves.length > 0">
-        <a class="ad-leave-card" routerLink="/dashboard/view-leaves"
-          *ngFor="let leave of recentLeaves">
-          <div class="ad-leave-avatar">{{ leave.studentName.charAt(0).toUpperCase() }}</div>
-          <div class="ad-leave-info">
-            <span class="ad-leave-name">{{ leave.studentName }}</span>
-            <div class="ad-leave-tags">
-              <span class="ad-leave-class-chip"><mat-icon>school</mat-icon>Class {{ leave.className }}</span>
-              <span class="ad-leave-reason" [ngClass]="reasonTagClass(leave.reason)" *ngIf="leave.reason">{{ leave.reason }}</span>
-            </div>
-          </div>
-          <div class="ad-leave-date-chip">
-            <span class="ad-leave-date-day">{{ leave.leaveDate | date:'d' }}</span>
-            <span class="ad-leave-date-month">{{ leave.leaveDate | date:'MMM' }}</span>
-          </div>
-          <mat-icon class="ad-leave-arrow">chevron_right</mat-icon>
-        </a>
-      </div>
-    </div>
-
-    <!-- ── Today's Quick Actions (compact daily subset) ─────────────── -->
-    <div class="ad-section" *ngIf="isAdmin">
-      <h2 class="ad-section-title">Today's Actions</h2>
-      <div class="ad-daily-actions-grid">
-        <a class="ad-action-card" routerLink="/dashboard/staff-attendance">
-          <div class="ad-action-icon" style="background:#e0e7ff;color:#3730a3">
-            <mat-icon>summarize</mat-icon>
-          </div>
-          <span>Staff Attendance</span>
-        </a>
-        <a class="ad-action-card" routerLink="/dashboard/view-leaves">
-          <div class="ad-action-icon" style="background:#fef3c7;color:#b45309">
-            <mat-icon>assignment_late</mat-icon>
-          </div>
-          <span>Leave Approval</span>
-        </a>
-        <a class="ad-action-card" routerLink="/dashboard/notice">
-          <div class="ad-action-icon" style="background:#fff1f2;color:#be123c">
-            <mat-icon>campaign</mat-icon>
-          </div>
-          <span>Send Notice</span>
-        </a>
-      </div>
-    </div>
 
     <!-- ── Upcoming Event ────────────────────────────────────────────── -->
     <div class="ad-section">
@@ -427,7 +300,7 @@
           </div>
           <span>Leaves</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('PAYMENT_COLLECTION')" routerLink="/dashboard/payment-history-admin">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('ONLINE_PAYMENTS')" routerLink="/dashboard/payment-history-admin">
           <div class="ad-action-icon" style="background:#ede9fe;color:#7c3aed">
             <mat-icon>payments</mat-icon>
           </div>
@@ -487,25 +360,25 @@
           </div>
           <span>Promotion</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/setup">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/setup">
           <div class="ad-action-icon" style="background:#ede9fe;color:#4338ca">
             <mat-icon>tune</mat-icon>
           </div>
           <span>Report Card Setup</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/remarks">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/remarks">
           <div class="ad-action-icon" style="background:#f5f3ff;color:#7c3aed">
             <mat-icon>edit_note</mat-icon>
           </div>
           <span>Remarks</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/generate">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/generate">
           <div class="ad-action-icon" style="background:#fdf2f8;color:#be185d">
             <mat-icon>preview</mat-icon>
           </div>
           <span>Generate &amp; Preview</span>
         </a>
-        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-cards-v2/design">
+        <a class="ad-action-card" *ngIf="isAdmin && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/design">
           <div class="ad-action-icon" style="background:#e0f2fe;color:#0369a1">
             <mat-icon>palette</mat-icon>
           </div>
@@ -523,5 +396,10 @@
 
       </div>
     </div>
+
+
+    <section class="ad-thought" *ngIf="hasFeature('THOUGHT_OF_THE_DAY')">
+      <app-wisdom-cards></app-wisdom-cards>
+    </section>
 
 </div>
