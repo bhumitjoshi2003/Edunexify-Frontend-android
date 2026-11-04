@@ -190,8 +190,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.staffAdoptionLoading = true;
     this.staffAdoptionError = false;
     this.staffAdoptionService.getStaffAdoption().pipe(takeUntil(this.destroy$)).subscribe({
-      next: response => { this.staffAdoption = response.summary; this.staffAdoptionLoading = false; this.cdr.markForCheck(); },
-      error: e => { this.logger.error('Staff adoption load error:', e); this.staffAdoptionLoading = false; this.staffAdoptionError = true; this.cdr.markForCheck(); }
+      next: response => { this.staffAdoption = response.summary; this.staffAdoptionLoading = false; this.settleInitialLoad('staff-adoption'); this.cdr.markForCheck(); },
+      error: e => { this.logger.error('Staff adoption load error:', e); this.staffAdoptionLoading = false; this.staffAdoptionError = true; this.settleInitialLoad('staff-adoption'); this.cdr.markForCheck(); }
     });
   }
 
