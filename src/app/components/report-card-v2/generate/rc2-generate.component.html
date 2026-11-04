@@ -5,7 +5,10 @@
     <div class="rc2-hero-icon" aria-hidden="true">📄</div>
     <div class="rc2-hero-text">
       <h1 class="rc2-hero-title">Generate &amp; Preview</h1>
-      <p class="rc2-hero-sub">Live data: check the class and preview each student's report card as it stands now. Previews are not official — issue the official copies from <a routerLink="/dashboard/bulk-report-cards" *ngIf="isAdmin; else pubText">Published Report Cards</a><ng-template #pubText>Published Report Cards (administrator)</ng-template>.</p>
+      <p class="rc2-hero-sub">
+        <span class="rc2-hero-sub-desktop">Review live report cards before publishing official copies.</span>
+        <span class="rc2-hero-sub-mobile">Preview report cards before publishing.</span>
+      </p>
     </div>
   </div>
 
