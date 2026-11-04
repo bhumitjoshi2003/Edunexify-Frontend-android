@@ -34,6 +34,7 @@ import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.componen
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private initialLoadsPending = new Set<string>();
 
   adminName = '';
   isLoading = true;
@@ -97,9 +98,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.isLoading = false;
   }
 
+  private beginInitialLoad(keys: string[]): void {
+    this.initialLoadsPending = new Set(keys);
+    this.isLoading = this.initialLoadsPending.size > 0;
+  }
+
+  private settleInitialLoad(key: string): void {
+    if (!this.initialLoadsPending.delete(key)) return;
+    if (this.initialLoadsPending.size === 0) {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
   loadUncoveredSubstitutions(): void {
     if (!this.substitutionService) {
       this.substitutionsLoading = false;
+      this.settleInitialLoad('substitutions');
       return;
     }
     this.substitutionsLoading = true;
@@ -110,12 +125,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       next: periods => {
         this.uncoveredSubstitutionCount = periods.filter(period => !period.assignment).length;
         this.substitutionsLoading = false;
+        this.settleInitialLoad('substitutions');
         this.cdr.markForCheck();
       },
       error: error => {
         this.logger.error('Uncovered substitutions load error:', error);
         this.substitutionsLoading = false;
         this.substitutionsFailed = true;
+        this.settleInitialLoad('substitutions');
         this.cdr.markForCheck();
       },
     });
@@ -183,12 +200,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: response => {
           this.teacherPendingLeaveCount = response.totalElements;
           this.teacherPendingLeaveLoading = false;
+          this.settleInitialLoad('teacher-leaves');
           this.cdr.markForCheck();
         },
         error: e => {
           this.logger.error('Teacher pending leave count load error:', e);
           this.teacherPendingLeaveLoading = false;
           this.teacherPendingLeaveFailed = true;
+          this.settleInitialLoad('teacher-leaves');
           this.cdr.markForCheck();
         }
       });
@@ -210,6 +229,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           if (nearest) {
             this.upcomingEvent = nearest;
             this.upcomingEventLoading = false;
+            this.settleInitialLoad('upcoming-event');
             this.cdr.markForCheck();
             return;
           }
@@ -219,6 +239,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.logger.error('Upcoming event load error:', e);
           this.upcomingEventLoading = false;
           this.upcomingEventFailed = true;
+          this.settleInitialLoad('upcoming-event');
           this.cdr.markForCheck();
         }
       });
@@ -232,12 +253,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: events => {
           this.upcomingEvent = pickNearestUpcomingEvent(events, now);
           this.upcomingEventLoading = false;
+          this.settleInitialLoad('upcoming-event');
           this.cdr.markForCheck();
         },
         error: e => {
           this.logger.error('Next-month event load error:', e);
           this.upcomingEventLoading = false;
           this.upcomingEventFailed = true;
+          this.settleInitialLoad('upcoming-event');
           this.cdr.markForCheck();
         }
       });
@@ -252,11 +275,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       next: stats => {
         this.stats = { ...stats, feesCollectedThisMonth: stats.feesCollectedThisMonth / 100 };
         this.statsLoading = false;
+        this.settleInitialLoad('stats');
         this.cdr.markForCheck();
       },
       error: e => {
         this.statsFailed = true;
         this.statsLoading = false;
+        this.settleInitialLoad('stats');
         this.logger.error('Dashboard stats load error:', e);
         this.cdr.markForCheck();
       }
@@ -266,24 +291,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   loadStudentLeaves(): void {
     this.studentLeavesFailed = false;
     this.leaveService.getLeavesPaginated(0, 10).pipe(takeUntil(this.destroy$)).subscribe({
-      next: page => { this.recentLeaves = page.content.filter(l => l.status === 'PENDING').slice(0, 5); this.cdr.markForCheck(); },
-      error: e => { this.studentLeavesFailed = true; this.logger.error('Student leave preview load error:', e); this.cdr.markForCheck(); }
+      next: page => { this.recentLeaves = page.content.filter(l => l.status === 'PENDING').slice(0, 5); this.settleInitialLoad('student-leaves'); this.cdr.markForCheck(); },
+      error: e => { this.studentLeavesFailed = true; this.settleInitialLoad('student-leaves'); this.logger.error('Student leave preview load error:', e); this.cdr.markForCheck(); }
     });
   }
 
   loadEntitlement(): void {
     this.entitlementFailed = false;
     this.schoolService.getEntitlement().pipe(takeUntil(this.destroy$)).subscribe({
-      next: entitlement => { this.entitlement = entitlement; this.cdr.markForCheck(); },
-      error: e => { this.entitlementFailed = true; this.logger.error('Plan entitlement load error:', e); this.cdr.markForCheck(); }
+      next: entitlement => { this.entitlement = entitlement; this.settleInitialLoad('entitlement'); this.cdr.markForCheck(); },
+      error: e => { this.entitlementFailed = true; this.settleInitialLoad('entitlement'); this.logger.error('Plan entitlement load error:', e); this.cdr.markForCheck(); }
     });
   }
 
   loadStaffAttendance(): void {
     this.staffAttendanceFailed = false;
     this.teacherCheckinService.getTodaySummary().pipe(takeUntil(this.destroy$)).subscribe({
-      next: attendance => { this.staffAttendance = attendance; this.cdr.markForCheck(); },
-      error: e => { this.staffAttendanceFailed = true; this.logger.error('Staff attendance summary load error:', e); this.cdr.markForCheck(); }
+      next: attendance => { this.staffAttendance = attendance; this.settleInitialLoad('staff-attendance'); this.cdr.markForCheck(); },
+      error: e => { this.staffAttendanceFailed = true; this.settleInitialLoad('staff-attendance'); this.logger.error('Staff attendance summary load error:', e); this.cdr.markForCheck(); }
     });
   }
 
