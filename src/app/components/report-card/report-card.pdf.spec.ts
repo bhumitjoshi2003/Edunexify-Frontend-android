@@ -86,7 +86,7 @@ describe('ReportCardComponent — backend PDF only', () => {
     configure({ studentId: 'S1', session: '2026-2027', examId: '7' });
     rc.downloadResultsPdf.and.returnValue(of(pdf()));
 
-    (el().querySelector('.rc-btn-print') as HTMLButtonElement).click();
+    (el().querySelector('.rc-action-preview') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(rc.downloadResultsPdf).toHaveBeenCalledWith('S1', '2026-2027', 7, null);
@@ -184,8 +184,7 @@ describe('ReportCardComponent — backend PDF only', () => {
 
   it('the static sample has no PDF actions', () => {
     configure({ demo: 'true' });
-    expect(el().querySelector('.rc-btn-print')).toBeNull();
-    expect(el().querySelector('.rc-btn-pdf')).toBeNull();
+    expect(el().querySelector('.rc-action-btn')).toBeNull();
   });
 });
 
@@ -226,7 +225,7 @@ describe('ReportCardComponent — Android PDF delivery', () => {
     fixture.detectChanges();
   });
 
-  it('Preview & Print in the app fetches the backend PDF and shares it — no preview page, no window.print', async () => {
+  it('Preview in the app fetches the backend PDF and opens the Android document chooser', async () => {
     const { Capacitor } = await import('@capacitor/core');
     spyOn(Capacitor, 'isNativePlatform').and.returnValue(true);
     const printSpy = spyOn(window, 'print');
@@ -234,22 +233,44 @@ describe('ReportCardComponent — Android PDF delivery', () => {
     const blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
     rc.downloadResultsPdf.and.returnValue(of(blob));
 
-    component.print();
+    component.previewPdf();
     await new Promise(r => setTimeout(r));
 
     expect(rc.downloadResultsPdf).toHaveBeenCalledWith('S1', '2026-2027', 7, null);
-    expect(share).toHaveBeenCalledWith(blob);
+    expect(share).toHaveBeenCalledWith(blob, 'preview');
     expect(component.pdfPreviewUrl).toBeNull();
     expect(printSpy).not.toHaveBeenCalled();
   });
 
-  it('Download in the app uses the same share flow', async () => {
+  it('Print in the app fetches the backend PDF and opens Android printing options', async () => {
     const { Capacitor } = await import('@capacitor/core');
     spyOn(Capacitor, 'isNativePlatform').and.returnValue(true);
     const share = spyOn<any>(component, 'sharePdf').and.resolveTo();
-    rc.downloadResultsPdf.and.returnValue(of(new Blob(['%PDF'])));
+    const blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
+    rc.downloadResultsPdf.and.returnValue(of(blob));
+
+    component.printPdf();
+    await new Promise(r => setTimeout(r));
+
+    expect(share).toHaveBeenCalledWith(blob, 'print');
+  });
+
+  it('Download in the app saves the PDF instead of routing through the share sheet', async () => {
+    const { Capacitor } = await import('@capacitor/core');
+    spyOn(Capacitor, 'isNativePlatform').and.returnValue(true);
+    const save = spyOn<any>(component, 'saveNativePdf').and.resolveTo();
+    const share = spyOn<any>(component, 'sharePdf').and.resolveTo();
+    const blob = new Blob(['%PDF'], { type: 'application/pdf' });
+    rc.downloadResultsPdf.and.returnValue(of(blob));
+
     component.downloadPdf();
     await new Promise(r => setTimeout(r));
-    expect(share).toHaveBeenCalled();
+
+    expect(save).toHaveBeenCalledWith(blob);
+    expect(share).not.toHaveBeenCalled();
+  });
+
+  it('does not render the old Back action in the report-card toolbar', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('.rc-btn-back')).toBeNull();
   });
 });

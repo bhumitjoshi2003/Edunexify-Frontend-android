@@ -104,42 +104,95 @@
   margin: 0;
 }
 
-.tc-checkin-btn {
-  width: 140px;
-  height: 140px;
+.tc-checkin-orbit {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.tc-checkin-wave {
+  position: absolute;
+  inset: 10px;
   border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  border: 2px solid rgba(20, 184, 166, 0.28);
+  pointer-events: none;
+  z-index: 0;
+  animation: tc-checkin-wave 2.4s ease-out infinite;
+}
+
+.tc-wave-2 { animation-delay: 1.2s; }
+
+.tc-checkin-btn {
+  position: relative;
+  z-index: 2;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: linear-gradient(145deg, #0f766e 0%, #14b8a6 100%);
   color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 8px 30px rgba(15, 118, 110, 0.35);
+  gap: 3px;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.24);
   font-family: inherit;
-}
-.tc-checkin-btn:active { transform: scale(0.96); }
-.tc-checkin-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.tc-btn-icon { font-size: 2rem; }
-
-.tc-btn-pulse {
-  animation: pulse-ring 2s ease-out infinite;
-}
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.4); }
-  70% { box-shadow: 0 0 0 20px rgba(15, 118, 110, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
-.tc-gps-note {
-  font-size: 0.72rem;
-  color: #94a3b8;
-  margin: 0;
+.tc-checkin-btn:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 13px 28px rgba(15, 118, 110, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.tc-checkin-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.tc-checkin-btn:disabled {
+  cursor: wait;
+  opacity: 0.8;
+  filter: saturate(0.75);
+}
+
+.tc-btn-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.tc-btn-label {
+  font-size: 0.76rem;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.tc-checkin-orbit-loading .tc-checkin-wave {
+  animation-duration: 1.4s;
+}
+
+@keyframes tc-checkin-wave {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-checkin-wave { animation: none; opacity: 0.2; }
+  .tc-checkin-btn { transition: none; }
 }
 
 .tc-checkout-btn {
@@ -403,4 +456,46 @@
   color: #075985;
   font-size: 0.82rem;
   line-height: 1.5;
+}
+
+/* Mobile hero collision guard */
+@media (max-width: 640px) {
+  .tc-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 14px;
+    gap: 8px;
+  }
+  .tc-hero-left { gap: 9px; min-width: 0; }
+  .tc-hero-icon { width: 38px; height: 38px; font-size: 1.25rem; border-radius: 10px; }
+  .tc-hero-text { min-width: 0; }
+  .tc-hero-text h1 {
+    font-size: 0.98rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tc-hero-text p {
+    margin-top: 3px;
+    font-size: 0.66rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tc-hero-clock-wrap {
+    min-width: 76px;
+    padding: 7px 9px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .tc-hero-clock { font-size: 0.92rem; letter-spacing: 0; }
+}
+
+@media (max-width: 390px) {
+  .tc-hero-icon { display: none; }
+  .tc-hero-left { gap: 0; }
+  .tc-hero-clock-wrap { min-width: 70px; padding: 6px 8px; }
 }

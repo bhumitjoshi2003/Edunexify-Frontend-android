@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { SUPPORT_TICKET_CATEGORIES, SupportTicketCategory } from '../../interfaces/support-ticket';
 import { SupportTicketService } from '../../services/support-ticket.service';
 import { ToastService } from '../../services/toast.service';
@@ -23,8 +24,8 @@ export class ReportSupportTicketComponent implements OnInit {
   category: SupportTicketCategory | '' = '';
   title = '';
   description = '';
-  selectedFile: File | null = null;
-  imagePreviewUrl: string | ArrayBuffer | null = null;
+  selectedFiles: File[] = [];
+  imagePreviewUrls: (string | ArrayBuffer | null)[] = [];
   submitting = false;
   appVersion: string | null = null;
 
@@ -46,31 +47,51 @@ export class ReportSupportTicketComponent implements OnInit {
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (!input.files || !input.files.length) return;
-    const file = input.files[0];
+    const picked = Array.from(input.files ?? []);
+    if (!picked.length) return;
 
     const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      this.toast.error('File too large', 'Screenshots must be less than 5MB.');
-      input.value = '';
-      return;
-    }
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      this.toast.error('Invalid file', 'Only JPG, PNG, or WebP images are supported.');
+    const combined = [...this.selectedFiles, ...picked];
+
+    if (combined.length > 5) {
+      this.toast.warning('Too many screenshots', 'You can attach up to 5 screenshots.');
       input.value = '';
       return;
     }
 
-    this.selectedFile = file;
-    const reader = new FileReader();
-    reader.onload = () => { this.imagePreviewUrl = reader.result; this.cdr.markForCheck(); };
-    reader.readAsDataURL(file);
+    for (const file of picked) {
+      if (file.size > maxSize) {
+        this.toast.error('File too large', 'Each screenshot must be less than 5MB.');
+        input.value = '';
+        return;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        this.toast.error('Invalid file', 'Only JPG, PNG, or WebP images are supported.');
+        input.value = '';
+        return;
+      }
+    }
+
+    this.selectedFiles = combined;
+    picked.forEach(file => {
+      const index = this.imagePreviewUrls.length;
+      this.imagePreviewUrls.push(null);
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrls[index] = reader.result;
+        this.cdr.markForCheck();
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+    this.cdr.markForCheck();
   }
 
-  removeScreenshot(): void {
-    this.selectedFile = null;
-    this.imagePreviewUrl = null;
+  removeScreenshot(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter((_, i) => i !== index);
+    this.imagePreviewUrls = this.imagePreviewUrls.filter((_, i) => i !== index);
+    this.cdr.markForCheck();
   }
 
   submit(): void {
@@ -86,28 +107,29 @@ export class ReportSupportTicketComponent implements OnInit {
     this.submitting = true;
     this.cdr.markForCheck();
 
-    if (this.selectedFile) {
-      this.supportTicketService.uploadScreenshotDirect(this.selectedFile).subscribe({
-        next: uploaded => this.createTicket(uploaded.objectKey),
+    if (this.selectedFiles.length) {
+      forkJoin(this.selectedFiles.map(file => this.supportTicketService.uploadScreenshotDirect(file))).subscribe({
+        next: uploaded => this.createTicket(uploaded.map(item => item.objectKey)),
         error: error => {
           this.logger.error('Screenshot upload failed:', error);
           this.submitting = false;
-          this.toast.error('Unable to upload screenshot', this.errorMessage(error));
+          this.toast.error('Unable to upload screenshots', this.errorMessage(error));
           this.cdr.markForCheck();
         },
       });
     } else {
-      this.createTicket(null);
+      this.createTicket([]);
     }
   }
 
-  private createTicket(screenshotObjectKey: string | null): void {
+  private createTicket(screenshotObjectKeys: string[]): void {
     const route = this.router.url.split('?')[0];
     this.supportTicketService.createTicket({
       category: this.category as SupportTicketCategory,
       title: this.title.trim(),
       description: this.description.trim(),
-      screenshotObjectKey,
+      screenshotObjectKey: screenshotObjectKeys[0] ?? null,
+      screenshotObjectKeys,
       route,
       platform: 'ANDROID',
       appVersion: this.appVersion,

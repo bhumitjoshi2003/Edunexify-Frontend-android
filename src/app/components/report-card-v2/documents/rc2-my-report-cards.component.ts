@@ -5,6 +5,9 @@ import { Subject, takeUntil } from 'rxjs';
 import { ReportCardDocument, ReportCardV2Service } from '../../../services/report-card-v2.service';
 import { AcademicSessionService } from '../../../services/academic-session.service';
 import { ToastService } from '../../../services/toast.service';
+import { AuthStateService } from '../../../auth/auth-state.service';
+import { ChildAccess } from '../../../interfaces/parent-portal';
+import { ParentChildContextComponent } from '../../parent-child-context/parent-child-context.component';
 
 /**
  * A student's (or, with ?studentId, a parent's linked child's) published report cards: only the
@@ -13,10 +16,11 @@ import { ToastService } from '../../../services/toast.service';
 @Component({
   selector: 'app-rc2-my-report-cards',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ParentChildContextComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['../rc2-shared.css'],
   styles: [`
+    app-parent-child-context { display: block; margin-bottom: -14px; }
     .mrc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
     .mrc-item { display: flex; flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--edu-border, #e2e8f0); border-radius: 14px;
       background: #fff; color: inherit; text-decoration: none; transition: border-color 0.15s, box-shadow 0.15s; }
@@ -29,6 +33,8 @@ import { ToastService } from '../../../services/toast.service';
   `],
   template: `
     <div class="rc2-page">
+      <app-parent-child-context *ngIf="studentId" [studentId]="studentId" requiredPermission="canViewResults"
+        (childSelected)="onChildSelected($event)"></app-parent-child-context>
       <div class="rc2-hero">
         <div class="rc2-blob rc2-blob-1"></div>
         <div class="rc2-blob rc2-blob-2"></div>
@@ -86,6 +92,7 @@ export class Rc2MyReportCardsComponent implements OnInit, OnDestroy {
     private api: ReportCardV2Service,
     private sessions: AcademicSessionService,
     private toast: ToastService,
+    private authState: AuthStateService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -114,11 +121,30 @@ export class Rc2MyReportCardsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** The earlier (pre-V2) report card page, which needs a session. */
+  /** A parent switching child: reload the list for that child through the query parameter. */
+  onChildSelected(child: ChildAccess): void {
+    if (!child.canViewResults) {
+      this.toast.error('Results access unavailable', 'Please contact the school administrator.');
+      return;
+    }
+    this.router.navigate([], { relativeTo: this.route, queryParams: { studentId: child.studentId }, replaceUrl: true });
+  }
+
+  /** Open the legacy report-card page for the currently selected child/student. */
   openOlder(): void {
+    const studentId = this.studentId
+      || (this.authState.getUserRole() === 'STUDENT' ? this.authState.getUserId() : null)
+      || this.documents[0]?.studentId
+      || null;
+
+    if (!studentId) {
+      this.toast.error('Could not open earlier report cards', 'Please choose a student first.');
+      return;
+    }
+
     this.sessions.getCurrentSession().pipe(takeUntil(this.destroy$)).subscribe({
       next: session => this.router.navigate(['/dashboard/report-card'], {
-        queryParams: { ...(this.studentId ? { studentId: this.studentId } : {}), session: session.label },
+        queryParams: { studentId, session: session.label },
       }),
       error: () => this.toast.error('Could not open earlier report cards', 'No active academic session found.'),
     });

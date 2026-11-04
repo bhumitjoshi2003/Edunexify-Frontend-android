@@ -136,6 +136,7 @@
   white-space: nowrap;
 }
 .nb-mark-all-btn:hover { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.7); }
+.nb-mark-all-mobile { display: none; }
 
 .nb-hero-wave {
   position: absolute;
@@ -729,19 +730,70 @@
 
 @media (max-width: 640px) {
   .nb-hero {
-    padding: 20px 18px 34px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 9px 11px;
+    min-height: 56px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 7px;
+    border-radius: 14px;
   }
-  .nb-hero-left { gap: 12px; }
-  .nb-hero-icon-wrap { width: 44px; height: 44px; font-size: 1.4rem; }
-  .nb-hero-title { font-size: 1.25rem; }
-  .nb-hero-sub { font-size: 0.8rem; }
-  .nb-hero-right { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
-  .nb-hero-stats { gap: 8px; }
-  .nb-hero-stat { padding: 8px 14px; }
-  .nb-mark-all-btn { padding: 9px 18px; font-size: 0.8rem; }
+  .nb-hero-left {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+  .nb-hero-left > div:last-child { min-width: 0; }
+  .nb-hero-icon-wrap {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    font-size: 1.05rem;
+  }
+  .nb-hero-title {
+    font-size: 0.95rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .nb-hero-sub { display: none; }
+
+  .nb-hero-right {
+    width: auto;
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .nb-hero-stats { gap: 4px; }
+  .nb-hero-stat {
+    min-width: 32px;
+    padding: 5px 7px;
+    border-radius: 8px;
+  }
+  .nb-hero-stat-num {
+    display: inline;
+    font-size: 0.86rem;
+    line-height: 1;
+  }
+  .nb-hero-stat-lbl { display: none; }
+
+  .nb-mark-all-btn {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    border-width: 1px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+  }
+  .nb-mark-all-desktop { display: none; }
+  .nb-mark-all-mobile { display: inline; }
+  .nb-hero-wave { height: 20px; opacity: 0.5; }
+
   .nb-cards-grid { grid-template-columns: 1fr; gap: 14px; }
   .nb-card-inner { padding: 14px 16px 16px; }
   .nb-admin-hero { padding: 14px 16px; }
@@ -749,6 +801,11 @@
   .nb-compose-card, .nb-list-card { padding: 18px 14px; }
   .nb-ani-top { flex-direction: column; gap: 8px; }
   .nb-ani-actions { width: 100%; justify-content: flex-end; }
+}
+
+@media (max-width: 390px) {
+  .nb-hero-stat { min-width: 30px; padding: 5px 6px; }
+  .nb-mark-all-btn { width: 29px; height: 29px; }
 }
 
 /* ── Load More ───────────────────────────────────────────────────── */
@@ -838,4 +895,31 @@
 @keyframes nb-shimmer { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) {
   .nb-shimmer::after { animation: none; display: none; }
+}
+
+/* Match Holiday Calendar hero dimensions on phone screens. */
+@media (max-width: 480px) {
+  .nb-hero {
+    min-height: 0;
+    padding: 18px 16px 22px;
+    border-radius: 20px;
+    gap: 12px;
+  }
+  .nb-hero-left { gap: 16px; }
+  .nb-hero-icon-wrap {
+    display: flex;
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    font-size: 1.6rem;
+  }
+  .nb-hero-title {
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+  .nb-hero-sub {
+    display: block;
+    margin: 3px 0 0;
+    font-size: 0.78rem;
+  }
 }

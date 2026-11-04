@@ -34,7 +34,7 @@ export const routes: Routes = [
       {
         path: 'notifications',
         loadComponent: () => import('./components/notification-center/notification-center.component').then(m => m.NotificationCenterComponent),
-        canActivate: [roleGuard], data: { roles: ['STUDENT', 'TEACHER', 'ADMIN', 'SUB_ADMIN', 'PARENT'] }
+        canActivate: [roleGuard], data: { roles: ['STUDENT', 'TEACHER', 'ADMIN', 'SUB_ADMIN', 'PARENT', 'SUPER_ADMIN'] }
       },
       // ── Student routes ────────────────────────────────────────────────
       {

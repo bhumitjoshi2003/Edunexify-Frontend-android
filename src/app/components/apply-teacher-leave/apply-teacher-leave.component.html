@@ -36,7 +36,7 @@
           <label class="al-label">Start Date</label>
           <div class="al-input-wrap">
             <span class="al-input-icon">📅</span>
-            <input type="date" formControlName="startDate" class="al-input" [min]="today" (change)="check()" />
+            <input type="date" formControlName="startDate" class="al-input" [min]="today" (change)="onFieldChange()" />
           </div>
         </div>
         <div class="al-field">
@@ -44,7 +44,7 @@
           <div class="al-input-wrap">
             <span class="al-input-icon">📅</span>
             <input type="date" formControlName="endDate" class="al-input"
-              [min]="leaveForm.get('startDate')?.value || today" (change)="check()" />
+              [min]="leaveForm.get('startDate')?.value || today" (change)="onFieldChange()" />
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@
         <label class="al-label">Reason <span class="al-label-hint">(max 200 chars)</span></label>
         <textarea formControlName="reason" class="al-textarea"
           rows="3" maxlength="200"
-          placeholder="Describe your reason…"></textarea>
+          placeholder="Describe your reason…" (input)="onFieldChange()"></textarea>
       </div>
 
       <button type="submit" class="al-submit-btn" [disabled]="!calendarReady || isSubmitting">

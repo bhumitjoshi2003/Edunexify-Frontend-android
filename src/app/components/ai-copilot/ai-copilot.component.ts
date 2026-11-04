@@ -69,6 +69,7 @@ export interface ChatMessage {
 })
 export class AiCopilotComponent implements OnInit, OnDestroy, AfterViewChecked {
   private destroy$ = new Subject<void>();
+  private readonly visualViewportHandler = () => this.syncVisualViewport();
   private shouldScroll = false;
   private lastUserMessage = '';
   private currentRequest?: Subscription;
@@ -100,6 +101,10 @@ export class AiCopilotComponent implements OnInit, OnDestroy, AfterViewChecked {
   ) {}
 
   ngOnInit(): void {
+    window.visualViewport?.addEventListener('resize', this.visualViewportHandler);
+    window.visualViewport?.addEventListener('scroll', this.visualViewportHandler);
+    this.syncVisualViewport();
+
     if (!localStorage.getItem('edu_copilot_seen')) {
       this.showNewBadge = true;
       this.showPulse    = true;
@@ -107,6 +112,10 @@ export class AiCopilotComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    window.visualViewport?.removeEventListener('resize', this.visualViewportHandler);
+    window.visualViewport?.removeEventListener('scroll', this.visualViewportHandler);
+    document.documentElement.style.removeProperty('--cp-viewport-top');
+    document.documentElement.style.removeProperty('--cp-viewport-height');
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -207,6 +216,7 @@ export class AiCopilotComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   open(): void {
+    this.syncVisualViewport();
     this.isOpen       = true;
     this.showNewBadge = false;
     this.showPulse    = false;
@@ -231,10 +241,36 @@ export class AiCopilotComponent implements OnInit, OnDestroy, AfterViewChecked {
   // ── Input handlers ─────────────────────────────────────────────────────────
 
   onKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key !== 'Enter' || event.isComposing) return;
+
+    // Phones/tablets do not have a practical Shift+Enter gesture. On narrow mobile
+    // layouts, Enter must therefore remain the textarea's normal newline key; users
+    // send explicitly with the arrow button. Desktop keeps the familiar chat behavior.
+    if (this.isMobileComposer()) return;
+
+    if (!event.shiftKey) {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  private isMobileComposer(): boolean {
+    return window.matchMedia?.('(max-width: 720px)').matches ?? window.innerWidth <= 720;
+  }
+
+  /** Keep the full-screen mobile Copilot attached to the *visible* viewport. Mobile browsers
+   * can pan the visual viewport when the keyboard opens; without compensating for offsetTop,
+   * the fixed header can move above the visible screen even though the panel itself is fixed. */
+  private syncVisualViewport(): void {
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+    if (!viewport || !this.isMobileComposer()) {
+      root.style.removeProperty('--cp-viewport-top');
+      root.style.removeProperty('--cp-viewport-height');
+      return;
+    }
+    root.style.setProperty('--cp-viewport-top', `${viewport.offsetTop}px`);
+    root.style.setProperty('--cp-viewport-height', `${viewport.height}px`);
   }
 
   onInput(event: Event): void {

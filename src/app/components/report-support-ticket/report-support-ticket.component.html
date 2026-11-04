@@ -34,23 +34,22 @@
       </label>
 
       <div class="rst-field">
-        <span>Screenshot <small>(optional)</small></span>
-        <input #fileInput type="file" accept="image/jpeg,image/png,image/webp" (change)="onFileSelected($event)" id="rst-file" hidden />
+        <span>Screenshots <small>(optional · up to 5)</small></span>
+        <input #fileInput type="file" multiple accept="image/jpeg,image/png,image/webp"
+          (change)="onFileSelected($event)" id="rst-file" hidden />
 
-        <label for="rst-file" class="rst-dropzone" *ngIf="!imagePreviewUrl">
+        <label for="rst-file" class="rst-dropzone" *ngIf="selectedFiles.length < 5">
           <mat-icon>add_photo_alternate</mat-icon>
-          <strong>Attach screenshot</strong>
-          <small>PNG, JPG or WebP · Max 5 MB</small>
+          <strong>{{ selectedFiles.length ? 'Add more screenshots' : 'Attach screenshots' }}</strong>
+          <small>PNG, JPG or WebP · Max 5 MB each</small>
         </label>
 
-        <div class="rst-preview" *ngIf="imagePreviewUrl">
-          <img [src]="imagePreviewUrl" alt="Screenshot preview" />
-          <div class="rst-preview-info">
-            <span class="rst-preview-name">{{ selectedFile?.name }}</span>
-            <div class="rst-preview-actions">
-              <label for="rst-file" class="rst-link-btn">Replace</label>
-              <button type="button" class="rst-link-btn rst-link-btn--danger"
-                (click)="removeScreenshot(); fileInput.value = ''">Remove</button>
+        <div class="rst-preview-list" *ngIf="selectedFiles.length">
+          <div class="rst-preview" *ngFor="let file of selectedFiles; let i = index">
+            <img *ngIf="imagePreviewUrls[i]" [src]="imagePreviewUrls[i]" [alt]="'Screenshot preview ' + (i + 1)" />
+            <div class="rst-preview-info">
+              <span class="rst-preview-name">{{ file.name }}</span>
+              <button type="button" class="rst-link-btn rst-link-btn--danger" (click)="removeScreenshot(i)">Remove</button>
             </div>
           </div>
         </div>
