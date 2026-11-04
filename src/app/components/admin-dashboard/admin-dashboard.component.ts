@@ -167,9 +167,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   get hasAdminAttention(): boolean {
     return this.uncoveredSubstitutionCount > 0 || (this.isAdmin && (
-      this.notYetCheckedIn > 0 || (this.staffAttendance?.onLeaveCount ?? 0) > 0
-      || (this.teacherPendingLeaveCount ?? 0) > 0 || this.studentPendingLeaves > 0
-      || this.staffAdoptionNotStarted > 0 || this.adoptionOnboardingIncomplete > 0 || this.adoptionOutdatedApp > 0
+      this.notYetCheckedIn > 0
+      || (this.teacherPendingLeaveCount ?? 0) > 0
+      || this.studentPendingLeaves > 0
+      || this.staffAdoptionNotStarted > 0
+      || this.adoptionOutdatedApp > 0
     ));
   }
 
@@ -426,10 +428,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
    *  safe, already-available client-side computation — never labelled "Absent". Clamped to 0
    *  defensively since stats and staffAttendance are fetched independently in the same forkJoin. */
   get notYetCheckedIn(): number {
-    if (!this.stats || !this.staffAttendance) return 0;
-    const accounted = this.staffAttendance.presentCount + this.staffAttendance.lateCount
-      + this.staffAttendance.absentCount + this.staffAttendance.halfDayCount + this.staffAttendance.onLeaveCount;
-    return Math.max(0, this.stats.totalTeachers - accounted);
+    return this.staffAttendance?.notCheckedInCount ?? 0;
+  }
+
+  get staffCheckedInCount(): number {
+    if (!this.staffAttendance) return 0;
+    return this.staffAttendance.presentCount + this.staffAttendance.lateCount + this.staffAttendance.halfDayCount;
   }
 
   hasFeature(featureKey: string): boolean {
