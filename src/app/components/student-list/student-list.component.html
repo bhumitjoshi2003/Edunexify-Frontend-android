@@ -21,6 +21,7 @@
   <!-- ── Class Chips (Admin only) ──────────────────────────────────── -->
   <div class="sl-chips-wrap" *ngIf="loggedInUserRole === 'ADMIN'">
     <div class="sl-chips">
+      <span class="section-label">Class</span>
       <button *ngFor="let c of classList; trackBy: trackByClass"
         class="sl-chip" [class.sl-chip-active]="selectedClass === c"
         (click)="onClassSelect(c)">{{ c }}</button>
