@@ -1,6 +1,6 @@
 <p class="tc-error" role="alert" *ngIf="error">{{ error }}</p>
 
-<h4 class="tc-mgmt-heading">Timetable Management</h4>
+<h4 class="tc-mgmt-heading">Setup tools</h4>
 
 <!-- ═══════════════════════════════════════════════════════════════
      Copy Teaching Configuration — advanced/occasional action, collapsed by default
@@ -9,7 +9,7 @@
   <button type="button" class="tc-section-header" (click)="toggleSection('copy')" [attr.aria-expanded]="expanded.copy">
     <span class="tc-section-icon tc-icon-indigo">⇄</span>
     <span class="tc-section-heading">
-      <span class="tc-section-title">Copy Configuration</span>
+      <span class="tc-section-title">Copy from another session</span>
       <span class="tc-section-sub" *ngIf="sourceId && targetId">{{ sessionLabel(sourceId) }} → {{ sessionLabel(targetId) }}</span>
     </span>
     <span class="tc-chevron" [class.tc-chevron-open]="expanded.copy">⌄</span>
@@ -144,6 +144,8 @@
     </fieldset>
   </div>
 </div>
+
+<h4 class="tc-mgmt-heading tc-advanced-heading">Advanced tools</h4>
 
 <!-- ═══════════════════════════════════════════════════════════════
      Resync current-session class teachers — recovery/repair action, not the normal rollover
