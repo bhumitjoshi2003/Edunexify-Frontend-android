@@ -15,5 +15,6 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+      # Repository currently uses Angular 19 with ng2-charts 10; follow the existing peer-dependency install mode.
+      - run: npm ci --legacy-peer-deps
       - run: npm run build:android
