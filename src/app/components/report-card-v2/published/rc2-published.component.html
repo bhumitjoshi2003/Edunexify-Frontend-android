@@ -5,7 +5,6 @@
     <div class="rc2-hero-icon" aria-hidden="true">🏅</div>
     <div class="rc2-hero-text">
       <h1 class="rc2-hero-title">Published Report Cards</h1>
-      <p class="rc2-hero-sub">The official copies students and parents receive. Each is frozen when published — later changes to marks or remarks don't alter it. To check live data first, use <a routerLink="/dashboard/report-cards-v2/generate">Generate &amp; Preview</a>.</p>
     </div>
   </div>
 
@@ -15,7 +14,6 @@
     <div class="rc2-empty">
       <div class="rc2-empty-icon">🧾</div>
       <p class="rc2-empty-title">Choose a class and report card</p>
-      <p class="rc2-empty-sub">Pick the session, class and report card to see what has been published.</p>
     </div>
   </div>
 
@@ -94,13 +92,11 @@
       <div class="rc2-card-head">
         <div>
           <h2 class="rc2-card-title">Versions</h2>
-          <p class="rc2-card-sub">Every publication is kept for the record. Students see only the active version.</p>
         </div>
       </div>
       <div class="rc2-empty" *ngIf="history.length === 0">
         <div class="rc2-empty-icon">📭</div>
         <p class="rc2-empty-title">Not published yet</p>
-        <p class="rc2-empty-sub">Publish to issue the official report cards.</p>
       </div>
       <div class="rc2-table-wrap" *ngIf="history.length">
         <table class="rc2-table">
