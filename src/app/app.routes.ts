@@ -440,7 +440,7 @@ export const routes: Routes = [
       {
         path: 'homework',
         loadComponent: () => import('./components/student-homework/student-homework.component').then(m => m.StudentHomeworkComponent),
-        canActivate: [roleGuard], data: { roles: ['STUDENT'] }
+        canActivate: [roleGuard], data: { roles: ['STUDENT', 'PARENT'] }
       },
 
       // ── Class Updates ─────────────────────────────────────────────────
@@ -452,7 +452,7 @@ export const routes: Routes = [
       {
         path: 'class-updates',
         loadComponent: () => import('./components/student-class-updates/student-class-updates.component').then(m => m.StudentClassUpdatesComponent),
-        canActivate: [roleGuard], data: { roles: ['STUDENT'] }
+        canActivate: [roleGuard], data: { roles: ['STUDENT', 'PARENT'] }
       },
 
       // ── Assessments (SUB_ADMIN intentionally excluded) ──────────────
@@ -464,7 +464,7 @@ export const routes: Routes = [
       {
         path: 'assessments',
         loadComponent: () => import('./components/student-assessments/student-assessments.component').then(m => m.StudentAssessmentsComponent),
-        canActivate: [roleGuard], data: { roles: ['STUDENT'] }
+        canActivate: [roleGuard], data: { roles: ['STUDENT', 'PARENT'] }
       },
 
       // ── Admin Dashboard ───────────────────────────────────────────────
