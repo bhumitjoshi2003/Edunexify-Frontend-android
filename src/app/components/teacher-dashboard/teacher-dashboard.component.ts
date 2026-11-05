@@ -91,6 +91,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   upcomingEventFailed = false;
   /** School-wide timetable visibility set by ADMIN in Timetable → Setup. */
   showTimes = true;
+  private centralTimingActive = false;
   private timingByPeriod = new Map<number, TimetableTimingPeriod>();
 
   constructor(
@@ -371,8 +372,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   classTimeRange(entry: TeacherTodayClassEntry): string | null {
     if (!this.showTimes) return null;
     const configured = this.timingByPeriod.get(entry.periodNumber);
-    const start = configured?.startTime ?? entry.startTime;
-    const end = configured?.endTime ?? entry.endTime;
+    const start = this.centralTimingActive ? configured?.startTime : (configured?.startTime ?? entry.startTime);
+    const end = this.centralTimingActive ? configured?.endTime : (configured?.endTime ?? entry.endTime);
     if (!start || !end) return null;
     return `${formatTeacherAttendanceTime(start)} – ${formatTeacherAttendanceTime(end)}`;
   }
@@ -381,6 +382,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.timetableService.getTimingDisplay().pipe(takeUntil(this.destroy$)).subscribe({
       next: display => {
         this.showTimes = display.showTimes;
+        this.centralTimingActive = display.activeProfileId != null;
         this.timingByPeriod = new Map(display.periods.map(p => [p.periodNumber, p]));
         this.cdr.markForCheck();
       },
@@ -388,6 +390,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         // Preserve existing row times if the new setting endpoint is temporarily unavailable.
         this.logger.error('Failed to load timetable timing display settings', err);
         this.showTimes = true;
+        this.centralTimingActive = false;
         this.timingByPeriod.clear();
         this.cdr.markForCheck();
       }
