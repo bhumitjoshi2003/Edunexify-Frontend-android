@@ -968,3 +968,38 @@
   .tt-card-teacher, .tt-simul-teacher { overflow-wrap: anywhere; }
   .tt-modal { min-width: 0; box-sizing: border-box; }
 }
+
+
+/* Compact teacher card actions: keep the period summary on one row. */
+.tt-period-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  margin-left: auto;
+}
+.tt-teacher-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tt-teacher-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #dbe4ec;
+  border-radius: 9px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.tt-teacher-action svg { width: 17px; height: 17px; }
+.tt-teacher-action-edit:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+.tt-teacher-action-delete:hover { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.tt-teacher-action:focus-visible { outline: 2px solid #15803d; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .tt-period-header-right { gap: 6px; }
+  .tt-teacher-action { width: 32px; height: 32px; }
+}

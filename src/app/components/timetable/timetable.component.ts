@@ -889,6 +889,42 @@ export class TimetableComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Direct delete for the teacher's own card, without requiring the edit modal. */
+  deleteTeacherEntry(entry: TimetableEntry): void {
+    if (!this.isTeacher() || !this.canEditEntry(entry) ||
+        !entry.id || !entry.academicSessionId || this.modalSaving) return;
+    const id = entry.id;
+    const sessionId = entry.academicSessionId;
+    this.toast.confirm({
+      title: 'Delete this period?',
+      message: `${entry.subjectName} — ${this.dayLabels[entry.day]} Period ${entry.periodNumber}`,
+      confirmText: 'Yes, delete',
+      cancelText: 'Cancel',
+      dismissOnBackdrop: true,
+      danger: true
+    }).then(confirmed => {
+      if (!confirmed || this.destroyed || this.modalSaving ||
+          !this.canEditEntry(entry)) return;
+      this.modalSaving = true;
+      this.cdr.markForCheck();
+      this.timetableService.deleteEntry(id, sessionId)
+        .pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            this.modalSaving = false;
+            this.loadTeacherTimetable();
+            this.toast.success('Deleted');
+            this.cdr.markForCheck();
+          },
+          error: err => {
+            this.modalSaving = false;
+            this.logger.error('Failed to delete teacher timetable entry:', err);
+            this.toast.error('Error', apiMessage(err));
+            this.cdr.markForCheck();
+          }
+        });
+    });
+  }
+
   deleteEntry(): void {
     if (!this.canEditEntry(this.modalForm) || !this.modalForm.id || this.modalSaving) return;
     const id = this.modalForm.id;
@@ -897,6 +933,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
       title: 'Delete this period?',
       message: `${this.modalForm.subjectName} — ${this.dayLabels[this.modalForm.day]} Period ${this.modalForm.periodNumber}`,
       confirmText: 'Yes, delete',
+      cancelText: 'Cancel',
+      dismissOnBackdrop: true,
       danger: true
     }).then(confirmed => {
       if (!confirmed || this.destroyed || !this.canEditEntry(this.modalForm) || this.modalForm.id !== id || (this.canManage() && this.selectedSession?.id !== sessionId)) return;

@@ -20,7 +20,7 @@ import { TeacherClassGrantService } from '../../services/teacher-class-grant.ser
  * template — that style cannot observe template-only issues (a mis-bound field, a control that
  * doesn't reflect its model, a button that isn't actually reachable from the rendered DOM). This
  * file uses TestBed + real change detection specifically to exercise the actual rendered page —
- * clicking the real "Edit / Delete" button, reading the real "Class" dropdown and Subject input —
+ * clicking the teacher card edit and delete icon buttons, reading the real "Class" dropdown and Subject input —
  * the same way a teacher's browser would.
  */
 describe('TEACHER edit flow (rendered template)', () => {
@@ -47,6 +47,7 @@ describe('TEACHER edit flow (rendered template)', () => {
     api.getTeacherTimetable.and.returnValue(of(entries));
     api.updateEntry.and.returnValue(of({}));
     api.createEntry.and.returnValue(of({}));
+    api.deleteEntry.and.returnValue(of({}));
     toast = { success: jasmine.createSpy(), confirm: jasmine.createSpy().and.resolveTo(true) };
 
     await TestBed.configureTestingModule({
@@ -77,7 +78,7 @@ describe('TEACHER edit flow (rendered template)', () => {
   }
 
   async function clickEdit(matchText: string) {
-    const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.tt-card-list .tt-btn-cancel'));
+    const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.tt-card-list .tt-teacher-action-edit'));
     const btn = buttons.find(b => b.closest('.tt-period-card')?.textContent?.includes(matchText));
     btn?.click();
     fixture.detectChanges();
@@ -132,8 +133,8 @@ describe('TEACHER edit flow (rendered template)', () => {
 
   it('6. another teacher\'s entry is not offered for edit and cannot be opened', async () => {
     await setup([mathEntry, otherTeacherEntry]);
-    const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.tt-card-list .tt-btn-cancel'));
-    expect(buttons.length).toBe(1); // only the Mathematics (own) row offers Edit / Delete
+    const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.tt-card-list .tt-teacher-action-edit'));
+    expect(buttons.length).toBe(1); // only the Mathematics (own) row offers Edit
     c.openEdit(otherTeacherEntry);
     expect(c.showModal).toBeFalse();
   });
@@ -168,6 +169,22 @@ describe('TEACHER edit flow (rendered template)', () => {
     expect(c.modalError).toBeNull();
     expect(api.createEntry).toHaveBeenCalledWith(jasmine.objectContaining({ subjectName: 'Physics', teacherId: 'T1' }));
     expect(fixture.nativeElement.querySelector('.tt-corr-conflict')).toBeNull();
+  });
+
+  it('10. offers compact edit and delete buttons and confirms direct deletion', async () => {
+    await setup();
+    const edit: HTMLButtonElement = fixture.nativeElement.querySelector('.tt-teacher-action-edit');
+    const remove: HTMLButtonElement = fixture.nativeElement.querySelector('.tt-teacher-action-delete');
+    expect(edit).toBeTruthy();
+    expect(remove).toBeTruthy();
+    expect(edit.getAttribute('aria-label')).toContain('Edit period');
+    expect(remove.getAttribute('aria-label')).toContain('Delete period');
+
+    remove.click();
+    await fixture.whenStable();
+    expect(toast.confirm).toHaveBeenCalled();
+    expect(api.deleteEntry).toHaveBeenCalledWith(501, 1);
+    expect(c.showModal).toBeFalse();
   });
 
   it('9. Class 11 – Commerce: Add Period submits with a valid classId, no "unable to determine" error', async () => {
