@@ -665,6 +665,7 @@
 
     <!-- Content -->
     <main class="content-area">
+      <app-festival-greeting [userId]="Id" [role]="Role" [schoolSlug]="tenantService.school?.slug || 'platform'"></app-festival-greeting>
 
       <!-- Subscription expiry warning banner -->
       <div class="sub-warning-banner"
