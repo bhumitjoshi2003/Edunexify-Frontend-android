@@ -15,6 +15,10 @@ import {
 import { formatFileSize } from '../../interfaces/homework';
 import { AssessmentService } from '../../services/assessment.service';
 import { LoggerService } from '../../services/logger.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { ChildAccess } from '../../interfaces/parent-portal';
+import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 
 export type StudentAssessmentTab = 'upcoming' | 'month' | 'past';
 
@@ -28,7 +32,7 @@ interface TabState {
 @Component({
   selector: 'app-student-assessments',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, ParentChildContextComponent],
   templateUrl: './student-assessments.component.html',
   styleUrl: './student-assessments.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,16 +61,39 @@ export class StudentAssessmentsComponent implements OnInit, OnDestroy {
   month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   /** Refreshed every minute so countdowns roll over at midnight. */
   now = new Date();
+  /** A parent reads the same view for the linked child named in ?studentId= (the backend
+   *  checks the link); the shared child switcher changes it. Nothing here can create or edit. */
+  readonly isParent: boolean;
+  studentId: string | null = null;
+  /** The backend refused this child for this parent (unlinked, ended or revoked link): the
+   *  switcher explains it and offers the linked children, so the page body stays hidden. */
+  denied = false;
 
   constructor(
     private assessments: AssessmentService,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object,
-  ) {}
+    private route: ActivatedRoute,
+    private router: Router,
+    authState: AuthStateService,
+  ) {
+    this.isParent = authState.getUserRole() === 'PARENT';
+  }
 
   ngOnInit(): void {
-    this.select('upcoming');
+    if (this.isParent) {
+      this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(q => {
+        this.studentId = q.get('studentId');
+        this.denied = false;
+        for (const tab of this.tabs) this.state[tab.key] = { loaded: false, loading: false, failed: false, items: [] };
+        // "Upcoming" also feeds the header counts, so it loads first, like the student view.
+        if (this.studentId) { this.select('upcoming'); if (this.active !== 'upcoming') this.select(this.active); }
+        this.cdr.markForCheck();
+      });
+    } else {
+      this.select('upcoming');
+    }
     if (isPlatformBrowser(this.platformId)) {
       interval(60_000).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.now = new Date();
@@ -94,6 +121,7 @@ export class StudentAssessmentsComponent implements OnInit, OnDestroy {
       },
       error: error => {
         this.logger.error(`Assessments (${tab}) load failed:`, error);
+        if (this.isParent && error?.status === 403) this.denied = true;
         s.loading = false;
         s.failed = true;
         this.cdr.markForCheck();
@@ -102,9 +130,9 @@ export class StudentAssessmentsComponent implements OnInit, OnDestroy {
   }
 
   private source(tab: StudentAssessmentTab): Observable<Assessment[]> {
-    if (tab === 'month') return this.assessments.studentMonth(this.monthKey);
-    if (tab === 'past') return this.assessments.studentPast();
-    return this.assessments.studentUpcoming();
+    if (tab === 'month') return this.assessments.studentMonth(this.monthKey, this.studentId);
+    if (tab === 'past') return this.assessments.studentPast(this.studentId);
+    return this.assessments.studentUpcoming(undefined, this.studentId);
   }
 
   get monthKey(): string {
@@ -144,6 +172,10 @@ export class StudentAssessmentsComponent implements OnInit, OnDestroy {
 
   trackById(_: number, item: Assessment): number {
     return item.id;
+  }
+
+  onChildSelected(child: ChildAccess): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: { studentId: child.studentId }, replaceUrl: true });
   }
 
   ngOnDestroy(): void {
