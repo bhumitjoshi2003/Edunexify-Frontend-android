@@ -285,12 +285,32 @@
 
         <div *ngFor="let entry of teacherDayEntries; trackBy: trackByEntry"
           class="tt-period-card tt-period-card--single tt-sc-{{ getSubjectClass(entry.subjectName) }}">
-          <button type="button" class="tt-btn-cancel no-print" *ngIf="canEditEntry(entry)" (click)="openEdit(entry)">Edit / Delete</button>
           <div class="tt-period-header">
             <span class="tt-card-period">Period {{ entry.periodNumber }}</span>
-            <span class="tt-card-time" *ngIf="showTimes && entryStartTime(entry)">
-              {{ entryStartTime(entry) }} – {{ entryEndTime(entry) }}
-            </span>
+            <div class="tt-period-header-right">
+              <span class="tt-card-time" *ngIf="showTimes && entryStartTime(entry)">
+                {{ entryStartTime(entry) }} – {{ entryEndTime(entry) }}
+              </span>
+              <div class="tt-teacher-actions no-print" *ngIf="canEditEntry(entry)">
+                <button type="button" class="tt-teacher-action tt-teacher-action-edit"
+                  [attr.aria-label]="'Edit period ' + entry.periodNumber" title="Edit period"
+                  (click)="openEdit(entry)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/>
+                  </svg>
+                </button>
+                <button type="button" class="tt-teacher-action tt-teacher-action-delete"
+                  [attr.aria-label]="'Delete period ' + entry.periodNumber" title="Delete period"
+                  (click)="deleteTeacherEntry(entry)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M5 6l1 14h12l1-14"/>
+                    <path d="M10 10v7M14 10v7"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
           <div class="tt-card-content">
             <div class="tt-icon-box">{{ getSubjectIcon(entry.subjectName) }}</div>
