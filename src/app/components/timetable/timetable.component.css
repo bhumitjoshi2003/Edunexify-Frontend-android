@@ -459,3 +459,136 @@
   color: #64748b;
   margin: -4px 0 12px;
 }
+
+
+/* ── Timetable / Setup page hierarchy ─────────────────────────── */
+.tt-tabs {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+.tt-tab {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 190px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.tt-tab:hover { background: #f8fafc; color: #334155; }
+.tt-tab-active {
+  background: linear-gradient(145deg, #eefbf3, #f7fff9);
+  color: #166534;
+  box-shadow: inset 0 0 0 1px #ccebd7;
+}
+.tt-tab-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: .9rem;
+}
+.tt-tab-active .tt-tab-icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+.tt-tab span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tt-tab strong {
+  font-size: .8rem;
+  font-weight: 800;
+}
+.tt-tab small {
+  font-size: .65rem;
+  color: #94a3b8;
+}
+
+.tt-session-shell {
+  display: grid;
+  gap: 6px;
+}
+.tt-session-shell app-academic-session-selector {
+  display: block;
+}
+.tt-session-note {
+  margin: 0 2px;
+  color: #92400e;
+  font-size: .74rem;
+  font-weight: 600;
+}
+
+.tt-setup-view {
+  display: grid;
+  gap: 12px;
+}
+.tt-setup-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fbfefc, #fff);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .04);
+}
+.tt-setup-intro-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  border-radius: 11px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 1rem;
+}
+.tt-setup-intro h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: .95rem;
+  font-weight: 800;
+}
+.tt-setup-intro p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: .75rem;
+  line-height: 1.45;
+}
+.tt-main-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .tt-tabs {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .tt-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 10px;
+  }
+  .tt-tab small { display: none; }
+  .tt-setup-intro { padding: 14px; }
+}
