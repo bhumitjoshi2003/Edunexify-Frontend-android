@@ -199,3 +199,56 @@
   .tc-form-row { flex-direction: column; }
   .tc-field, .tc-select { width: 100%; }
 }
+
+
+/* Keep the embedded setup tools within the mobile viewport. */
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tc-section,
+.tc-section-header,
+.tc-section-body,
+.tc-transfer-row,
+.tc-form-row {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.tc-section-heading {
+  min-width: 0;
+}
+
+.tc-section-title,
+.tc-section-sub,
+.tc-hint,
+.tc-result-summary {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .tc-section-header {
+    width: 100%;
+  }
+
+  .tc-actions,
+  .tc-form-row {
+    width: 100%;
+  }
+
+  .tc-btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .tc-transfer-row .tc-field,
+  .tc-form-row .tc-field,
+  .tc-select {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
