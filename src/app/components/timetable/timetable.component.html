@@ -123,7 +123,7 @@
           <div class="tt-profile-actions">
             <button type="button" class="tt-setup-btn tt-setup-btn-primary" [disabled]="timingLoading" (click)="saveTimingProfile()">Save profile</button>
             <button type="button" class="tt-setup-btn" *ngIf="!selectedTimingProfile?.active"
-              [disabled]="timingLoading" (click)="activateTimingProfile(timingProfileId!)">Save & activate</button>
+              [disabled]="timingLoading" (click)="saveAndActivateTimingProfile()">Save & activate</button>
             <button type="button" class="tt-setup-btn tt-setup-btn-danger" *ngIf="selectedTimingProfile && !selectedTimingProfile.active"
               [disabled]="timingLoading" (click)="deleteTimingProfile(selectedTimingProfile)">Delete</button>
           </div>
