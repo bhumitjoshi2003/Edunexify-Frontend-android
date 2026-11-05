@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { TimetableEntry, TimetableEntryRequest } from '../interfaces/timetable';
+import { SessionCopyRequest, SessionCopyResult } from '../interfaces/teaching-configuration';
 
 export interface TimetableBulkImportError {
   row: number;
@@ -60,6 +61,10 @@ export class TimetableService {
 
   deleteEntry(id: number, academicSessionId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, { params: { academicSessionId } });
+  }
+
+  copySession(body: SessionCopyRequest & { confirmCurrentTarget: boolean }): Observable<SessionCopyResult> {
+    return this.http.post<SessionCopyResult>(`${this.baseUrl}/copy-session`, body);
   }
 
   downloadBulkTemplate(): Observable<Blob> {
