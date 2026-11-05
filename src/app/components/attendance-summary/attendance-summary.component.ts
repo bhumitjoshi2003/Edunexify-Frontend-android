@@ -112,11 +112,30 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
 
     if (this.role !== 'PARENT') {
       this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
-        next: classes => { this.classList = classes; this.cdr.markForCheck(); },
+        next: classes => {
+          this.classList = classes;
+          // Admin-only convenience: show the first class's current-session insights
+          // immediately. The student and period reports still require Load Report.
+          if (this.role === 'ADMIN' && !this.selectedClass && classes.length > 0) {
+            this.selectedClass = classes[0];
+            this.selectedSectionId = null; // All Sections
+            this.loadSectionsForClass(this.selectedClass);
+            if (this.viewMode === 'student') this.loadStudentList();
+          }
+          this.cdr.markForCheck();
+        },
         error: (err) => this.logger.error('Failed to load classes', err)
       });
       this.schoolService.getManagedClasses().pipe(takeUntil(this.destroy$)).subscribe({
-        next: classes => { this.managedClasses = classes; },
+        next: classes => {
+          this.managedClasses = classes;
+          // Class names may arrive before IDs; resolve the initial class's sections
+          // when both requests have completed, regardless of response order.
+          if (this.role === 'ADMIN' && this.selectedClass) {
+            this.loadSectionsForClass(this.selectedClass);
+          }
+          this.cdr.markForCheck();
+        },
         error: (err) => this.logger.error('Failed to load managed classes', err)
       });
     }
