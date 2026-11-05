@@ -428,6 +428,35 @@ export class TimetableComponent implements OnInit, OnDestroy {
     });
   }
 
+  saveAndActivateTimingProfile(): void {
+    if (!this.canManage() || !this.timingProfileId || this.timingLoading) return;
+    const periods = this.timingDraft.filter(p => p.startTime && p.endTime);
+    if (!periods.length) {
+      this.timingError = 'Add at least one period time before activating.';
+      this.cdr.markForCheck();
+      return;
+    }
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.updateTimingProfile(this.timingProfileId, {
+      name: this.timingProfileName.trim(),
+      periods
+    }).pipe(
+      switchMap(() => this.timetableService.activateTimingProfile(this.timingProfileId!)),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: config => {
+        this.timingLoading = false;
+        this.applyTimingConfig(config);
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not save and activate the timing profile.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   activateTimingProfile(profileId: number): void {
     if (!this.canManage() || this.timingLoading) return;
     this.timingLoading = true;
@@ -481,6 +510,9 @@ export class TimetableComponent implements OnInit, OnDestroy {
   private applyTimingConfig(config: TimetableTimingConfig): void {
     this.timingConfig = config;
     this.showTimes = config.showTimes;
+    if (!config.profiles.length && this.newTimingProfileName === 'Winter Schedule') {
+      this.newTimingProfileName = 'Current Schedule';
+    }
     const active = config.profiles.find(p => p.active) ?? null;
     this.centralTimingActive = active != null;
     this.activeTimingProfileName = active?.name ?? null;
