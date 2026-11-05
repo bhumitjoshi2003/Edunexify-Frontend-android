@@ -183,15 +183,16 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
 
   /** Mirrors the selection into the URL (replacing the entry) so Back from a report card restores it. */
   private syncUrl(): void {
+    const queryParams: Record<string, string | number | null> = {
+      session: this.selectedSession || null,
+      className: this.selectedClass || null,
+      examId: this.selectedExamId,
+      sectionId: this.selectedSectionId,
+    };
+    if (this.focusedStudentId) queryParams['studentId'] = this.focusedStudentId;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: {
-        session: this.selectedSession || null,
-        className: this.selectedClass || null,
-        examId: this.selectedExamId,
-        sectionId: this.selectedSectionId,
-        studentId: this.focusedStudentId || null,
-      },
+      queryParams,
       replaceUrl: true,
     });
   }
