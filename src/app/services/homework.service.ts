@@ -57,17 +57,22 @@ export class HomeworkService {
     return this.http.get<HomeworkClasswork[]>(`${this.baseUrl}/my/recent`);
   }
 
-  // Student
-  studentOn(date?: string): Observable<HomeworkClasswork[]> {
-    const params = date ? new HttpParams().set('date', date) : undefined;
+  // Student — or a parent, who names the linked child (the backend checks the link; a student's
+  // own requests never send one)
+  studentOn(date?: string, studentId?: string | null): Observable<HomeworkClasswork[]> {
+    let params = new HttpParams();
+    if (date) params = params.set('date', date);
+    if (studentId) params = params.set('studentId', studentId);
     return this.http.get<HomeworkClasswork[]>(`${this.baseUrl}/student`, { params });
   }
 
-  studentUpcoming(): Observable<HomeworkClasswork[]> {
-    return this.http.get<HomeworkClasswork[]>(`${this.baseUrl}/student/upcoming`);
+  studentUpcoming(studentId?: string | null): Observable<HomeworkClasswork[]> {
+    const params = studentId ? new HttpParams().set('studentId', studentId) : undefined;
+    return this.http.get<HomeworkClasswork[]>(`${this.baseUrl}/student/upcoming`, { params });
   }
 
-  studentRecent(): Observable<HomeworkClasswork[]> {
-    return this.http.get<HomeworkClasswork[]>(`${this.baseUrl}/student/recent`);
+  studentRecent(studentId?: string | null): Observable<HomeworkClasswork[]> {
+    const params = studentId ? new HttpParams().set('studentId', studentId) : undefined;
+    return this.http.get<HomeworkClasswork[]>(`${this.baseUrl}/student/recent`, { params });
   }
 }
