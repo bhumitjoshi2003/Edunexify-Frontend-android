@@ -72,6 +72,8 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   activeTab: 'overview' | 'schools' | 'plans' = 'overview';
+  festival: FestivalCampaign | null = null;
+  festivalSaving = false;
   stats: DashboardStats | null = null;
   schools: SchoolSettings[] = [];
   loading = false;
