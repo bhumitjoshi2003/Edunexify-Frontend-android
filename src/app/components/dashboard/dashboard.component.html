@@ -101,7 +101,7 @@
            (click)="closeSidebarOnMobile()" title="Notice Board">
           <mat-icon>campaign</mat-icon><span>Notice Board</span>
         </a>
-        <a class="nav-item" *ngIf="hasFeature('EVENT_CALENDAR')" routerLink="/dashboard/event-calendar" routerLinkActive="active"
+        <a class="nav-item" *ngIf="hasFeature('SCHOOL_COMMUNICATION')" routerLink="/dashboard/event-calendar" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Event Calendar">
           <mat-icon>calendar_month</mat-icon><span>Event Calendar</span>
         </a>
@@ -143,7 +143,7 @@
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Results">
             <mat-icon>grade</mat-icon><span>Results</span>
           </a>
-          <a class="nav-item" *ngIf="childCan('canViewResults') && hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-documents"
+          <a class="nav-item" *ngIf="childCan('canViewResults') && hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-card-documents"
              [queryParams]="{ studentId: selectedChild.studentId }"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report Cards">
             <mat-icon>workspace_premium</mat-icon><span>Report Cards</span>
