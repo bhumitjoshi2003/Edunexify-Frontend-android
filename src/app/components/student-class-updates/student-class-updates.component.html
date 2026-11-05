@@ -1,4 +1,9 @@
 <div class="scu-page">
+  <app-parent-child-context *ngIf="isParent && studentId" [studentId]="studentId" (childSelected)="onChildSelected($event)"></app-parent-child-context>
+  <p class="scu-no-child" *ngIf="isParent && !studentId">Choose one of your children from the menu to see their class updates.</p>
+
+  <ng-container *ngIf="!denied">
+
   <!-- ── Hero ── -->
   <header class="scu-hero">
     <span class="scu-orb scu-orb-1"></span>
@@ -13,7 +18,7 @@
       </div>
       <div class="scu-hero-copy">
         <h1>Class Updates</h1>
-        <p>Updates from your teachers.</p>
+        <p>Updates from {{ isParent ? 'your child\'s' : 'your' }} teachers.</p>
       </div>
     </div>
 
@@ -45,7 +50,7 @@
       <mat-icon>notifications_none</mat-icon>
     </div>
     <h3>No class updates right now.</h3>
-    <p>When your teachers post an update, it will show up here.</p>
+    <p>When {{ isParent ? 'your child\'s' : 'your' }} teachers post an update, it will show up here.</p>
   </div>
 
   <ng-container *ngIf="!loading && !failed && items.length">
@@ -119,5 +124,6 @@
         </div>
       </article>
     </div>
+  </ng-container>
   </ng-container>
 </div>
