@@ -77,24 +77,35 @@ import { LeaveService, OnLeaveToday } from '../../services/leave.service';
   styles: [`
     .olt-card {
       margin-bottom: 16px;
-      padding: 16px 18px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
+      padding: 18px;
+      background: linear-gradient(165deg, #fbfefd 0%, #ffffff 58%);
+      border: 1px solid #e6ebf2;
+      border-radius: 19px;
+      box-shadow: 0 8px 28px rgba(30, 48, 73, 0.055);
     }
-    .olt-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-    .olt-head h2 { margin:0; color:#0f172a; font-size:1rem; font-weight:800; }
-    .olt-head p { margin:3px 0 0; color:#64748b; font-size:.76rem; font-weight:600; }
+    .olt-head {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #edf1f5;
+    }
+    .olt-head h2 { margin:0; color:#172033; font-size:1rem; font-weight:800; letter-spacing:-.2px; }
+    .olt-head p { margin:3px 0 0; color:#8190a4; font-size:.75rem; font-weight:600; }
     .olt-list { list-style:none; margin:0; padding:0; }
     .olt-list li {
-      display:flex; align-items:flex-start; gap:10px;
-      min-height:52px; padding:10px 0;
+      display:flex; align-items:flex-start; gap:11px;
+      min-height:56px; padding:11px 9px;
+      border-radius:12px;
+      transition:background .15s ease, transform .15s ease;
     }
     .olt-list li + li { border-top:1px solid #eef2f7; }
+    .olt-list li:hover { background:#f7fbfa; transform:translateX(2px); }
     .olt-avatar {
       width:32px; height:32px; flex:0 0 32px;
       display:grid; place-items:center;
-      border-radius:10px; background:#f1f5f9; color:#475569;
+      border-radius:10px;
+      background:linear-gradient(145deg,#e6f8f5,#f4fffd);
+      color:#0f766e;
+      border:1px solid #cdebe6;
+      box-shadow:0 5px 12px rgba(15,118,110,.09);
       font-size:.76rem; font-weight:800;
     }
     .olt-copy { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
@@ -110,11 +121,15 @@ import { LeaveService, OnLeaveToday } from '../../services/leave.service';
     }
     .olt-warning:hover { text-decoration:underline; }
     .olt-state {
-      min-height:48px; display:flex; align-items:center; gap:8px;
+      min-height:64px; display:flex; align-items:center; gap:9px;
+      padding:12px;
       color:#64748b; font-size:.78rem;
+      border:1px dashed #cfe8e5;
+      border-radius:13px;
+      background:linear-gradient(160deg,#f6fcfb,#fff);
     }
     .olt-state mat-icon { width:18px; height:18px; font-size:18px; }
-    .olt-state--success { color:#15803d; }
+    .olt-state--success { color:#15803d; background:linear-gradient(160deg,#f2fbf5,#fff); border-color:#cfe9d8; }
     .olt-state button, .olt-show-all {
       margin-left:auto; border:0; background:transparent;
       color:#087e88; font-weight:800; cursor:pointer;
@@ -139,7 +154,7 @@ import { LeaveService, OnLeaveToday } from '../../services/leave.service';
     .olt-sk-copy { width:58%; height:18px; border-radius:999px; }
     @keyframes olt-shimmer { to { transform:translateX(100%); } }
     @media (max-width:600px) {
-      .olt-card { padding:14px; }
+      .olt-card { padding:14px; border-radius:16px; }
       .olt-copy > span { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
     }
     @media (prefers-reduced-motion:reduce) { .olt-sk::after { animation:none; } }
