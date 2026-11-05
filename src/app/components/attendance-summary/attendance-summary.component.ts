@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil, switchMap, forkJoin } from 'rxjs';
 import { AttendanceService } from '../../services/attendance.service';
+import { AttendancePdfService } from '../../services/attendance-pdf.service';
 import { SchoolHolidayService } from '../../services/school-holiday.service';
 import { SchoolHoliday } from '../../interfaces/school-holiday';
 import { StudentService } from '../../services/student.service';
@@ -94,6 +95,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private attendanceService: AttendanceService,
+    private attendancePdfService: AttendancePdfService,
     private studentService: StudentService,
     private authStateService: AuthStateService,
     private logger: LoggerService,
@@ -112,11 +114,30 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
 
     if (this.role !== 'PARENT') {
       this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
-        next: classes => { this.classList = classes; this.cdr.markForCheck(); },
+        next: classes => {
+          this.classList = classes;
+          // Admin-only convenience: show the first class's current-session insights
+          // immediately. The student and period reports still require Load Report.
+          if (this.role === 'ADMIN' && !this.selectedClass && classes.length > 0) {
+            this.selectedClass = classes[0];
+            this.selectedSectionId = null; // All Sections
+            this.loadSectionsForClass(this.selectedClass);
+            if (this.viewMode === 'student') this.loadStudentList();
+          }
+          this.cdr.markForCheck();
+        },
         error: (err) => this.logger.error('Failed to load classes', err)
       });
       this.schoolService.getManagedClasses().pipe(takeUntil(this.destroy$)).subscribe({
-        next: classes => { this.managedClasses = classes; },
+        next: classes => {
+          this.managedClasses = classes;
+          // Class names may arrive before IDs; resolve the initial class's sections
+          // when both requests have completed, regardless of response order.
+          if (this.role === 'ADMIN' && this.selectedClass) {
+            this.loadSectionsForClass(this.selectedClass);
+          }
+          this.cdr.markForCheck();
+        },
         error: (err) => this.logger.error('Failed to load managed classes', err)
       });
     }
@@ -549,8 +570,28 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     return this.role === 'STUDENT' || this.role === 'PARENT';
   }
 
-  printReport(): void {
-    window.print();
+  async printReport(): Promise<void> {
+    if (this.isLoading) return;
+    this.error = null;
+    try {
+      const period = this.getPeriodLabel();
+      if (this.viewMode === 'student' && this.studentSummary) {
+        const month = this.periodType === 'month'
+          ? { month: this.selectedMonth, year: this.selectedYear }
+          : undefined;
+        await this.attendancePdfService.studentReport(this.studentSummary, period, month);
+      } else if (this.viewMode === 'class' && this.classSummary.length) {
+        const sectionName = this.selectedSectionId === null
+          ? 'All Sections'
+          : (this.sections.find(s => s.id === this.selectedSectionId)?.name || 'Selected Section');
+        await this.attendancePdfService.classReport(this.classSummary, this.selectedClass, sectionName, period);
+      }
+    } catch (err) {
+      this.logger.error('Failed to download attendance PDF:', err);
+      this.error = 'Could not generate the PDF. Please try again.';
+    } finally {
+      this.cdr.markForCheck();
+    }
   }
 
   goBack(): void {

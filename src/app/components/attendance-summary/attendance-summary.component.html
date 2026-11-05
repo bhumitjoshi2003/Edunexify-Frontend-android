@@ -20,10 +20,13 @@
     [studentId]="selectedStudentId" [requireStudentId]="true"></app-student-attendance-insights>
   <app-class-attendance-insights class="no-print" *ngIf="role === 'TEACHER'" mode="teacher"></app-class-attendance-insights>
 
+  <!-- Admin: insights for the chosen class (and section, if one is picked). -->
+  <app-class-attendance-insights class="no-print" *ngIf="role === 'ADMIN' && selectedClassId !== null" mode="admin"
+    [classId]="selectedClassId" [sectionId]="selectedSectionId"></app-class-attendance-insights>
+
   <!-- ── Detailed Attendance Report: filters, summary cards, calendar, PDF ── -->
   <div class="as-section-head no-print">
     <h2 class="as-section-title">Detailed Attendance Report</h2>
-    <p class="as-section-sub">Choose a month or the academic year for day-by-day attendance and a downloadable PDF.</p>
   </div>
 
   <!-- ── Controls Card ─────────────────────────────────────────── -->
@@ -115,10 +118,6 @@
       </button>
     </div>
   </div>
-
-  <!-- Admin: insights for the chosen class (and section, if one is picked). -->
-  <app-class-attendance-insights class="no-print" *ngIf="role === 'ADMIN' && selectedClassId !== null" mode="admin"
-    [classId]="selectedClassId" [sectionId]="selectedSectionId"></app-class-attendance-insights>
 
   <!-- ── Error / Loading ───────────────────────────────────────── -->
   <p class="as-error" *ngIf="error">{{ error }}</p>
