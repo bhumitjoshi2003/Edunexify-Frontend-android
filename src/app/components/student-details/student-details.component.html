@@ -243,6 +243,10 @@
         <span class="sd-action-icon">🗓</span>
         <span>Leaves</span>
       </button>
+      <button *ngIf="hasFeature('EXAMS_RESULTS')" class="sd-action-btn" (click)="viewResults()">
+        <span class="sd-action-icon">📈</span>
+        <span>Results</span>
+      </button>
       <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('FEE_MANAGEMENT')" class="sd-action-btn" (click)="viewFeeDetails()">
         <span class="sd-action-icon">💰</span>
         <span>Fee Details</span>
