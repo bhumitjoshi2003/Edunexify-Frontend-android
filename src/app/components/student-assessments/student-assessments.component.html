@@ -1,4 +1,9 @@
 <div class="sas-page">
+  <app-parent-child-context *ngIf="isParent && studentId" [studentId]="studentId" (childSelected)="onChildSelected($event)"></app-parent-child-context>
+  <p class="sas-no-child" *ngIf="isParent && !studentId">Choose one of your children from the menu to see their tests and exams.</p>
+
+  <ng-container *ngIf="!denied">
+
   <!-- ── Hero ── -->
   <header class="sas-hero">
     <span class="sas-orb sas-orb-1"></span>
@@ -10,7 +15,7 @@
       <div class="sas-hero-icon"><mat-icon>event_note</mat-icon></div>
       <div class="sas-hero-copy">
         <h1>Assessment Calendar</h1>
-        <p>Your upcoming tests and exams.</p>
+        <p>{{ isParent ? 'Your child\'s' : 'Your' }} upcoming tests and exams.</p>
       </div>
     </div>
 
@@ -55,7 +60,8 @@
         <mat-icon>event_available</mat-icon>
       </div>
       <h3>{{ emptyText(active) }}</h3>
-      <p *ngIf="active === 'upcoming'">When your teachers schedule a test, it will show up here — with a reminder the day before.</p>
+      <p *ngIf="active === 'upcoming' && !isParent">When your teachers schedule a test, it will show up here — with a reminder the day before.</p>
+      <p *ngIf="active === 'upcoming' && isParent">When your child's teachers schedule a test, it will show up here.</p>
     </div>
 
     <div class="sas-grid" *ngIf="!s.loading && !s.failed && s.items.length">
@@ -109,5 +115,6 @@
         </footer>
       </article>
     </div>
+  </ng-container>
   </ng-container>
 </div>

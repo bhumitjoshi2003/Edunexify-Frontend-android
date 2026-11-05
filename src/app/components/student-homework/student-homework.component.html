@@ -1,4 +1,9 @@
 <div class="shw-page">
+  <app-parent-child-context *ngIf="isParent && studentId" [studentId]="studentId" (childSelected)="onChildSelected($event)"></app-parent-child-context>
+  <p class="shw-no-child" *ngIf="isParent && !studentId">Choose one of your children from the menu to see their homework and classwork.</p>
+
+  <ng-container *ngIf="!denied">
+
   <!-- ── Hero ── -->
   <header class="shw-hero">
     <span class="shw-orb shw-orb-1"></span>
@@ -10,7 +15,7 @@
       <div class="shw-hero-icon"><mat-icon>menu_book</mat-icon></div>
       <div class="shw-hero-copy">
         <h1>Homework &amp; Classwork</h1>
-        <p>What's covered and what's due.</p>
+        <p>What's covered and what's due{{ isParent ? ' in your child\'s class' : '' }}.</p>
       </div>
     </div>
 
@@ -51,7 +56,7 @@
         <mat-icon>task_alt</mat-icon>
       </div>
       <h3>{{ emptyText(active) }}</h3>
-      <p>New homework and classwork from your teachers will show up here.</p>
+      <p>New homework and classwork from {{ isParent ? 'your child\'s' : 'your' }} teachers will show up here.</p>
     </div>
 
     <div class="shw-grid" *ngIf="!s.loading && !s.failed && s.items.length">
@@ -101,5 +106,6 @@
         </footer>
       </article>
     </div>
+  </ng-container>
   </ng-container>
 </div>

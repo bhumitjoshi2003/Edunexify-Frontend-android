@@ -63,8 +63,11 @@ export class ClassUpdateService {
   }
 
   // Student — active (non-expired) updates for their class, newest first.
-  studentActive(limit?: number): Observable<ClassUpdate[]> {
-    const params = limit ? new HttpParams().set('limit', limit) : undefined;
+  /** A parent names the linked child (the backend checks the link); a student never sends one. */
+  studentActive(limit?: number, studentId?: string | null): Observable<ClassUpdate[]> {
+    let params = new HttpParams();
+    if (limit) params = params.set('limit', limit);
+    if (studentId) params = params.set('studentId', studentId);
     return this.http.get<ClassUpdate[]>(`${this.baseUrl}/student`, { params });
   }
 }

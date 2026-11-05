@@ -205,3 +205,8 @@
 @media (prefers-reduced-motion: reduce) {
   .scu-page *, .scu-page *::before, .scu-page *::after { animation: none !important; transition: none !important; }
 }
+
+.scu-no-child {
+  margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px dashed #cbd5e1;
+  color: #475569; font-size: 0.85rem;
+}

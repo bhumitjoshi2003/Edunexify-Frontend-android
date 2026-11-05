@@ -5,6 +5,9 @@
   gap: 14px;
   padding-bottom: 20px;
   font-family: 'Segoe UI', system-ui, sans-serif;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
@@ -539,6 +542,8 @@
 .tt-setup-view {
   display: grid;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
 }
 .tt-setup-intro {
   display: flex;
@@ -599,6 +604,9 @@
   display: grid;
   gap: 14px;
   padding: 18px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid #dfe7e3;
   border-radius: 16px;
   background: linear-gradient(155deg, #f8fffb 0%, #ffffff 58%);
@@ -757,7 +765,7 @@
   flex-direction: column;
   gap: 5px;
 }
-.tt-profile-create label { flex: 1 1 230px; }
+.tt-profile-create label { flex: 1 1 230px; min-width: 0; }
 .tt-profile-create label span,
 .tt-profile-editor-head label span {
   color: #64748b;
@@ -770,6 +778,8 @@
 .tt-profile-editor-head input,
 .tt-period-row input {
   box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   padding: 8px 10px;
   border: 1.5px solid #e2e8f0;
   border-radius: 9px;
@@ -810,7 +820,7 @@
   justify-content: space-between;
   gap: 12px;
 }
-.tt-profile-editor-head label { flex: 1; }
+.tt-profile-editor-head label { flex: 1; min-width: 0; }
 .tt-profile-active-badge {
   padding: 4px 9px;
   border-radius: 999px;
@@ -839,7 +849,7 @@
   color: #166534;
   font-size: .78rem;
 }
-.tt-period-row label { display: flex; flex-direction: column; gap: 3px; }
+.tt-period-row label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .tt-period-row label span { color: #94a3b8; font-size: .6rem; font-weight: 700; }
 .tt-period-arrow { align-self: center; color: #94a3b8; font-size: .72rem; }
 .tt-profile-actions {
@@ -859,11 +869,52 @@
 .tt-central-time-note strong { color: #166534; font-size: .74rem; }
 .tt-central-time-note span { color: #64748b; font-size: .7rem; }
 
+/* Prevent mobile setup content from widening the page */
 @media (max-width: 720px) {
-  .tt-timing-head { flex-direction: column; }
+  .tt-timing-card { padding: 14px; }
+  .tt-timing-head { flex-direction: column; min-width: 0; }
+  .tt-timing-head > div { min-width: 0; width: 100%; }
   .tt-school-toggle { width: 100%; min-width: 0; box-sizing: border-box; }
-  .tt-profile-summary { align-items: flex-start; flex-direction: column; }
-  .tt-profile-editor-head { align-items: stretch; flex-direction: column; }
-  .tt-period-grid { grid-template-columns: 1fr; }
-  .tt-period-row { grid-template-columns: 32px 1fr auto 1fr; }
+  .tt-school-toggle > span:first-child { min-width: 0; }
+  .tt-profile-summary { align-items: flex-start; flex-direction: column; min-width: 0; }
+  .tt-profile-summary > div { min-width: 0; max-width: 100%; }
+  .tt-profile-list { min-width: 0; max-width: 100%; }
+  .tt-profile-pill { max-width: 100%; min-width: 0; }
+  .tt-profile-pill span { overflow-wrap: anywhere; }
+
+  .tt-profile-create {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+  }
+  .tt-profile-create label {
+    flex: 0 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+  .tt-profile-create .tt-setup-btn { width: 100%; white-space: normal; }
+
+  .tt-profile-editor-head { align-items: stretch; flex-direction: column; min-width: 0; }
+  .tt-profile-editor-head label { width: 100%; min-width: 0; }
+  .tt-period-grid { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+  .tt-period-row {
+    grid-template-columns: 28px minmax(0, 1fr) 12px minmax(0, 1fr);
+    gap: 6px;
+    min-width: 0;
+    padding: 9px 8px;
+  }
+  .tt-period-row > strong { min-width: 0; }
+  .tt-period-row input { width: 100%; min-width: 0; padding-inline: 6px; }
+  .tt-profile-actions { min-width: 0; }
+  .tt-profile-actions .tt-setup-btn { flex: 1 1 120px; min-width: 0; white-space: normal; }
+}
+
+@media (max-width: 380px) {
+  .tt-timing-card { padding: 12px; }
+  .tt-period-row {
+    grid-template-columns: 24px minmax(0, 1fr) 10px minmax(0, 1fr);
+    gap: 4px;
+    padding-inline: 6px;
+  }
+  .tt-period-row input { font-size: .72rem; padding-inline: 4px; }
 }

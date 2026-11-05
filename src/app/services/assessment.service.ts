@@ -62,19 +62,25 @@ export class AssessmentService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  // Student
-  studentUpcoming(limit?: number): Observable<Assessment[]> {
-    const params = limit ? new HttpParams().set('limit', limit) : undefined;
+  // Student — or a parent, who names the linked child (the backend checks the link; a student's
+  // own requests never send one)
+  studentUpcoming(limit?: number, studentId?: string | null): Observable<Assessment[]> {
+    let params = new HttpParams();
+    if (limit) params = params.set('limit', limit);
+    if (studentId) params = params.set('studentId', studentId);
     return this.http.get<Assessment[]>(`${this.baseUrl}/student/upcoming`, { params });
   }
 
   /** month = YYYY-MM (default: the school's current month). */
-  studentMonth(month?: string): Observable<Assessment[]> {
-    const params = month ? new HttpParams().set('month', month) : undefined;
+  studentMonth(month?: string, studentId?: string | null): Observable<Assessment[]> {
+    let params = new HttpParams();
+    if (month) params = params.set('month', month);
+    if (studentId) params = params.set('studentId', studentId);
     return this.http.get<Assessment[]>(`${this.baseUrl}/student/month`, { params });
   }
 
-  studentPast(): Observable<Assessment[]> {
-    return this.http.get<Assessment[]>(`${this.baseUrl}/student/past`);
+  studentPast(studentId?: string | null): Observable<Assessment[]> {
+    const params = studentId ? new HttpParams().set('studentId', studentId) : undefined;
+    return this.http.get<Assessment[]>(`${this.baseUrl}/student/past`, { params });
   }
 }

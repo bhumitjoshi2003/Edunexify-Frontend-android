@@ -217,3 +217,8 @@
 @media (prefers-reduced-motion: reduce) {
   .sas-page *, .sas-page *::before, .sas-page *::after { animation: none !important; transition: none !important; }
 }
+
+.sas-no-child {
+  margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px dashed #cbd5e1;
+  color: #475569; font-size: 0.85rem;
+}
