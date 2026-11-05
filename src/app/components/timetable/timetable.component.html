@@ -1,5 +1,3 @@
-<app-academic-session-selector class="no-print" *ngIf="canManage()" [initialId]="initialSessionId" [disabled]="modalSaving || (!isTeacher() && !canWrite())" (selected)="onSessionSelected($event)" />
-<p class="no-print" *ngIf="canManage() && !canWrite()">Select a current or future session to configure the timetable. Historical sessions are read-only.</p>
 <div class="tt-page">
   <app-parent-child-context *ngIf="isParent()" [studentId]="userId" requiredPermission="canViewTimetable" (childSelected)="onChildTabSelected($event)"></app-parent-child-context>
 
@@ -12,12 +10,50 @@
         <p class="tt-hero-sub">Weekly class &amp; teacher schedules</p>
       </div>
     </div>
-    <button type="button" class="tt-bulk-import-btn no-print" *ngIf="canManage()" [disabled]="!canWrite()" (click)="goToBulkImport()">
+    <button type="button" class="tt-bulk-import-btn no-print" *ngIf="canManage() && activeTab === 'timetable'" [disabled]="!canWrite()" (click)="goToBulkImport()">
       &#8593; Bulk Import
     </button>
     <div class="tt-blob tt-blob-1"></div>
     <div class="tt-blob tt-blob-2"></div>
   </div>
+
+  <!-- ── Admin navigation ─────────────────────────────────────── -->
+  <nav class="tt-tabs no-print" *ngIf="canManage()" aria-label="Timetable sections">
+    <button type="button" class="tt-tab" [class.tt-tab-active]="activeTab === 'timetable'" (click)="activeTab = 'timetable'">
+      <span class="tt-tab-icon">▦</span>
+      <span>
+        <strong>Timetable</strong>
+        <small>View and update schedules</small>
+      </span>
+    </button>
+    <button type="button" class="tt-tab" [class.tt-tab-active]="activeTab === 'setup'" (click)="activeTab = 'setup'">
+      <span class="tt-tab-icon">⚙</span>
+      <span>
+        <strong>Setup</strong>
+        <small>Class teachers and session tools</small>
+      </span>
+    </button>
+  </nav>
+
+  <div class="tt-session-shell no-print" *ngIf="canManage()">
+    <app-academic-session-selector [initialId]="initialSessionId"
+      [disabled]="modalSaving || !canWrite()" (selected)="onSessionSelected($event)" />
+    <p class="tt-session-note" *ngIf="!canWrite()">Historical sessions are read-only. Select a current or future session to make changes.</p>
+  </div>
+
+  <section class="tt-setup-view no-print" *ngIf="canManage() && activeTab === 'setup'">
+    <div class="tt-setup-intro">
+      <span class="tt-setup-intro-icon">⚙</span>
+      <div>
+        <h2>Timetable setup</h2>
+        <p>Manage class teachers, reuse a previous session, and access advanced maintenance tools.</p>
+      </div>
+    </div>
+    <app-teaching-configuration [session]="selectedSession" [classes]="managedClasses" [teachers]="teachers"
+      (timetableCopied)="loadClassTimetable()" (busyChange)="configurationBusy = $event" />
+  </section>
+
+  <div class="tt-main-view" *ngIf="!canManage() || activeTab === 'timetable'">
 
   <!-- ── Admin controls ───────────────────────────────────────── -->
   <div class="tt-controls no-print" *ngIf="isAdmin()">
@@ -228,6 +264,7 @@
 
   </ng-container>
 
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
