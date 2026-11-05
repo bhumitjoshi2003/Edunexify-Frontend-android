@@ -5,6 +5,10 @@ import { interval, Observable, Subject, takeUntil } from 'rxjs';
 import { HomeworkClasswork, dueLabel, formatFileSize, homeworkClassLabel, homeworkKind } from '../../interfaces/homework';
 import { HomeworkService } from '../../services/homework.service';
 import { LoggerService } from '../../services/logger.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { ChildAccess } from '../../interfaces/parent-portal';
+import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 
 export type StudentHomeworkTab = 'today' | 'upcoming' | 'recent';
 
@@ -18,7 +22,7 @@ interface TabState {
 @Component({
   selector: 'app-student-homework',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, ParentChildContextComponent],
   templateUrl: './student-homework.component.html',
   styleUrl: './student-homework.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +41,13 @@ export class StudentHomeworkComponent implements OnInit, OnDestroy {
   readonly skeletons = [0, 1, 2];
   /** Refreshed every minute so relative times stay live. */
   now = Date.now();
+  /** A parent reads the same view for the linked child named in ?studentId= (the backend
+   *  checks the link); the shared child switcher changes it. Nothing here can create or edit. */
+  readonly isParent: boolean;
+  studentId: string | null = null;
+  /** The backend refused this child for this parent (unlinked, ended or revoked link): the
+   *  switcher explains it and offers the linked children, so the page body stays hidden. */
+  denied = false;
 
   active: StudentHomeworkTab = 'today';
   state: Record<StudentHomeworkTab, TabState> = {
@@ -50,10 +61,25 @@ export class StudentHomeworkComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object,
-  ) {}
+    private route: ActivatedRoute,
+    private router: Router,
+    authState: AuthStateService,
+  ) {
+    this.isParent = authState.getUserRole() === 'PARENT';
+  }
 
   ngOnInit(): void {
-    this.select('today');
+    if (this.isParent) {
+      this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(q => {
+        this.studentId = q.get('studentId');
+        this.denied = false;
+        for (const tab of this.tabs) this.state[tab.key] = { loaded: false, loading: false, failed: false, items: [] };
+        if (this.studentId) this.select(this.active);
+        this.cdr.markForCheck();
+      });
+    } else {
+      this.select('today');
+    }
     if (isPlatformBrowser(this.platformId)) {
       interval(60_000).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.now = Date.now();
@@ -122,6 +148,7 @@ export class StudentHomeworkComponent implements OnInit, OnDestroy {
       },
       error: error => {
         this.logger.error(`Homework (${tab}) load failed:`, error);
+        if (this.isParent && error?.status === 403) this.denied = true;
         s.loading = false;
         s.failed = true;
         this.cdr.markForCheck();
@@ -130,9 +157,13 @@ export class StudentHomeworkComponent implements OnInit, OnDestroy {
   }
 
   private source(tab: StudentHomeworkTab): Observable<HomeworkClasswork[]> {
-    if (tab === 'upcoming') return this.homework.studentUpcoming();
-    if (tab === 'recent') return this.homework.studentRecent();
-    return this.homework.studentOn();
+    if (tab === 'upcoming') return this.homework.studentUpcoming(this.studentId);
+    if (tab === 'recent') return this.homework.studentRecent(this.studentId);
+    return this.homework.studentOn(undefined, this.studentId);
+  }
+
+  onChildSelected(child: ChildAccess): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: { studentId: child.studentId }, replaceUrl: true });
   }
 
   emptyText(tab: StudentHomeworkTab): string {
