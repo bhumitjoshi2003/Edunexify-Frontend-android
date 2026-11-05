@@ -4,7 +4,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, switchMap, catchError, EMPTY } from 'rxjs';
-import { TimetableService } from '../../services/timetable.service';
+import { TimetableService, TimetableTimingConfig, TimetableTimingPeriod, TimetableTimingProfile } from '../../services/timetable.service';
 import { TeacherService } from '../../services/teacher.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { StudentService } from '../../services/student.service';
@@ -25,7 +25,6 @@ import { AcademicSession } from '../../interfaces/academic-session';
 import { AcademicSessionSelectorComponent, writableSession, apiMessage } from '../academic-session-selector/academic-session-selector.component';
 import { TeachingConfigurationComponent } from '../teaching-configuration/teaching-configuration.component';
 import { subjectIcon, subjectAccentClass } from '../../utils/subject-visual.util';
-import { isShowTimesEnabled, setShowTimesEnabled } from '../../utils/timetable-preferences.util';
 
 @Component({
   selector: 'app-timetable',
@@ -96,7 +95,15 @@ export class TimetableComponent implements OnInit, OnDestroy {
    *  into. The backend enforces this independently; this only scopes what's offered. */
   myClasses: { classId?: number; className: string; sectionId: number | null; sectionName: string | null }[] = [];
 
-  showTimes: boolean = isShowTimesEnabled();
+  showTimes = true;
+  timingConfig: TimetableTimingConfig | null = null;
+  timingLoading = false;
+  timingError = '';
+  timingProfileId: number | null = null;
+  timingProfileName = '';
+  timingDraft: TimetableTimingPeriod[] = [];
+  newTimingProfileName = 'Winter Schedule';
+  private timingByPeriod = new Map<number, TimetableTimingPeriod>();
 
   entries: TimetableEntry[] = [];
   teacherEntries: TimetableEntry[] = [];
@@ -152,6 +159,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.userId = user?.userId ?? '';
     this.userClassName = user?.className ?? '';
     this.userName = user?.name ?? '';
+    this.loadTimingDisplay();
+    if (this.canManage()) this.loadTimingConfig();
 
     const dayMap = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
     this.todayDay = dayMap[new Date().getDay()];
@@ -287,10 +296,192 @@ export class TimetableComponent implements OnInit, OnDestroy {
       });
   }
 
-  toggleTimes(): void {
-    this.showTimes = !this.showTimes;
-    setShowTimesEnabled(this.showTimes);
+  loadTimingDisplay(): void {
+    this.timetableService.getTimingDisplay().pipe(takeUntil(this.destroy$)).subscribe({
+      next: display => {
+        this.showTimes = display.showTimes;
+        this.applyTimingPeriods(display.periods);
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        // Backward-compatible fallback: if the new endpoint is temporarily unavailable,
+        // preserve the existing timetable row times rather than hiding the schedule.
+        this.logger.error('Failed to load timetable timing display settings', err);
+        this.showTimes = true;
+        this.applyTimingPeriods([]);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadTimingConfig(): void {
+    if (!this.canManage()) return;
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.getTimingConfig().pipe(takeUntil(this.destroy$)).subscribe({
+      next: config => {
+        this.timingLoading = false;
+        this.applyTimingConfig(config);
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not load period timing settings.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  setSchoolShowTimes(enabled: boolean): void {
+    if (!this.canManage() || this.timingLoading) return;
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.setTimingVisibility(enabled).pipe(takeUntil(this.destroy$)).subscribe({
+      next: config => {
+        this.timingLoading = false;
+        this.applyTimingConfig(config);
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not update period-time visibility.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  selectTimingProfile(profile: TimetableTimingProfile): void {
+    this.timingProfileId = profile.id;
+    this.timingProfileName = profile.name;
+    const byPeriod = new Map(profile.periods.map(p => [p.periodNumber, p]));
+    const count = Math.max(8, ...profile.periods.map(p => p.periodNumber), 0);
+    this.timingDraft = Array.from({ length: count }, (_, i) => {
+      const periodNumber = i + 1;
+      const current = byPeriod.get(periodNumber);
+      return current ? { ...current } : { periodNumber, startTime: '', endTime: '' };
+    });
     this.cdr.markForCheck();
+  }
+
+  createTimingProfile(fromCurrentTimetable = false): void {
+    if (!this.canManage() || this.timingLoading) return;
+    const name = this.newTimingProfileName.trim();
+    if (!name) {
+      this.timingError = 'Enter a name for the timing profile.';
+      this.cdr.markForCheck();
+      return;
+    }
+    const activeId = this.timingConfig?.activeProfileId ?? null;
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.createTimingProfile({
+      name,
+      copyFromProfileId: fromCurrentTimetable ? null : activeId,
+      fromCurrentTimetable
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: profile => {
+        this.newTimingProfileName = profile.name.toLowerCase().includes('winter') ? 'Summer Schedule' : 'Winter Schedule';
+        this.timingLoading = false;
+        this.loadTimingConfig();
+        this.selectTimingProfile(profile);
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not create the timing profile.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  saveTimingProfile(): void {
+    if (!this.canManage() || !this.timingProfileId || this.timingLoading) return;
+    const periods = this.timingDraft.filter(p => p.startTime && p.endTime);
+    if (!periods.length) {
+      this.timingError = 'Add at least one period time before saving.';
+      this.cdr.markForCheck();
+      return;
+    }
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.updateTimingProfile(this.timingProfileId, {
+      name: this.timingProfileName.trim(),
+      periods
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: profile => {
+        this.timingLoading = false;
+        this.loadTimingConfig();
+        this.selectTimingProfile(profile);
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not save the timing profile.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  activateTimingProfile(profileId: number): void {
+    if (!this.canManage() || this.timingLoading) return;
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.activateTimingProfile(profileId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: config => {
+        this.timingLoading = false;
+        this.applyTimingConfig(config);
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not activate the timing profile.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  deleteTimingProfile(profile: TimetableTimingProfile): void {
+    if (!this.canManage() || profile.active || this.timingLoading) return;
+    this.timingLoading = true;
+    this.timingError = '';
+    this.timetableService.deleteTimingProfile(profile.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.timingLoading = false;
+        if (this.timingProfileId === profile.id) {
+          this.timingProfileId = null;
+          this.timingDraft = [];
+        }
+        this.loadTimingConfig();
+      },
+      error: err => {
+        this.timingLoading = false;
+        this.timingError = apiMessage(err, 'Could not delete the timing profile.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  entryStartTime(entry: TimetableEntry): string {
+    return this.timingByPeriod.get(entry.periodNumber)?.startTime || entry.startTime || '';
+  }
+
+  entryEndTime(entry: TimetableEntry): string {
+    return this.timingByPeriod.get(entry.periodNumber)?.endTime || entry.endTime || '';
+  }
+
+  private applyTimingConfig(config: TimetableTimingConfig): void {
+    this.timingConfig = config;
+    this.showTimes = config.showTimes;
+    const active = config.profiles.find(p => p.active) ?? null;
+    this.applyTimingPeriods(active?.periods ?? []);
+    if (this.timingProfileId) {
+      const selected = config.profiles.find(p => p.id === this.timingProfileId);
+      if (selected) this.selectTimingProfile(selected);
+    } else if (active) {
+      this.selectTimingProfile(active);
+    } else if (config.profiles.length) {
+      this.selectTimingProfile(config.profiles[0]);
+    }
+    this.cdr.markForCheck();
+  }
+
+  private applyTimingPeriods(periods: TimetableTimingPeriod[]): void {
+    this.timingByPeriod = new Map(periods.map(p => [p.periodNumber, p]));
   }
 
   get dayEntries(): TimetableEntry[] {
