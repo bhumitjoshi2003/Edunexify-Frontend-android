@@ -684,14 +684,7 @@ app-class-attendance-insights { display: block; margin-bottom: 16px; }
   line-height: 1.35;
   letter-spacing: -0.2px;
 }
-.as-section-sub {
-  margin: 5px 0 0;
-  color: #475569;
-  font-size: 0.84rem;
-  line-height: 1.55;
-}
 @media (max-width: 767px) {
   .as-section-head { padding: 14px 15px 14px 18px; }
   .as-section-title { font-size: 1rem; }
-  .as-section-sub { font-size: 0.8rem; }
 }
