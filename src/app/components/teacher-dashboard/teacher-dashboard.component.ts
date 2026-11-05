@@ -23,12 +23,11 @@ import { TeacherAttendanceRecord, TeacherAttendanceSummary } from '../../interfa
 import { TeacherLeaveService } from '../../services/teacher-leave.service';
 import { TeacherLeave } from '../../interfaces/teacher-leave';
 import { formatTeacherAttendanceTime, teacherAttendanceErrorMessage } from '../../utils/teacher-attendance.util';
-import { TimetableService } from '../../services/timetable.service';
+import { TimetableService, TimetableTimingPeriod } from '../../services/timetable.service';
 import { TeacherSubstitutionService } from '../../services/teacher-substitution.service';
 import { MyCoverage, TeacherSubstitution } from '../../interfaces/teacher-substitution';
 import { TimetableEntry } from '../../interfaces/timetable';
 import { subjectIcon } from '../../utils/subject-visual.util';
-import { isShowTimesEnabled } from '../../utils/timetable-preferences.util';
 import {
   buildTodayClassesView,
   todayDayCode,
@@ -90,11 +89,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   upcomingEvent: CalendarEvent | null = null;
   upcomingEventLoading = true;
   upcomingEventFailed = false;
-  /** Read synchronously at construction — never loaded asynchronously, so the UI can never
-   * briefly show clock times before the real "show times" preference is known. This is the
-   * same per-device viewer preference as the full Timetable page's own "Show times" toggle
-   * (localStorage, not a school/admin setting) — see timetable-preferences.util. */
-  readonly showTimes: boolean = isShowTimesEnabled();
+  /** School-wide timetable visibility set by ADMIN in Timetable → Setup. */
+  showTimes = true;
+  private timingByPeriod = new Map<number, TimetableTimingPeriod>();
 
   constructor(
     private authState: AuthStateService,
@@ -117,6 +114,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     const user = this.authState.getUser();
     if (!user?.userId) { this.isLoading = false; return; }
 
+    this.loadTimingDisplay();
     this.loadPersonalAttendance();
     this.loadRecentTeacherLeaves();
     this.loadTodayClasses(user.userId);
@@ -372,8 +370,28 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
    */
   classTimeRange(entry: TeacherTodayClassEntry): string | null {
     if (!this.showTimes) return null;
-    if (!entry.startTime || !entry.endTime) return null;
-    return `${formatTeacherAttendanceTime(entry.startTime)} – ${formatTeacherAttendanceTime(entry.endTime)}`;
+    const configured = this.timingByPeriod.get(entry.periodNumber);
+    const start = configured?.startTime ?? entry.startTime;
+    const end = configured?.endTime ?? entry.endTime;
+    if (!start || !end) return null;
+    return `${formatTeacherAttendanceTime(start)} – ${formatTeacherAttendanceTime(end)}`;
+  }
+
+  private loadTimingDisplay(): void {
+    this.timetableService.getTimingDisplay().pipe(takeUntil(this.destroy$)).subscribe({
+      next: display => {
+        this.showTimes = display.showTimes;
+        this.timingByPeriod = new Map(display.periods.map(p => [p.periodNumber, p]));
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        // Preserve existing row times if the new setting endpoint is temporarily unavailable.
+        this.logger.error('Failed to load timetable timing display settings', err);
+        this.showTimes = true;
+        this.timingByPeriod.clear();
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngOnDestroy(): void {
