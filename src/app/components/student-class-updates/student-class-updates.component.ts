@@ -6,13 +6,17 @@ import { ClassUpdate, classUpdateContextLabel } from '../../interfaces/class-upd
 import { formatFileSize, homeworkClassLabel } from '../../interfaces/homework';
 import { ClassUpdateService } from '../../services/class-update.service';
 import { LoggerService } from '../../services/logger.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { ChildAccess } from '../../interfaces/parent-portal';
+import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 @Component({
   selector: 'app-student-class-updates',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, ParentChildContextComponent],
   templateUrl: './student-class-updates.component.html',
   styleUrl: './student-class-updates.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +33,13 @@ export class StudentClassUpdatesComponent implements OnInit, OnDestroy {
   failed = false;
   /** Selected subject filter; null = all subjects. */
   subject: string | null = null;
+  /** A parent reads the same view for the linked child named in ?studentId= (the backend
+   *  checks the link); the shared child switcher changes it. Nothing here can create or edit. */
+  readonly isParent: boolean;
+  studentId: string | null = null;
+  /** The backend refused this child for this parent (unlinked, ended or revoked link): the
+   *  switcher explains it and offers the linked children, so the page body stays hidden. */
+  denied = false;
   /** Refreshed every minute so relative times and expiry countdowns stay live. */
   now = Date.now();
   private readonly expanded = new Set<number>();
@@ -38,10 +49,26 @@ export class StudentClassUpdatesComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object,
-  ) {}
+    private route: ActivatedRoute,
+    private router: Router,
+    authState: AuthStateService,
+  ) {
+    this.isParent = authState.getUserRole() === 'PARENT';
+  }
 
   ngOnInit(): void {
-    this.load();
+    if (this.isParent) {
+      this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(q => {
+        this.studentId = q.get('studentId');
+        this.denied = false;
+        this.items = [];
+        this.subject = null;
+        if (this.studentId) this.load();
+        else { this.loading = false; this.cdr.markForCheck(); }
+      });
+    } else {
+      this.load();
+    }
     if (isPlatformBrowser(this.platformId)) {
       interval(60_000).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.now = Date.now();
@@ -54,7 +81,7 @@ export class StudentClassUpdatesComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.failed = false;
     this.cdr.markForCheck();
-    this.classUpdates.studentActive().pipe(takeUntil(this.destroy$)).subscribe({
+    this.classUpdates.studentActive(undefined, this.studentId).pipe(takeUntil(this.destroy$)).subscribe({
       next: items => {
         this.items = items;
         if (this.subject && !this.subjects.includes(this.subject)) this.subject = null;
@@ -63,6 +90,7 @@ export class StudentClassUpdatesComponent implements OnInit, OnDestroy {
       },
       error: error => {
         this.logger.error('Class updates load failed:', error);
+        if (this.isParent && error?.status === 403) this.denied = true;
         this.loading = false;
         this.failed = true;
         this.cdr.markForCheck();
@@ -163,6 +191,10 @@ export class StudentClassUpdatesComponent implements OnInit, OnDestroy {
 
   trackById(_: number, item: ClassUpdate): number {
     return item.id;
+  }
+
+  onChildSelected(child: ChildAccess): void {
+    this.router.navigate([], { relativeTo: this.route, queryParams: { studentId: child.studentId }, replaceUrl: true });
   }
 
   ngOnDestroy(): void {
