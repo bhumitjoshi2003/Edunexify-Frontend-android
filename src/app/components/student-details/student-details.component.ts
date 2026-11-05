@@ -390,6 +390,15 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/view-leaves', this.studentId]);
   }
 
+  viewResults(): void {
+    this.router.navigate(['/dashboard/class-results'], {
+      queryParams: {
+        studentId: this.studentId,
+        className: this.studentDetails?.className
+      }
+    });
+  }
+
   viewFeeDetails(): void {
     this.router.navigate(['/dashboard/fees', this.studentId]);
   }
