@@ -49,6 +49,88 @@
         <p>Manage class teachers, reuse a previous session, and access advanced maintenance tools.</p>
       </div>
     </div>
+    <section class="tt-timing-card">
+      <div class="tt-timing-head">
+        <div>
+          <h3>Period timings</h3>
+          <p>One school-wide schedule controls the clock time shown for P1, P2 and the rest.</p>
+        </div>
+        <label class="tt-school-toggle">
+          <span>
+            <strong>Show period times to users</strong>
+            <small>Teachers, students and parents all follow this setting.</small>
+          </span>
+          <input type="checkbox" [checked]="showTimes" [disabled]="timingLoading"
+            (change)="setSchoolShowTimes($any($event.target).checked)">
+          <span class="tt-school-toggle-ui" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <p class="tt-timing-error" *ngIf="timingError">{{ timingError }}</p>
+      <p class="tt-timing-loading" *ngIf="timingLoading">Updating timing settings…</p>
+
+      <ng-container *ngIf="timingConfig as config">
+        <div class="tt-profile-summary">
+          <div>
+            <span class="tt-profile-label">Active schedule</span>
+            <strong>{{ activeTimingProfileName || 'Using existing timetable times' }}</strong>
+          </div>
+          <span class="tt-profile-visibility" [class.is-off]="!showTimes">{{ showTimes ? 'Visible to everyone' : 'Times hidden for everyone' }}</span>
+        </div>
+
+        <div class="tt-profile-list" *ngIf="config.profiles.length">
+          <button type="button" class="tt-profile-pill" *ngFor="let profile of config.profiles"
+            [class.is-active]="profile.active" [class.is-selected]="timingProfileId === profile.id"
+            (click)="selectTimingProfile(profile)">
+            <span>{{ profile.name }}</span>
+            <small *ngIf="profile.active">Active</small>
+          </button>
+        </div>
+
+        <div class="tt-profile-create">
+          <label>
+            <span>New timing profile</span>
+            <input type="text" [(ngModel)]="newTimingProfileName" placeholder="Winter Schedule" maxlength="100">
+          </label>
+          <button type="button" class="tt-setup-btn" *ngIf="config.profiles.length"
+            [disabled]="timingLoading || !newTimingProfileName.trim()" (click)="createTimingProfile(false)">
+            Duplicate active profile
+          </button>
+          <button type="button" class="tt-setup-btn" *ngIf="!config.profiles.length"
+            [disabled]="timingLoading || !newTimingProfileName.trim()" (click)="createTimingProfile(true)">
+            Create from current timetable
+          </button>
+        </div>
+
+        <div class="tt-profile-editor" *ngIf="timingProfileId">
+          <div class="tt-profile-editor-head">
+            <label>
+              <span>Profile name</span>
+              <input type="text" [(ngModel)]="timingProfileName" maxlength="100">
+            </label>
+            <span class="tt-profile-active-badge" *ngIf="selectedTimingProfile?.active">Currently active</span>
+          </div>
+
+          <div class="tt-period-grid">
+            <div class="tt-period-row" *ngFor="let period of timingDraft">
+              <strong>P{{ period.periodNumber }}</strong>
+              <label><span>Start</span><input type="time" [(ngModel)]="period.startTime"></label>
+              <span class="tt-period-arrow">→</span>
+              <label><span>End</span><input type="time" [(ngModel)]="period.endTime"></label>
+            </div>
+          </div>
+
+          <div class="tt-profile-actions">
+            <button type="button" class="tt-setup-btn tt-setup-btn-primary" [disabled]="timingLoading" (click)="saveTimingProfile()">Save profile</button>
+            <button type="button" class="tt-setup-btn" *ngIf="!selectedTimingProfile?.active"
+              [disabled]="timingLoading" (click)="activateTimingProfile(timingProfileId!)">Save & activate</button>
+            <button type="button" class="tt-setup-btn tt-setup-btn-danger" *ngIf="selectedTimingProfile && !selectedTimingProfile.active"
+              [disabled]="timingLoading" (click)="deleteTimingProfile(selectedTimingProfile)">Delete</button>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+
     <app-teaching-configuration [session]="selectedSession" [classes]="managedClasses" [teachers]="teachers"
       (timetableCopied)="loadClassTimetable()" (busyChange)="configurationBusy = $event" />
   </section>
@@ -73,18 +155,6 @@
         <option *ngFor="let s of sections" [ngValue]="s.id">{{ s.name }}</option>
       </select>
     </div>
-    <div class="tt-times-toggle">
-      <span class="tt-toggle-lbl">Show times</span>
-      <button class="tt-toggle" [class.tt-toggle-on]="showTimes"
-        (click)="toggleTimes()" aria-label="Toggle time display"></button>
-    </div>
-  </div>
-
-  <!-- Non-admin times toggle -->
-  <div class="tt-times-bar no-print" *ngIf="!isAdmin()">
-    <span class="tt-toggle-lbl">Show times</span>
-    <button class="tt-toggle" [class.tt-toggle-on]="showTimes"
-      (click)="toggleTimes()" aria-label="Toggle time display"></button>
   </div>
 
   <!-- ── Loading / Error ──────────────────────────────────────── -->
@@ -134,8 +204,8 @@
             (click)="canWrite() && openEdit(group.entries[0])">
             <div class="tt-period-header">
               <span class="tt-card-period">Period {{ group.entries[0].periodNumber }}</span>
-              <span class="tt-card-time" *ngIf="showTimes && group.entries[0].startTime">
-                {{ group.entries[0].startTime }} – {{ group.entries[0].endTime }}
+              <span class="tt-card-time" *ngIf="showTimes && entryStartTime(group.entries[0])">
+                {{ entryStartTime(group.entries[0]) }} – {{ entryEndTime(group.entries[0]) }}
               </span>
             </div>
             <div class="tt-card-content">
@@ -227,8 +297,8 @@
           <button type="button" class="tt-btn-cancel no-print" *ngIf="canEditEntry(entry)" (click)="openEdit(entry)">Edit / Delete</button>
           <div class="tt-period-header">
             <span class="tt-card-period">Period {{ entry.periodNumber }}</span>
-            <span class="tt-card-time" *ngIf="showTimes && entry.startTime">
-              {{ entry.startTime }} – {{ entry.endTime }}
+            <span class="tt-card-time" *ngIf="showTimes && entryStartTime(entry)">
+              {{ entryStartTime(entry) }} – {{ entryEndTime(entry) }}
             </span>
           </div>
           <div class="tt-card-content">
@@ -315,7 +385,17 @@
         </select>
       </div>
 
-      <div class="tt-field-row">
+      <div class="tt-central-time-note" *ngIf="centralTimingActive">
+        <strong>Time comes from {{ activeTimingProfileName || 'the active timing profile' }}</strong>
+        <span *ngIf="configuredTimeForPeriod(modalForm.periodNumber) as timing">
+          P{{ modalForm.periodNumber }} · {{ timing.startTime }} – {{ timing.endTime }}
+        </span>
+        <span *ngIf="!configuredTimeForPeriod(modalForm.periodNumber)">
+          Configure P{{ modalForm.periodNumber }} in Timetable → Setup before saving.
+        </span>
+      </div>
+
+      <div class="tt-field-row" *ngIf="!centralTimingActive">
         <div class="tt-field">
           <label class="tt-field-label" for="modal-start">Start Time</label>
           <input id="modal-start" type="time" class="tt-field-input" [(ngModel)]="modalForm.startTime">
