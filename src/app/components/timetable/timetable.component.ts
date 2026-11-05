@@ -72,6 +72,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   selectedClass = '';
   selectedClassId: number | null = null;
   selectedSession: AcademicSession | null = null;
+  configurationBusy = false;
   sectionsLoaded = false;
   private selectionChanged$ = new Subject<void>();
   private classRead$ = new Subject<{ className: string; sectionId: number | null; studentId: string | null; academicSessionId?: number } | null>();
