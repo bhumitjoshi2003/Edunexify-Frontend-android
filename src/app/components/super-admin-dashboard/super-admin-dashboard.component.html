@@ -44,6 +44,19 @@
       </button>
     </div>
 
+    <section class="sa-festival-controls" *ngIf="festival" aria-label="Diwali greeting settings">
+      <div class="sa-festival-mark" aria-hidden="true">🪔</div>
+      <div class="sa-festival-details">
+        <strong>Diwali greeting</strong>
+        <span>6–12 Nov 2026 · {{ festival.enabled ? 'Enabled' : 'Disabled' }}<ng-container *ngIf="festival.enabled && !festival.active"> · Outside display dates</ng-container></span>
+      </div>
+      <button type="button" class="sa-festival-toggle" [class.is-enabled]="festival.enabled"
+              [disabled]="festivalSaving" [attr.aria-pressed]="festival.enabled"
+              (click)="toggleFestival()">
+        {{ festivalSaving ? 'Saving…' : (festival.enabled ? 'Turn off' : 'Turn on') }}
+      </button>
+    </section>
+
     <!-- ══════════════ OVERVIEW TAB ══════════════ -->
     <ng-container *ngIf="activeTab === 'overview'">
 

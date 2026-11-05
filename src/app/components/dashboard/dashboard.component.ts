@@ -9,6 +9,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { AuthService } from '../../auth/auth.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { CommonModule } from '@angular/common';
+import { FestivalGreetingComponent } from '../festival-greeting/festival-greeting.component';
 import { StudentService } from '../../services/student.service';
 import { TeacherService } from '../../services/teacher.service';
 import { AdminService } from '../../services/admin.service';
@@ -39,6 +40,7 @@ import { PRIVACY_POLICY_URL, openExternalUrl } from '../../utils/legal-links';
     MatIconModule,
     MatDividerModule,
     CommonModule,
+    FestivalGreetingComponent,
     MatBadgeModule,
     AiCopilotComponent,
     NavGroupComponent,

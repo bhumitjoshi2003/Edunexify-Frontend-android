@@ -1,0 +1,22 @@
+<div class="festival-ribbon" *ngIf="campaign" role="status">
+  <span aria-hidden="true">🪔</span>
+  <span>Celebrating Diwali together</span>
+  <button type="button" (click)="showGreeting()">View wishes <span aria-hidden="true">✦</span></button>
+</div>
+
+<div class="festival-backdrop" *ngIf="campaign && open" (click)="dismiss()">
+  <section class="festival-card" role="dialog" aria-modal="true" aria-labelledby="festival-title"
+           (click)="$event.stopPropagation()" (keydown.escape)="dismiss()">
+    <button type="button" class="festival-close" aria-label="Close Diwali greeting" (click)="dismiss()">×</button>
+    <div class="festival-spark festival-spark-a" aria-hidden="true">✦</div>
+    <div class="festival-spark festival-spark-b" aria-hidden="true">✧</div>
+    <div class="festival-spark festival-spark-c" aria-hidden="true">✦</div>
+    <div class="festival-kicker">EDUNEXIFY CELEBRATES</div>
+    <div class="festival-diya" aria-hidden="true">🪔</div>
+    <h2 id="festival-title">{{ campaign.title }}</h2>
+    <p>{{ campaign.message }}</p>
+    <div class="festival-rule" aria-hidden="true">✦ ✦ ✦</div>
+    <span class="festival-signature">With warmth, from the Edunexify family</span>
+    <button class="festival-action" type="button" (click)="dismiss()">Celebrate together <span aria-hidden="true">♥</span></button>
+  </section>
+</div>

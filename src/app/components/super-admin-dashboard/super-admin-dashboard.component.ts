@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { SchoolService, SchoolSettings, PlanDetail, FeatureCatalogItem, GlobalSubscriptionConfig, SchoolFeature, SchoolSubscription } from '../../services/school.service';
 import { ToastService } from '../../services/toast.service';
+import { FestivalCampaign, FestivalCampaignService } from '../../services/festival-campaign.service';
 import { LoggerService } from '../../services/logger.service';
 
 interface DashboardStats {
@@ -97,6 +98,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private schoolService: SchoolService,
+    private festivalService: FestivalCampaignService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
     private logger: LoggerService
@@ -104,6 +106,32 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadOverview();
+    this.loadFestival();
+  }
+
+  loadFestival(): void {
+    this.festivalService.getCurrent().pipe(takeUntil(this.destroy$)).subscribe({
+      next: campaign => { this.festival = campaign; this.cdr.markForCheck(); },
+      error: () => { this.festival = null; this.cdr.markForCheck(); },
+    });
+  }
+
+  toggleFestival(): void {
+    if (!this.festival || this.festivalSaving) return;
+    this.festivalSaving = true;
+    this.festivalService.setEnabled(!this.festival.enabled).pipe(takeUntil(this.destroy$)).subscribe({
+      next: campaign => {
+        this.festival = campaign;
+        this.festivalSaving = false;
+        this.toast.success(campaign.enabled ? 'Diwali greeting enabled' : 'Diwali greeting disabled');
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.festivalSaving = false;
+        this.toast.error('Could not update Diwali greeting');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   ngOnDestroy(): void {

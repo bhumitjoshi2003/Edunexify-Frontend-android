@@ -1129,3 +1129,8 @@ select.sa-input { -webkit-appearance: auto; appearance: auto; cursor: pointer; }
   .sa-plan-header { flex-direction: column; gap: 8px; }
   .sa-plan-price-col { text-align: left; }
 }
+
+/* Platform-wide festival control */
+.sa-festival-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 18px;margin:0 0 17px;background:linear-gradient(100deg,#fff9ed,#fff2d8);border:1px solid #f0d7a7;border-radius:15px;color:#65431b}
+.sa-festival-mark{font-size:29px}.sa-festival-details{display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px}.sa-festival-details strong{font-size:15px}.sa-festival-details span{font-size:12px;color:#916c3f}
+.sa-festival-toggle{border:1px solid #b87930;border-radius:10px;padding:9px 15px;cursor:pointer;font-weight:700;background:#fff;color:#925315}.sa-festival-toggle.is-enabled{background:#80411c;color:white}.sa-festival-toggle:disabled{opacity:.55;cursor:wait}
