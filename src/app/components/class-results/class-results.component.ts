@@ -40,6 +40,7 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
   examSubjects: ExamSubjectEntry[] = [];
 
   results: ClassStudentResult[] = [];
+  focusedStudentId: string | null = null;
   loading = false;
   publishing = false;
 
@@ -70,6 +71,7 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
     const q = this.route.snapshot.queryParamMap;
     const urlSession = q.get('session');
     const urlClass = q.get('className');
+    this.focusedStudentId = q.get('studentId');
     const examParam = Number(q.get('examId'));
     const sectionParam = Number(q.get('sectionId'));
     this.restore = {
@@ -188,6 +190,7 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
         className: this.selectedClass || null,
         examId: this.selectedExamId,
         sectionId: this.selectedSectionId,
+        studentId: this.focusedStudentId || null,
       },
       replaceUrl: true,
     });
@@ -213,7 +216,9 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          this.results = data;
+          this.results = this.focusedStudentId
+            ? data.filter(student => student.studentId === this.focusedStudentId)
+            : data;
           this.loading = false;
           this.cdr.markForCheck();
         },
