@@ -899,6 +899,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
       title: 'Delete this period?',
       message: `${entry.subjectName} — ${this.dayLabels[entry.day]} Period ${entry.periodNumber}`,
       confirmText: 'Yes, delete',
+      cancelText: 'Cancel',
+      dismissOnBackdrop: true,
       danger: true
     }).then(confirmed => {
       if (!confirmed || this.destroyed || this.modalSaving ||
@@ -931,6 +933,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
       title: 'Delete this period?',
       message: `${this.modalForm.subjectName} — ${this.dayLabels[this.modalForm.day]} Period ${this.modalForm.periodNumber}`,
       confirmText: 'Yes, delete',
+      cancelText: 'Cancel',
+      dismissOnBackdrop: true,
       danger: true
     }).then(confirmed => {
       if (!confirmed || this.destroyed || !this.canEditEntry(this.modalForm) || this.modalForm.id !== id || (this.canManage() && this.selectedSession?.id !== sessionId)) return;

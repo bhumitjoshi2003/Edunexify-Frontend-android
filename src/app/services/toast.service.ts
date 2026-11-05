@@ -23,6 +23,8 @@ export interface ConfirmDialogData {
   confirmText?: string;
   /** Omit or leave empty to show only the confirm button (alert mode) */
   cancelText?: string;
+  /** Allow clicking outside this confirmation to cancel it. */
+  dismissOnBackdrop?: boolean;
   /** Red confirm button for destructive actions */
   danger?: boolean;
   icon?: 'warning' | 'question' | 'info' | 'success' | 'danger';
@@ -77,7 +79,7 @@ export class ToastService {
         maxWidth: '440px',
         width: '92vw',
         panelClass: 'edu-dialog',
-        disableClose: true,
+        disableClose: !data.dismissOnBackdrop,
       }).afterClosed()
     ).then(r => !!r);
   }
