@@ -23,13 +23,14 @@ import { TeacherClassGrantService } from '../../services/teacher-class-grant.ser
 
 import { AcademicSession } from '../../interfaces/academic-session';
 import { AcademicSessionSelectorComponent, writableSession, apiMessage } from '../academic-session-selector/academic-session-selector.component';
+import { TeachingConfigurationComponent } from '../teaching-configuration/teaching-configuration.component';
 import { subjectIcon, subjectAccentClass } from '../../utils/subject-visual.util';
 import { isShowTimesEnabled, setShowTimesEnabled } from '../../utils/timetable-preferences.util';
 
 @Component({
   selector: 'app-timetable',
   standalone: true,
-  imports: [CommonModule, FormsModule, ParentChildContextComponent, AcademicSessionSelectorComponent],
+  imports: [CommonModule, FormsModule, ParentChildContextComponent, AcademicSessionSelectorComponent, TeachingConfigurationComponent],
   templateUrl: './timetable.component.html',
   styleUrl: './timetable.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -45,6 +46,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   role = '';
   userId = '';
   userClassName = '';
+  activeTab: 'timetable' | 'setup' = 'timetable';
 
   private static readonly DAY_LABELS: Record<string, string> = {
     MONDAY: 'Monday', TUESDAY: 'Tuesday', WEDNESDAY: 'Wednesday',
