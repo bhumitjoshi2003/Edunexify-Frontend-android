@@ -33,7 +33,8 @@
       </div>
 
       <div class="ad-today-grid" *ngIf="stats || staffAttendance; else todayLoading">
-        <a class="ad-today-cell" routerLink="/dashboard/attendance-summary">
+        <a class="ad-today-cell is-students" routerLink="/dashboard/attendance-summary">
+          <span class="ad-today-icon"><mat-icon>groups</mat-icon></span>
           <span class="ad-today-label">Students present</span>
           <strong *ngIf="stats && stats.todayAttendanceRate > 0">{{ stats.todayAttendanceRate | number:'1.0-1' }}%</strong>
           <strong class="is-muted" *ngIf="stats && stats.todayAttendanceRate === 0">Not marked yet</strong>
@@ -42,7 +43,8 @@
           <small *ngIf="!stats">Attendance unavailable</small>
         </a>
 
-        <a class="ad-today-cell" routerLink="/dashboard/staff-attendance">
+        <a class="ad-today-cell is-staff" routerLink="/dashboard/staff-attendance">
+          <span class="ad-today-icon"><mat-icon>badge</mat-icon></span>
           <span class="ad-today-label">Staff present</span>
           <strong *ngIf="staffAttendance && stats">{{ staffCheckedInCount }} / {{ stats.totalTeachers }}</strong>
           <strong class="is-muted" *ngIf="!staffAttendance || !stats">—</strong>
@@ -55,13 +57,15 @@
           <small *ngIf="!staffAttendance">Staff attendance unavailable</small>
         </a>
 
-        <div class="ad-today-cell">
+        <div class="ad-today-cell is-leave">
+          <span class="ad-today-icon"><mat-icon>event_busy</mat-icon></span>
           <span class="ad-today-label">Staff on leave</span>
           <strong>{{ staffAttendance?.onLeaveCount ?? '—' }}</strong>
           <small>Approved leave today</small>
         </div>
 
-        <a class="ad-today-cell" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/payment-history-admin">
+        <a class="ad-today-cell is-fees" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/payment-history-admin">
+          <span class="ad-today-icon"><mat-icon>payments</mat-icon></span>
           <span class="ad-today-label">Fees this month</span>
           <strong *ngIf="stats">₹{{ stats.feesCollectedThisMonth | number }}</strong>
           <strong class="is-muted" *ngIf="!stats">—</strong>
@@ -69,7 +73,8 @@
           <small *ngIf="!stats">Fee summary unavailable</small>
         </a>
 
-        <a class="ad-today-cell" *ngIf="!hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/view-leaves">
+        <a class="ad-today-cell is-approvals" *ngIf="!hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/view-leaves">
+          <span class="ad-today-icon"><mat-icon>approval</mat-icon></span>
           <span class="ad-today-label">Pending approvals</span>
           <strong>{{ studentPendingLeaves + (teacherPendingLeaveCount ?? 0) }}</strong>
           <small>Student & teacher leave requests</small>
@@ -123,8 +128,14 @@
     <app-on-leave-today *ngIf="isAdmin"></app-on-leave-today>
 
     <!-- ── Upcoming Event ────────────────────────────────────────────── -->
-    <div class="ad-section">
-      <h2 class="ad-section-title">Upcoming Event</h2>
+    <div class="ad-section ad-upcoming-section">
+      <div class="ad-section-heading ad-section-heading--icon">
+        <div class="ad-heading-icon"><mat-icon>event</mat-icon></div>
+        <div>
+          <h2>Upcoming Event</h2>
+          <p>Your next school event at a glance.</p>
+        </div>
+      </div>
       <div class="ad-inline-event-skeleton" *ngIf="upcomingEventLoading" aria-busy="true" aria-label="Loading upcoming event">
         <span class="ad-inline-shimmer ad-inline-event-icon"></span>
         <div class="ad-inline-event-copy">
@@ -206,7 +217,13 @@
 
     <!-- ── Shortcuts ─────────────────────────────────────────────────── -->
     <section class="ad-section ad-shortcuts">
-      <h2 class="ad-section-title">Shortcuts</h2>
+      <div class="ad-section-heading ad-section-heading--icon">
+        <div class="ad-heading-icon"><mat-icon>bolt</mat-icon></div>
+        <div>
+          <h2>Shortcuts</h2>
+          <p>Frequently used admin actions.</p>
+        </div>
+      </div>
       <div class="ad-actions-grid ad-actions-grid--compact">
         <a class="ad-action-card" *ngIf="isAdmin" routerLink="/dashboard/register">
           <div class="ad-action-icon"><mat-icon>person_add</mat-icon></div><span>Register</span>

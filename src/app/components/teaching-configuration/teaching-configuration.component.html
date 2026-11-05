@@ -1,0 +1,236 @@
+<p class="tc-error" role="alert" *ngIf="error">{{ error }}</p>
+
+<h4 class="tc-mgmt-heading">Setup tools</h4>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Copy Teaching Configuration — advanced/occasional action, collapsed by default
+════════════════════════════════════════════════════════════════ -->
+<div class="tc-section">
+  <button type="button" class="tc-section-header" (click)="toggleSection('copy')" [attr.aria-expanded]="expanded.copy">
+    <span class="tc-section-icon tc-icon-indigo">⇄</span>
+    <span class="tc-section-heading">
+      <span class="tc-section-title">Copy from another session</span>
+      <span class="tc-section-sub" *ngIf="sourceId && targetId">{{ sessionLabel(sourceId) }} → {{ sessionLabel(targetId) }}</span>
+    </span>
+    <span class="tc-chevron" [class.tc-chevron-open]="expanded.copy">⌄</span>
+  </button>
+
+  <div class="tc-section-body" [class.tc-collapsed]="!expanded.copy">
+    <div class="tc-transfer-row">
+      <label class="tc-field">
+        <span class="tc-field-label">Source session</span>
+        <select class="tc-select" [(ngModel)]="sourceId" [disabled]="busy">
+          <option [ngValue]="null">Select source</option>
+          <option *ngFor="let s of sessions" [ngValue]="s.id">{{ s.label }} — {{ kind(s) }}</option>
+        </select>
+      </label>
+      <span class="tc-transfer-arrow" aria-hidden="true">→</span>
+      <label class="tc-field">
+        <span class="tc-field-label">Target session</span>
+        <select class="tc-select" [(ngModel)]="targetId" [disabled]="busy">
+          <option [ngValue]="null">Select target</option>
+          <option *ngFor="let s of sessions" [ngValue]="s.id" [disabled]="!writable(s)">{{ s.label }} — {{ kind(s) }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="tc-actions">
+      <button type="button" class="tc-btn tc-btn-primary" (click)="copy('timetable')" [disabled]="!canCopy()">
+        <span aria-hidden="true">📋</span> Copy Timetable
+      </button>
+      <button type="button" class="tc-btn tc-btn-secondary" (click)="copy('responsibilities')" [disabled]="!canCopy()">
+        <span aria-hidden="true">👥</span> Copy Responsibilities
+      </button>
+    </div>
+
+    <div class="tc-result" *ngIf="copyResult as r">
+      <p class="tc-result-summary">
+        <strong>{{ copyType }}</strong>: session {{ r.sourceAcademicSessionId }} → {{ r.targetAcademicSessionId }}.
+      </p>
+      <div class="tc-stat-row">
+        <span class="tc-stat">Scanned <strong>{{ r.scanned }}</strong></span>
+        <span class="tc-stat tc-stat-good">Copied <strong>{{ r.copied }}</strong></span>
+        <span class="tc-stat">Already copied <strong>{{ r.alreadyCopied }}</strong></span>
+        <span class="tc-stat" *ngIf="r.conflicts !== undefined" [class.tc-stat-warn]="r.conflicts > 0">Conflicts <strong>{{ r.conflicts }}</strong></span>
+        <span class="tc-stat" [class.tc-stat-warn]="r.failures > 0">Failures <strong>{{ r.failures }}</strong></span>
+      </div>
+      <p class="tc-hint">Skipped: ineligible teachers {{ r.skippedIneligibleTeacher }}, invalid classes {{ r.skippedInvalidClass }}, invalid sections {{ r.skippedInvalidSection }}.</p>
+      <div class="tc-scroll">
+        <table class="tc-table">
+          <thead><tr><th>Source row</th><th>Target row</th><th>Outcome</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of r.details">
+              <td>{{ d.sourceEntryId ?? d.sourceId }}</td>
+              <td>{{ d.targetEntryId ?? d.targetId ?? '—' }}</td>
+              <td><span class="tc-outcome-tag">{{ d.outcome }}</span></td>
+              <td>{{ d.reason }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Class-Teacher Responsibilities
+════════════════════════════════════════════════════════════════ -->
+<div class="tc-section">
+  <button type="button" class="tc-section-header" (click)="toggleSection('responsibilities')" [attr.aria-expanded]="expanded.responsibilities">
+    <span class="tc-section-icon tc-icon-green">🧑‍🏫</span>
+    <span class="tc-section-heading">
+      <span class="tc-section-title">Class Teachers</span>
+      <span class="tc-section-sub" *ngIf="session">{{ session.label }}</span>
+    </span>
+    <span class="tc-count-badge" *ngIf="rows.length">{{ rows.length }}</span>
+    <span class="tc-chevron" [class.tc-chevron-open]="expanded.responsibilities">⌄</span>
+  </button>
+
+  <div class="tc-section-body" [class.tc-collapsed]="!expanded.responsibilities">
+    <p class="tc-hint tc-hint-warn" *ngIf="!writable(session)">Read-only. Select a current or future session to configure responsibilities.</p>
+    <p class="tc-hint" *ngIf="loading">Loading configuration…</p>
+
+    <button type="button" class="tc-btn tc-btn-secondary tc-btn-sm" (click)="refresh()" [disabled]="busy || !session">
+      <span aria-hidden="true">↻</span> Refresh configuration
+    </button>
+
+    <div class="tc-scroll">
+      <table class="tc-table">
+        <thead><tr><th>Class / section</th><th>Configured teacher</th><th>Live teacher now</th><th>Live matches</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of rows">
+            <td>{{ r.className || r.classId }} / {{ r.sectionName || 'No section' }}</td>
+            <td>{{ r.configuredTeacherName || r.configuredTeacherId }}</td>
+            <td>{{ r.liveTeacherName || r.liveTeacherId || 'None' }}</td>
+            <td><span class="tc-match-pill" [class.tc-match-yes]="r.liveMatchesConfigured" [class.tc-match-no]="!r.liveMatchesConfigured">{{ r.liveMatchesConfigured ? 'Yes' : 'No' }}</span></td>
+            <td class="tc-row-actions">
+              <button type="button" class="tc-btn tc-btn-ghost tc-btn-sm" (click)="edit(r)" [disabled]="!canWrite()">Edit</button>
+              <button type="button" class="tc-btn tc-btn-ghost tc-btn-sm tc-btn-ghost-danger" (click)="remove(r)" [disabled]="!canWrite()">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <fieldset class="tc-form" [disabled]="!canWrite()">
+      <legend class="tc-form-legend">{{ editingId ? 'Edit responsibility' : 'Add responsibility' }}</legend>
+      <div class="tc-form-row">
+        <label class="tc-field">
+          <span class="tc-field-label">Class</span>
+          <select class="tc-select" [(ngModel)]="classId" (ngModelChange)="classChanged()">
+            <option [ngValue]="null">Select class</option>
+            <option *ngFor="let c of classes" [ngValue]="c.id">{{ c.name }}</option>
+          </select>
+        </label>
+        <label class="tc-field">
+          <span class="tc-field-label">Section</span>
+          <select class="tc-select" [(ngModel)]="sectionId" [disabled]="!sectionsLoaded">
+            <option [ngValue]="null">{{ sections.length ? 'Select section' : 'No section' }}</option>
+            <option *ngFor="let s of sections" [ngValue]="s.id">{{ s.name }}</option>
+          </select>
+        </label>
+        <label class="tc-field">
+          <span class="tc-field-label">Teacher</span>
+          <select class="tc-select" [(ngModel)]="teacherId">
+            <option value="">Select teacher</option>
+            <option *ngFor="let t of eligibleTeachers" [value]="t.teacherId">{{ t.name }} ({{ t.teacherId }})</option>
+          </select>
+        </label>
+      </div>
+      <div class="tc-actions">
+        <button type="button" class="tc-btn tc-btn-primary" (click)="save()" [disabled]="!canSave()">Save responsibility</button>
+        <button type="button" class="tc-btn tc-btn-ghost" (click)="resetForm()">Cancel edit</button>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<h4 class="tc-mgmt-heading tc-advanced-heading">Advanced tools</h4>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     Resync current-session class teachers — recovery/repair action, not the normal rollover
+     path (making a session current already activates its configuration automatically; this
+     stays available for APPLIED_BUT_DRIFTED recovery — e.g. a direct Teacher-profile edit
+     drifting away from configuration — or re-syncing after fixing an ineligible/invalid row).
+════════════════════════════════════════════════════════════════ -->
+<div class="tc-section tc-section-important" *ngIf="session?.current">
+  <button type="button" class="tc-section-header" (click)="toggleSection('activation')" [attr.aria-expanded]="expanded.activation">
+    <span class="tc-section-icon tc-icon-amber">⚡</span>
+    <span class="tc-section-heading">
+      <span class="tc-section-title">Resync Class Teachers</span>
+      <span class="tc-section-sub" *ngIf="session">{{ session.label }}</span>
+    </span>
+    <span class="tc-chevron" [class.tc-chevron-open]="expanded.activation">⌄</span>
+  </button>
+
+  <div class="tc-section-body" [class.tc-collapsed]="!expanded.activation">
+    <button type="button" class="tc-btn tc-btn-secondary" (click)="loadPreview()" [disabled]="busy || loading">
+      <span aria-hidden="true">👁</span> Preview live access changes
+    </button>
+
+    <div class="tc-preview" *ngIf="preview as p">
+      <div class="tc-status-grid">
+        <div class="tc-status-card">
+          <span class="tc-status-label">Configuration status</span>
+          <span class="tc-pill" [class.tc-pill-good]="p.inSync" [class.tc-pill-warn]="!p.inSync">
+            {{ p.inSync ? '✓ In Sync' : '⚠ Out of Sync' }}
+          </span>
+        </div>
+        <div class="tc-status-card">
+          <span class="tc-status-label">Activation history</span>
+          <span class="tc-pill"
+            [class.tc-pill-good]="p.activationState === 'APPLIED_IN_SYNC'"
+            [class.tc-pill-warn]="p.activationState === 'APPLIED_BUT_DRIFTED'"
+            [class.tc-pill-neutral]="p.activationState === 'NEVER_APPLIED'">
+            {{ p.activationState === 'NEVER_APPLIED' ? 'Never Applied' : p.activationState === 'APPLIED_IN_SYNC' ? 'Applied · In Sync' : 'Applied · Drifted' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="tc-stat-row">
+        <span class="tc-stat tc-stat-good">Gains {{ p.becomingLive }}</span>
+        <span class="tc-stat">changes {{ p.changing }}</span>
+        <span class="tc-stat" [class.tc-stat-warn]="p.clearing > 0">removals {{ p.clearing }}</span>
+        <span class="tc-stat">unchanged {{ p.unchanged }}</span>
+      </div>
+
+      <p class="tc-meta" *ngIf="p.lastAppliedAt">Last applied {{ p.lastAppliedAt }} by {{ p.lastAppliedBy || '—' }}</p>
+      <p class="tc-hint tc-hint-warn" *ngIf="p.hasIssues">
+        {{ p.ineligibleTeacher }} ineligible teacher{{ p.ineligibleTeacher === 1 ? '' : 's' }}, {{ p.invalidClassOrSection }} invalid class/section{{ p.invalidClassOrSection === 1 ? '' : 's' }}
+      </p>
+
+      <div class="tc-scroll">
+        <table class="tc-table">
+          <thead><tr><th>Class / section</th><th>Prior live</th><th>Configured</th><th>Outcome / issue</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let d of p.details">
+              <td>{{ d.className }} / {{ d.sectionName || 'No section' }}</td>
+              <td>{{ d.priorLiveTeacherName || d.priorLiveTeacherId || 'None' }}</td>
+              <td>{{ d.configuredTeacherName || d.configuredTeacherId || 'None' }}</td>
+              <td><span class="tc-outcome-tag">{{ d.outcome }}</span> {{ d.reason }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button type="button" class="tc-btn tc-btn-important" (click)="apply()" [disabled]="busy || loading">
+        Apply current-session configuration
+      </button>
+    </div>
+
+    <div class="tc-result" *ngIf="applied as a">
+      <p class="tc-result-summary">
+        Applied to session {{ a.academicSessionId }}: <strong>{{ a.activationState }}</strong>.
+        {{ a.lastAppliedAt }} by {{ a.lastAppliedBy }}.
+      </p>
+      <div class="tc-stat-row">
+        <span class="tc-stat tc-stat-good">Applied <strong>{{ a.applied }}</strong></span>
+        <span class="tc-stat">Cleared <strong>{{ a.cleared }}</strong></span>
+        <span class="tc-stat">Unchanged <strong>{{ a.unchanged }}</strong></span>
+        <span class="tc-stat" [class.tc-stat-warn]="a.ineligibleTeacher > 0">Ineligible teachers <strong>{{ a.ineligibleTeacher }}</strong></span>
+        <span class="tc-stat" [class.tc-stat-warn]="a.invalidClassOrSection > 0">Invalid classes/sections <strong>{{ a.invalidClassOrSection }}</strong></span>
+      </div>
+      <p class="tc-hint" *ngFor="let d of a.details">{{ d.className }} {{ d.sectionName }}: {{ d.outcome }} {{ d.reason }}</p>
+    </div>
+  </div>
+</div>

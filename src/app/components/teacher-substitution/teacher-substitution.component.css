@@ -350,3 +350,220 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   .sub-fill-actions { flex-direction: column-reverse; }
   .sub-fill-actions button { width: 100%; }
 }
+
+
+/* ── Structured substitution cards ─────────────────────────────────
+   Keep period, class context and assignment controls in predictable
+   zones so long suggestions/actions can never squeeze the class info. */
+.sub-card {
+  grid-template-columns: 74px minmax(190px, 230px) minmax(320px, 1fr);
+  align-items: start;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid #e6eaf0;
+  border-left: 4px solid #a855f7;
+  box-shadow: 0 5px 18px rgba(30, 41, 59, 0.06);
+}
+
+.sub-card-period {
+  min-height: 58px;
+  padding: 10px 8px;
+  box-sizing: border-box;
+}
+
+.sub-card-body {
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.sub-card-info {
+  gap: 5px;
+}
+
+.sub-card-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sub-card-class {
+  display: block;
+  max-width: 100%;
+  font-size: 0.98rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub-chip {
+  width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.sub-subject,
+.sub-absent {
+  display: block;
+  max-width: 100%;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.sub-subject {
+  margin-top: 2px;
+}
+
+.sub-assign {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  align-items: center;
+  justify-content: stretch;
+  gap: 8px;
+}
+
+.sub-suggested {
+  grid-column: 1 / -1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 10px;
+}
+
+.sub-suggested-copy {
+  overflow: hidden;
+}
+
+.sub-suggested-copy:not(small) {
+  text-overflow: ellipsis;
+}
+
+.sub-suggested .primary {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.sub-assign > select {
+  grid-column: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sub-assign > .secondary {
+  grid-column: 2;
+  white-space: nowrap;
+}
+
+.sub-assign > .link-cancel {
+  grid-column: 3;
+  white-space: nowrap;
+}
+
+.sub-assign > .sub-note-input,
+.sub-assign > small {
+  grid-column: 1 / -1;
+}
+
+.sub-assign small {
+  text-align: left;
+}
+
+.sub-assign-collapsed,
+.sub-assign-changing {
+  grid-column: 1 / -1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.sub-assign-changing select {
+  flex: 1 1 260px;
+  min-width: 180px;
+}
+
+.sub-group-title {
+  margin-bottom: 8px;
+}
+
+/* Medium desktop/tablet: keep period + class side by side, move controls
+   underneath instead of letting them crush the information column. */
+@media (max-width: 1120px) {
+  .sub-card {
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 12px 15px;
+  }
+
+  .sub-assign {
+    grid-column: 2;
+  }
+
+  .sub-card-class {
+    overflow: visible;
+    text-overflow: clip;
+  }
+}
+
+/* Small tablet/mobile: a clean vertical card with no horizontal competition. */
+@media (max-width: 720px) {
+  .sub-card {
+    grid-template-columns: 1fr;
+    gap: 11px;
+    padding: 14px;
+  }
+
+  .sub-card-period {
+    min-height: 0;
+    width: max-content;
+    max-width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 7px 10px;
+  }
+
+  .sub-card-body,
+  .sub-assign {
+    grid-column: 1;
+  }
+
+  .sub-card-body {
+    flex-direction: column;
+  }
+
+  .sub-card-top {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .sub-card-class {
+    white-space: normal;
+  }
+
+  .sub-assign {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sub-suggested {
+    width: 100%;
+  }
+
+  .sub-suggested .primary,
+  .sub-assign > .secondary,
+  .sub-assign > .link-cancel {
+    width: 100%;
+  }
+
+  .sub-substitute-mobile {
+    align-items: flex-start;
+    text-align: left;
+  }
+}

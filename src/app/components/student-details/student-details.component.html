@@ -206,13 +206,22 @@
     <p class="sd-history-empty" *ngIf="!guardians.length">No parent or guardian accounts are linked to this student.</p>
     <ul class="sd-guardians" *ngIf="guardians.length">
       <li *ngFor="let g of guardians" class="sd-guardian" [ngClass]="'is-' + g.linkStatus.toLowerCase()">
-        <div class="sd-guardian-head">
-          <strong>{{ g.parentName }}</strong>
-          <span class="sd-guardian-chip is-primary" *ngIf="g.primaryGuardian">Primary guardian</span>
-          <span class="sd-guardian-chip" [ngClass]="'is-' + g.linkStatus.toLowerCase()">{{ g.linkStatus === 'ACTIVE' ? 'Linked' : g.linkStatus === 'UPCOMING' ? 'Starts ' + (g.effectiveFrom | date:'d MMM y') : 'Ended' }}</span>
+        <span class="sd-guardian-avatar" aria-hidden="true">{{ (g.parentName || g.parentId || '?').charAt(0) }}</span>
+        <div class="sd-guardian-body">
+          <div class="sd-guardian-head">
+            <strong>{{ g.parentName }}</strong>
+            <span class="sd-guardian-chip is-primary" *ngIf="g.primaryGuardian">Primary guardian</span>
+            <span class="sd-guardian-chip" [ngClass]="'is-' + g.linkStatus.toLowerCase()">{{ g.linkStatus === 'ACTIVE' ? 'Linked' : g.linkStatus === 'UPCOMING' ? 'Starts ' + (g.effectiveFrom | date:'d MMM y') : 'Ended' }}</span>
+          </div>
+          <dl class="sd-guardian-meta">
+            <div><dt>Relationship</dt><dd>{{ g.relationshipType | titlecase }}</dd></div>
+            <div><dt>Parent ID</dt><dd>{{ g.parentId }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ g.phoneNumber }}</dd></div>
+            <div *ngIf="g.email"><dt>Email</dt><dd>{{ g.email }}</dd></div>
+            <div><dt>Linked</dt><dd>{{ g.effectiveFrom | date:'d MMM y' }} – {{ g.effectiveUntil ? (g.effectiveUntil | date:'d MMM y') : 'present' }}</dd></div>
+            <div><dt>Access</dt><dd>{{ guardianAccessSummary(g) }} · {{ guardianLoginLabel(g) }}</dd></div>
+          </dl>
         </div>
-        <small>{{ g.parentId }} · {{ g.relationshipType | titlecase }} · {{ g.phoneNumber }}<ng-container *ngIf="g.email"> · {{ g.email }}</ng-container></small>
-        <small>{{ g.effectiveFrom | date:'d MMM y' }} – {{ g.effectiveUntil ? (g.effectiveUntil | date:'d MMM y') : 'present' }} · {{ guardianAccessSummary(g) }} · {{ guardianLoginLabel(g) }}</small>
         <button type="button" class="sd-guardian-link" (click)="router.navigate(['/dashboard/parent-portal', g.parentId])">Manage access</button>
       </li>
     </ul>
@@ -233,6 +242,10 @@
       <button class="sd-action-btn" (click)="viewLeaves()">
         <span class="sd-action-icon">🗓</span>
         <span>Leaves</span>
+      </button>
+      <button *ngIf="hasFeature('EXAM_MARKS')" class="sd-action-btn" (click)="viewResults()">
+        <span class="sd-action-icon">📈</span>
+        <span>Results</span>
       </button>
       <button *ngIf="getUserRole() === 'ADMIN' && hasFeature('FEE_MANAGEMENT')" class="sd-action-btn" (click)="viewFeeDetails()">
         <span class="sd-action-icon">💰</span>

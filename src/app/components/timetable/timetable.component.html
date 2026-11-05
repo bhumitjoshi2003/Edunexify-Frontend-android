@@ -1,5 +1,3 @@
-<app-academic-session-selector class="no-print" *ngIf="canManage()" [initialId]="initialSessionId" [disabled]="modalSaving || (!isTeacher() && !canWrite())" (selected)="onSessionSelected($event)" />
-<p class="no-print" *ngIf="canManage() && !canWrite()">Select a current or future session to configure the timetable. Historical sessions are read-only.</p>
 <div class="tt-page">
   <app-parent-child-context *ngIf="isParent()" [studentId]="userId" requiredPermission="canViewTimetable" (childSelected)="onChildTabSelected($event)"></app-parent-child-context>
 
@@ -12,12 +10,132 @@
         <p class="tt-hero-sub">Weekly class &amp; teacher schedules</p>
       </div>
     </div>
-    <button type="button" class="tt-bulk-import-btn no-print" *ngIf="canManage()" [disabled]="!canWrite()" (click)="goToBulkImport()">
+    <button type="button" class="tt-bulk-import-btn no-print" *ngIf="canManage() && activeTab === 'timetable'" [disabled]="!canWrite()" (click)="goToBulkImport()">
       &#8593; Bulk Import
     </button>
     <div class="tt-blob tt-blob-1"></div>
     <div class="tt-blob tt-blob-2"></div>
   </div>
+
+  <!-- ── Admin navigation ─────────────────────────────────────── -->
+  <nav class="tt-tabs no-print" *ngIf="canManage()" aria-label="Timetable sections">
+    <button type="button" class="tt-tab" [class.tt-tab-active]="activeTab === 'timetable'" (click)="activeTab = 'timetable'">
+      <span class="tt-tab-icon">▦</span>
+      <span>
+        <strong>Timetable</strong>
+        <small>View and update schedules</small>
+      </span>
+    </button>
+    <button type="button" class="tt-tab" [class.tt-tab-active]="activeTab === 'setup'" (click)="activeTab = 'setup'">
+      <span class="tt-tab-icon">⚙</span>
+      <span>
+        <strong>Setup</strong>
+        <small>Class teachers and session tools</small>
+      </span>
+    </button>
+  </nav>
+
+  <div class="tt-session-shell no-print" *ngIf="canManage()">
+    <app-academic-session-selector [initialId]="initialSessionId"
+      [disabled]="modalSaving || !canWrite()" (selected)="onSessionSelected($event)" />
+    <p class="tt-session-note" *ngIf="!canWrite()">Historical sessions are read-only. Select a current or future session to make changes.</p>
+  </div>
+
+  <section class="tt-setup-view no-print" *ngIf="canManage() && activeTab === 'setup'">
+    <div class="tt-setup-intro">
+      <span class="tt-setup-intro-icon">⚙</span>
+      <div>
+        <h2>Timetable setup</h2>
+        <p>Manage class teachers, reuse a previous session, and access advanced maintenance tools.</p>
+      </div>
+    </div>
+    <section class="tt-timing-card">
+      <div class="tt-timing-head">
+        <div>
+          <h3>Period timings</h3>
+          <p>One school-wide schedule controls the clock time shown for P1, P2 and the rest.</p>
+        </div>
+        <label class="tt-school-toggle">
+          <span>
+            <strong>Show period times to users</strong>
+            <small>Teachers, students and parents all follow this setting.</small>
+          </span>
+          <input type="checkbox" [checked]="showTimes" [disabled]="timingLoading"
+            (change)="setSchoolShowTimes($any($event.target).checked)">
+          <span class="tt-school-toggle-ui" aria-hidden="true"></span>
+        </label>
+      </div>
+
+      <p class="tt-timing-error" *ngIf="timingError">{{ timingError }}</p>
+      <p class="tt-timing-loading" *ngIf="timingLoading">Updating timing settings…</p>
+
+      <ng-container *ngIf="timingConfig as config">
+        <div class="tt-profile-summary">
+          <div>
+            <span class="tt-profile-label">Active schedule</span>
+            <strong>{{ activeTimingProfileName || 'Using existing timetable times' }}</strong>
+          </div>
+          <span class="tt-profile-visibility" [class.is-off]="!showTimes">{{ showTimes ? 'Visible to everyone' : 'Times hidden for everyone' }}</span>
+        </div>
+
+        <div class="tt-profile-list" *ngIf="config.profiles.length">
+          <button type="button" class="tt-profile-pill" *ngFor="let profile of config.profiles"
+            [class.is-active]="profile.active" [class.is-selected]="timingProfileId === profile.id"
+            (click)="selectTimingProfile(profile)">
+            <span>{{ profile.name }}</span>
+            <small *ngIf="profile.active">Active</small>
+          </button>
+        </div>
+
+        <div class="tt-profile-create">
+          <label>
+            <span>New timing profile</span>
+            <input type="text" [(ngModel)]="newTimingProfileName" placeholder="Winter Schedule" maxlength="100">
+          </label>
+          <button type="button" class="tt-setup-btn" *ngIf="config.profiles.length"
+            [disabled]="timingLoading || !newTimingProfileName.trim()" (click)="createTimingProfile(false)">
+            Duplicate active profile
+          </button>
+          <button type="button" class="tt-setup-btn" *ngIf="!config.profiles.length"
+            [disabled]="timingLoading || !newTimingProfileName.trim()" (click)="createTimingProfile(true)">
+            Create from current timetable
+          </button>
+        </div>
+
+        <div class="tt-profile-editor" *ngIf="timingProfileId">
+          <div class="tt-profile-editor-head">
+            <label>
+              <span>Profile name</span>
+              <input type="text" [(ngModel)]="timingProfileName" maxlength="100">
+            </label>
+            <span class="tt-profile-active-badge" *ngIf="selectedTimingProfile?.active">Currently active</span>
+          </div>
+
+          <div class="tt-period-grid">
+            <div class="tt-period-row" *ngFor="let period of timingDraft">
+              <strong>P{{ period.periodNumber }}</strong>
+              <label><span>Start</span><input type="time" [(ngModel)]="period.startTime"></label>
+              <span class="tt-period-arrow">→</span>
+              <label><span>End</span><input type="time" [(ngModel)]="period.endTime"></label>
+            </div>
+          </div>
+
+          <div class="tt-profile-actions">
+            <button type="button" class="tt-setup-btn tt-setup-btn-primary" [disabled]="timingLoading" (click)="saveTimingProfile()">Save profile</button>
+            <button type="button" class="tt-setup-btn" *ngIf="!selectedTimingProfile?.active"
+              [disabled]="timingLoading" (click)="saveAndActivateTimingProfile()">Save & activate</button>
+            <button type="button" class="tt-setup-btn tt-setup-btn-danger" *ngIf="selectedTimingProfile && !selectedTimingProfile.active"
+              [disabled]="timingLoading" (click)="deleteTimingProfile(selectedTimingProfile)">Delete</button>
+          </div>
+        </div>
+      </ng-container>
+    </section>
+
+    <app-teaching-configuration [session]="selectedSession" [classes]="managedClasses" [teachers]="teachers"
+      (timetableCopied)="loadClassTimetable()" (busyChange)="configurationBusy = $event" />
+  </section>
+
+  <div class="tt-main-view" *ngIf="!canManage() || activeTab === 'timetable'">
 
   <!-- ── Admin controls ───────────────────────────────────────── -->
   <div class="tt-controls no-print" *ngIf="isAdmin()">
@@ -37,18 +155,6 @@
         <option *ngFor="let s of sections" [ngValue]="s.id">{{ s.name }}</option>
       </select>
     </div>
-    <div class="tt-times-toggle">
-      <span class="tt-toggle-lbl">Show times</span>
-      <button class="tt-toggle" [class.tt-toggle-on]="showTimes"
-        (click)="toggleTimes()" aria-label="Toggle time display"></button>
-    </div>
-  </div>
-
-  <!-- Non-admin times toggle -->
-  <div class="tt-times-bar no-print" *ngIf="!isAdmin()">
-    <span class="tt-toggle-lbl">Show times</span>
-    <button class="tt-toggle" [class.tt-toggle-on]="showTimes"
-      (click)="toggleTimes()" aria-label="Toggle time display"></button>
   </div>
 
   <!-- ── Loading / Error ──────────────────────────────────────── -->
@@ -98,8 +204,8 @@
             (click)="canWrite() && openEdit(group.entries[0])">
             <div class="tt-period-header">
               <span class="tt-card-period">Period {{ group.entries[0].periodNumber }}</span>
-              <span class="tt-card-time" *ngIf="showTimes && group.entries[0].startTime">
-                {{ group.entries[0].startTime }} – {{ group.entries[0].endTime }}
+              <span class="tt-card-time" *ngIf="showTimes && entryStartTime(group.entries[0])">
+                {{ entryStartTime(group.entries[0]) }} – {{ entryEndTime(group.entries[0]) }}
               </span>
             </div>
             <div class="tt-card-content">
@@ -191,8 +297,8 @@
           <button type="button" class="tt-btn-cancel no-print" *ngIf="canEditEntry(entry)" (click)="openEdit(entry)">Edit / Delete</button>
           <div class="tt-period-header">
             <span class="tt-card-period">Period {{ entry.periodNumber }}</span>
-            <span class="tt-card-time" *ngIf="showTimes && entry.startTime">
-              {{ entry.startTime }} – {{ entry.endTime }}
+            <span class="tt-card-time" *ngIf="showTimes && entryStartTime(entry)">
+              {{ entryStartTime(entry) }} – {{ entryEndTime(entry) }}
             </span>
           </div>
           <div class="tt-card-content">
@@ -228,6 +334,7 @@
 
   </ng-container>
 
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
@@ -278,7 +385,17 @@
         </select>
       </div>
 
-      <div class="tt-field-row">
+      <div class="tt-central-time-note" *ngIf="centralTimingActive">
+        <strong>Time comes from {{ activeTimingProfileName || 'the active timing profile' }}</strong>
+        <span *ngIf="configuredTimeForPeriod(modalForm.periodNumber) as timing">
+          P{{ modalForm.periodNumber }} · {{ timing.startTime }} – {{ timing.endTime }}
+        </span>
+        <span *ngIf="!configuredTimeForPeriod(modalForm.periodNumber)">
+          Configure P{{ modalForm.periodNumber }} in Timetable → Setup before saving.
+        </span>
+      </div>
+
+      <div class="tt-field-row" *ngIf="!centralTimingActive">
         <div class="tt-field">
           <label class="tt-field-label" for="modal-start">Start Time</label>
           <input id="modal-start" type="time" class="tt-field-input" [(ngModel)]="modalForm.startTime">
