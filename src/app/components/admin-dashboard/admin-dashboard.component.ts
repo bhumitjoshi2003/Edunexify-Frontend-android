@@ -11,7 +11,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { DashboardAnalyticsService, DashboardStats } from '../../services/dashboard-analytics.service';
 import { LeaveService, LeaveApplication } from '../../services/leave.service';
-import { SchoolService, SchoolEntitlementSummary } from '../../services/school.service';
+import { SchoolService, SchoolEntitlementSummary, SchoolSetupHealth } from '../../services/school.service';
 import { TeacherCheckinService } from '../../services/teacher-checkin.service';
 import { TeacherAttendanceTodaySummary } from '../../interfaces/teacher-checkin';
 import { LoggerService } from '../../services/logger.service';
@@ -44,6 +44,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   recentLeaves: LeaveApplication[] = [];
   entitlement: SchoolEntitlementSummary | null = null;
   staffAttendance: TeacherAttendanceTodaySummary | null = null;
+  setupHealth: SchoolSetupHealth | null = null;
+  setupHealthLoading = false;
+  setupHealthError = false;
   staffAdoption: StaffAdoptionSummary | null = null;
   staffAdoptionLoading = false;
   staffAdoptionError = false;
@@ -92,6 +95,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         'student-leaves',
         'entitlement',
         'staff-attendance',
+        'setup-health',
         'staff-adoption',
         'teacher-leaves',
       );
@@ -105,6 +109,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.loadStudentLeaves();
       this.loadEntitlement();
       this.loadStaffAttendance();
+      this.loadSetupHealth();
       this.loadStaffAdoption();
       this.loadTeacherPendingLeaveCount();
     }
@@ -186,6 +191,26 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return this.substitutionsFailed || (this.isAdmin && (
       this.statsFailed || this.teacherPendingLeaveFailed || this.staffAdoptionError || this.staffAttendanceFailed
     ));
+  }
+
+  loadSetupHealth(): void {
+    this.setupHealthLoading = true;
+    this.setupHealthError = false;
+    this.schoolService.getSetupHealth().pipe(takeUntil(this.destroy$)).subscribe({
+      next: health => {
+        this.setupHealth = health;
+        this.setupHealthLoading = false;
+        this.settleInitialLoad('setup-health');
+        this.cdr.markForCheck();
+      },
+      error: e => {
+        this.logger.error('School setup health load error:', e);
+        this.setupHealthLoading = false;
+        this.setupHealthError = true;
+        this.settleInitialLoad('setup-health');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   loadStaffAdoption(): void {

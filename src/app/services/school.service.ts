@@ -121,6 +121,25 @@ export interface SchoolEntitlementSummary {
   admins: number;
 }
 
+export type SetupItemStatus = 'COMPLETED' | 'INCOMPLETE' | 'NOT_APPLICABLE';
+export type SetupImportance = 'REQUIRED' | 'RECOMMENDED' | 'OPTIONAL';
+
+export interface SchoolSetupItem {
+  key: string;
+  title: string;
+  description: string;
+  status: SetupItemStatus;
+  importance: SetupImportance;
+}
+
+export interface SchoolSetupHealth {
+  completionPercentage: number;
+  completedRequired: number;
+  totalRequired: number;
+  status: 'NOT_STARTED' | 'IN_PROGRESS' | 'READY';
+  items: SchoolSetupItem[];
+}
+
 export interface SubscriptionHistoryItem {
   id: number;
   schoolId: number;
@@ -271,6 +290,10 @@ export class SchoolService {
 
   getSettings(): Observable<SchoolSettings> {
     return this.http.get<SchoolSettings>(`${this.baseUrl}/settings`);
+  }
+
+  getSetupHealth(): Observable<SchoolSetupHealth> {
+    return this.http.get<SchoolSetupHealth>(`${this.baseUrl}/setup-health`);
   }
 
   updateSettings(data: Partial<SchoolSettings>): Observable<SchoolSettings> {
