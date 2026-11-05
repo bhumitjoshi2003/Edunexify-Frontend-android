@@ -918,3 +918,53 @@
   }
   .tt-period-row input { font-size: .72rem; padding-inline: 4px; }
 }
+
+
+/* Mobile timetable: keep controls and all seven days inside the viewport.
+   Content wraps or shrinks rather than causing page-level horizontal scrolling. */
+@media (max-width: 600px) {
+  .tt-page,
+  .tt-main-view,
+  .tt-setup-view,
+  .tt-card-list {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .tt-hero {
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .tt-hero-left { flex: 1 1 100%; min-width: 0; }
+  .tt-hero-left > div:last-child { min-width: 0; }
+  .tt-hero-title, .tt-hero-sub { overflow-wrap: anywhere; }
+  .tt-bulk-import-btn, .tt-print-btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .tt-controls { padding: 12px; gap: 10px; }
+  .tt-control-group { flex: 1 1 100%; min-width: 0; }
+  .tt-select { max-width: 100%; box-sizing: border-box; }
+  .tt-times-bar { flex-wrap: wrap; min-width: 0; }
+
+  .tt-day-selector { min-width: 0; padding: 10px 5px; gap: 0; }
+  .tt-day-btn { min-width: 0; }
+  .tt-day-circle { max-width: 100%; }
+
+  .tt-period-card,
+  .tt-card-content,
+  .tt-simul-row,
+  .tt-simul-info,
+  .tt-card-info {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .tt-period-header { flex-wrap: wrap; gap: 8px; }
+  .tt-card-teacher, .tt-simul-teacher { overflow-wrap: anywhere; }
+  .tt-modal { min-width: 0; box-sizing: border-box; }
+}
