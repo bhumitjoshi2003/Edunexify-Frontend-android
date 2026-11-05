@@ -42,23 +42,14 @@
   </div>
 
   <section class="tt-setup-view no-print" *ngIf="canManage() && activeTab === 'setup'">
-    <div class="tt-setup-intro">
-      <span class="tt-setup-intro-icon">⚙</span>
-      <div>
-        <h2>Timetable setup</h2>
-        <p>Manage class teachers, reuse a previous session, and access advanced maintenance tools.</p>
-      </div>
-    </div>
     <section class="tt-timing-card">
       <div class="tt-timing-head">
         <div>
           <h3>Period timings</h3>
-          <p>One school-wide schedule controls the clock time shown for P1, P2 and the rest.</p>
         </div>
         <label class="tt-school-toggle">
           <span>
             <strong>Show period times to users</strong>
-            <small>Teachers, students and parents all follow this setting.</small>
           </span>
           <input type="checkbox" [checked]="showTimes" [disabled]="timingLoading"
             (change)="setSchoolShowTimes($any($event.target).checked)">
