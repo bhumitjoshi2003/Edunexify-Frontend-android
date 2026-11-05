@@ -496,11 +496,13 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   entryStartTime(entry: TimetableEntry): string {
-    return this.timingByPeriod.get(entry.periodNumber)?.startTime || entry.startTime || '';
+    if (this.centralTimingActive) return this.timingByPeriod.get(entry.periodNumber)?.startTime ?? '';
+    return entry.startTime || '';
   }
 
   entryEndTime(entry: TimetableEntry): string {
-    return this.timingByPeriod.get(entry.periodNumber)?.endTime || entry.endTime || '';
+    if (this.centralTimingActive) return this.timingByPeriod.get(entry.periodNumber)?.endTime ?? '';
+    return entry.endTime || '';
   }
 
   configuredTimeForPeriod(periodNumber: number): TimetableTimingPeriod | null {
