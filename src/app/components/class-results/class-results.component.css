@@ -352,3 +352,16 @@
 .cr-grade { display: inline-block; margin-right: 6px; font-weight: 800; color: #0f172a; }
 .cr-pass { padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #15803d; font-size: 0.7rem; font-weight: 700; }
 .cr-pass.cr-fail { background: #fee2e2; color: #b91c1c; }
+
+/* Skeleton mirrors the class-results summary/table without flashing text. */
+.cr-results-skeleton { padding: 20px; }
+.cr-sk-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.cr-sk-table { padding: 16px; border: 1px solid #e5eaf2; border-radius: 14px; display: flex; flex-direction: column; gap: 13px; }
+.cr-sk-shimmer { display: block; border-radius: 7px; background: linear-gradient(100deg, #e8edf4 20%, #f7f9fc 40%, #e8edf4 60%); background-size: 200% 100%; animation: cr-sk-wave 1.6s linear infinite; }
+.cr-sk-heading { width: 180px; max-width: 60%; height: 20px; }
+.cr-sk-pill { width: 80px; height: 30px; border-radius: 18px; }
+.cr-sk-table-header { width: 100%; height: 36px; }
+.cr-sk-table-row { width: 100%; height: 42px; }
+@keyframes cr-sk-wave { to { background-position-x: -200%; } }
+@media (max-width: 600px) { .cr-results-skeleton { padding: 12px; } .cr-sk-table { padding: 10px; } .cr-sk-table-row { height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .cr-sk-shimmer { animation: none; } }

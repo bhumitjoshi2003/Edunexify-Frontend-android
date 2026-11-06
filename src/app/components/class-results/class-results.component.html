@@ -69,7 +69,16 @@
       (click)="onSectionSelect(sec.id!)">{{ sec.name }}</button>
   </div>
 
-  <div *ngIf="loading" class="cr-loading">Loading results…</div>
+  <div *ngIf="loading" class="cr-results-skeleton" role="status" aria-busy="true" aria-label="Loading results">
+    <div class="cr-sk-toolbar" aria-hidden="true">
+      <span class="cr-sk-shimmer cr-sk-heading"></span>
+      <span class="cr-sk-shimmer cr-sk-pill"></span>
+    </div>
+    <div class="cr-sk-table" aria-hidden="true">
+      <span class="cr-sk-shimmer cr-sk-table-header"></span>
+      <span class="cr-sk-shimmer cr-sk-table-row" *ngFor="let item of [1, 2, 3, 4, 5]"></span>
+    </div>
+  </div>
 
   <div *ngIf="!loading && selectedExamId && results.length === 0" class="cr-empty">
     <div class="cr-empty-icon">📊</div>
