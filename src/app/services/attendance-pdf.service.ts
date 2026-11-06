@@ -1,12 +1,17 @@
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { jsPDF } from 'jspdf';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { SchoolService } from './school.service';
 import { AttendanceService } from './attendance.service';
 import { StudentAttendanceSummary, ClassAttendanceSummary, MonthlyBreakdown, DailyDetail } from '../interfaces/attendance-summary';
+
+interface NativePdfDownloads {
+  saveToDownloads(options: { data: string; fileName: string }): Promise<{ uri: string }>;
+}
+const nativePdfDownloads = registerPlugin<NativePdfDownloads>('ReportCardPdf');
 
 const NAVY: [number, number, number] = [16, 59, 80];
 const TEAL: [number, number, number] = [4, 120, 87];
@@ -27,7 +32,7 @@ export class AttendancePdfService {
     private readonly attendance: AttendanceService
   ) {}
 
-  async studentReport(summary: StudentAttendanceSummary, period: string, month?: { month: number; year: number }): Promise<void> {
+  async studentReport(summary: StudentAttendanceSummary, period: string, month?: { month: number; year: number }, action: 'download' | 'share' = 'download'): Promise<void> {
     const school = await this.schoolIdentity();
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
     const w = 210;
@@ -76,10 +81,10 @@ export class AttendancePdfService {
       }
     }
     this.footers(pdf, w);
-    await this.deliver(pdf, `Attendance_${this.fileSafe(summary.studentName)}_${this.fileSafe(period)}.pdf`);
+    await this.deliver(pdf, `Attendance_${this.fileSafe(summary.studentName)}_${this.fileSafe(period)}.pdf`, action);
   }
 
-  async classReport(students: ClassAttendanceSummary[], className: string, sectionName: string, period: string): Promise<void> {
+  async classReport(students: ClassAttendanceSummary[], className: string, sectionName: string, period: string, action: 'download' | 'share' = 'download'): Promise<void> {
     if (!students.length) throw new Error('No class report is loaded.');
     const school = await this.schoolIdentity();
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
@@ -112,7 +117,7 @@ export class AttendancePdfService {
       { label: 'Rate', width: 24, align: 'right' }
     ], y, w, school, 'CLASS ATTENDANCE REPORT', period);
     this.footers(pdf, w, '*Approved leave is included in absent days.');
-    await this.deliver(pdf, `Attendance_Class_${this.fileSafe(className)}_${this.fileSafe(period)}.pdf`);
+    await this.deliver(pdf, `Attendance_Class_${this.fileSafe(className)}_${this.fileSafe(period)}.pdf`, action);
   }
 
   private async schoolIdentity(): Promise<SchoolIdentity> {
@@ -346,15 +351,32 @@ export class AttendancePdfService {
     return input.replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 70);
   }
 
-  private async deliver(pdf: ReportDocument, filename: string): Promise<void> {
+  private async deliver(pdf: ReportDocument, filename: string, action: 'download' | 'share'): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      pdf.save(filename);
+      if (action === 'download') {
+        pdf.save(filename);
+      } else {
+        const file = new File([pdf.output('blob')], filename, { type: 'application/pdf' });
+        if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+          try {
+            await navigator.share({ files: [file], title: 'Attendance Report' });
+          } catch (error) {
+            if ((error as Error)?.name !== 'AbortError') throw error;
+          }
+        } else {
+          pdf.save(filename);
+        }
+      }
       return;
     }
     const data = pdf.output('datauristring').split(',')[1];
     if (!data) throw new Error('PDF encoding failed');
+    if (action === 'download') {
+      await nativePdfDownloads.saveToDownloads({ data, fileName: filename });
+      return;
+    }
     await Filesystem.writeFile({ path: filename, data, directory: Directory.Cache, recursive: true });
     const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
-    await Share.share({ title: 'Attendance Report', text: filename, url: uri, dialogTitle: 'Save or share attendance report' });
+    await Share.share({ title: 'Attendance Report', files: [uri], dialogTitle: 'Share attendance report' });
   }
 }

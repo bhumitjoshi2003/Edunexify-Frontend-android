@@ -139,9 +139,10 @@
       <div>
         <h3 class="as-student-name">{{ studentSummary.studentName }}</h3>
       </div>
-      <button class="as-print-btn no-print" (click)="printReport()" aria-label="Download PDF">
-        ⬇ Download PDF
-      </button>
+      <div class="as-export-actions no-print">
+        <button class="as-print-btn" (click)="printReport()" aria-label="Download PDF">⬇ Download PDF</button>
+        <button class="as-share-btn" (click)="shareReport()" aria-label="Share PDF" title="Share PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 13.5 6.6 4m0-11-6.6 4"/></svg></button>
+      </div>
     </div>
 
     <!-- Stat cards -->
@@ -318,9 +319,10 @@
         <p class="as-sub">{{ getPeriodLabel() }} &nbsp;·&nbsp; {{ classSummary.length }} students (sorted by lowest
           first)</p>
       </div>
-      <button class="as-print-btn no-print" (click)="printReport()" aria-label="Download PDF">
-        ⬇ Download PDF
-      </button>
+      <div class="as-export-actions no-print">
+        <button class="as-print-btn" (click)="printReport()" aria-label="Download PDF">⬇ Download PDF</button>
+        <button class="as-share-btn" (click)="shareReport()" aria-label="Share PDF" title="Share PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 13.5 6.6 4m0-11-6.6 4"/></svg></button>
+      </div>
     </div>
 
     <div class="as-table-wrap">

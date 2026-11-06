@@ -5,6 +5,11 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.ContentValues;
+import android.content.ContentResolver;
+import android.provider.MediaStore;
+import android.os.Environment;
+import android.util.Base64;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -35,6 +40,46 @@ import java.io.OutputStream;
 @CapacitorPlugin(name = "ReportCardPdf")
 public class ReportCardPdfPlugin extends Plugin {
     private static final String DOWNLOAD_CHANNEL_ID = "edunexify_downloads";
+
+    /** Save attendance PDFs directly in the public Downloads folder (no share chooser). */
+    @PluginMethod
+    public void saveToDownloads(PluginCall call) {
+        String data = call.getString("data");
+        String fileName = call.getString("fileName");
+        if (data == null || fileName == null || !fileName.matches("[a-zA-Z0-9_.-]+\\.pdf")) {
+            call.reject("Invalid attendance PDF");
+            return;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            call.reject("Saving to public Downloads requires Android 10 or later");
+            return;
+        }
+        Uri uri = null;
+        try {
+            byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+            ContentResolver resolver = getContext().getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Edunexify");
+            values.put(MediaStore.Downloads.IS_PENDING, 1);
+            uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) throw new IllegalStateException("Cannot create download");
+            try (OutputStream output = resolver.openOutputStream(uri)) {
+                if (output == null) throw new IllegalStateException("Cannot write download");
+                output.write(bytes);
+            }
+            values.clear();
+            values.put(MediaStore.Downloads.IS_PENDING, 0);
+            resolver.update(uri, values, null, null);
+            JSObject result = new JSObject();
+            result.put("uri", uri.toString());
+            call.resolve(result);
+        } catch (Exception e) {
+            if (uri != null) getContext().getContentResolver().delete(uri, null, null);
+            call.reject("Unable to save attendance PDF to Downloads", e);
+        }
+    }
 
     @PluginMethod
     public void open(PluginCall call) {
