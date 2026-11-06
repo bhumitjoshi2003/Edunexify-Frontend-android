@@ -4,6 +4,9 @@ import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.pdf.PdfRenderer;
 import android.content.Context;
 import android.content.ContentValues;
 import android.content.ContentResolver;
@@ -26,11 +29,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import com.getcapacitor.JSObject;
+import com.getcapacitor.JSArray;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -79,6 +84,48 @@ public class ReportCardPdfPlugin extends Plugin {
             if (uri != null) getContext().getContentResolver().delete(uri, null, null);
             call.reject("Unable to save attendance PDF to Downloads", e);
         }
+    }
+
+    /** Render an authenticated PDF as images for the inline report-card preview in the WebView. */
+    @PluginMethod
+    public void renderPages(PluginCall call) {
+        String uriValue = call.getString("uri");
+        if (uriValue == null || uriValue.trim().isEmpty()) {
+            call.reject("Missing PDF uri");
+            return;
+        }
+        new Thread(() -> {
+            try {
+                Uri uri = Uri.parse(uriValue);
+                try (ParcelFileDescriptor descriptor = "file".equalsIgnoreCase(uri.getScheme())
+                        ? ParcelFileDescriptor.open(new File(uri.getPath()), ParcelFileDescriptor.MODE_READ_ONLY)
+                        : getContext().getContentResolver().openFileDescriptor(uri, "r");
+                     PdfRenderer renderer = new PdfRenderer(descriptor)) {
+                    JSArray pages = new JSArray();
+                    for (int i = 0; i < renderer.getPageCount(); i++) {
+                        try (PdfRenderer.Page page = renderer.openPage(i)) {
+                            int width = 1200;
+                            int height = Math.max(1, Math.round(width * (float) page.getHeight() / page.getWidth()));
+                            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                            try {
+                                bitmap.eraseColor(Color.WHITE);
+                                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 88, stream);
+                                pages.put("data:image/jpeg;base64," + Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP));
+                            } finally {
+                                bitmap.recycle();
+                            }
+                        }
+                    }
+                    JSObject result = new JSObject();
+                    result.put("pages", pages);
+                    call.resolve(result);
+                }
+            } catch (Exception e) {
+                call.reject("Could not render report card", e);
+            }
+        }, "edunexify-report-card-inline").start();
     }
 
     @PluginMethod

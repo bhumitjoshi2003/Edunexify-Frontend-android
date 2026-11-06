@@ -1102,3 +1102,7 @@
 .rc-viewer-frame { display: block; width: 100%; height: min(1180px, 85vh); border: 0; background: #525659; }
 .rc-viewer-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 48px 20px; font-family: 'Segoe UI', system-ui, sans-serif; color: #475569; font-size: 0.95rem; }
 @media (max-width: 768px) { .rc-viewer { border-radius: 0; } .rc-viewer-frame { height: 80vh; } }
+
+/* Embedded Android PDF pages stay within the report-card screen. */
+.rc-native-pages { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; background: #e9eef3; }
+.rc-native-page { display: block; width: 100%; max-width: 794px; height: auto; background: #fff; box-shadow: 0 2px 12px rgba(15,23,42,.12); border: 1px solid #dce3eb; border-radius: 4px; }

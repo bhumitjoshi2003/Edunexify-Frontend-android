@@ -24,6 +24,8 @@ interface NativeReportCardPdfPlugin {
   open(options: { uri: string; title: string }): Promise<void>;
   print(options: { uri: string; title: string }): Promise<void>;
   notifyDownload(options: { uri: string; title: string; fileName: string }): Promise<{ shown?: boolean }>;
+  saveToDownloads(options: { data: string; fileName: string }): Promise<{ uri: string }>;
+  renderPages(options: { uri: string }): Promise<{ pages: string[] }>;
 }
 
 const NativeReportCardPdf = registerPlugin<NativeReportCardPdfPlugin>('ReportCardPdf');
@@ -451,6 +453,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   // ── The page's report card: the backend PDF itself, shown inline ──────
   inlineUrl: SafeResourceUrl | null = null;
+  nativeInlinePages: string[] = [];
   inlineState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
   private inlineObjectUrl: string | null = null;
   @ViewChild('inlineFrame') private inlineFrame?: ElementRef<HTMLIFrameElement>;
@@ -463,16 +466,32 @@ export class ReportCardComponent implements OnInit, OnDestroy {
 
   /** Loads the backend report-card PDF into the page on web. Android opens the same PDF in the native viewer. */
   loadInline(): void {
-    if (!this.canUsePdf || this.isNative || !isPlatformBrowser(this.platformId)) return;
+    if (!this.canUsePdf || !isPlatformBrowser(this.platformId)) return;
     const request = this.pdfRequest();
     if (!request) return;
     this.inlineState = 'loading';
     this.cdr.markForCheck();
     request.pipe(takeUntil(this.destroy$), takeUntil(this.cardRequest$)).subscribe({
-      next: (blob) => {
+      next: async (blob) => {
+        const requestedStudentId = this.studentId;
         this.revokeInline();
-        this.inlineObjectUrl = URL.createObjectURL(blob);
-        this.inlineUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.inlineObjectUrl);
+        if (this.isNative) {
+          try {
+            const uri = await this.cacheNativePdf(blob);
+            const result = await NativeReportCardPdf.renderPages({ uri });
+            if (requestedStudentId !== this.studentId) return;
+            this.nativeInlinePages = result.pages;
+          } catch (error) {
+            if (requestedStudentId !== this.studentId) return;
+            this.logger.error('Could not render report card inline', error);
+            this.inlineState = 'error';
+            this.cdr.markForCheck();
+            return;
+          }
+        } else {
+          this.inlineObjectUrl = URL.createObjectURL(blob);
+          this.inlineUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.inlineObjectUrl);
+        }
         this.inlineState = 'ready';
         this.cdr.markForCheck();
       },
@@ -484,6 +503,7 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     if (this.inlineObjectUrl) URL.revokeObjectURL(this.inlineObjectUrl);
     this.inlineObjectUrl = null;
     this.inlineUrl = null;
+    this.nativeInlinePages = [];
   }
 
   /** Preview & Print: prints the report card shown on the page (the PDF), else opens it in a preview. */
@@ -558,11 +578,11 @@ export class ReportCardComponent implements OnInit, OnDestroy {
           if (Capacitor.isNativePlatform()) {
             const uri = await this.saveNativePdf(blob);
             await this.notifyNativeDownload(uri);
-            this.toast.success('PDF Downloaded', 'Saved to Documents/Edunexify. Tap the download notification to open it.');
+            this.toast.success('PDF Downloaded', 'Saved to Downloads/Edunexify. Tap the notification to open it.');
           } else {
             const url = URL.createObjectURL(blob);
             this.saveUrl(url);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 30_000);
           }
         } catch (e: any) {
           this.logger.error('PDF download failed', e);
@@ -582,7 +602,8 @@ export class ReportCardComponent implements OnInit, OnDestroy {
       this.print();
       return;
     }
-    this.openNativePdf('preview');
+    if (this.inlineState !== 'ready') this.loadInline();
+    else document.getElementById('report-card-inline-viewer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   printPdf(): void {
@@ -594,30 +615,12 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     this.openNativePdf('print');
   }
 
-  /** Android: persist a user-requested download in Documents/Edunexify and return its URI. */
+  /** Android: write into public Downloads/Edunexify without a storage permission prompt. */
   private async saveNativePdf(blob: Blob): Promise<string> {
-    const permissions = await Filesystem.checkPermissions();
-    if (permissions.publicStorage !== 'granted') {
-      const requested = await Filesystem.requestPermissions();
-      if (requested.publicStorage !== 'granted') {
-        throw new Error('Storage permission denied');
-      }
-    }
-    const base64 = await this.blobToBase64(blob);
-    try {
-      await Filesystem.mkdir({ path: 'Edunexify', directory: Directory.Documents, recursive: true });
-    } catch { /* directory already exists */ }
-    await Filesystem.writeFile({
-      path: `Edunexify/${this.pdfFileName}`,
-      data: base64,
-      directory: Directory.Documents,
-      recursive: true,
-    });
-    const { uri } = await Filesystem.getUri({
-      path: `Edunexify/${this.pdfFileName}`,
-      directory: Directory.Documents,
-    });
-    return uri;
+    const data = await this.blobToBase64(blob);
+    const fileName = this.pdfFileName.replace(/[^A-Za-z0-9_.-]/g, '_');
+    const result = await NativeReportCardPdf.saveToDownloads({ data, fileName });
+    return result.uri;
   }
 
   /** Android: cache the generated PDF and return the URI used by the native viewer/print framework. */
@@ -702,7 +705,9 @@ export class ReportCardComponent implements OnInit, OnDestroy {
     const a = document.createElement('a');
     a.href = url;
     a.download = this.pdfFileName;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
   }
 
   /** PDF errors arrive as a Blob body: read it to show the right message (or the class picker). */
