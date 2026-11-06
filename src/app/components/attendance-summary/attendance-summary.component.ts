@@ -571,6 +571,14 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
   }
 
   async printReport(): Promise<void> {
+    await this.exportReport('download');
+  }
+
+  async shareReport(): Promise<void> {
+    await this.exportReport('share');
+  }
+
+  private async exportReport(action: 'download' | 'share'): Promise<void> {
     if (this.isLoading) return;
     this.error = null;
     try {
@@ -579,16 +587,16 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
         const month = this.periodType === 'month'
           ? { month: this.selectedMonth, year: this.selectedYear }
           : undefined;
-        await this.attendancePdfService.studentReport(this.studentSummary, period, month);
+        await this.attendancePdfService.studentReport(this.studentSummary, period, month, action);
       } else if (this.viewMode === 'class' && this.classSummary.length) {
         const sectionName = this.selectedSectionId === null
           ? 'All Sections'
           : (this.sections.find(s => s.id === this.selectedSectionId)?.name || 'Selected Section');
-        await this.attendancePdfService.classReport(this.classSummary, this.selectedClass, sectionName, period);
+        await this.attendancePdfService.classReport(this.classSummary, this.selectedClass, sectionName, period, action);
       }
     } catch (err) {
-      this.logger.error('Failed to download attendance PDF:', err);
-      this.error = 'Could not generate the PDF. Please try again.';
+      this.logger.error('Failed to export attendance PDF:', err);
+      this.error = 'Could not prepare the PDF. Please try again.';
     } finally {
       this.cdr.markForCheck();
     }

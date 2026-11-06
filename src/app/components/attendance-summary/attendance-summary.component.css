@@ -215,6 +215,11 @@
 }
 .as-print-btn:hover { opacity: 0.9; }
 
+.as-export-actions { display: flex; align-items: center; gap: 8px; }
+.as-share-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #bbf7d0; border-radius: 10px; background: #ecfdf5; color: #047857; cursor: pointer; flex-shrink: 0; }
+.as-share-btn:hover { background: #d1fae5; }
+.as-share-btn:focus-visible, .as-print-btn:focus-visible { outline: 3px solid #6ee7b7; outline-offset: 2px; }
+
 /* ── Stat Cards ──────────────────────────────────────────────────── */
 .as-stats {
   display: grid;

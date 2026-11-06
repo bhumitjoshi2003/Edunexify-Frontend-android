@@ -304,21 +304,18 @@
   </div>
 
   <ng-container *ngIf="!loading && !demoMode && !notPublished && !ambiguousCandidates && hasCard">
-    <div class="rc-viewer no-print">
-      <div class="rc-viewer-state" *ngIf="!isNative && inlineState === 'loading'" role="status" aria-live="polite" aria-busy="true">
+    <div id="report-card-inline-viewer" class="rc-viewer no-print">
+      <div class="rc-viewer-state" *ngIf="inlineState === 'loading'" role="status" aria-live="polite" aria-busy="true">
         <div class="rc-loading-spinner" aria-hidden="true"></div>
         <span>Preparing report card…</span>
       </div>
       <iframe #inlineFrame *ngIf="!isNative && inlineUrl" class="rc-viewer-frame" [src]="inlineUrl" title="Report card"></iframe>
-      <div class="rc-viewer-state" *ngIf="!isNative && inlineState === 'error'">
+      <div class="rc-viewer-state" *ngIf="inlineState === 'error'">
         <span>Couldn't load the report card.</span>
         <button type="button" class="rc-btn-pdf" (click)="loadInline()">Try again</button>
       </div>
-      <div class="rc-viewer-state" *ngIf="isNative">
-        <span>Your report card is ready.</span>
-        <button type="button" class="rc-btn-pdf" (click)="previewPdf()" [disabled]="previewingPdf">
-          {{ previewingPdf ? 'Opening…' : 'Open report card' }}
-        </button>
+      <div class="rc-native-pages" *ngIf="isNative && nativeInlinePages.length" aria-label="Report card preview">
+        <img *ngFor="let page of nativeInlinePages; let i = index" [src]="page" [alt]="'Report card page ' + (i + 1)" class="rc-native-page" />
       </div>
     </div>
   </ng-container>
