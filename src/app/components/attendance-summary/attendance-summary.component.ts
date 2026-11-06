@@ -10,6 +10,7 @@ import { SchoolHoliday } from '../../interfaces/school-holiday';
 import { StudentService } from '../../services/student.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { LoggerService } from '../../services/logger.service';
+import { ToastService } from '../../services/toast.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
@@ -99,6 +100,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     private studentService: StudentService,
     private authStateService: AuthStateService,
     private logger: LoggerService,
+    private toast: ToastService,
     private cdr: ChangeDetectorRef,
     private schoolService: SchoolService,
     private academicSessionService: AcademicSessionService,
@@ -593,10 +595,15 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
           ? 'All Sections'
           : (this.sections.find(s => s.id === this.selectedSectionId)?.name || 'Selected Section');
         await this.attendancePdfService.classReport(this.classSummary, this.selectedClass, sectionName, period, action);
+      } else {
+        throw new Error('Load an attendance report before downloading');
       }
+      if (action === 'download') this.toast.success('PDF downloaded', 'Saved to Downloads/Edunexify on Android.');
     } catch (err) {
       this.logger.error('Failed to export attendance PDF:', err);
-      this.error = 'Could not prepare the PDF. Please try again.';
+      const reason = err instanceof Error ? err.message : 'Please try again.';
+      this.error = 'Could not save the PDF. ' + reason;
+      this.toast.error('Download failed', this.error);
     } finally {
       this.cdr.markForCheck();
     }

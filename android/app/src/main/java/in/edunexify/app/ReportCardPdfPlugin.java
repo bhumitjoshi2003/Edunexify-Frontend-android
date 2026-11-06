@@ -46,44 +46,71 @@ import java.io.OutputStream;
 public class ReportCardPdfPlugin extends Plugin {
     private static final String DOWNLOAD_CHANNEL_ID = "edunexify_downloads";
 
-    /** Save attendance PDFs directly in the public Downloads folder (no share chooser). */
+    /** Persist a generated PDF in public Downloads/Edunexify, independently of Android sharing. */
     @PluginMethod
     public void saveToDownloads(PluginCall call) {
         String data = call.getString("data");
         String fileName = call.getString("fileName");
         if (data == null || fileName == null || !fileName.matches("[a-zA-Z0-9_.-]+\\.pdf")) {
-            call.reject("Invalid attendance PDF");
+            call.reject("Invalid PDF filename or contents");
             return;
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            call.reject("Saving to public Downloads requires Android 10 or later");
+            call.reject("Public Downloads saving requires Android 10 or later");
             return;
         }
-        Uri uri = null;
-        try {
-            byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+
+        // Decode and write off the main thread: large attendance reports must not freeze the UI.
+        new Thread(() -> {
+            Uri uri = null;
             ContentResolver resolver = getContext().getContentResolver();
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-            values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
-            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Edunexify");
-            values.put(MediaStore.Downloads.IS_PENDING, 1);
-            uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-            if (uri == null) throw new IllegalStateException("Cannot create download");
-            try (OutputStream output = resolver.openOutputStream(uri)) {
-                if (output == null) throw new IllegalStateException("Cannot write download");
-                output.write(bytes);
+            try {
+                byte[] bytes = Base64.decode(data, Base64.DEFAULT);
+                if (bytes.length < 5 || bytes[0] != '%' || bytes[1] != 'P' ||
+                        bytes[2] != 'D' || bytes[3] != 'F' || bytes[4] != '-') {
+                    throw new IllegalArgumentException("The generated file is not a PDF");
+                }
+
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Edunexify/");
+                values.put(MediaStore.Downloads.IS_PENDING, 1);
+                uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IllegalStateException("Downloads storage is unavailable");
+                try (OutputStream output = resolver.openOutputStream(uri, "w")) {
+                    if (output == null) throw new IllegalStateException("Could not open the new PDF for writing");
+                    output.write(bytes);
+                    output.flush();
+                }
+
+                // Verify it really landed on disk before reporting success.
+                try (ParcelFileDescriptor descriptor = resolver.openFileDescriptor(uri, "r")) {
+                    if (descriptor == null) {
+                        throw new IllegalStateException("Saved PDF could not be reopened");
+                    }
+                    long size = descriptor.getStatSize();
+                    if (size >= 0 && size != bytes.length) {
+                        throw new IllegalStateException("Saved PDF size did not match");
+                    }
+                }
+                values.clear();
+                values.put(MediaStore.Downloads.IS_PENDING, 0);
+                if (resolver.update(uri, values, null, null) < 1) {
+                    throw new IllegalStateException("Could not finish the PDF download");
+                }
+                JSObject result = new JSObject();
+                result.put("uri", uri.toString());
+                result.put("fileName", fileName);
+                result.put("bytes", bytes.length);
+                call.resolve(result);
+            } catch (Exception e) {
+                if (uri != null) {
+                    try { resolver.delete(uri, null, null); } catch (Exception ignored) { }
+                }
+                call.reject("Unable to save PDF in Downloads/Edunexify: " + e.getMessage(), e);
             }
-            values.clear();
-            values.put(MediaStore.Downloads.IS_PENDING, 0);
-            resolver.update(uri, values, null, null);
-            JSObject result = new JSObject();
-            result.put("uri", uri.toString());
-            call.resolve(result);
-        } catch (Exception e) {
-            if (uri != null) getContext().getContentResolver().delete(uri, null, null);
-            call.reject("Unable to save attendance PDF to Downloads", e);
-        }
+        }, "edunexify-attendance-pdf-save").start();
     }
 
     /** Render an authenticated PDF as images for the inline report-card preview in the WebView. */
