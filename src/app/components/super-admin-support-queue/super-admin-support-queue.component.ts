@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { SupportScreenshotViewerComponent } from '../support-screenshot-viewer/support-screenshot-viewer.component';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,13 +22,26 @@ import { LoggerService } from '../../services/logger.service';
 @Component({
   selector: 'app-super-admin-support-queue',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, RouterLink],
+  imports: [CommonModule, FormsModule, MatIconModule, RouterLink, SupportScreenshotViewerComponent],
   templateUrl: './super-admin-support-queue.component.html',
   styleUrl: './super-admin-support-queue.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SuperAdminSupportQueueComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  screenshotUrls: string[] = [];
+  screenshotIndex: number | null = null;
+
+  openScreenshot(urls: string[], index: number): void {
+    this.screenshotUrls = urls;
+    this.screenshotIndex = index;
+    this.cdr.markForCheck();
+  }
+
+  closeScreenshot(): void {
+    this.screenshotIndex = null;
+    this.cdr.markForCheck();
+  }
   readonly categories = SUPPORT_TICKET_CATEGORIES;
   readonly statuses: SupportTicketStatus[] = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
   readonly categoryLabel = supportCategoryLabel;

@@ -75,3 +75,8 @@
   .msr-row { padding: 12px 14px; }
   .msr-detail { padding: 0 14px 14px; }
 }
+
+.msr-image-button { padding: 0; border: 0; background: none; cursor: zoom-in; text-align: center; }
+.msr-image-button:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; border-radius: 10px; }
+.msr-image-hint { display: inline-flex; gap: 3px; align-items: center; color: #2563eb; font-size: .7rem; font-weight: 700; padding: 4px; }
+.msr-image-hint mat-icon { font-size: 17px; width: 17px; height: 17px; }

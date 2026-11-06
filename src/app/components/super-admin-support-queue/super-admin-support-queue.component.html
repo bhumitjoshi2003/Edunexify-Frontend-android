@@ -100,12 +100,18 @@
 
         <p class="saq-drawer-description">{{ detail.description }}</p>
         <div class="saq-drawer-screenshots" *ngIf="detail.screenshotUrls?.length; else legacyAdminScreenshot">
-          <img *ngFor="let url of detail.screenshotUrls" [src]="url"
-            alt="Attached screenshot" class="saq-drawer-screenshot" />
+          <button type="button" class="saq-image-button" *ngFor="let url of detail.screenshotUrls; let i = index"
+            (click)="openScreenshot(detail.screenshotUrls || [], i)" [attr.aria-label]="'Enlarge screenshot ' + (i + 1)">
+            <img [src]="url" alt="Attached screenshot" class="saq-drawer-screenshot" />
+            <span class="saq-image-hint"><mat-icon>zoom_in</mat-icon> View full size</span>
+          </button>
         </div>
         <ng-template #legacyAdminScreenshot>
-          <img *ngIf="detail.screenshotUrl" [src]="detail.screenshotUrl"
-            alt="Attached screenshot" class="saq-drawer-screenshot" />
+          <button *ngIf="detail.screenshotUrl" type="button" class="saq-image-button"
+            (click)="openScreenshot([detail.screenshotUrl!], 0)" aria-label="Enlarge screenshot">
+            <img [src]="detail.screenshotUrl" alt="Attached screenshot" class="saq-drawer-screenshot" />
+            <span class="saq-image-hint"><mat-icon>zoom_in</mat-icon> View full size</span>
+          </button>
         </ng-template>
 
         <div class="saq-drawer-controls">
@@ -127,3 +133,6 @@
     </div>
   </div>
 </div>
+
+<app-support-screenshot-viewer *ngIf="screenshotIndex !== null"
+  [urls]="screenshotUrls" [index]="screenshotIndex" (closed)="closeScreenshot()"></app-support-screenshot-viewer>

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { SupportScreenshotViewerComponent } from '../support-screenshot-viewer/support-screenshot-viewer.component';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -15,13 +16,26 @@ import { LoggerService } from '../../services/logger.service';
 @Component({
   selector: 'app-my-support-requests',
   standalone: true,
-  imports: [CommonModule, MatIconModule, RouterLink],
+  imports: [CommonModule, MatIconModule, RouterLink, SupportScreenshotViewerComponent],
   templateUrl: './my-support-requests.component.html',
   styleUrl: './my-support-requests.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MySupportRequestsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  screenshotUrls: string[] = [];
+  screenshotIndex: number | null = null;
+
+  openScreenshot(urls: string[], index: number): void {
+    this.screenshotUrls = urls;
+    this.screenshotIndex = index;
+    this.cdr.markForCheck();
+  }
+
+  closeScreenshot(): void {
+    this.screenshotIndex = null;
+    this.cdr.markForCheck();
+  }
   readonly categoryLabel = supportCategoryLabel;
   readonly statusLabel = supportStatusLabel;
 

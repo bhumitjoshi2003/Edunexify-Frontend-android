@@ -83,3 +83,8 @@
   .saq-filter-group select { width: 100%; }
   .saq-drawer { width: 100%; }
 }
+
+.saq-image-button { display: block; padding: 0; border: 0; background: none; width: 100%; cursor: zoom-in; text-align: center; }
+.saq-image-button:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; border-radius: 10px; }
+.saq-image-hint { display: inline-flex; gap: 3px; align-items: center; color: #2563eb; font-size: .76rem; font-weight: 700; padding: 5px; }
+.saq-image-hint mat-icon { font-size: 18px; width: 18px; height: 18px; }

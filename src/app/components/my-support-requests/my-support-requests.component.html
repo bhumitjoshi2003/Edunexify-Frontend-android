@@ -58,12 +58,18 @@
           </div>
           <p class="msr-detail-description">{{ detail.description }}</p>
           <div class="msr-detail-screenshots" *ngIf="detail.screenshotUrls?.length; else legacyScreenshot">
-            <img *ngFor="let url of detail.screenshotUrls" [src]="url"
-              alt="Attached screenshot" class="msr-detail-screenshot" />
+            <button type="button" class="msr-image-button" *ngFor="let url of detail.screenshotUrls; let i = index"
+              (click)="openScreenshot(detail.screenshotUrls || [], i)" [attr.aria-label]="'Enlarge screenshot ' + (i + 1)">
+              <img [src]="url" alt="Attached screenshot" class="msr-detail-screenshot" />
+              <span class="msr-image-hint"><mat-icon>zoom_in</mat-icon> View full size</span>
+            </button>
           </div>
           <ng-template #legacyScreenshot>
-            <img *ngIf="detail.screenshotUrl" [src]="detail.screenshotUrl"
-              alt="Attached screenshot" class="msr-detail-screenshot" />
+            <button type="button" class="msr-image-button" *ngIf="detail.screenshotUrl"
+              (click)="openScreenshot([detail.screenshotUrl!], 0)" aria-label="Enlarge screenshot">
+              <img [src]="detail.screenshotUrl" alt="Attached screenshot" class="msr-detail-screenshot" />
+              <span class="msr-image-hint"><mat-icon>zoom_in</mat-icon> View full size</span>
+            </button>
           </ng-template>
         </ng-container>
       </div>
@@ -76,3 +82,6 @@
     <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Next</button>
   </div>
 </div>
+
+<app-support-screenshot-viewer *ngIf="screenshotIndex !== null"
+  [urls]="screenshotUrls" [index]="screenshotIndex" (closed)="closeScreenshot()"></app-support-screenshot-viewer>
