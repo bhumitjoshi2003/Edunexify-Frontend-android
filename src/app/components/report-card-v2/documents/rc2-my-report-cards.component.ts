@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ReportCardDocument, ReportCardV2Service } from '../../../services/report-card-v2.service';
-import { AcademicSessionService } from '../../../services/academic-session.service';
 import { ToastService } from '../../../services/toast.service';
-import { AuthStateService } from '../../../auth/auth-state.service';
 import { ChildAccess } from '../../../interfaces/parent-portal';
 import { ParentChildContextComponent } from '../../parent-child-context/parent-child-context.component';
 
@@ -87,13 +85,6 @@ import { ParentChildContextComponent } from '../../parent-child-context/parent-c
     }
     .mrc-item:hover .mrc-open, .mrc-item:focus-visible .mrc-open { background: var(--rc2-btn-hover, #264b78); }
 
-    .mrc-older {
-      display: flex; align-items: flex-start; gap: 10px; margin: 18px 0 0; padding: 12px 14px;
-      border-radius: 12px; background: #f8fafc; border: 1px dashed #cbd5e1;
-      font-size: var(--edu-text-sm, 0.82rem); color: var(--edu-text-sec, #64748b);
-    }
-    .mrc-older-icon { flex-shrink: 0; margin-top: 1px; color: #64748b; display: grid; place-items: center; }
-    .mrc-older button { padding: 0; border: 0; background: none; color: var(--rc2-btn); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
     @media (max-width: 480px) {
       .mrc-cover { padding: 16px 14px 14px; }
       .mrc-body { padding: 14px 14px 4px; }
@@ -177,10 +168,6 @@ import { ParentChildContextComponent } from '../../parent-child-context/parent-c
             </a>
           </div>
         </ng-container>
-        <p class="mrc-older">
-          <span class="mrc-older-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></span>
-          <span>Looking for a report card issued before these? <button type="button" (click)="openOlder()">Earlier report cards</button></span>
-        </p>
       </div>
     </div>
   `,
@@ -196,9 +183,7 @@ export class Rc2MyReportCardsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private api: ReportCardV2Service,
-    private sessions: AcademicSessionService,
     private toast: ToastService,
-    private authState: AuthStateService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -218,7 +203,13 @@ export class Rc2MyReportCardsComponent implements OnInit, OnDestroy {
     this.state = 'loading';
     this.cdr.markForCheck();
     this.api.myDocuments(this.studentId).pipe(takeUntil(this.destroy$)).subscribe({
-      next: docs => { this.documents = docs; this.state = 'loaded'; this.cdr.markForCheck(); },
+      next: docs => {
+        // The API includes issued cards from every academic session; order newest first.
+        this.documents = [...docs].sort((a, b) =>
+          new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime() || b.id - a.id);
+        this.state = 'loaded';
+        this.cdr.markForCheck();
+      },
       error: e => {
         this.error = e?.error?.message || 'Please try again.';
         this.state = 'error';
@@ -227,33 +218,13 @@ export class Rc2MyReportCardsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** A parent switching child: reload the list for that child through the query parameter. */
+  /** A parent switching child: the list reloads for that child through the studentId query param. */
   onChildSelected(child: ChildAccess): void {
     if (!child.canViewResults) {
       this.toast.error('Results access unavailable', 'Please contact the school administrator.');
       return;
     }
     this.router.navigate([], { relativeTo: this.route, queryParams: { studentId: child.studentId }, replaceUrl: true });
-  }
-
-  /** Open the legacy report-card page for the currently selected child/student. */
-  openOlder(): void {
-    const studentId = this.studentId
-      || (this.authState.getUserRole() === 'STUDENT' ? this.authState.getUserId() : null)
-      || this.documents[0]?.studentId
-      || null;
-
-    if (!studentId) {
-      this.toast.error('Could not open earlier report cards', 'Please choose a student first.');
-      return;
-    }
-
-    this.sessions.getCurrentSession().pipe(takeUntil(this.destroy$)).subscribe({
-      next: session => this.router.navigate(['/dashboard/report-card'], {
-        queryParams: { studentId, session: session.label },
-      }),
-      error: () => this.toast.error('Could not open earlier report cards', 'No active academic session found.'),
-    });
   }
 
   trackById(_: number, d: ReportCardDocument): number { return d.id; }
