@@ -9,7 +9,7 @@ import { AttendanceService } from './attendance.service';
 import { StudentAttendanceSummary, ClassAttendanceSummary, MonthlyBreakdown, DailyDetail } from '../interfaces/attendance-summary';
 
 interface NativePdfDownloads {
-  saveToDownloads(options: { data: string; fileName: string }): Promise<{ uri: string }>;
+  saveToDownloads(options: { data: string; fileName: string }): Promise<{ uri: string; fileName: string; bytes: number }>;
 }
 const nativePdfDownloads = registerPlugin<NativePdfDownloads>('ReportCardPdf');
 
@@ -372,7 +372,8 @@ export class AttendancePdfService {
     const data = pdf.output('datauristring').split(',')[1];
     if (!data) throw new Error('PDF encoding failed');
     if (action === 'download') {
-      await nativePdfDownloads.saveToDownloads({ data, fileName: filename });
+      const saved = await nativePdfDownloads.saveToDownloads({ data, fileName: filename });
+      if (!saved.uri || !saved.bytes) throw new Error('Android did not confirm the PDF download');
       return;
     }
     await Filesystem.writeFile({ path: filename, data, directory: Directory.Cache, recursive: true });
