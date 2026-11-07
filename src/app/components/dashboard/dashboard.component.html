@@ -37,6 +37,10 @@
              (click)="closeSidebarOnMobile()" title="My Signature">
             <mat-icon>draw</mat-icon><span>My Signature</span>
           </a>
+          <a class="nav-item" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
+             (click)="closeSidebarOnMobile()" title="Report Card Approvals">
+            <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
+          </a>
         </app-nav-group>
       </ng-container>
 
@@ -216,6 +220,10 @@
         <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Signature">
           <mat-icon>draw</mat-icon><span>My Signature</span>
+        </a>
+        <a class="nav-item" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Report Card Approvals">
+          <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
         </a>
         <a class="nav-item" routerLink="/dashboard/teacher-checkin" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Check-in">

@@ -31,6 +31,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'report-card-approvals',
+        loadComponent: () => import('./components/report-card-approvals/report-card-approvals.component').then(m => m.ReportCardApprovalsComponent),
+        canActivate: [roleGuard], data: { roles: ['ADMIN', 'TEACHER', 'PRINCIPAL'] }
+      },
+      {
         path: 'my-signature',
         loadComponent: () => import('./components/signature-settings/signature-settings.component').then(m => m.SignatureSettingsComponent),
         canActivate: [roleGuard], data: { roles: ['TEACHER', 'PRINCIPAL'] }

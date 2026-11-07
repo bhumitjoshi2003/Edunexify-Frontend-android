@@ -1,3 +1,5 @@
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -35,6 +37,8 @@ export class Rc2PublishedComponent implements OnDestroy {
   selected: Publication | null = null;
   docsState: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   includeIncomplete = false;
+  approvalRequired = false;
+  approvalBusy = false;
   withdrawReason = '';
   busy: 'publish' | 'withdraw' | 'zip' | 'send' | null = null;
   busyDoc: number | null = null;
@@ -50,6 +54,7 @@ export class Rc2PublishedComponent implements OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
+    private http: HttpClient,
     private api: ReportCardV2Service,
     private delivery: ReportCardPdfDeliveryService,
     private toast: ToastService,
@@ -65,9 +70,35 @@ export class Rc2PublishedComponent implements OnDestroy {
 
   onContext(ctx: Rc2Context): void {
     this.ctx = ctx;
+    this.approvalRequired = false;
+    if (ctx?.setup) {
+      this.http.get<{ required: boolean }>(`${environment.apiUrl}/report-card-approvals/setups/${ctx.setup.id}/policy`).subscribe({
+        next: response => { this.approvalRequired = response.required; this.cdr.markForCheck(); },
+        error: () => { this.cdr.markForCheck(); }
+      });
+    }
     this.lastResult = null;
     this.bulk = null;
     this.load();
+  }
+
+  enableApprovals(): void {
+    if (!this.ctx?.setup || this.approvalRequired || this.approvalBusy) return;
+    if (!window.confirm('Enable mandatory Class Teacher and Principal approval for future publications of this report card? This cannot be undone. Existing issued PDFs remain unchanged.')) return;
+    this.approvalBusy = true;
+    this.http.post(`${environment.apiUrl}/report-card-approvals/setups/${this.ctx.setup.id}/enable`, {}).subscribe({
+      next: () => {
+        this.approvalRequired = true;
+        this.approvalBusy = false;
+        this.toast.success('Approval workflow enabled', 'Teachers and the Principal must now approve each section before new publication.');
+        this.cdr.markForCheck();
+      },
+      error: response => {
+        this.approvalBusy = false;
+        this.toast.error('Could not enable approvals', response?.error?.message || 'Try again.');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   /** The chosen scope: one section, or the whole class. */

@@ -42,6 +42,20 @@
   </div>
 
   <ng-container *ngIf="state === 'loaded' && ctx?.setup as setup">
+    <div class="rc2-card" aria-label="Report card approval policy">
+      <h2 class="rc2-card-title">Teacher &amp; Principal approval</h2>
+      <p class="rc2-card-sub" *ngIf="approvalRequired">
+        Required for new publications. Each section needs an approved, unchanged report card and both saved signatures.
+        <a routerLink="/dashboard/report-card-approvals">View approval queue</a>.
+      </p>
+      <ng-container *ngIf="!approvalRequired">
+        <p class="rc2-card-sub">Optional rollout: existing report-card publishing remains available until you enable approvals.
+          Enabling is permanent for this report-card setup and does not change previously issued PDFs.</p>
+        <button class="rc2-btn rc2-btn-outline" type="button" [disabled]="approvalBusy" (click)="enableApprovals()">
+          {{ approvalBusy ? 'Enabling…' : 'Enable mandatory approvals' }}
+        </button>
+      </ng-container>
+    </div>
     <!-- Current status & actions -->
     <div class="rc2-card">
       <div class="rc2-card-head">
