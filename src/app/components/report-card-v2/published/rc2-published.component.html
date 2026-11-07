@@ -48,7 +48,10 @@
         Required for new publications. Each section needs an approved, unchanged report card and both saved signatures.
         <a routerLink="/dashboard/report-card-approvals">View approval queue</a>.
       </p>
-      <ng-container *ngIf="!approvalRequired">
+      <p *ngIf="approvalPolicyState === 'loading'" role="status">Checking approval readiness…</p>
+      <p role="status">{{ readinessMessage }}</p>
+      <button *ngIf="approvalPolicyState === 'error'" type="button" class="rc2-btn rc2-btn-outline" (click)="checkReadiness()">Retry approval check</button>
+      <ng-container *ngIf="approvalPolicyState === 'ready' && !approvalRequired">
         <p class="rc2-card-sub">Optional rollout: existing report-card publishing remains available until you enable approvals.
           Enabling is permanent for this report-card setup and does not change previously issued PDFs.</p>
         <button class="rc2-btn rc2-btn-outline" type="button" [disabled]="approvalBusy" (click)="enableApprovals()">
@@ -73,15 +76,15 @@
       </div>
 
       <p class="rc2-error" *ngIf="blockedByWholeClass" role="status">
-        This report card is published for the whole class. Choose "All sections" to republish it, or withdraw it before publishing one section.
+        This report card is published for the whole class. Choose "All sections" to republish it, after all required section approvals.
       </p>
 
       <div class="pub-actions">
         <label class="rc2-check pub-check">
-          <input type="checkbox" [(ngModel)]="includeIncomplete" [disabled]="busy !== null" />
+          <input type="checkbox" [(ngModel)]="includeIncomplete" (ngModelChange)="checkReadiness()" [disabled]="busy !== null" />
           <span>Include students with missing marks</span>
         </label>
-        <button type="button" class="rc2-btn rc2-btn-primary" (click)="publish()" [disabled]="busy !== null || blockedByWholeClass">
+        <button type="button" class="rc2-btn rc2-btn-primary" (click)="publish()" [disabled]="busy !== null || blockedByWholeClass || approvalPolicyState !== 'ready' || !publicationReady">
           {{ busy === 'publish' ? 'Publishing…' : (active && !blockedByWholeClass ? 'Republish (new version)' : 'Publish') }}
         </button>
       </div>

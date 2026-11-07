@@ -38,6 +38,10 @@ export class Rc2PublishedComponent implements OnDestroy {
   docsState: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   includeIncomplete = false;
   approvalRequired = false;
+  approvalPolicyState: 'loading' | 'ready' | 'error' = 'loading';
+  publicationReady = false;
+  readinessMessage = '';
+  private policySub?: Subscription;
   approvalBusy = false;
   withdrawReason = '';
   busy: 'publish' | 'withdraw' | 'zip' | 'send' | null = null;
@@ -70,26 +74,23 @@ export class Rc2PublishedComponent implements OnDestroy {
 
   onContext(ctx: Rc2Context): void {
     this.ctx = ctx;
-    this.approvalRequired = false;
-    if (ctx?.setup) {
-      this.http.get<{ required: boolean }>(`${environment.apiUrl}/report-card-approvals/setups/${ctx.setup.id}/policy`).subscribe({
-        next: response => { this.approvalRequired = response.required; this.cdr.markForCheck(); },
-        error: () => { this.cdr.markForCheck(); }
-      });
-    }
+    this.checkReadiness();
     this.lastResult = null;
     this.bulk = null;
     this.load();
   }
 
-  enableApprovals(): void {
-    if (!this.ctx?.setup || this.approvalRequired || this.approvalBusy) return;
-    if (!window.confirm('Enable mandatory Class Teacher and Principal approval for future publications of this report card? This cannot be undone. Existing issued PDFs remain unchanged.')) return;
+  async enableApprovals(): Promise<void> {
+    const setupId = this.ctx?.setup?.id;
+    if (!setupId || this.approvalRequired || this.approvalBusy) return;
+    const confirmed = await this.toast.confirm({ title: 'Require teacher and Principal approval?', message: 'New publications require both reviewers to approve the exact revision and inclusion policy. This policy is permanent. Existing issued PDFs remain unchanged.', confirmText: 'Enable approvals', icon: 'question' });
+    if (!confirmed || this.ctx?.setup?.id !== setupId) return;
     this.approvalBusy = true;
-    this.http.post(`${environment.apiUrl}/report-card-approvals/setups/${this.ctx.setup.id}/enable`, {}).subscribe({
+    this.http.post(`${environment.apiUrl}/report-card-approvals/setups/${setupId}/enable`, {}).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.approvalRequired = true;
         this.approvalBusy = false;
+        this.checkReadiness();
         this.toast.success('Approval workflow enabled', 'Teachers and the Principal must now approve each section before new publication.');
         this.cdr.markForCheck();
       },
@@ -98,6 +99,17 @@ export class Rc2PublishedComponent implements OnDestroy {
         this.toast.error('Could not enable approvals', response?.error?.message || 'Try again.');
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  checkReadiness(): void {
+    this.policySub?.unsubscribe(); this.approvalPolicyState = 'loading'; this.publicationReady = false;
+    const ctx = this.ctx; if (!ctx?.setup) return;
+    const params: Record<string, string> = { includeIncomplete: String(this.includeIncomplete) };
+    if (ctx.sectionId != null) params['sectionId'] = String(ctx.sectionId);
+    this.policySub = this.http.get<{ required: boolean; ready: boolean; message: string }>(`${environment.apiUrl}/report-card-approvals/setups/${ctx.setup.id}/readiness`, { params }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: value => { this.approvalRequired = value.required; this.publicationReady = value.ready; this.readinessMessage = value.message; this.approvalPolicyState = 'ready'; this.cdr.markForCheck(); },
+      error: () => { this.approvalPolicyState = 'error'; this.readinessMessage = 'Could not verify approval policy. Retry before publication.'; this.cdr.markForCheck(); }
     });
   }
 
@@ -154,7 +166,10 @@ export class Rc2PublishedComponent implements OnDestroy {
 
   async publish(): Promise<void> {
     const setup = this.ctx?.setup;
-    if (!setup || this.busy) return;
+    if (!setup || this.busy || this.approvalPolicyState !== 'ready' || !this.publicationReady) return;
+    const context = this.ctx;
+    const targetSection = this.sectionId;
+    const includeIncomplete = this.includeIncomplete;
     const republish = !!this.active && !this.blockedByWholeClass;
     const ok = await this.toast.confirm({
       title: republish ? `Republish ${setup.name}?` : `Publish ${setup.name}?`,
@@ -165,11 +180,11 @@ export class Rc2PublishedComponent implements OnDestroy {
       confirmText: republish ? 'Republish' : 'Publish',
       icon: 'question',
     });
-    if (!ok) return;
+    if (!ok || this.ctx !== context || this.sectionId !== targetSection || this.includeIncomplete !== includeIncomplete) return;
     this.busy = 'publish';
     this.lastResult = null;
     this.cdr.markForCheck();
-    this.api.publish(setup.id, this.sectionId, this.includeIncomplete).pipe(takeUntil(this.destroy$)).subscribe({
+    this.api.publish(setup.id, targetSection, includeIncomplete).pipe(takeUntil(this.destroy$)).subscribe({
       next: res => {
         this.busy = null;
         this.lastResult = res;
