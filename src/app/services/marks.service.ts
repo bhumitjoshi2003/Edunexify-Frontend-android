@@ -117,6 +117,10 @@ export class MarksService {
   }
 
   // Bulk save / update
+  correctMarks(entries: MarkEntryRequest[], reason: string): Observable<MarkBulkResult> {
+    return this.http.post<MarkBulkResult>(`${environment.apiUrl}/principal/marks/corrections`, {marks: entries, reason});
+  }
+
   saveBulkMarks(entries: MarkEntryRequest[]): Observable<MarkBulkResult> {
     return this.http.post<MarkBulkResult>(`${this.base}/bulk`, entries);
   }

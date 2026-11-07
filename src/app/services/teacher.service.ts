@@ -1,3 +1,4 @@
+import { AuthStateService } from '../auth/auth-state.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -27,14 +28,16 @@ export interface TeacherAttendanceScheduleRequest {
 export class TeacherService {
   private baseUrl = `${environment.apiUrl}/teachers`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authState: AuthStateService) {}
 
   getTeacher(teacherId: string): Observable<Teacher> {
-    return this.http.get<Teacher>(`${this.baseUrl}/${teacherId}`);
+    const base = this.authState.getUserRole() === 'PRINCIPAL' ? `${environment.apiUrl}/principal/teachers` : this.baseUrl;
+    return this.http.get<Teacher>(`${base}/${encodeURIComponent(teacherId)}`);
   }
 
   getAllTeachers(): Observable<Teacher[]> {
-    return this.http.get<Teacher[]>(`${this.baseUrl}`);
+    const base = this.authState.getUserRole() === 'PRINCIPAL' ? `${environment.apiUrl}/principal/teachers` : this.baseUrl;
+    return this.http.get<Teacher[]>(base);
   }
 
   updateTeacher(

@@ -1,0 +1,113 @@
+<div class="as-page">
+
+  <!-- ── Hero ───────────────────────────────────────────────────────── -->
+  <div class="as-hero">
+    <div class="as-blob as-blob-1"></div>
+    <div class="as-blob as-blob-2"></div>
+    <div class="as-blob as-blob-3"></div>
+    <div class="as-hero-left">
+      <div class="as-hero-icon"><mat-icon>shield</mat-icon></div>
+      <div>
+        <h1 class="as-hero-title">Active Sessions</h1>
+        <p class="as-hero-sub">Manage where you're signed in.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────────────────────── -->
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading active sessions">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
+  <!-- ── Error ───────────────────────────────────────────────────────── -->
+  <div class="as-card as-error-card" *ngIf="!loading && loadError">
+    <mat-icon class="as-error-icon">error_outline</mat-icon>
+    <p class="as-empty-title">Unable to load sessions.</p>
+    <button type="button" class="as-btn as-btn-primary" (click)="retry()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="!loading && !loadError">
+
+    <!-- ── Current Session ───────────────────────────────────────────── -->
+    <section class="as-section" *ngIf="current">
+      <h2 class="as-section-label">Current Session</h2>
+
+      <div class="as-current-card">
+        <div class="as-current-card-identity">
+          <div class="as-device-icon as-device-icon-current"><mat-icon>{{ icon(current) }}</mat-icon></div>
+          <div class="as-session-info">
+            <span class="as-session-name">{{ label(current) }}</span>
+            <span class="as-session-date">Signed in {{ current.createdAt | date: 'MMM d, y' }}</span>
+          </div>
+        </div>
+        <span class="as-status-badge as-status-current">
+          <span class="as-status-dot"></span>CURRENT<span class="as-status-badge-full"> SESSION</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ── Other Active Sessions ─────────────────────────────────────── -->
+    <section class="as-section">
+      <div class="as-section-header">
+        <h2 class="as-section-label">
+          Other Active Sessions
+          <span class="as-count-badge" *ngIf="otherSessions.length">{{ otherSessions.length }}</span>
+        </h2>
+        <button type="button" class="as-btn as-btn-danger-ghost as-btn-sm" *ngIf="canRevokeOthers"
+                [disabled]="revokingOthers" (click)="revokeOthers()" data-testid="revoke-others">
+          {{ revokingOthers ? 'Logging out others…' : 'Log out all others' }}
+        </button>
+      </div>
+
+      <p class="as-note" *ngIf="!currentKnown && otherSessions.length" data-testid="current-unknown">
+        This device couldn't be identified in the list, so "Log out all others" isn't available — it would sign
+        this device out too. Log out individual sessions below, or use "Log out everywhere".
+      </p>
+
+      <div class="as-empty-card" *ngIf="otherSessions.length === 0">
+        <div class="as-empty-icon"><mat-icon>verified_user</mat-icon></div>
+        <p class="as-empty-title">You're not signed in anywhere else</p>
+        <p class="as-empty-sub">Only this session is currently active on your account.</p>
+      </div>
+
+      <div class="as-session-grid" *ngIf="otherSessions.length">
+        <div class="as-card as-session-tile" *ngFor="let session of otherSessions">
+          <div class="as-tile-top">
+            <div class="as-device-icon"><mat-icon>{{ icon(session) }}</mat-icon></div>
+            <div class="as-session-info">
+              <span class="as-session-name">{{ label(session) }}</span>
+              <span class="as-session-date">Signed in {{ session.createdAt | date: 'MMM d, y' }}</span>
+            </div>
+          </div>
+          <button type="button" class="as-btn as-btn-danger-sm" [disabled]="revokingId === session.id"
+                  (click)="revoke(session)">
+            <mat-icon>logout</mat-icon>
+            <span>{{ revokingId === session.id ? 'Logging out…' : 'Log out' }}</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Everywhere ────────────────────────────────────────────────── -->
+    <section class="as-section as-everywhere" data-testid="logout-everywhere-section">
+      <h2 class="as-section-label">Log out everywhere</h2>
+      <p class="as-note">Signs out every session on your account, including this one.</p>
+      <button type="button" class="as-btn as-btn-danger-ghost as-btn-sm" [disabled]="signingOutEverywhere"
+              (click)="logOutEverywhere()" data-testid="logout-everywhere">
+        {{ signingOutEverywhere ? 'Logging out…' : 'Log out everywhere' }}
+      </button>
+    </section>
+
+  </ng-container>
+
+</div>

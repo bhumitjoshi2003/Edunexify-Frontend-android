@@ -35,7 +35,7 @@
     </button>
   </nav>
 
-  <div class="tt-session-shell no-print" *ngIf="canManage()">
+  <div class="tt-session-shell no-print" *ngIf="canSelectSession()">
     <app-academic-session-selector [initialId]="initialSessionId"
       [disabled]="modalSaving || !canWrite()" (selected)="onSessionSelected($event)" />
     <p class="tt-session-note" *ngIf="!canWrite()">Historical sessions are read-only. Select a current or future session to make changes.</p>

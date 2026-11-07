@@ -226,7 +226,9 @@ describe('Report Card V2 (Phase 1)', () => {
     expect(route('bulk-report-cards').data!['roles']).toEqual(['ADMIN']);
     expect(await (route('bulk-report-cards').loadComponent as any)()).toBe(Rc2PublishedComponent);
     expect(route('report-card-documents').data!['roles']).toEqual(['STUDENT', 'PARENT']);
-    expect(route('report-card-documents/:id').data!['roles']).toEqual(['STUDENT', 'PARENT', 'ADMIN']);
+    // The Principal reads issued documents (capability-guarded) but has no publication page.
+    expect(route('report-card-documents/:id').data!['roles']).toEqual(['STUDENT', 'PARENT', 'ADMIN', 'PRINCIPAL']);
+    expect(route('report-card-documents/:id').data!['principalOperation']).toBe('ISSUED_REPORT_CARD_READ');
   });
 
   it('Published: no setup for the class shows the setup link, never templates', () => {

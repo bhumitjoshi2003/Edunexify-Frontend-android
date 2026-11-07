@@ -45,6 +45,10 @@ export class ExamConfigService {
   }
 
   /** ADMIN: make the exam's results visible to students/parents (locks marks). */
+  releaseByPrincipal(id: number, published: boolean): Observable<ExamConfig> {
+    return this.http.post<ExamConfig>(`${environment.apiUrl}/principal/exams/${id}/release`, {published, confirmed: true});
+  }
+
   publishResults(examId: number): Observable<ExamConfig> {
     return this.http.post<ExamConfig>(`${this.base}/${examId}/publish`, {});
   }

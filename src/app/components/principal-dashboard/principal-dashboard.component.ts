@@ -1,16 +1,30 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { MatIconModule } from '@angular/material/icon';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
 
-interface ClassAttendance {
-  className: string; students: number; attendanceRate: number; workingDays: number;
+/** One class's attendance; recordedToday is absent from servers older than this screen. */
+export interface PrincipalClassAttendance {
+  className: string;
+  students: number;
+  attendanceRate: number | null;
+  workingDays: number;
+  recordedToday?: boolean;
 }
-interface PrincipalOverview {
+
+export interface PrincipalOverview {
   totalStudents: number;
   totalTeachers: number;
-  todayAttendanceRate: number;
+  todayAttendanceRate: number | null;
+  schoolDate: string;
+  todayRecordedStudents: number;
+  todayPresentStudents: number;
   pendingStudentLeaves: number;
   pendingTeacherLeaves: number;
   publishedReportCards: number;
@@ -18,130 +32,262 @@ interface PrincipalOverview {
   awaitingPrincipalReview: number;
   readyForPublication: number;
   returnedForCorrection: number;
-  classAttendance: ClassAttendance[];
+  classAttendance: PrincipalClassAttendance[];
 }
 
-/** School-scoped academic operations; financial administration remains Admin-only. */
+/** Principal projection of today's staff attendance: counts only, never locations. */
+export interface PrincipalStaffToday {
+  date: string;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  halfDayCount: number;
+  onLeaveCount: number;
+  /** Teachers expected to attend; 0 on a school holiday. */
+  expectedCount?: number;
+  notCheckedInCount?: number;
+}
+
+interface UncoveredPeriod { assignment?: unknown | null; }
+
+export interface PrincipalUpcomingEvent {
+  id?: number;
+  title: string;
+  startDate: string;
+  endDate?: string | null;
+  startTime?: string | null;
+  category?: string;
+}
+
+/** urgent: teaching is affected now · warning: expected work is missing · action: waits for you · info: for awareness. */
+export type AttentionSeverity = 'urgent' | 'warning' | 'action' | 'info';
+
+export interface AttentionItem {
+  key: string;
+  severity: AttentionSeverity;
+  icon: string;
+  label: string;
+  count: number;
+  /** null: no Principal screen lists these details yet; the row informs without navigating. */
+  route: string | null;
+}
+
+interface Widget<T> { data: T | null; loading: boolean; failed: boolean; }
+
+const SEVERITY_ORDER: Record<AttentionSeverity, number> = { urgent: 0, warning: 1, action: 2, info: 3 };
+
+/**
+ * The Principal's school-day overview. Every widget loads and fails independently, so one
+ * unavailable source never hides the others. Academic and operational data only: nothing here
+ * reads fees, payments or staff locations.
+ */
 @Component({
   selector: 'app-principal-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, MatIconModule, OnLeaveTodayComponent],
+  templateUrl: './principal-dashboard.component.html',
+  styleUrl: './principal-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <main class="principal-page">
-      <header class="hero">
-        <div class="hero-icon" aria-hidden="true">🎓</div>
-        <div class="hero-text">
-          <p class="eyebrow">ACADEMIC LEADERSHIP</p>
-          <h1>Principal Dashboard</h1>
-          <p>Attendance, school performance and approvals at a glance</p>
-        </div>
-        <button type="button" class="refresh" (click)="load()" [disabled]="loading">Refresh</button>
-      </header>
-
-      <div *ngIf="loading" class="skeleton-grid" role="status" aria-label="Loading principal overview">
-        <div class="skeleton" *ngFor="let x of [1,2,3,4]"></div>
-      </div>
-      <div *ngIf="error" class="notice error" role="alert">
-        {{ error }} <button type="button" (click)="load()">Try again</button>
-      </div>
-
-      <ng-container *ngIf="!loading && overview as data">
-        <section class="summary" aria-label="School overview">
-          <article class="metric"><span>Active students</span><strong>{{ data.totalStudents }}</strong><small>Currently enrolled</small></article>
-          <article class="metric"><span>Active teachers</span><strong>{{ data.totalTeachers }}</strong><small>Teaching staff</small></article>
-          <article class="metric"><span>Today's attendance</span><strong>{{ data.todayAttendanceRate | number:'1.0-1' }}%</strong><small>Recorded student attendance</small></article>
-          <article class="metric"><span>Pending leave requests</span><strong>{{ data.pendingStudentLeaves + data.pendingTeacherLeaves }}</strong>
-            <small>{{ data.pendingStudentLeaves }} student · {{ data.pendingTeacherLeaves }} teacher</small></article>
-        </section>
-
-        <section class="panel" aria-labelledby="approval-title">
-          <div class="panel-heading">
-            <div><p class="eyebrow">ACTION CENTER</p><h2 id="approval-title">Report card approvals</h2>
-              <p>Saved workflow states. Review the queue for changes requiring fresh signatures.</p></div>
-            <a routerLink="/dashboard/report-card-approvals" class="primary-link">Open approval queue</a>
-          </div>
-          <div class="pipeline">
-            <div><span>Awaiting class teacher</span><strong>{{ data.awaitingTeacherReview }}</strong></div>
-            <div><span>Awaiting Principal</span><strong>{{ data.awaitingPrincipalReview }}</strong></div>
-            <div><span>Approved for publication</span><strong>{{ data.readyForPublication }}</strong></div>
-            <div><span>Returned for correction</span><strong>{{ data.returnedForCorrection }}</strong></div>
-          </div>
-          <p class="footnote">{{ data.publishedReportCards }} active issued report cards across the school.</p>
-          <a routerLink="/dashboard/my-signature" class="inline-link">Manage my signature</a>
-        </section>
-
-        <section class="panel" aria-labelledby="classes-title">
-          <div class="panel-heading">
-            <div><p class="eyebrow">ACADEMIC MONITORING</p><h2 id="classes-title">Class-wise attendance</h2>
-              <p>Current month · school attendance records</p></div>
-          </div>
-          <div *ngIf="!data.classAttendance?.length" class="notice">No class attendance data is available yet.</div>
-          <div class="table-scroll" *ngIf="data.classAttendance?.length">
-            <table>
-              <thead><tr><th scope="col">Class</th><th scope="col">Students</th>
-                <th scope="col">Working days</th><th scope="col">Attendance</th></tr></thead>
-              <tbody>
-                <tr *ngFor="let cls of data.classAttendance">
-                  <th scope="row">Class {{ cls.className }}</th>
-                  <td>{{ cls.students }}</td><td>{{ cls.workingDays }}</td>
-                  <td><span *ngIf="cls.workingDays; else noAttendance" class="rate"
-                            [class.low]="cls.attendanceRate < 75">
-                    {{ cls.attendanceRate | number:'1.0-1' }}%</span>
-                    <ng-template #noAttendance><span class="muted">Not recorded</span></ng-template>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </ng-container>
-    </main>
-  `,
-  styles: [`
-    .principal-page{padding:18px;max-width:1400px;margin:0 auto;color:#20314b}
-    .hero{background:#17345a;color:white;border-radius:17px;padding:24px;display:flex;align-items:center;gap:16px}
-    .hero-icon{font-size:30px;background:#ffffff22;border-radius:11px;padding:13px}
-    .hero-text{flex:1}.hero h1{font-size:27px;margin:2px 0 5px}.hero p{margin:0;color:#dbe8f6}
-    .eyebrow{font-size:11px;letter-spacing:.12em;font-weight:700}
-    .hero .eyebrow{color:#b6d6f4}.refresh{border:1px solid #ffffff88;background:transparent;color:white;border-radius:9px;padding:10px 16px;cursor:pointer}
-    .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-top:18px}
-    .metric,.panel,.notice{background:#fff;border:1px solid #e0e7f0;border-radius:14px;padding:20px;box-shadow:0 4px 15px #1535540b}
-    .metric span{display:block;color:#63768b;font-weight:600}.metric strong{font-size:29px;display:block;margin:8px 0}
-    .metric small,.footnote,.panel-heading p,.muted{color:#63768b}
-    .panel{margin-top:18px}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-    .panel-heading h2{margin:4px 0 6px;font-size:21px}.panel-heading p{margin:0;font-size:13px}
-    .pipeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .pipeline>div{border:1px solid #e2e9f2;background:#f8fafd;border-radius:11px;padding:15px}
-    .pipeline span{font-size:13px;color:#526880;display:block;min-height:35px}
-    .pipeline strong{font-size:26px;display:block;margin-top:8px}
-    .primary-link{background:#173e69;color:#fff;text-decoration:none;padding:11px 15px;border-radius:9px;font-weight:700;white-space:nowrap}
-    .inline-link{color:#155e90;font-weight:700}.footnote{font-size:13px;margin-top:16px}
-    .table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left}
-    th,td{padding:12px;border-bottom:1px solid #e9edf4}thead th{font-size:12px;text-transform:uppercase;color:#667b93}
-    tbody th{font-weight:650}.rate{color:#08794e;font-weight:700}.rate.low{color:#b54834}
-    .notice{margin-top:18px}.error{color:#a72126}.notice button{margin-left:12px;padding:7px 12px;cursor:pointer}
-    .skeleton-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:18px}
-    .skeleton{height:120px;border-radius:14px;background:linear-gradient(90deg,#e8eef5,#f7f9fc,#e8eef5);background-size:200% 100%;animation:shimmer 1.5s infinite}
-    @keyframes shimmer{to{background-position-x:-200%}}
-    @media(max-width:950px){.summary,.pipeline,.skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:580px){.principal-page{padding:12px}.hero{padding:16px;flex-wrap:wrap}.hero h1{font-size:22px}
-      .summary,.pipeline,.skeleton-grid{gap:9px}.metric,.panel{padding:14px}
-      .metric strong{font-size:24px}.panel-heading{align-items:stretch;flex-direction:column}.primary-link{text-align:center}
-      .pipeline span{min-height:55px}.pipeline strong{font-size:23px}}
-  `]
 })
-export class PrincipalDashboardComponent implements OnInit {
-  overview: PrincipalOverview | null = null;
-  loading = false;
-  error = '';
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
-  ngOnInit(): void { this.load(); }
-  load(): void {
-    this.loading = true; this.error = ''; this.overview = null; this.cdr.markForCheck();
-    this.http.get<PrincipalOverview>(`${environment.apiUrl}/principal/overview`).subscribe({
-      next: data => { this.overview = data; this.loading = false; this.cdr.markForCheck(); },
-      error: () => { this.error = 'Academic overview could not be loaded.'; this.loading = false; this.cdr.markForCheck(); }
+export class PrincipalDashboardComponent implements OnInit, OnDestroy {
+  private readonly api = environment.apiUrl;
+  private destroy$ = new Subject<void>();
+  private refresh$ = new Subject<void>();
+  private schoolDate$ = new Subject<string>();
+
+  overview: Widget<PrincipalOverview> = { data: null, loading: true, failed: false };
+  staff: Widget<PrincipalStaffToday> = { data: null, loading: true, failed: false };
+  uncovered: Widget<number> = { data: null, loading: true, failed: false };
+  events: Widget<PrincipalUpcomingEvent[]> = { data: null, loading: true, failed: false };
+  updatedAt: Date | null = null;
+
+  constructor(private http: HttpClient, private auth: AuthStateService, private cdr: ChangeDetectorRef) {}
+
+  ngOnInit(): void {
+    this.refresh$.pipe(
+      tap(() => this.start(this.overview)),
+      switchMap(() => this.http.get<PrincipalOverview>(`${this.api}/principal/overview`).pipe(
+        catchError(() => of(null)))),
+      takeUntil(this.destroy$),
+    ).subscribe(data => {
+      this.finish(this.overview, data);
+      if (data) this.updatedAt = new Date();
+      // Today-bound widgets follow the school's own date; fall back to this device's date.
+      this.schoolDate$.next(data?.schoolDate ?? this.localDate());
     });
+
+    this.refresh$.pipe(
+      tap(() => this.start(this.staff)),
+      switchMap(() => this.http.get<PrincipalStaffToday>(`${this.api}/principal/staff-attendance/today-summary`).pipe(
+        catchError(() => of(null)))),
+      takeUntil(this.destroy$),
+    ).subscribe(data => this.finish(this.staff, data));
+
+    this.schoolDate$.pipe(
+      tap(() => this.start(this.uncovered)),
+      switchMap(date => this.http.get<UncoveredPeriod[]>(`${this.api}/substitutions/uncovered`, { params: { date } }).pipe(
+        map(periods => periods.filter(p => !p.assignment).length),
+        catchError(() => of(null)))),
+      takeUntil(this.destroy$),
+    ).subscribe(count => this.finish(this.uncovered, count));
+
+    this.schoolDate$.pipe(
+      tap(() => this.start(this.events)),
+      switchMap(date => this.upcomingEvents(date)),
+      takeUntil(this.destroy$),
+    ).subscribe(events => this.finish(this.events, events));
+
+    this.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  refresh(): void { this.refresh$.next(); }
+
+  get name(): string { return this.auth.getUser()?.name?.trim() || 'Principal'; }
+
+  get greeting(): string {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  }
+
+  get schoolDate(): string | null { return this.overview.data?.schoolDate ?? null; }
+
+  get reportCardsEnabled(): boolean { return this.auth.hasFeature('REPORT_CARDS'); }
+
+  get eventsEnabled(): boolean { return this.auth.hasFeature('SCHOOL_COMMUNICATION'); }
+
+  /** A school holiday or closed day: the staff summary expects nobody. Unknown counts as a school day. */
+  get closedToday(): boolean { return this.staff.data?.expectedCount === 0; }
+
+  get staffPresent(): number {
+    const s = this.staff.data;
+    return s ? s.presentCount + s.lateCount + s.halfDayCount : 0;
+  }
+
+  get pendingLeaves(): number {
+    const o = this.overview.data;
+    return o ? o.pendingStudentLeaves + o.pendingTeacherLeaves : 0;
+  }
+
+  /** Classes with pupils that have not submitted today's attendance; null when the server cannot say. */
+  get classesUnmarked(): number | null {
+    const classes = (this.overview.data?.classAttendance ?? []).filter(c => c.students > 0);
+    if (!classes.length || classes.some(c => c.recordedToday === undefined)) return null;
+    return classes.filter(c => !c.recordedToday).length;
+  }
+
+  get classesWithPupils(): number {
+    return (this.overview.data?.classAttendance ?? []).filter(c => c.students > 0).length;
+  }
+
+  get attention(): AttentionItem[] {
+    const items: AttentionItem[] = [];
+    const add = (item: AttentionItem) => { if (item.count > 0) items.push(item); };
+    const o = this.overview.data;
+    const s = this.staff.data;
+    const uncovered = this.uncovered.data ?? 0;
+    add({ key: 'uncovered', severity: 'urgent', icon: 'event_busy', count: uncovered,
+      label: this.plural(uncovered, 'period has', 'periods have') + ' no substitute today',
+      route: '/dashboard/teacher-substitutions' });
+    if (!this.closedToday) {
+      const unmarked = this.classesUnmarked ?? 0;
+      add({ key: 'unmarked', severity: 'warning', icon: 'fact_check', count: unmarked,
+        label: this.plural(unmarked, 'class has', 'classes have') + ' not marked attendance',
+        route: '/dashboard/attendance-summary' });
+      const notIn = s?.notCheckedInCount ?? 0;
+      add({ key: 'not-checked-in', severity: 'warning', icon: 'schedule', count: notIn,
+        label: this.plural(notIn, 'teacher has', 'teachers have') + ' not checked in',
+        route: null });
+    }
+    if (this.reportCardsEnabled) {
+      const awaiting = o?.awaitingPrincipalReview ?? 0;
+      add({ key: 'approvals', severity: 'action', icon: 'draw', count: awaiting,
+        label: this.plural(awaiting, 'report-card review awaits', 'report-card reviews await') + ' your approval',
+        route: '/dashboard/report-card-approvals' });
+    }
+    const teacherLeave = o?.pendingTeacherLeaves ?? 0;
+    add({ key: 'teacher-leave', severity: 'action', icon: 'work_off', count: teacherLeave,
+      label: this.plural(teacherLeave, 'teacher leave request', 'teacher leave requests') + ' to decide',
+      route: '/dashboard/teacher-leave-requests' });
+    const studentLeave = o?.pendingStudentLeaves ?? 0;
+    add({ key: 'student-leave', severity: 'action', icon: 'event_note', count: studentLeave,
+      label: this.plural(studentLeave, 'student leave request', 'student leave requests') + ' to decide',
+      route: '/dashboard/view-leaves' });
+    if (this.reportCardsEnabled) {
+      const returned = o?.returnedForCorrection ?? 0;
+      add({ key: 'returned', severity: 'info', icon: 'undo', count: returned,
+        label: this.plural(returned, 'report-card review is', 'report-card reviews are') + ' back with teachers',
+        route: '/dashboard/report-card-approvals' });
+    }
+    return items.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.count - a.count);
+  }
+
+  /** "All clear" is only claimed when every source the list depends on actually answered. */
+  get attentionComplete(): boolean {
+    return !!this.overview.data && !this.overview.failed && !this.staff.failed && !this.uncovered.failed;
+  }
+
+  get attentionLoading(): boolean {
+    return this.overview.loading || this.staff.loading || this.uncovered.loading;
+  }
+
+  rateTone(rate: number | null): 'good' | 'fair' | 'low' | 'none' {
+    if (rate === null) return 'none';
+    return rate >= 90 ? 'good' : rate >= 75 ? 'fair' : 'low';
+  }
+
+  trackByKey(_: number, item: AttentionItem): string { return item.key; }
+  trackByClass(_: number, item: PrincipalClassAttendance): string { return item.className; }
+  trackByEvent(_: number, item: PrincipalUpcomingEvent): string { return `${item.id ?? item.title}-${item.startDate}`; }
+
+  private upcomingEvents(date: string): Observable<PrincipalUpcomingEvent[] | null> {
+    if (!this.eventsEnabled) return of([]);
+    const [year, month] = date.split('-').map(Number);
+    const next = month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+    const fetch = (y: number, m: number) =>
+      this.http.get<PrincipalUpcomingEvent[]>(`${this.api}/events/month/${m}/year/${y}`);
+    return forkJoin([fetch(year, month), fetch(next.year, next.month)]).pipe(
+      map(([current, following]) => {
+        const seen = new Set<string>();
+        return [...current, ...following]
+          .filter(e => (e.endDate || e.startDate) >= date)
+          .filter(e => {
+            const key = this.trackByEvent(0, e);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .sort((a, b) => a.startDate.localeCompare(b.startDate) || (a.startTime ?? '').localeCompare(b.startTime ?? ''))
+          .slice(0, 4);
+      }),
+      catchError(() => of(null)),
+    );
+  }
+
+  private start<T>(widget: Widget<T>): void {
+    widget.loading = true;
+    widget.failed = false;
+    this.cdr.markForCheck();
+  }
+
+  /** A failed refresh keeps the last good data visible and flags the widget instead. */
+  private finish<T>(widget: Widget<T>, data: T | null): void {
+    widget.loading = false;
+    widget.failed = data === null;
+    if (data !== null) widget.data = data;
+    this.cdr.markForCheck();
+  }
+
+  private plural(count: number, one: string, many: string): string {
+    return `${count} ${count === 1 ? one : many}`;
+  }
+
+  private localDate(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 }

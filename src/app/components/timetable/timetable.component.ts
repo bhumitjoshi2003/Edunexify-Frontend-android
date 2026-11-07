@@ -78,6 +78,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   private destroyed = false;
   get initialSessionId(): number | null { return Number(this.route.snapshot.queryParamMap.get('academicSessionId')) || null; }
   canManage(): boolean { return this.role === 'ADMIN'; }
+  canSelectSession(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
   canWrite(): boolean { return this.canManage() && writableSession(this.selectedSession); }
   canAdd(): boolean { return this.canWrite() && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
   onSessionSelected(session: AcademicSession | null): void {
@@ -169,7 +170,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.selectedDay = this.days.includes(this.todayDay) ? this.todayDay : this.days[0];
 
     // Load school settings (working days)
-    this.schoolService.getSettings().pipe(takeUntil(this.destroy$)).subscribe({
+    this.schoolService.getAcademicContext().pipe(takeUntil(this.destroy$)).subscribe({
       next: (settings) => {
         if (settings.workingDays) {
           this.days = settings.workingDays.split(',').filter(d => d.trim()).map(d => d.trim().toUpperCase());
@@ -260,7 +261,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   isParent(): boolean { return this.role === 'PARENT'; }
   isTeacher(): boolean { return this.role === 'TEACHER'; }
   isAdmin(): boolean {
-    return this.role === 'ADMIN' || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN';
+    return this.role === 'ADMIN' || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'PRINCIPAL';
   }
 
   onDaySelect(day: string): void {
@@ -576,7 +577,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
   loadClassTimetable(): void {
     this.classRead$.next(null);
-    if (!this.selectedClass || (this.canManage() && !this.selectedSession)) return;
+    if (!this.selectedClass || (this.canSelectSession() && !this.selectedSession)) return;
     this.isLoading = true;
     this.error = null;
     this.entries = [];
@@ -586,7 +587,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
       className: this.selectedClass,
       sectionId: this.selectedSectionId,
       studentId: this.isParent() ? this.userId : null,
-      academicSessionId: this.canManage() ? this.selectedSession!.id : undefined
+      academicSessionId: this.canSelectSession() ? this.selectedSession!.id : undefined
     });
   }
 

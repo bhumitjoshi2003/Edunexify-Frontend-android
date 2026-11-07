@@ -105,6 +105,9 @@ export class NotificationNavigationService {
       case 'FEE_REMINDER': return '/dashboard/fees';
       case 'STUDENT_ABSENT':
       case 'ATTENDANCE_LOW': return '/dashboard/attendance-summary';
+      case 'REPORT_CARD_APPROVAL_REQUIRED':
+      case 'REPORT_CARD_CORRECTION_REQUESTED':
+      case 'REPORT_CARD_READY_TO_PUBLISH': return '/dashboard/report-card-approvals';
       case 'REPORT_CARD_READY':
         if (action.sourceEntityType?.toUpperCase() === 'REPORTCARDDOCUMENT' && action.sourceEntityId) {
           return `/dashboard/report-card-documents/${encodeURIComponent(action.sourceEntityId)}`;

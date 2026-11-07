@@ -208,11 +208,11 @@ describe('ReportSupportTicketComponent', () => {
 
   it('removeScreenshot clears the selected file and preview', () => {
     component.selectedFiles = [new File(['x'], 'shot.png', { type: 'image/png' })];
-    component.imagePreviewUrl = 'data:image/png;base64,x';
+    component.imagePreviewUrls = ['data:image/png;base64,x'];
 
-    component.removeScreenshot();
+    component.removeScreenshot(0);
 
     expect(component.selectedFiles).toEqual([]);
-    expect(component.imagePreviewUrl).toBeNull();
+    expect(component.imagePreviewUrls).toEqual([]);
   });
 });

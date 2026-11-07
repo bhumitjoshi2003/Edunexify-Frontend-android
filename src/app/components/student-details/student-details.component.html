@@ -15,7 +15,7 @@
           <button class="sd-pill sd-pill-green" (click)="saveStudentDetails()">✓ Save</button>
           <button class="sd-pill sd-pill-red" (click)="cancelEditMode()">✕</button>
         </ng-container>
-        <button *ngIf="getUserRole() !== 'TEACHER'" class="sd-pill-icon" (click)="openPasswordModal()" title="Change Password">🔐</button>
+        <button *ngIf="getUserRole() === 'ADMIN' || getUserRole() === 'STUDENT'" class="sd-pill-icon" (click)="openPasswordModal()" title="Change Password">🔐</button>
         <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'ACTIVE' && !isEditing" class="sd-pill sd-pill-exit" (click)="openExitModal()">Mark as Left</button>
         <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" class="sd-pill sd-pill-green" (click)="openReadmitModal()">Re-admit</button>
         <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'UPCOMING' && !isEditing" class="sd-pill sd-pill-exit"
@@ -183,7 +183,7 @@
   </div>
 
   <!-- ── Enrollment History (admin, read-only) ─────────────────────── -->
-  <div class="sd-section" *ngIf="getUserRole() === 'ADMIN' && (enrollmentHistory.length || enrollmentHistoryFailed)">
+  <div class="sd-section" *ngIf="(getUserRole() === 'ADMIN' || getUserRole() === 'PRINCIPAL') && (enrollmentHistory.length || enrollmentHistoryFailed)">
     <p class="sd-section-title">Enrollment History</p>
     <p class="sd-history-empty" *ngIf="enrollmentHistoryFailed">Enrollment history is unavailable right now.</p>
     <ol class="sd-history" *ngIf="enrollmentHistory.length">

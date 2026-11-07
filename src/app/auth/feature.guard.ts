@@ -1,13 +1,14 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthStateService } from './auth-state.service';
+import { FeatureKey } from './feature-keys';
 
 /**
  * Functional route guard that enforces feature-flag-based access control.
  *
  * Usage in routes:
  *   canActivate: [roleGuard, featureGuard],
- *   data: { roles: ['ADMIN'], featureKey: 'ANALYTICS' }
+ *   data: { roles: ['ADMIN'], featureKey: FEATURES.ANALYTICS }
  *
  * If data.featureKey is absent, any authenticated user is allowed through.
  * On failure, the user is redirected to /dashboard.
@@ -18,7 +19,7 @@ export const featureGuard: CanActivateFn = (route, _state) => {
   const authState = inject(AuthStateService);
   const router = inject(Router);
 
-  const featureKey: string | undefined = route.data['featureKey'];
+  const featureKey: FeatureKey | undefined = route.data['featureKey'];
   if (!featureKey) {
     console.warn(`[FeatureGuard] Route "${route.routeConfig?.path}" has no featureKey defined.`);
     return true; // Still allow but at least warn
@@ -31,6 +32,8 @@ export const featureGuard: CanActivateFn = (route, _state) => {
     ? '/dashboard/admin-dashboard'
     : role === 'TEACHER'
       ? '/dashboard/teacher-dashboard'
+      : role === 'PRINCIPAL'
+        ? '/dashboard/principal-dashboard'
       : role === 'STUDENT'
         ? '/dashboard/student-dashboard'
         : role === 'PARENT'

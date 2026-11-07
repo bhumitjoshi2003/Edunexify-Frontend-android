@@ -3,6 +3,13 @@
   "include": [
     "src/**/*.d.ts",
     "src/app/components/report-card-approvals/*.spec.ts",
-    "src/app/components/report-card-v2/rc2.spec.ts"
+    "src/app/components/report-card-v2/rc2.spec.ts",
+    "src/app/app.routes.principal.spec.ts",
+    "src/app/auth/principal-capability.guard.spec.ts",
+    "src/app/services/leadership-people.spec.ts",
+    "src/app/components/principal-dashboard/*.spec.ts",
+    "src/app/components/principal-management/*.spec.ts",
+    "src/app/components/signature-settings/*.spec.ts",
+    "src/app/components/view-leaves/*.spec.ts"
   ]
 }

@@ -59,7 +59,7 @@ describe('TEACHER edit flow (rendered template)', () => {
         { provide: StudentService, useValue: {} },
         { provide: LoggerService, useValue: { error: () => { } } },
         { provide: ToastService, useValue: toast },
-        { provide: SchoolService, useValue: { getSettings: () => of({}), getManagedClasses: () => of([{ id: 11, name: '11', displayOrder: 1, active: true, streamEligible: false }]) } },
+        { provide: SchoolService, useValue: { getSettings: () => of({}), getAcademicContext: () => of({}), getManagedClasses: () => of([{ id: 11, name: '11', displayOrder: 1, active: true, streamEligible: false }]) } },
         { provide: SectionService, useValue: { getSectionsForClass: () => of([]) } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } } } },
         { provide: Router, useValue: {} },

@@ -7,7 +7,7 @@
       <div>
         <h1 class="vl-hero-title">Leave Applications</h1>
         <p class="vl-hero-sub" *ngIf="loggedInUserRole === 'TEACHER'">Class {{ loggedInUserClass }}</p>
-        <p class="vl-hero-sub" *ngIf="loggedInUserRole === 'ADMIN'">
+        <p class="vl-hero-sub" *ngIf="schoolWide">
           {{ selectedClass === 'all' ? 'All Classes' : 'Class ' + selectedClass }}
         </p>
       </div>
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Class chips (Admin only) -->
-    <div class="vl-chips" *ngIf="loggedInUserRole === 'ADMIN'">
+    <div class="vl-chips" *ngIf="schoolWide">
       <span class="vl-class-filter-label">Class</span>
       <button type="button" class="vl-chip" [class.vl-chip-active]="selectedClass === 'all'"
         (click)="onClassSelect('all')">All</button>
@@ -100,7 +100,7 @@
         <!-- Main info -->
         <div class="vl-card-body">
           <span class="vl-card-name">{{ leave.studentName }}</span>
-          <span class="vl-card-id">ID · {{ leave.studentId }}<ng-container *ngIf="loggedInUserRole === 'ADMIN' && leave.className"> · Class {{ leave.className }}</ng-container></span>
+          <span class="vl-card-id">ID · {{ leave.studentId }}<ng-container *ngIf="schoolWide && leave.className"> · Class {{ leave.className }}</ng-container></span>
           <span class="vl-card-reason" *ngIf="leave.reason">“{{ leave.reason }}”</span>
           <span class="vl-card-meta" *ngIf="leave.decidedBy && (leave.status === 'APPROVED' || leave.status === 'REJECTED')">
             {{ leave.status === 'APPROVED' ? 'Approved' : 'Rejected' }} by {{ leave.decidedBy }}<ng-container *ngIf="leave.decidedAt"> · {{ leave.decidedAt | date:'d MMM, h:mm a' }}</ng-container><ng-container *ngIf="leave.decisionReason"> · {{ leave.decisionReason }}</ng-container>
@@ -119,7 +119,7 @@
             [class.vl-status-cancelled]="leave.status === 'CANCELLED'">
             {{ leave.status }}
           </span>
-          <div class="vl-actions" *ngIf="loggedInUserRole === 'ADMIN' || loggedInUserRole === 'TEACHER'">
+          <div class="vl-actions" *ngIf="schoolWide || loggedInUserRole === 'TEACHER'">
             <ng-container *ngIf="leave.status === 'PENDING'">
               <button class="vl-btn-approve" [disabled]="updatingLeaveIds.has(leave.id)" (click)="updateLeaveStatus(leave, 'APPROVED')" title="Approve">✓</button>
               <button class="vl-btn-reject"  [disabled]="updatingLeaveIds.has(leave.id)" (click)="updateLeaveStatus(leave, 'REJECTED')" title="Reject">✕</button>
