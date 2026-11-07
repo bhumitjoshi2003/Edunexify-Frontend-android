@@ -25,6 +25,17 @@
     <!-- Nav items -->
     <nav class="sidebar-nav">
 
+      <!-- ── PRINCIPAL ── -->
+      <ng-container *ngIf="isPrincipal()">
+        <app-nav-group>
+          <div class="nav-section-label">Academic Leadership</div>
+          <a class="nav-item" routerLink="/dashboard/principal-dashboard" routerLinkActive="active"
+             (click)="closeSidebarOnMobile()" title="Principal Dashboard">
+            <mat-icon>school</mat-icon><span>Principal Dashboard</span>
+          </a>
+        </app-nav-group>
+      </ng-container>
+
       <!-- ── STUDENT ── -->
       <ng-container *ngIf="isStudent()">
         <app-nav-group>
@@ -298,6 +309,10 @@
         <a class="nav-item" routerLink="/dashboard/admin-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Dashboard">
           <mat-icon>home</mat-icon><span>Dashboard</span>
+        </a>
+        <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/principal-management" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Principal Account">
+          <mat-icon>manage_accounts</mat-icon><span>Principal Account</span>
         </a>
         <a class="nav-item" *ngIf="hasFeature('ANALYTICS')" routerLink="/dashboard/analytics" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Analytics">

@@ -187,6 +187,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (user) {
       this.Role = user.role;
       this.Id = user.userId;
+      if (user.role === 'PRINCIPAL') this.Name = user.name ?? '';
       this.fetchUserDetails();
     }
   }
@@ -248,6 +249,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard/student-dashboard']);
     } else if (this.Role === 'TEACHER') {
       this.router.navigate(['/dashboard/teacher-dashboard']);
+    } else if (this.Role === 'PRINCIPAL') {
+      this.router.navigate(['/dashboard/principal-dashboard']);
     } else if (this.Role === 'ADMIN' || this.Role === 'SUB_ADMIN') {
       this.router.navigate(['/dashboard/admin-dashboard']);
     } else if (this.Role === 'PARENT') {
@@ -263,6 +266,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   isTeacher(): boolean {
     return this.Role === 'TEACHER';
+  }
+
+  isPrincipal(): boolean {
+    return this.Role === 'PRINCIPAL';
   }
 
   isAdmin(): boolean {
