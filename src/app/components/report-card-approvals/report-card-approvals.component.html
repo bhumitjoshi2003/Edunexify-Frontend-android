@@ -1,0 +1,197 @@
+<main class="approval-page">
+  <header>
+    <div>
+      <h1>Report card approvals</h1>
+      <p>Teacher review → Principal approval → Admin publication</p>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading || busy">
+      Refresh queue
+    </button>
+  </header>
+  <p class="hint">
+    Review a frozen revision before approving.
+    <a routerLink="/dashboard/my-signature" *ngIf="role !== 'ADMIN'"
+      >Manage your signature</a
+    >. Saving a signature never approves a report card.
+  </p>
+  <p *ngIf="error" class="error" role="alert">{{ error }}</p>
+  <div
+    *ngIf="loading"
+    class="edu-sk-panel"
+    aria-busy="true"
+    aria-label="Loading approval queue"
+  >
+    <span
+      class="edu-sk-shimmer edu-sk-table-line"
+      *ngFor="let x of [1, 2, 3]"
+    ></span>
+  </div>
+  <section *ngIf="!loading && !items.length" class="panel">
+    <h2>No approval work is available</h2>
+    <p>
+      Only enabled setups and your authorized class sections appear here. Empty
+      or retired scopes do not block other work.
+    </p>
+  </section>
+  <section class="queue" aria-label="Approval queue" *ngIf="!loading">
+    <article class="panel" *ngFor="let item of items; trackBy: track">
+      <h2>{{ item.setupName }}</h2>
+      <p>Class {{ item.className }} · {{ item.sectionName || "No section" }}</p>
+      <span class="status">{{ label(item.status) }}</span
+      ><button type="button" (click)="review(item)" [disabled]="busy">
+        Open review
+      </button>
+    </article>
+  </section>
+  <section class="panel" *ngIf="selected as item" aria-label="Review details">
+    <div class="section-head">
+      <h2>
+        {{ item.setupName }} · Class {{ item.className }} /
+        {{ item.sectionName || "No section" }}
+      </h2>
+      <button
+        type="button"
+        (click)="review(item)"
+        [disabled]="busy || reviewing"
+      >
+        Reload review
+      </button>
+    </div>
+    <label class="policy" *ngIf="role === 'TEACHER'"
+      ><input
+        type="checkbox"
+        [(ngModel)]="includeIncomplete"
+        (ngModelChange)="review(item)"
+        [disabled]="busy || reviewing"
+      />
+      Include incomplete report cards in this review</label
+    >
+    <div
+      *ngIf="reviewing"
+      class="edu-sk-panel"
+      aria-busy="true"
+      aria-label="Preparing consistent review"
+    >
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+    <ng-container *ngIf="summary as s">
+      <p>{{ s.academicSession }} · {{ label(s.state.status) }}</p>
+      <p class="revision">
+        Review revision <strong>{{ s.revisionId }}</strong>
+      </p>
+      <p class="hint">
+        Attendance cutoff: {{ s.attendanceCutoff }}. Teacher:
+        {{ s.teacherUserId }}.
+        {{
+          s.includeIncomplete
+            ? "Incomplete cards are included."
+            : "Incomplete cards are excluded."
+        }}
+      </p>
+      <div class="metrics">
+        <div>
+          <strong>{{ s.totalStudents }}</strong
+          >Total students
+        </div>
+        <div>
+          <strong>{{ s.completeCards }}</strong
+          >Complete cards
+        </div>
+        <div>
+          <strong>{{ s.incompleteCards }}</strong
+          >Incomplete cards
+        </div>
+        <div>
+          <strong>{{ s.missingMarks }}</strong
+          >Missing marks
+        </div>
+        <div>
+          <strong>{{ s.excludedStudents }}</strong
+          >Excluded
+        </div>
+        <div>
+          <strong>{{ s.includedStudents }}</strong
+          >Included
+        </div>
+      </div>
+      <p *ngIf="s.state.returnReason" class="correction">
+        <strong>Correction requested:</strong> {{ s.state.returnReason }}
+      </p>
+      <label for="review-student">Student report card</label>
+      <div class="preview-controls">
+        <select id="review-student" [(ngModel)]="selectedStudent">
+          <option value="">Select a student</option>
+          <option
+            *ngFor="let student of s.students"
+            [value]="student.studentId"
+          >
+            {{ student.studentName }} ·
+            {{ student.included ? "Included" : "Excluded" }} ·
+            {{ student.missingMarks }} missing marks
+          </option></select
+        ><button
+          type="button"
+          (click)="preview()"
+          [disabled]="!selectedStudent || busy"
+        >
+          Preview revision PDF
+        </button>
+      </div>
+      <p class="hint">
+        Previews, summary and approvals use this revision. Changed content
+        requires a fresh review. Only an Admin can publish official documents.
+      </p>
+      <div class="actions">
+        <button
+          *ngIf="role === 'TEACHER'"
+          type="button"
+          [disabled]="!canApprove()"
+          (click)="act('teacher-approve')"
+        >
+          Approve as class teacher</button
+        ><button
+          *ngIf="role === 'PRINCIPAL'"
+          type="button"
+          [disabled]="!canApprove()"
+          (click)="act('principal-approve')"
+        >
+          Approve as Principal</button
+        ><button
+          *ngIf="role === 'PRINCIPAL'"
+          type="button"
+          [disabled]="!canApprove()"
+          (click)="returning = true"
+        >
+          Return for correction</button
+        ><button type="button" (click)="loadHistory()">
+          View approval history
+        </button>
+      </div>
+      <div *ngIf="returning">
+        <label for="return-reason">Reason for correction</label
+        ><textarea
+          id="return-reason"
+          [(ngModel)]="reason"
+          rows="3"
+          maxlength="500"
+        ></textarea
+        ><button
+          type="button"
+          [disabled]="!reason.trim() || busy"
+          (click)="act('return')"
+        >
+          Confirm return
+        </button>
+      </div>
+      <ol *ngIf="history.length" class="history">
+        <li *ngFor="let event of history">
+          <strong>{{ label(event.action) }}</strong> · {{ event.actorId }} ({{
+            event.actorRole || "Recorded reviewer"
+          }}) · {{ event.createdAt }}
+          <p *ngIf="event.reason">{{ event.reason }}</p>
+          <small>{{ event.revisionId || "Legacy audit entry" }}</small>
+        </li>
+      </ol>
+    </ng-container>
+  </section>
+</main>

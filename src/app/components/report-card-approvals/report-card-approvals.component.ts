@@ -1,181 +1,362 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ReportCardPdfDeliveryService } from '../../services/report-card-pdf-delivery.service';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+} from '@angular/material/dialog';
+import { Subject, catchError, finalize, of, switchMap, takeUntil } from 'rxjs';
 import { AuthStateService } from '../../auth/auth-state.service';
-import { environment } from '../../../environments/environment';
+import { ReportCardPdfDeliveryService } from '../../services/report-card-pdf-delivery.service';
+import { ToastService } from '../../services/toast.service';
+import {
+  ApprovalAction,
+  ApprovalHistory,
+  ApprovalItem,
+  ReportCardApprovalService,
+  ReviewSummary,
+} from '../../services/report-card-approval.service';
 
-interface ApprovalItem {
-  setupId: number; setupName: string; className: string;
-  sectionId: number | null; sectionName: string | null; status: string; stale: boolean;
+@Component({
+  standalone: true,
+  imports: [MatDialogModule],
+  template: `<div class="review-preview">
+    <button type="button" mat-dialog-close>Close preview</button
+    ><iframe [src]="url" title="Frozen report card review"></iframe>
+  </div>`,
+  styles: [
+    `
+      .review-preview {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+        height: 85dvh;
+      }
+      .review-preview iframe {
+        flex: 1;
+        width: 100%;
+        border: 0;
+      }
+      button {
+        align-self: flex-end;
+        padding: 10px;
+      }
+    `,
+  ],
+})
+export class ReviewPdfDialogComponent {
+  url: SafeResourceUrl;
+  constructor(@Inject(MAT_DIALOG_DATA) data: string, sanitizer: DomSanitizer) {
+    this.url = sanitizer.bypassSecurityTrustResourceUrl(data);
+  }
 }
-interface ReviewStudent { studentId: string; studentName: string; }
-interface ApprovalState { status: string; stale: boolean; returnReason: string | null; }
 
 @Component({
   standalone: true,
   selector: 'app-report-card-approvals',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
+  templateUrl: './report-card-approvals.component.html',
+  styleUrls: ['./report-card-approvals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <main class="page">
-      <header><span class="hero-icon">✅</span><div><h1>Report Card Approvals</h1>
-        <p>Teacher review → Principal approval → Admin publication</p></div></header>
-      <section class="notice">Approvals apply only to report-card setups enabled by the school Admin.
-        If marks, remarks, or report-card content change after approval, both approvals must be renewed.
-        You must save your handwritten signature under <strong>My Signature</strong> before approving.</section>
-      <div *ngIf="error" class="error" role="alert">{{ error }}</div>
-      <div *ngIf="message" class="message" role="status">{{ message }}</div>
-      <div *ngIf="loading" class="notice" role="status">Loading approval queue…</div>
-      <section *ngIf="!loading && items.length === 0" class="empty">
-        No report-card approval workflows are enabled yet.
-        <span *ngIf="role === 'ADMIN'">Enable one from Published Report Cards after choosing a report-card setup.</span>
-      </section>
-      <section class="cards" *ngIf="!loading">
-        <article *ngFor="let item of items; trackBy: track" class="card">
-          <div class="head"><div><h2>{{ item.setupName }}</h2>
-            <p>Class {{ item.className }} · {{ item.sectionName || 'No section' }}</p></div>
-            <span class="status" [class.ok]="item.status === 'PRINCIPAL_APPROVED'" [class.warning]="item.stale">
-              {{ label(item) }}</span></div>
-          <p class="hint" *ngIf="item.status === 'RETURNED'">Returned for correction. The teacher must review and approve again.</p>
-          <p class="hint" *ngIf="item.stale">The underlying report card changed after approval. Fresh reviews are required.</p>
-          <div class="review">
-            <button class="secondary" type="button" [disabled]="busy !== null" (click)="loadStudents(item)">
-              {{ reviewKey === key(item) ? 'Refresh students' : 'Review report cards' }}
-            </button>
-            <div *ngIf="reviewKey === key(item)" class="student-picker">
-              <label [attr.for]="'student-' + key(item)">Select a student to inspect the live PDF</label>
-              <select [id]="'student-' + key(item)" [(ngModel)]="selectedStudent">
-                <option value="">Select a student</option>
-                <option *ngFor="let st of students" [value]="st.studentId">{{ st.studentName }} ({{ st.studentId }})</option>
-              </select>
-              <button type="button" [disabled]="!selectedStudent || busy !== null" (click)="preview(item)">Preview PDF</button>
-            </div>
-          </div>
-          <div class="actions">
-            <button *ngIf="role === 'TEACHER'" [disabled]="busy !== null" (click)="act(item, 'teacher-approve')">
-              Approve as Class Teacher</button>
-            <button *ngIf="role === 'PRINCIPAL'" [disabled]="busy !== null || item.status !== 'TEACHER_APPROVED'"
-              (click)="act(item, 'principal-approve')">Approve &amp; Sign</button>
-            <button *ngIf="role === 'PRINCIPAL'" class="secondary" [disabled]="busy !== null || item.status !== 'TEACHER_APPROVED'"
-              (click)="startReturn(item)">Return for correction</button>
-            <span *ngIf="role === 'ADMIN' && item.status === 'PRINCIPAL_APPROVED'" class="hint">Approved and ready for publication.</span>
-          </div>
-          <div *ngIf="returning === key(item)" class="return-form">
-            <label>Reason for correction (required)</label>
-            <textarea [(ngModel)]="reason" maxlength="500" rows="3"></textarea>
-            <button [disabled]="busy !== null || !reason.trim()" (click)="act(item, 'return')">Confirm return</button>
-            <button class="secondary" (click)="returning = null">Cancel</button>
-          </div>
-        </article>
-      </section>
-      <div class="preview-overlay" *ngIf="previewUrl" role="dialog" aria-modal="true" aria-label="Report card preview">
-        <div class="preview-panel"><button type="button" class="secondary" (click)="closePreview()">Close preview</button>
-          <iframe [src]="previewUrl" title="Report card preview"></iframe>
-        </div>
-      </div>
-      <button class="refresh" type="button" (click)="load()" [disabled]="loading || busy !== null">Refresh queue</button>
-    </main>
-  `,
-  styles: [`
-    .page{max-width:1200px;margin:auto;padding:18px;color:#20334b}
-    header{background:linear-gradient(110deg,#102f55,#205f8c);color:white;padding:26px;border-radius:16px;display:flex;gap:16px;align-items:center}
-    header h1{font-size:26px;margin:0 0 5px}header p{color:#d3e7fa;margin:0}
-    .hero-icon{font-size:29px;background:#ffffff25;padding:13px;border-radius:11px}
-    .notice,.empty,.card{background:white;border:1px solid #dce5f0;padding:20px;border-radius:13px;margin-top:16px}
-    .notice{line-height:1.5;color:#536881}.empty{color:#66788e}.empty span{display:block;margin-top:8px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;margin-top:18px}
-    .card{margin:0}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-    h2{font-size:18px;margin:0 0 5px}.head p{color:#687a90;font-size:13px;margin:0}
-    .status{font-size:12px;background:#ecf1fa;padding:6px 9px;border-radius:30px;font-weight:700;white-space:nowrap}
-    .status.ok{background:#d9f9e5;color:#08783d}.status.warning{background:#fff1d6;color:#945700}
-    .hint{font-size:13px;color:#65788d}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-    button{border:1px solid #1e4f80;border-radius:8px;background:#1e4f80;color:white;padding:10px 14px;cursor:pointer;font-weight:600}
-    button.secondary,.refresh{background:white;color:#204e7a}button:disabled{opacity:.5;cursor:not-allowed}
-    .review{margin-top:15px}.student-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
-    .student-picker label{font-size:13px}.student-picker select{padding:8px;border:1px solid #b7c8dc;border-radius:7px;max-width:100%}
-    .preview-overlay{position:fixed;inset:0;background:#0d2038cc;z-index:9999;display:grid;place-items:center;padding:14px}
-    .preview-panel{background:white;width:min(100%,1050px);height:min(94dvh,900px);padding:12px;border-radius:12px;display:flex;flex-direction:column;gap:8px}
-    .preview-panel iframe{flex:1;border:0;width:100%}
-    .return-form{margin-top:12px}.return-form label{display:block;margin-bottom:5px;font-size:13px}
-    textarea{width:100%;border:1px solid #bbcada;border-radius:8px;padding:8px;box-sizing:border-box}
-    .return-form button{margin:8px 8px 0 0}.refresh{margin-top:18px}
-    .error{color:#b42318;padding:12px}.message{color:#087443;padding:12px}
-    @media(max-width:600px){.page{padding:10px}header{padding:20px}header h1{font-size:21px}}
-  `]
 })
 export class ReportCardApprovalsComponent implements OnInit, OnDestroy {
   items: ApprovalItem[] = [];
   role: string;
-  loading = false; busy: string | null = null;
-  error = ''; message = ''; returning: string | null = null; reason = '';
-  reviewKey: string | null = null; students: ReviewStudent[] = []; selectedStudent = '';
-  previewUrl: SafeResourceUrl | null = null; private previewObjectUrl: string | null = null;
-
-  constructor(private http: HttpClient, auth: AuthStateService, private cdr: ChangeDetectorRef,
-              private delivery: ReportCardPdfDeliveryService, private sanitizer: DomSanitizer) {
+  loading = false;
+  reviewing = false;
+  busy = false;
+  error = '';
+  selected: ApprovalItem | null = null;
+  summary: ReviewSummary | null = null;
+  history: ApprovalHistory[] = [];
+  includeIncomplete = false;
+  selectedStudent = '';
+  reason = '';
+  returning = false;
+  private destroyed = false;
+  private destroy$ = new Subject<void>();
+  private reviewRequests$ = new Subject<{
+    item: ApprovalItem;
+    include: boolean;
+  }>();
+  private queueRequests$ = new Subject<void>();
+  private actionIds = new Map<string, string>();
+  private previewUrls = new Set<string>();
+  private dialogRef: ReturnType<MatDialog['open']> | null = null;
+  constructor(
+    private api: ReportCardApprovalService,
+    auth: AuthStateService,
+    private cdr: ChangeDetectorRef,
+    private delivery: ReportCardPdfDeliveryService,
+    private toast: ToastService,
+    private dialog: MatDialog
+  ) {
     this.role = auth.getUserRole();
   }
-  ngOnInit(): void { this.load(); }
-  ngOnDestroy(): void { this.closePreview(); }
-  key(item: ApprovalItem): string { return item.setupId + ':' + (item.sectionId ?? 'all'); }
-  track = (_: number, item: ApprovalItem) => this.key(item);
-  label(item: ApprovalItem): string {
-    return ({ PENDING_TEACHER: 'Awaiting Teacher', TEACHER_APPROVED: 'Awaiting Principal',
-      PRINCIPAL_APPROVED: 'Approved', RETURNED: 'Returned', STALE: 'Needs Re-review' } as Record<string,string>)[item.status] || item.status;
+  ngOnInit(): void {
+    this.queueRequests$
+      .pipe(
+        switchMap(() =>
+          this.api.queue().pipe(
+            catchError(() => {
+              this.error =
+                'Could not load the approval queue. Retry when connected.';
+              return of(null);
+            })
+          )
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((items) => {
+        if (items) this.items = items;
+        this.loading = false;
+        this.cdr.markForCheck();
+      });
+    this.reviewRequests$
+      .pipe(
+        switchMap(({ item, include }) =>
+          this.api.review(item, include).pipe(
+            catchError((response) => {
+              this.error =
+                response?.error?.message ||
+                'Could not prepare this review. Check the responsible teacher and retry.';
+              return of(null);
+            })
+          )
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((summary) => {
+        this.summary = summary;
+        this.reviewing = false;
+        if (summary) this.includeIncomplete = summary.includeIncomplete;
+        this.cdr.markForCheck();
+      });
+    this.load();
+  }
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.dialogRef?.close();
+    this.previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    this.previewUrls.clear();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
   load(): void {
-    this.loading = true; this.error = ''; this.cdr.markForCheck();
-    this.http.get<ApprovalItem[]>(`${environment.apiUrl}/report-card-approvals/queue`).subscribe({
-      next: items => { this.items = items; this.loading = false; this.cdr.markForCheck(); },
-      error: () => { this.loading = false; this.error = 'Could not load the approval queue.'; this.cdr.markForCheck(); }
-    });
-  }
-  loadStudents(item: ApprovalItem): void {
-    this.reviewKey = this.key(item); this.students = []; this.selectedStudent = ''; this.error = '';
-    const params = item.sectionId == null ? new HttpParams() : new HttpParams().set('sectionId', String(item.sectionId));
-    this.http.get<ReviewStudent[]>(`${environment.apiUrl}/report-card-approvals/setups/${item.setupId}/students`, { params }).subscribe({
-      next: rows => { this.students = rows; this.cdr.markForCheck(); },
-      error: response => { this.error = response?.error?.message || 'Could not load students.'; this.cdr.markForCheck(); }
-    });
-  }
-  preview(item: ApprovalItem): void {
-    if (!this.selectedStudent || this.busy) return;
-    const studentId = this.selectedStudent;
-    this.busy = this.key(item);
-    const params = item.sectionId == null ? new HttpParams() : new HttpParams().set('sectionId', String(item.sectionId));
-    this.http.get(`${environment.apiUrl}/report-card-approvals/setups/${item.setupId}/preview/${encodeURIComponent(studentId)}`,
-      { params, responseType: 'blob' }).subscribe({
-      next: async blob => {
-        try {
-          if (this.delivery.native) await this.delivery.share(blob, 'Report_Card_Preview.pdf');
-          else {
-            this.closePreview();
-            this.previewObjectUrl = URL.createObjectURL(blob);
-            this.previewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.previewObjectUrl);
-          }
-        } catch { this.error = 'Could not open the report card preview.'; }
-        finally { this.busy = null; this.cdr.markForCheck(); }
-      },
-      error: response => { this.busy = null; this.error = response?.error?.message || 'Could not load the preview.'; this.cdr.markForCheck(); }
-    });
-  }
-  closePreview(): void {
-    this.previewUrl = null;
-    if (this.previewObjectUrl) URL.revokeObjectURL(this.previewObjectUrl);
-    this.previewObjectUrl = null;
-  }
-  startReturn(item: ApprovalItem): void { this.returning = this.key(item); this.reason = ''; }
-  act(item: ApprovalItem, action: 'teacher-approve' | 'principal-approve' | 'return'): void {
     if (this.busy) return;
-    this.busy = this.key(item); this.error = ''; this.message = '';
-    const params = item.sectionId == null ? new HttpParams() : new HttpParams().set('sectionId', String(item.sectionId));
-    const url = `${environment.apiUrl}/report-card-approvals/setups/${item.setupId}/${action}`;
-    this.http.post<ApprovalState>(url, action === 'return' ? { reason: this.reason.trim() } : {}, { params }).subscribe({
-      next: () => { this.busy = null; this.returning = null; this.message = 'Review recorded. The next reviewer can now continue.'; this.load(); },
-      error: response => { this.busy = null; this.error = response?.error?.message || 'Could not record this action.'; this.cdr.markForCheck(); }
+    this.loading = true;
+    this.error = '';
+    this.queueRequests$.next();
+  }
+  key(item: ApprovalItem): string {
+    return `${item.setupId}:${item.sectionId ?? 'all'}`;
+  }
+  track = (_: number, item: ApprovalItem) => this.key(item);
+  label(status: string): string {
+    return (
+      (
+        {
+          PENDING_TEACHER: 'Awaiting teacher',
+          TEACHER_APPROVED: 'Awaiting Principal',
+          PRINCIPAL_APPROVED: 'Approved for Admin publication',
+          RETURNED: 'Returned to teacher',
+          STALE: 'Review needs validation',
+        } as Record<string, string>
+      )[status] || status
+    );
+  }
+  review(item: ApprovalItem): void {
+    if (this.busy) return;
+    this.selected = item;
+    this.summary = null;
+    this.selectedStudent = '';
+    this.history = [];
+    this.reason = '';
+    this.returning = false;
+    this.error = '';
+    this.reviewing = true;
+    this.reviewRequests$.next({ item, include: this.includeIncomplete });
+  }
+  canApprove(): boolean {
+    const s = this.summary;
+    if (!s || this.busy || this.reviewing || !s.includedStudents) return false;
+    if (this.role === 'TEACHER') return s.state.status !== 'PRINCIPAL_APPROVED';
+    return (
+      this.role === 'PRINCIPAL' &&
+      s.state.status === 'TEACHER_APPROVED' &&
+      s.state.reviewRevisionId === s.revisionId &&
+      !s.state.stale
+    );
+  }
+  async act(action: ApprovalAction): Promise<void> {
+    const allowed =
+      this.role === 'TEACHER'
+        ? action === 'teacher-approve'
+        : this.role === 'PRINCIPAL' && action !== 'teacher-approve';
+    if (!allowed) return;
+    const item = this.selected,
+      summary = this.summary;
+    if (
+      !item ||
+      !summary ||
+      this.busy ||
+      !this.canApprove() ||
+      (action === 'return' && !this.reason.trim())
+    )
+      return;
+    this.busy = true;
+    const scope = `${summary.academicSession} · ${summary.setupName} · Class ${
+      summary.className
+    }${summary.sectionName ? ' / ' + summary.sectionName : ''}`;
+    const ok = await this.toast.confirm({
+      title:
+        action === 'return'
+          ? 'Return this revision for correction?'
+          : 'Approve this exact review revision?',
+      message: `${scope}\n${summary.includedStudents} included of ${
+        summary.totalStudents
+      } students; ${summary.excludedStudents} excluded; ${
+        summary.incompleteCards
+      } incomplete cards; ${summary.missingMarks} missing marks.\nPolicy: ${
+        summary.includeIncomplete
+          ? 'Include incomplete cards'
+          : 'Exclude incomplete cards'
+      }.\nReview revision: ${summary.revisionId}${
+        action === 'return' ? '\nReason: ' + this.reason.trim() : ''
+      }`,
+      confirmText:
+        action === 'return' ? 'Return to teacher' : 'Approve revision',
+      icon: 'question',
     });
+    if (!ok) {
+      this.busy = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    // Ignore confirmation results after leaving the page or changing the review.
+    if (this.destroyed || this.selected !== item || this.summary !== summary) {
+      this.busy = false;
+      return;
+    }
+    const idKey = `${summary.revisionId}:${summary.state.status}:${
+      summary.state.stateVersion
+    }:${action}:${action === 'return' ? this.reason.trim() : ''}`;
+    let id = this.actionIds.get(idKey);
+    if (!id) {
+      id = crypto.randomUUID();
+      this.actionIds.set(idKey, id);
+    }
+    this.api
+      .act(item, action, summary.revisionId, id, this.reason.trim())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (state) => {
+          this.busy = false;
+          this.summary = { ...summary, state };
+          this.returning = false;
+          this.reason = '';
+          this.toast.success(
+            action === 'return' ? 'Returned for correction' : 'Review approved',
+            action === 'return'
+              ? 'The teacher must correct and review this scope again.'
+              : 'The approval was recorded for this exact revision.'
+          );
+          this.load();
+          this.cdr.markForCheck();
+        },
+        error: (response) => {
+          this.busy = false;
+          if (response.status === 409) {
+            this.summary = null;
+            this.error =
+              'This review is no longer approvable. Reload and review the updated revision before trying again.';
+          } else
+            this.error =
+              response?.error?.message ||
+              'The action could not be confirmed. Retry safely when connected.';
+          this.toast.error('Review not recorded', this.error);
+          this.cdr.markForCheck();
+        },
+      });
+  }
+  loadHistory(): void {
+    const item = this.selected;
+    if (!item) return;
+    this.api
+      .history(item)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (history) => {
+          if (this.selected === item) {
+            this.history = history;
+            this.cdr.markForCheck();
+          }
+        },
+        error: () => this.toast.error('Could not load approval history'),
+      });
+  }
+  preview(): void {
+    const item = this.selected,
+      summary = this.summary,
+      student = this.selectedStudent;
+    if (!item || !summary || !student || this.busy) return;
+    this.busy = true;
+    this.api
+      .preview(item, summary.revisionId, student)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.busy = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: async (blob) => {
+          try {
+            if (this.delivery.native)
+              await this.delivery.share(
+                blob,
+                `Review_${summary.revisionId}_${encodeURIComponent(
+                  student
+                )}.pdf`
+              );
+            else {
+              const url = URL.createObjectURL(blob);
+              this.previewUrls.add(url);
+              this.dialogRef = this.dialog.open(ReviewPdfDialogComponent, {
+                data: url,
+                width: '1100px',
+                maxWidth: '96vw',
+                restoreFocus: true,
+              });
+              this.dialogRef
+                .afterClosed()
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(() => {
+                  URL.revokeObjectURL(url);
+                  this.previewUrls.delete(url);
+                });
+            }
+          } catch {
+            this.toast.error('Could not open the review PDF');
+          }
+        },
+        error: () =>
+          this.toast.error(
+            'Could not load the review PDF',
+            'Reload the review and retry.'
+          ),
+      });
   }
 }
