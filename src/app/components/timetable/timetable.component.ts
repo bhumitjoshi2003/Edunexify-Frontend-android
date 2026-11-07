@@ -81,6 +81,9 @@ export class TimetableComponent implements OnInit, OnDestroy {
   canSelectSession(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
   canWrite(): boolean { return this.canManage() && writableSession(this.selectedSession); }
   canAdd(): boolean { return this.canWrite() && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
+  /** Timings, class-teacher configuration and access grants; period editing stays canWrite(). */
+  canManageSetup(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
+  canGrant(): boolean { return this.canManageSetup() && writableSession(this.selectedSession) && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
   onSessionSelected(session: AcademicSession | null): void {
     this.classRead$.next(null);
     this.selectedSession = session; this.showModal = false; this.showGrantModal = false;
@@ -163,7 +166,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.userClassName = user?.className ?? '';
     this.userName = user?.name ?? '';
     this.loadTimingDisplay();
-    if (this.canManage()) this.loadTimingConfig();
+    if (this.canManageSetup()) this.loadTimingConfig();
 
     const dayMap = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
     this.todayDay = dayMap[new Date().getDay()];
@@ -195,7 +198,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
         },
         error: err => { this.error = apiMessage(err); this.cdr.markForCheck(); }
       });
-      if (this.canManage()) this.loadTeachers();
+      if (this.canManageSetup()) this.loadTeachers();
     }
 
     if (this.isTeacher()) {
@@ -322,7 +325,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   loadTimingConfig(): void {
-    if (!this.canManage()) return;
+    if (!this.canManageSetup()) return;
     this.timingLoading = true;
     this.timingError = '';
     this.timetableService.getTimingConfig().pipe(takeUntil(this.destroy$)).subscribe({
@@ -339,7 +342,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   setSchoolShowTimes(enabled: boolean): void {
-    if (!this.canManage() || this.timingLoading) return;
+    if (!this.canManageSetup() || this.timingLoading) return;
     this.timingLoading = true;
     this.timingError = '';
     this.timetableService.setTimingVisibility(enabled).pipe(takeUntil(this.destroy$)).subscribe({
@@ -373,7 +376,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   createTimingProfile(fromCurrentTimetable = false): void {
-    if (!this.canManage() || this.timingLoading) return;
+    if (!this.canManageSetup() || this.timingLoading) return;
     const name = this.newTimingProfileName.trim();
     if (!name) {
       this.timingError = 'Enter a name for the timing profile.';
@@ -403,7 +406,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   saveTimingProfile(): void {
-    if (!this.canManage() || !this.timingProfileId || this.timingLoading) return;
+    if (!this.canManageSetup() || !this.timingProfileId || this.timingLoading) return;
     const periods = this.timingDraft.filter(p => p.startTime && p.endTime);
     if (!periods.length) {
       this.timingError = 'Add at least one period time before saving.';
@@ -430,7 +433,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   saveAndActivateTimingProfile(): void {
-    if (!this.canManage() || !this.timingProfileId || this.timingLoading) return;
+    if (!this.canManageSetup() || !this.timingProfileId || this.timingLoading) return;
     const periods = this.timingDraft.filter(p => p.startTime && p.endTime);
     if (!periods.length) {
       this.timingError = 'Add at least one period time before activating.';
@@ -459,7 +462,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   activateTimingProfile(profileId: number): void {
-    if (!this.canManage() || this.timingLoading) return;
+    if (!this.canManageSetup() || this.timingLoading) return;
     this.timingLoading = true;
     this.timingError = '';
     this.timetableService.activateTimingProfile(profileId).pipe(takeUntil(this.destroy$)).subscribe({
@@ -476,7 +479,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   deleteTimingProfile(profile: TimetableTimingProfile): void {
-    if (!this.canManage() || profile.active || this.timingLoading) return;
+    if (!this.canManageSetup() || profile.active || this.timingLoading) return;
     this.timingLoading = true;
     this.timingError = '';
     this.timetableService.deleteTimingProfile(profile.id).pipe(takeUntil(this.destroy$)).subscribe({
@@ -766,7 +769,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
    *  class/section, even one with no periods logged yet and that isn't their class-teacher
    *  assignment. See TeacherClassGrantService (backend) for what this actually grants. */
   openGrantModal(): void {
-    if (!this.canAdd() || !this.selectedSession?.current) return;
+    if (!this.canGrant() || !this.selectedSession?.current) return;
     this.grantTeacherId = '';
     this.grantError = null;
     this.showGrantModal = true;
@@ -779,7 +782,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   saveGrant(): void {
-    if (!this.canAdd() || !this.selectedSession?.current || this.grantSaving) return;
+    if (!this.canGrant() || !this.selectedSession?.current || this.grantSaving) return;
     this.grantError = null;
     if (!this.grantTeacherId) {
       this.grantError = 'Please select a teacher.'; return;

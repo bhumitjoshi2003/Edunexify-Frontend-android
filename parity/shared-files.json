@@ -84,7 +84,7 @@
     "src/app/services/timetable.service.ts": "78f00ca5d84b2ff7ed5b0a022d8f88b702c0ad9fa5372afc0d19b48a473d0afa",
     "src/app/services/academic-session.service.ts": "bc4602daae583f62745257cbb6bc633005185d417fda699dd90695b5ab3aeba7",
     "src/app/interfaces/academic-session.ts": "aa5c9beec3041e5bc7ef05cfebbbaef2f896ddc6f614b78f9e60be2d8571f430",
-    "src/app/components/teaching-configuration/teaching-configuration.component.ts": "783cacc648db42f2f92b7efe6f16fec117613dc12e984fcbd4b9ab0c6196762e",
+    "src/app/components/teaching-configuration/teaching-configuration.component.ts": "da2e7ba658aed45b9091ccc814f6965de7b73d679a04820381c1a6e073d88fea",
     "src/app/components/school-setup/school-setup.component.ts": "1fa868735d65089b6fa00e8260b75fce20d32380e45bc989f9cf7dc09cd07177",
     "scripts/check-parity.mjs": "b1a2b2e1b9ea53979824d482a332c394aa6ed941f4a73a3e24aca4b1c5d14464",
     "parity/README.md": "d71e7e25b80842d38288056832b2212bad3d289b9471446975b1535fd4b134ca",
@@ -117,7 +117,13 @@
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.html": "886ad585b999d170fcda91356be278a3b342cf3fdccfbfe1ca9be8414c82417e",
     "src/app/components/view-leaves/view-leaves.component.html": "989e6ccd2df7c3d4e19d2850c270e7576e539a778c11a7e0c0e916c2d7de401c",
     "src/app/components/view-leaves/view-leaves.component.spec.ts": "99a253b99f60871025ca59648fa9cd4131e2aa5e18f172426afe51e81372c682",
-    "src/app/app.routes.principal.spec.ts": "91008acbd444b295834c70f910c6a35baa758c8de407485713aa278e1eaa52b6"
+    "src/app/app.routes.principal.spec.ts": "a8a032069188598c0d134d66cda7dfaf438092448de906abd16330d766e14b6c",
+    "src/app/components/notice/notice.component.principal.spec.ts": "5f7c8a283e21fa409c6427cecce475a904ebaefb2340ef262480e2a1708b577d",
+    "src/app/components/teaching-configuration/teaching-configuration.component.html": "255467f816f4f47b4624b6b5a64f46e5a86b4586be41e21c6679e38cb00569af",
+    "src/app/components/report-card-v2/setup/rc2-setup.component.ts": "30ee057fb36397ca087a06202389197da7fb0765ec6f87fe3aca1132147d4fb9",
+    "src/app/components/report-card-v2/setup/rc2-setup.component.html": "7ed65281f5159bc0f214b66d131ea62680336d73b6805aba41499d239cdfe443",
+    "src/app/components/holiday-calendar/holiday-calendar.component.ts": "3cbcef42fa55ab46cf3ab1caa0d1832de660d779ecab58d6f693f2fae214a3ba",
+    "src/app/components/notice/notice.component.html": "fec290309a82897825ba3a098f7c6e692537bc0241c1f8b5d416d67f312c5239"
   },
   "platformSpecific": [
     {
@@ -195,6 +201,13 @@
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.html",
     "src/app/components/view-leaves/view-leaves.component.html",
     "src/app/components/view-leaves/view-leaves.component.spec.ts",
-    "src/app/app.routes.principal.spec.ts"
+    "src/app/app.routes.principal.spec.ts",
+    "src/app/components/notice/notice.component.principal.spec.ts",
+    "src/app/components/teaching-configuration/teaching-configuration.component.ts",
+    "src/app/components/teaching-configuration/teaching-configuration.component.html",
+    "src/app/components/report-card-v2/setup/rc2-setup.component.ts",
+    "src/app/components/report-card-v2/setup/rc2-setup.component.html",
+    "src/app/components/holiday-calendar/holiday-calendar.component.ts",
+    "src/app/components/notice/notice.component.html"
   ]
 }

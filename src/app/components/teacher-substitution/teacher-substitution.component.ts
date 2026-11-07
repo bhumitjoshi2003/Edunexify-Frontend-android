@@ -73,7 +73,8 @@ export class TeacherSubstitutionComponent implements OnInit, OnDestroy {
    *  Assign and getting a confusing 403. Same convention as auth-state.service.ts's
    *  hasPermission() and ai-copilot.component.ts's isAdmin getter. */
   get canManage(): boolean {
-    return this.authState.getUser()?.role === 'ADMIN' || this.authState.hasPermission('TIMETABLE_EDIT');
+    const role = this.authState.getUser()?.role;
+    return role === 'ADMIN' || role === 'PRINCIPAL' || this.authState.hasPermission('TIMETABLE_EDIT');
   }
 
   /** Past dates are read-only (the backend rejects assign/change for them too). */

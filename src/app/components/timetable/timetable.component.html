@@ -18,7 +18,7 @@
   </div>
 
   <!-- ── Admin navigation ─────────────────────────────────────── -->
-  <nav class="tt-tabs no-print" *ngIf="canManage()" aria-label="Timetable sections">
+  <nav class="tt-tabs no-print" *ngIf="canManageSetup()" aria-label="Timetable sections">
     <button type="button" class="tt-tab" [class.tt-tab-active]="activeTab === 'timetable'" (click)="activeTab = 'timetable'">
       <span class="tt-tab-icon">▦</span>
       <span>
@@ -41,7 +41,7 @@
     <p class="tt-session-note" *ngIf="!canWrite()">Historical sessions are read-only. Select a current or future session to make changes.</p>
   </div>
 
-  <section class="tt-setup-view no-print" *ngIf="canManage() && activeTab === 'setup'">
+  <section class="tt-setup-view no-print" *ngIf="canManageSetup() && activeTab === 'setup'">
     <section class="tt-timing-card">
       <div class="tt-timing-head">
         <div>
@@ -122,11 +122,11 @@
       </ng-container>
     </section>
 
-    <app-teaching-configuration [session]="selectedSession" [classes]="managedClasses" [teachers]="teachers"
+    <app-teaching-configuration [session]="selectedSession" [classes]="managedClasses" [teachers]="teachers" [fullAdministration]="canManage()"
       (timetableCopied)="loadClassTimetable()" (busyChange)="configurationBusy = $event" />
   </section>
 
-  <div class="tt-main-view" *ngIf="!canManage() || activeTab === 'timetable'">
+  <div class="tt-main-view" *ngIf="!canManageSetup() || activeTab === 'timetable'">
 
   <!-- ── Admin controls ───────────────────────────────────────── -->
   <div class="tt-controls no-print" *ngIf="isAdmin()">
@@ -251,7 +251,7 @@
 
       <!-- Let a teacher self-serve periods for this class, even ones with no existing periods
            or class-teacher connection to it yet (see the modal's own explanation). -->
-      <button class="tt-grant-btn no-print" *ngIf="canManage() && selectedSession?.current" [disabled]="!canAdd()" (click)="openGrantModal()">
+      <button class="tt-grant-btn no-print" *ngIf="canManageSetup() && selectedSession?.current" [disabled]="!canGrant()" (click)="openGrantModal()">
         👤+ Grant a teacher access to Class {{ selectedClass }}<ng-container *ngIf="selectedSectionName"> – {{ selectedSectionName }}</ng-container>
       </button>
 

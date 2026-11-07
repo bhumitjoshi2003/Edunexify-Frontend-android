@@ -7,6 +7,7 @@ import {
   AvailableExam, ReportCardSetup, ReportCardV2Service, ResultMode, SetupRequest,
 } from '../../../services/report-card-v2.service';
 import { ToastService } from '../../../services/toast.service';
+import { AuthStateService } from '../../../auth/auth-state.service';
 
 interface TermRow { key: string; name: string; weight: number | null; }
 interface ExamRow { examConfigId: number; examName: string; resultStatus: string; termKey: string | null; weight: number | null; }
@@ -37,7 +38,11 @@ export class Rc2SetupComponent implements OnDestroy {
 
   static readonly MAX_EXAMS = 6;
 
-  constructor(private api: ReportCardV2Service, private toast: ToastService, private cdr: ChangeDetectorRef) {}
+  constructor(private api: ReportCardV2Service, private toast: ToastService, private cdr: ChangeDetectorRef,
+    private auth: AuthStateService) {}
+
+  /** Removing a setup stays an Admin action; the Principal creates and edits. */
+  get canDelete(): boolean { return this.auth.getUserRole() !== 'PRINCIPAL'; }
 
   ngOnDestroy(): void {
     this.destroy$.next();

@@ -21,6 +21,19 @@ describe('Principal route access', () => {
     ['teacher-list', 'TEACHER_READ'],
     ['timetable', 'TIMETABLE_READ'],
     ['notifications', 'OWN_INBOX'],
+    ['notice', 'COMMUNICATION_READ'],
+    ['holiday-calendar', 'COMMUNICATION_READ'],
+    ['event-new', 'COMMUNICATION_EDIT'],
+    ['event-edit/:id', 'COMMUNICATION_EDIT'],
+    ['class-management', 'ACADEMIC_CONFIGURATION_EDIT'],
+    ['subject-config', 'ACADEMIC_CONFIGURATION_EDIT'],
+    ['exam-config', 'ACADEMIC_CONFIGURATION_EDIT'],
+    ['assessment-groups', 'ACADEMIC_CONFIGURATION_EDIT'],
+    ['student-stream', 'STUDENT_ACADEMIC_EDIT'],
+    ['elective-assignment', 'STUDENT_ACADEMIC_EDIT'],
+    ['report-cards-v2/setup', 'REPORT_CARD_CONFIGURATION_EDIT'],
+    ['report-cards-v2/design', 'REPORT_CARD_CONFIGURATION_EDIT'],
+    ['report-cards-v2/remarks', 'REPORT_CARD_REMARKS_EDIT'],
   ];
 
   principalScreens.forEach(([path, operation]) => {
@@ -35,7 +48,8 @@ describe('Principal route access', () => {
   });
 
   it('keeps fees, publication and identity administration closed to the Principal', () => {
-    for (const path of ['fees', 'fee-structure', 'payment-history-admin', 'bulk-report-cards', 'register', 'admin-list', 'school-settings']) {
+    for (const path of ['fees', 'fee-structure', 'payment-history-admin', 'bulk-report-cards', 'register', 'admin-list', 'school-settings',
+        'timetable-bulk-import', 'report-cards-v2/generate', 'school-setup', 'register-admin']) {
       const route = routes.find(r => r.path === 'dashboard')!.children!.find(r => r.path === path);
       if (route) expect(route.data?.['roles'] ?? []).not.toContain('PRINCIPAL');
     }

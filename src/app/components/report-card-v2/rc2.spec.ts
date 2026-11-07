@@ -67,12 +67,12 @@ describe('Report Card V2 (Phase 1)', () => {
     });
   });
 
-  it('routes: Setup and Design are ADMIN-only; Remarks and Generate & Preview are ADMIN + TEACHER', () => {
+  it('routes: Setup and Design are ADMIN + PRINCIPAL; Remarks adds TEACHER; Generate & Preview stays ADMIN + TEACHER', () => {
     const dash = routes.find(r => r.path === 'dashboard')!;
     const find = (p: string) => dash.children!.find(c => c.path === p)!.data!['roles'];
-    expect(find('report-cards-v2/setup')).toEqual(['ADMIN']);
-    expect(find('report-cards-v2/design')).toEqual(['ADMIN']);
-    expect(find('report-cards-v2/remarks')).toEqual(['ADMIN', 'TEACHER']);
+    expect(find('report-cards-v2/setup')).toEqual(['ADMIN', 'PRINCIPAL']);
+    expect(find('report-cards-v2/design')).toEqual(['ADMIN', 'PRINCIPAL']);
+    expect(find('report-cards-v2/remarks')).toEqual(['ADMIN', 'TEACHER', 'PRINCIPAL']);
     expect(find('report-cards-v2/generate')).toEqual(['ADMIN', 'TEACHER']);
   });
 

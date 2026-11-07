@@ -56,6 +56,8 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   studentId: string = '';
 
   currentUserRole = '';
+  /** Admin and Principal manage events; the backend repeats the check per request. */
+  get canEditEvents(): boolean { return this.currentUserRole === 'ADMIN' || this.currentUserRole === 'PRINCIPAL'; }
   currentUserClass: string | null = null;
 
   selectedEvent: CalendarEvent | null = null;
