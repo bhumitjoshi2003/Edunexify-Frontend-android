@@ -31,7 +31,20 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="sr-loading">Loading results…</div>
+  <div *ngIf="loading" class="sr-results-skeleton" role="status" aria-busy="true" aria-label="Loading results">
+    <div class="sr-sk-toolbar" aria-hidden="true">
+      <span class="sr-sk-shimmer sr-sk-title"></span>
+      <span class="sr-sk-shimmer sr-sk-pill"></span>
+    </div>
+    <div class="sr-sk-grid" aria-hidden="true">
+      <div class="sr-sk-exam" *ngFor="let item of [1, 2, 3]">
+        <span class="sr-sk-shimmer sr-sk-heading"></span>
+        <span class="sr-sk-shimmer sr-sk-line"></span>
+        <span class="sr-sk-shimmer sr-sk-line sr-sk-short"></span>
+        <span class="sr-sk-shimmer sr-sk-bar"></span>
+      </div>
+    </div>
+  </div>
 
   <div *ngIf="!loading && results.length === 0" class="sr-empty">
     <div class="sr-empty-icon">📋</div>

@@ -30,6 +30,16 @@ export const routes: Routes = [
     loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard],
     children: [
+      {
+        path: 'principal-dashboard',
+        loadComponent: () => import('./components/principal-dashboard/principal-dashboard.component').then(m => m.PrincipalDashboardComponent),
+        canActivate: [roleGuard], data: { roles: ['PRINCIPAL'] }
+      },
+      {
+        path: 'principal-management',
+        loadComponent: () => import('./components/principal-management/principal-management.component').then(m => m.PrincipalManagementComponent),
+        canActivate: [roleGuard], data: { roles: ['ADMIN'] }
+      },
       { path: 'wisdom/manage', loadComponent: () => import('./components/wisdom/wisdom-admin.component').then(m => m.WisdomAdminComponent), canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN','SUB_ADMIN'], featureKey: 'WISDOM' } },
       {
         path: 'notifications',
