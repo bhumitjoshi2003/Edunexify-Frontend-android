@@ -22,6 +22,11 @@
   </div>
 
   <!-- Filters -->
+  <section *ngIf="role === 'PRINCIPAL'" class="me-filter-group">
+    <label for="mark-correction-reason">Reason for mark corrections</label>
+    <textarea id="mark-correction-reason" [(ngModel)]="correctionReason" maxlength="500" rows="2" [disabled]="saving" aria-describedby="mark-correction-help"></textarea>
+    <p id="mark-correction-help">Your reason and changes are recorded in academic history. Published results and issued-document locks still apply.</p>
+  </section>
   <div class="me-filters">
     <div class="me-filter-group">
       <label>Session</label>
@@ -29,7 +34,7 @@
         <option *ngFor="let s of sessions; trackBy: trackByIndex" [value]="s">{{ s }}</option>
       </select>
     </div>
-    <div class="me-filter-group" *ngIf="role === 'ADMIN'">
+    <div class="me-filter-group" *ngIf="role === 'ADMIN' || role === 'PRINCIPAL'">
       <label>Class</label>
       <select [(ngModel)]="selectedClass" (ngModelChange)="onClassChange()">
         <option *ngFor="let c of classOptions; trackBy: trackByIndex" [value]="c">Class {{ c }}</option>

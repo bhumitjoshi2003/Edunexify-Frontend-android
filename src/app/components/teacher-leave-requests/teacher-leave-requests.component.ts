@@ -6,6 +6,7 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { TeacherLeaveService } from '../../services/teacher-leave.service';
 import { TeacherLeave } from '../../interfaces/teacher-leave';
+import { AuthStateService } from '../../auth/auth-state.service';
 import { PaginatedResponse } from '../../services/payment-history.service';
 
 @Component({
@@ -37,7 +38,8 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
     private teacherLeaveService: TeacherLeaveService,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
+    private toast: ToastService,
+    private authState: AuthStateService
   ) { }
 
   ngOnInit(): void {
@@ -114,6 +116,11 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
     this.fetchLeaves();
   }
 
+  /** Cancelling stays an Admin action; the Principal decides, and every decision carries a reason. */
+  get isPrincipal(): boolean {
+    return this.authState.getUserRole() === 'PRINCIPAL';
+  }
+
   updateStatus(leave: TeacherLeave, status: 'APPROVED' | 'REJECTED'): void {
     const isApprove = status === 'APPROVED';
     this.toast.confirmWithReason({
@@ -124,8 +131,9 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
       confirmText: isApprove ? 'Yes, approve' : 'Yes, reject',
       cancelText: 'Cancel',
       reasonInput: isApprove
-        ? { label: 'Note', placeholder: 'Optional note for the teacher' }
-        : { label: 'Reason for rejecting', placeholder: 'Shown to the teacher' },
+        ? { label: this.isPrincipal ? 'Reason for approving' : 'Note', required: this.isPrincipal,
+            placeholder: this.isPrincipal ? 'Recorded with your decision' : 'Optional note for the teacher' }
+        : { label: 'Reason for rejecting', required: this.isPrincipal, placeholder: 'Shown to the teacher' },
     }).then((reason) => {
       if (reason === null) return;
       this.updatingIds.add(leave.id);

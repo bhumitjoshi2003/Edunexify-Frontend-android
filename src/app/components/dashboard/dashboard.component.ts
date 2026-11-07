@@ -333,7 +333,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   fetchUnreadCount(): void {
-    if (this.isPrincipal()) return; // Principal inbox is not enabled in the initial role rollout.
     this.notificationState.refreshUnread();
   }
 

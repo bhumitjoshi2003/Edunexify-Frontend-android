@@ -41,7 +41,7 @@
         </div>
         <div class="rc2-setup-actions">
           <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-outline" (click)="edit(s)">Edit</button>
-          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-danger" (click)="remove(s)">Delete</button>
+          <button type="button" class="rc2-btn rc2-btn-sm rc2-btn-danger" *ngIf="canDelete" (click)="remove(s)">Delete</button>
         </div>
       </div>
     </div>

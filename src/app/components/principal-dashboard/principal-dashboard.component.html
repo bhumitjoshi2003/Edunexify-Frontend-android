@@ -1,0 +1,199 @@
+<main class="pd-page">
+  <header class="pd-hero">
+    <div class="pd-hero-copy">
+      <p>{{ greeting }},</p>
+      <h1>{{ name }} <span aria-hidden="true">👋</span></h1>
+      <div class="pd-hero-meta">
+        <span><mat-icon aria-hidden="true">workspace_premium</mat-icon>Principal</span>
+        <span *ngIf="schoolDate"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ schoolDate | date:'EEEE, d MMMM' }}</span>
+      </div>
+    </div>
+    <div class="pd-hero-side">
+      <button type="button" class="pd-hero-action" (click)="refresh()" [disabled]="overview.loading">
+        <mat-icon aria-hidden="true" [class.pd-spin]="overview.loading">refresh</mat-icon>
+        {{ overview.loading ? 'Refreshing…' : 'Refresh' }}
+      </button>
+      <small *ngIf="updatedAt">Updated {{ updatedAt | date:'shortTime' }}</small>
+    </div>
+  </header>
+
+  <!-- ── Today at school ───────────────────────────────────────────── -->
+  <section class="pd-today" aria-label="Today at school">
+    <ng-container *ngIf="overview.data as o; else todayPending">
+      <a class="pd-tile" routerLink="/dashboard/attendance-summary">
+        <span class="pd-tile-label">Students present</span>
+        <strong *ngIf="o.todayAttendanceRate !== null; else notMarked" [class]="'pd-tone-' + rateTone(o.todayAttendanceRate)">
+          {{ o.todayAttendanceRate | number:'1.0-1' }}%</strong>
+        <ng-template #notMarked><strong class="pd-tone-none">{{ closedToday ? 'No school today' : 'Not marked yet' }}</strong></ng-template>
+        <small>
+          <ng-container *ngIf="o.todayRecordedStudents > 0">{{ o.todayPresentStudents }} of {{ o.todayRecordedStudents }} marked</ng-container>
+          <ng-container *ngIf="o.todayRecordedStudents === 0">{{ o.totalStudents }} enrolled</ng-container>
+          <ng-container *ngIf="classesUnmarked !== null && classesWithPupils"> · {{ classesWithPupils - classesUnmarked }}/{{ classesWithPupils }} classes</ng-container>
+        </small>
+      </a>
+
+      <div class="pd-tile" [class.pd-tile-muted]="staff.failed && !staff.data">
+        <span class="pd-tile-label">Staff present</span>
+        <ng-container *ngIf="staff.data as s; else staffPending">
+          <strong>{{ staffPresent }}<span class="pd-of"> / {{ s.expectedCount ?? o.totalTeachers }}</span></strong>
+          <small>
+            <ng-container *ngIf="s.notCheckedInCount">{{ s.notCheckedInCount }} not checked in · </ng-container>
+            <ng-container *ngIf="s.lateCount">{{ s.lateCount }} late · </ng-container>{{ s.onLeaveCount }} on leave
+          </small>
+        </ng-container>
+        <ng-template #staffPending>
+          <strong class="pd-tone-none">{{ staff.loading ? '…' : 'Unavailable' }}</strong>
+          <small>{{ o.totalTeachers }} active teachers</small>
+        </ng-template>
+      </div>
+
+      <a class="pd-tile" routerLink="/dashboard/view-leaves">
+        <span class="pd-tile-label">Leave requests</span>
+        <strong>{{ pendingLeaves }}</strong>
+        <small>{{ o.pendingStudentLeaves }} student · {{ o.pendingTeacherLeaves }} teacher</small>
+      </a>
+
+      <a class="pd-tile" *ngIf="reportCardsEnabled; else teachersTile" routerLink="/dashboard/report-card-approvals">
+        <span class="pd-tile-label">Report cards for you</span>
+        <strong>{{ o.awaitingPrincipalReview }}</strong>
+        <small>{{ o.readyForPublication }} approved · {{ o.returnedForCorrection }} returned</small>
+      </a>
+      <ng-template #teachersTile>
+        <a class="pd-tile" routerLink="/dashboard/teacher-list">
+          <span class="pd-tile-label">Active teachers</span>
+          <strong>{{ o.totalTeachers }}</strong>
+          <small>{{ o.totalStudents }} students enrolled</small>
+        </a>
+      </ng-template>
+    </ng-container>
+
+    <ng-template #todayPending>
+      <ng-container *ngIf="overview.loading; else todayFailed">
+        <div class="pd-tile pd-sk" *ngFor="let x of [1, 2, 3, 4]" aria-hidden="true">
+          <span class="pd-sk-line short"></span><span class="pd-sk-line tall"></span><span class="pd-sk-line"></span>
+        </div>
+        <span class="pd-visually-hidden" role="status">Loading today's overview</span>
+      </ng-container>
+      <ng-template #todayFailed>
+        <div class="pd-failed" role="alert">
+          <mat-icon aria-hidden="true">cloud_off</mat-icon>
+          <span>Today's overview could not be loaded.</span>
+          <button type="button" (click)="refresh()">Try again</button>
+        </div>
+      </ng-template>
+    </ng-template>
+  </section>
+  <p class="pd-stale" *ngIf="overview.failed && overview.data" role="status">
+    Showing the last update. The latest overview could not be loaded. <button type="button" (click)="refresh()">Try again</button>
+  </p>
+
+  <!-- ── Needs your attention ──────────────────────────────────────── -->
+  <section class="pd-attention" aria-labelledby="pd-attention-title">
+    <div class="pd-section-head">
+      <h2 id="pd-attention-title"><mat-icon aria-hidden="true">priority_high</mat-icon>Needs your attention</h2>
+      <span *ngIf="attention.length">{{ attention.length }} {{ attention.length === 1 ? 'item' : 'items' }}</span>
+    </div>
+    <ul class="pd-attention-list" *ngIf="attention.length">
+      <li *ngFor="let item of attention; trackBy: trackByKey" [class]="'is-' + item.severity">
+        <a *ngIf="item.route; else plainRow" [routerLink]="item.route">
+          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon><span>{{ item.label }}</span>
+          <mat-icon class="pd-chevron" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+        <ng-template #plainRow>
+          <div><mat-icon aria-hidden="true">{{ item.icon }}</mat-icon><span>{{ item.label }}</span></div>
+        </ng-template>
+      </li>
+    </ul>
+    <p class="pd-attention-ok" *ngIf="!attention.length && attentionComplete && !attentionLoading">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>Nothing needs your attention right now.
+    </p>
+    <p class="pd-muted" *ngIf="!attention.length && attentionLoading">Checking today's work…</p>
+    <p class="pd-partial" *ngIf="!attentionLoading && !attentionComplete">
+      Some information is unavailable, so this list may be incomplete.
+      <button type="button" (click)="refresh()">Refresh</button>
+    </p>
+  </section>
+
+  <div class="pd-grid">
+    <!-- ── Class attendance ─────────────────────────────────────────── -->
+    <section class="pd-panel" aria-labelledby="pd-classes-title">
+      <div class="pd-section-head">
+        <h2 id="pd-classes-title">Class attendance</h2>
+        <a routerLink="/dashboard/attendance-summary">Attendance reports</a>
+      </div>
+      <p class="pd-sub">Today's submission and this month's attendance rate</p>
+      <ng-container *ngIf="overview.data as o; else classesPending">
+        <p class="pd-empty" *ngIf="!o.classAttendance.length">No classes with enrolled students yet.</p>
+        <div class="pd-table-wrap" *ngIf="o.classAttendance.length">
+          <table>
+            <thead>
+              <tr><th scope="col">Class</th><th scope="col">Students</th><th scope="col">Today</th><th scope="col">This month</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of o.classAttendance; trackBy: trackByClass">
+                <th scope="row">{{ c.className }}</th>
+                <td>{{ c.students }}</td>
+                <td>
+                  <span *ngIf="c.recordedToday === true" class="pd-chip is-done">Marked</span>
+                  <span *ngIf="c.recordedToday === false && !closedToday" class="pd-chip is-pending">Not marked</span>
+                  <span *ngIf="c.recordedToday === undefined || (c.recordedToday === false && closedToday)" class="pd-muted">—</span>
+                </td>
+                <td>
+                  <span *ngIf="c.attendanceRate !== null; else noRate" [class]="'pd-rate pd-tone-' + rateTone(c.attendanceRate)">
+                    {{ c.attendanceRate | number:'1.0-1' }}%</span>
+                  <ng-template #noRate><span class="pd-muted">Not recorded</span></ng-template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+      <ng-template #classesPending>
+        <div *ngIf="overview.loading" aria-hidden="true">
+          <div class="pd-sk-row" *ngFor="let x of [1, 2, 3, 4]"><span class="pd-sk-line"></span></div>
+        </div>
+        <p class="pd-muted" *ngIf="!overview.loading">Class attendance is unavailable.</p>
+      </ng-template>
+    </section>
+
+    <aside class="pd-side">
+      <app-on-leave-today></app-on-leave-today>
+
+      <!-- ── Coming up ──────────────────────────────────────────────── -->
+      <section class="pd-panel" *ngIf="eventsEnabled" aria-labelledby="pd-events-title">
+        <div class="pd-section-head">
+          <h2 id="pd-events-title">Coming up</h2>
+          <a routerLink="/dashboard/event-calendar">All events</a>
+        </div>
+        <ul class="pd-events" *ngIf="events.data?.length">
+          <li *ngFor="let e of events.data; trackBy: trackByEvent">
+            <span class="pd-date"><b>{{ e.startDate | date:'d' }}</b>{{ e.startDate | date:'MMM' }}</span>
+            <span class="pd-event-copy">
+              <strong>{{ e.title }}</strong>
+              <small>{{ e.startDate | date:'EEE' }}<ng-container *ngIf="e.endDate && e.endDate !== e.startDate"> – {{ e.endDate | date:'EEE d MMM' }}</ng-container><ng-container *ngIf="e.category"> · {{ e.category }}</ng-container></small>
+            </span>
+          </li>
+        </ul>
+        <p class="pd-empty" *ngIf="events.data && !events.data.length">No events in the next few weeks.</p>
+        <p class="pd-muted" *ngIf="!events.data && events.loading">Loading events…</p>
+        <p class="pd-muted" *ngIf="!events.data && events.failed">Events could not be loaded.</p>
+      </section>
+
+      <!-- ── Report-card workflow ───────────────────────────────────── -->
+      <section class="pd-panel" *ngIf="reportCardsEnabled && overview.data as o" aria-labelledby="pd-rc-title">
+        <div class="pd-section-head">
+          <h2 id="pd-rc-title">Report-card reviews</h2>
+          <a routerLink="/dashboard/report-card-approvals">Open queue</a>
+        </div>
+        <dl class="pd-pipeline">
+          <div><dt>With class teachers</dt><dd>{{ o.awaitingTeacherReview }}</dd></div>
+          <div class="is-you"><dt>Awaiting you</dt><dd>{{ o.awaitingPrincipalReview }}</dd></div>
+          <div><dt>Ready for Admin</dt><dd>{{ o.readyForPublication }}</dd></div>
+          <div><dt>Returned</dt><dd>{{ o.returnedForCorrection }}</dd></div>
+        </dl>
+        <p class="pd-note">Saved review states. The queue shows reviews that need a fresh signature after changes.
+          <a routerLink="/dashboard/my-signature">My signature</a></p>
+      </section>
+    </aside>
+  </div>
+</main>

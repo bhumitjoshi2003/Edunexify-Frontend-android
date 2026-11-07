@@ -23,6 +23,8 @@ export class TeachingConfigurationComponent implements OnChanges, OnDestroy {
   @Input() session: AcademicSession | null = null;
   @Input() classes: SchoolClass[] = [];
   @Input() teachers: Teacher[] = [];
+  /** False for the Principal: class-teacher rows only; session copy and activation stay with the Admin. */
+  @Input() fullAdministration = true;
 
   /** Only ACTIVE teachers can hold a class-teacher responsibility (the backend enforces the same rule). */
   get eligibleTeachers(): Teacher[] {
@@ -135,6 +137,7 @@ export class TeachingConfigurationComponent implements OnChanges, OnDestroy {
       && writableSession(this.sessions.find(s => s.id === this.targetId) ?? null);
   }
   async copy(type: 'timetable' | 'responsibilities'): Promise<void> {
+    if (!this.fullAdministration) return;
     if (!this.canCopy()) return;
     const source = this.sessions.find(s => s.id === this.sourceId)!;
     const target = this.sessions.find(s => s.id === this.targetId)!;
@@ -162,6 +165,7 @@ export class TeachingConfigurationComponent implements OnChanges, OnDestroy {
     });
   }
   async apply(): Promise<void> {
+    if (!this.fullAdministration) return;
     if (!this.session?.current || !this.preview || this.busy) return;
     const id = this.session.id;
     const confirmed = await this.toast.confirm({ title: `Apply ${this.session.label} class-teacher configuration?`, message: `This replaces live class-teacher access: ${this.preview.becomingLive} gains, ${this.preview.changing} changes, ${this.preview.clearing} removals. Ineligible or invalid rows are reported and protected slots remain unchanged. Direct Teacher edits are immediately live and may be replaced.`, confirmText: 'Apply to current session', danger: true });

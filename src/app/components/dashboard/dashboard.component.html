@@ -28,19 +28,62 @@
       <!-- ── PRINCIPAL ── -->
       <ng-container *ngIf="isPrincipal()">
         <app-nav-group>
-          <div class="nav-section-label">Academic Leadership</div>
+          <div class="nav-section-label">Overview</div>
           <a class="nav-item" routerLink="/dashboard/principal-dashboard" routerLinkActive="active"
              (click)="closeSidebarOnMobile()" title="Principal Dashboard">
             <mat-icon>school</mat-icon><span>Principal Dashboard</span>
           </a>
-          <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
-             (click)="closeSidebarOnMobile()" title="My Signature">
-            <mat-icon>draw</mat-icon><span>My Signature</span>
-          </a>
-          <a class="nav-item" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
+          <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
              (click)="closeSidebarOnMobile()" title="Report Card Approvals">
             <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
           </a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Students &amp; Staff</div>
+          <a class="nav-item" routerLink="/dashboard/student-list" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Students"><mat-icon>groups</mat-icon><span>Students</span></a>
+          <a class="nav-item" routerLink="/dashboard/student-search" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Find a student"><mat-icon>search</mat-icon><span>Find a student</span></a>
+          <a class="nav-item" routerLink="/dashboard/teacher-list" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Teachers"><mat-icon>person</mat-icon><span>Teachers</span></a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Attendance &amp; Leave</div>
+          <a class="nav-item" routerLink="/dashboard/attendance-summary" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Attendance"><mat-icon>calendar_today</mat-icon><span>Attendance</span></a>
+          <a class="nav-item" routerLink="/dashboard/view-leaves" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Student leave"><mat-icon>event_busy</mat-icon><span>Student leave</span></a>
+          <a class="nav-item" routerLink="/dashboard/teacher-leave-requests" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Teacher leave"><mat-icon>work_off</mat-icon><span>Teacher leave</span></a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Academics</div>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/class-results" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Academic results"><mat-icon>assessment</mat-icon><span>Academic results</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/mark-entry" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Mark corrections"><mat-icon>edit_note</mat-icon><span>Mark corrections</span></a>
+          <a class="nav-item" routerLink="/dashboard/timetable" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Timetable"><mat-icon>schedule</mat-icon><span>Timetable</span></a>
+          <a class="nav-item" routerLink="/dashboard/teacher-substitutions" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Substitutions"><mat-icon>swap_horiz</mat-icon><span>Substitutions</span></a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Communication</div>
+          <a class="nav-item" routerLink="/dashboard/notice" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Notice board"><mat-icon>campaign</mat-icon><span>Notice board</span></a>
+          <a class="nav-item" *ngIf="hasFeature('SCHOOL_COMMUNICATION')" routerLink="/dashboard/event-calendar" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Events"><mat-icon>event</mat-icon><span>Events</span></a>
+          <a class="nav-item" *ngIf="hasFeature('SCHOOL_COMMUNICATION')" routerLink="/dashboard/event-new" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="New event"><mat-icon>add_circle</mat-icon><span>New event</span></a>
+          <a class="nav-item" routerLink="/dashboard/holiday-calendar" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Holidays"><mat-icon>beach_access</mat-icon><span>Holidays</span></a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">School Setup</div>
+          <a class="nav-item" routerLink="/dashboard/class-management" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Classes and sections"><mat-icon>class</mat-icon><span>Classes &amp; sections</span></a>
+          <a class="nav-item" routerLink="/dashboard/subject-config" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Subjects"><mat-icon>menu_book</mat-icon><span>Subjects</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/exam-config" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Exams"><mat-icon>quiz</mat-icon><span>Exams</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/assessment-groups" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Assessment groups"><mat-icon>functions</mat-icon><span>Assessment groups</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/student-stream" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Student streams"><mat-icon>alt_route</mat-icon><span>Student streams</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/elective-assignment" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Electives"><mat-icon>checklist</mat-icon><span>Electives</span></a>
+        </app-nav-group>
+        <app-nav-group *ngIf="hasFeature('REPORT_CARDS')">
+          <div class="nav-section-label">Report Cards</div>
+          <a class="nav-item" routerLink="/dashboard/report-cards-v2/setup" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report card setup"><mat-icon>tune</mat-icon><span>Report card setup</span></a>
+          <a class="nav-item" routerLink="/dashboard/report-cards-v2/design" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report card design"><mat-icon>palette</mat-icon><span>Report card design</span></a>
+          <a class="nav-item" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Remarks"><mat-icon>rate_review</mat-icon><span>Remarks</span></a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">My Account</div>
+          <a class="nav-item" routerLink="/dashboard/notifications" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My notifications"><mat-icon>notifications</mat-icon><span>My notifications</span></a>
+          <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My signature"><mat-icon>draw</mat-icon><span>My signature</span></a>
+          <a class="nav-item" routerLink="/dashboard/active-sessions" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My active sessions"><mat-icon>devices</mat-icon><span>My active sessions</span></a>
         </app-nav-group>
       </ng-container>
 

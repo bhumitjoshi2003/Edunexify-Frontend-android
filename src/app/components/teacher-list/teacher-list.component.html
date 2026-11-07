@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="tl-hero-right">
-      <button *ngIf="hasFeature('BULK_IMPORT')" class="tl-import-btn" (click)="navigateToBulkImport()">⬆ Bulk Import</button>
+      <button *ngIf="loggedInUserRole === 'ADMIN' && hasFeature('BULK_IMPORT')" class="tl-import-btn" (click)="navigateToBulkImport()">⬆ Bulk Import</button>
     </div>
     <div class="tl-blob tl-blob-1"></div>
     <div class="tl-blob tl-blob-2"></div>

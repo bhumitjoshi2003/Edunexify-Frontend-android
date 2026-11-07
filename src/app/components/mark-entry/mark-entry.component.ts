@@ -53,6 +53,9 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   originalMarksB: Record<number, number | null> = {};
 
   saving = false;
+  correctionReason = '';
+  private confirming = false;
+  private destroyed = false;
   managedClasses: SchoolClass[] = [];
   sections: Section[] = [];
   selectedSectionId: number | null = null;
@@ -134,6 +137,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -336,7 +340,13 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
       });
   }
 
+  private validCorrectionReason(): boolean {
+    if (this.role !== 'PRINCIPAL' || (this.correctionReason.trim().length > 0 && this.correctionReason.trim().length <= 500)) return true;
+    this.toast.warning('Reason required', 'Enter a reason of up to 500 characters for these mark corrections.');return false;
+  }
+
   async saveMarksA(): Promise<void> {
+    if (this.saving || this.confirming || this.destroyed || !this.validCorrectionReason()) return;
     if (!this.selectedSubjectEntryId) return;
 
     if (this.examLocked) {
@@ -374,18 +384,22 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const scope = `${this.selectedSession}:${this.selectedClass}:${this.selectedExamId}:${this.selectedSubjectEntryId}:${this.selectedStudentId}`;
+    const reason = this.correctionReason.trim();
+    this.confirming = true;
     const confirmed = await this.toast.confirm({
-      title: 'Save Marks',
+      title: this.role === 'PRINCIPAL' ? 'Confirm reasoned mark corrections' : 'Save Marks',
       message: `You are about to save marks for ${entries.length} students. This cannot be easily undone.`,
       confirmText: 'Yes, Save',
       cancelText: 'Cancel',
       danger: false,
     });
-    if (!confirmed) return;
+    this.confirming = false;
+    if (!confirmed || this.destroyed || scope !== `${this.selectedSession}:${this.selectedClass}:${this.selectedExamId}:${this.selectedSubjectEntryId}:${this.selectedStudentId}`) return;
 
     this.saving = true;
     this.rowErrors = {};
-    this.marksService.saveBulkMarks(entries).pipe(takeUntil(this.destroy$)).subscribe({
+    (this.role === 'PRINCIPAL' ? this.marksService.correctMarks(entries, reason) : this.marksService.saveBulkMarks(entries)).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.saving = false;
         // Sync snapshot so a second save won't re-send the same changes
@@ -400,6 +414,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   }
 
   async saveMarksB(): Promise<void> {
+    if (this.saving || this.confirming || this.destroyed || !this.validCorrectionReason()) return;
     if (!this.selectedStudentId) return;
     if (this.examLocked) {
       this.toast.warning('Results Published', 'These results are published and locked. Ask an admin to unpublish them to change marks.');
@@ -439,18 +454,22 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const scope = `${this.selectedSession}:${this.selectedClass}:${this.selectedExamId}:${this.selectedSubjectEntryId}:${this.selectedStudentId}`;
+    const reason = this.correctionReason.trim();
+    this.confirming = true;
     const confirmed = await this.toast.confirm({
-      title: 'Save Marks',
+      title: this.role === 'PRINCIPAL' ? 'Confirm reasoned mark corrections' : 'Save Marks',
       message: `You are about to save marks for ${entries.length} subjects. This cannot be easily undone.`,
       confirmText: 'Yes, Save',
       cancelText: 'Cancel',
       danger: false,
     });
-    if (!confirmed) return;
+    this.confirming = false;
+    if (!confirmed || this.destroyed || scope !== `${this.selectedSession}:${this.selectedClass}:${this.selectedExamId}:${this.selectedSubjectEntryId}:${this.selectedStudentId}`) return;
 
     this.saving = true;
     this.rowErrors = {};
-    this.marksService.saveBulkMarks(entries).pipe(takeUntil(this.destroy$)).subscribe({
+    (this.role === 'PRINCIPAL' ? this.marksService.correctMarks(entries, reason) : this.marksService.saveBulkMarks(entries)).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.saving = false;
         // Sync snapshot so a second save won't re-send the same changes

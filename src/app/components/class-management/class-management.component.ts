@@ -54,7 +54,7 @@ export class ClassManagementComponent implements OnInit, OnDestroy {
   }
 
   get isAdmin(): boolean {
-    return this.role === 'ADMIN';
+    return this.role === 'ADMIN' || this.role === 'PRINCIPAL';
   }
 
   loadClasses(): void {

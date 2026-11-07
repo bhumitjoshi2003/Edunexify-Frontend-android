@@ -224,7 +224,7 @@
                 </div>
                 <div class="nb-ani-actions">
                   <button class="nb-btn-edit" (click)="openEditDialog(notice)" title="Edit">✎ Edit</button>
-                  <button class="nb-btn-delete" (click)="deleteNotice(notice.id!)" title="Delete">✕</button>
+                  <button class="nb-btn-delete" *ngIf="canDeleteNotice(notice)" (click)="deleteNotice(notice.id!)" title="Delete">✕</button>
                 </div>
               </div>
               <p class="nb-ani-msg" appTruncationCheck (truncated)="onTruncated(notice.id, $event)">{{ notice.message }}</p>

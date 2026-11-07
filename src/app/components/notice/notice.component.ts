@@ -27,6 +27,7 @@ export class NoticeComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   role = '';
+  private userId = '';
 
   // Admin: current page of posted notices — server-side paginated, never
   // accumulated. Only one page of notices is ever held in the browser.
@@ -77,6 +78,7 @@ export class NoticeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const user = this.authStateService.getUser();
     this.role = user?.role ?? '';
+    this.userId = user?.userId ?? '';
     if (!this.hasBulkCommunications) {
       this.form.deliveryMode = 'IN_APP';
     }
@@ -92,8 +94,14 @@ export class NoticeComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /** Publishing view: the Admin, and the Principal for school notices. */
   get isAdmin(): boolean {
-    return this.role === 'ADMIN' || this.role === 'SUPER_ADMIN';
+    return this.role === 'ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'PRINCIPAL';
+  }
+
+  /** The Principal withdraws only notices they published; the server enforces the same rule. */
+  canDeleteNotice(notice: { createdBy?: string }): boolean {
+    return this.role !== 'PRINCIPAL' || (!!notice.createdBy && notice.createdBy === this.userId);
   }
 
   get requiresSubject(): boolean {

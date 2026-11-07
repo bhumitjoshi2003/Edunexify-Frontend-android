@@ -49,7 +49,7 @@
         · {{ completeCount }} complete<span *ngIf="incompleteCount">, {{ incompleteCount }} with marks missing</span><span *ngIf="completeCount"> · {{ passCount }} passed</span>
       </ng-container>
     </span>
-    <ng-container *ngIf="isAdmin">
+    <ng-container *ngIf="canReleaseResults">
       <button type="button" class="cr-btn-publish" *ngIf="!examPublished" [disabled]="publishing" (click)="publish()">
         {{ publishing ? 'Publishing…' : 'Publish Results' }}
       </button>

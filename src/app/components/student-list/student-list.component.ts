@@ -75,13 +75,13 @@ export class StudentListComponent implements OnInit, OnDestroy {
         const secId = this.selectedSectionId ?? undefined;
 
         const active$ = this.studentService.getActiveStudentsByClass(className, secId);
-        const upcoming$ = this.loggedInUserRole === 'ADMIN'
+        const upcoming$ = (this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL')
           ? this.studentService.getNewStudentsByClass(className, secId)
           : of([] as Student[]);
-        const alumni$ = this.loggedInUserRole === 'ADMIN'
+        const alumni$ = (this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL')
           ? this.studentService.getAlumniByClass(className, secId)
           : of([] as Student[]);
-        const left$ = this.loggedInUserRole === 'ADMIN'
+        const left$ = (this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL')
           ? this.studentService.getLeftStudentsByClass(className, secId)
           : of([] as Student[]);
 
@@ -115,7 +115,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
       this.teacherId = user.userId;
       this.schoolSlug = user.schoolSlug;
 
-      if (this.loggedInUserRole === 'ADMIN') {
+      if ((this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL')) {
         forkJoin({
           managedClasses: this.schoolService.getManagedClasses(),
           classList: this.schoolService.getClasses()

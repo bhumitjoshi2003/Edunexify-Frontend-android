@@ -134,7 +134,7 @@
         <div class="sidebar-header">
             <div class="sidebar-header-content">
                 <h3>{{ selectedEvent.title }}</h3>
-                <button *ngIf="!isEditing && this.currentUserRole==='ADMIN'" class="edit-btn"
+                <button *ngIf="!isEditing && canEditEvents" class="edit-btn"
                     (click)="toggleEditMode($event)">Edit</button>
                 <button class="close-btn" (click)="closeSidebar()" aria-label="Close event details">×</button>
             </div>
@@ -253,7 +253,7 @@
                     <div class="form-actions">
                         <button type="submit" [disabled]="!eventForm.valid" class="save-btn">Save Changes</button>
                         <button type="button" class="cancel-btn" (click)="toggleEditMode($event)">Cancel</button>
-                        <button *ngIf="currentUserRole === 'ADMIN' && isEditing"
+                        <button *ngIf="canEditEvents && isEditing"
                                 type="button"
                                 class="ec-btn-delete"
                                 (click)="deleteCurrentEvent()">

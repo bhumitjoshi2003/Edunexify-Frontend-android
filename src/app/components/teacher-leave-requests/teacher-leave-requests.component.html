@@ -123,7 +123,7 @@
             </ng-container>
             <button *ngIf="leave.status === 'APPROVED' || leave.status === 'REJECTED'"
               class="tl-btn-edit" [disabled]="updatingIds.has(leave.id)" (click)="editStatus(leave)" title="Change decision">✎</button>
-            <button *ngIf="leave.status === 'PENDING' || leave.status === 'APPROVED'"
+            <button *ngIf="!isPrincipal && (leave.status === 'PENDING' || leave.status === 'APPROVED')"
               class="tl-btn-del" (click)="cancelLeave(leave)" title="Cancel request">🗑</button>
           </div>
         </div>

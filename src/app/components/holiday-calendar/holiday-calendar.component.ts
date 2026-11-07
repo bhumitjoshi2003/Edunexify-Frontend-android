@@ -75,7 +75,7 @@ export class HolidayCalendarComponent implements OnInit, OnDestroy {
   }
 
   get isAdmin(): boolean {
-    return this.role === 'ADMIN';
+    return this.role === 'ADMIN' || this.role === 'PRINCIPAL';
   }
 
   loadHolidays(): void {

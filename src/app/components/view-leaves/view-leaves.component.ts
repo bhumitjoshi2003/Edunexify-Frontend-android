@@ -85,7 +85,7 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
       this.loggedInUserId = user.userId;
       this.schoolSlug = user.schoolSlug;
 
-      if (this.loggedInUserRole === 'ADMIN') {
+      if (this.schoolWide) {
         // Class list must be loaded before a stored selection can be validated against it —
         // otherwise a stale value from another school/session could slip through.
         this.schoolService.getClasses().pipe(takeUntil(this.ngUnsubscribe)).subscribe({
@@ -133,7 +133,7 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
   fetchLeaves(): void {
     let classFilterToSend: string | undefined = undefined;
 
-    if (this.loggedInUserRole === 'ADMIN') {
+    if (this.schoolWide) {
       classFilterToSend = this.selectedClass === 'all' ? undefined : this.selectedClass;
       if (this.selectedClass === 'all') {
         clearStoredSelectedClass(this.schoolSlug);
@@ -194,7 +194,7 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
   onClassSelect(className: string): void {
     this.selectedClass = className;
     this.currentPage = 0;
-    if (this.loggedInUserRole === 'ADMIN' && className === 'all') {
+    if (this.schoolWide && className === 'all') {
       this.selectedDate = null;
       this.studentIdFilter = '';
     }
@@ -222,7 +222,7 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
     this.statusFilter = 'PENDING';
     this.currentPage = 0;
 
-    if (this.loggedInUserRole === 'ADMIN') {
+    if (this.schoolWide) {
       this.selectedClass = getStoredSelectedClass(this.schoolSlug, this.classList, 'all');
     }
     this.fetchLeaves();
@@ -288,6 +288,15 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Admin and Principal review every class; the Principal's decisions always carry a reason. */
+  get schoolWide(): boolean {
+    return this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL';
+  }
+
+  get decisionReasonRequired(): boolean {
+    return this.loggedInUserRole === 'PRINCIPAL';
+  }
+
   get allApproved(): boolean {
     return !this.filteredLeaves.some(l => l.status === 'PENDING');
   }
@@ -338,8 +347,9 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
       confirmText: isApprove ? 'Yes, approve' : 'Yes, reject',
       cancelText: 'Cancel',
       reasonInput: isApprove
-        ? { label: 'Note', placeholder: 'Optional note for the student' }
-        : { label: 'Reason for rejecting', placeholder: 'Shown to the student and parents' },
+        ? { label: this.decisionReasonRequired ? 'Reason for approving' : 'Note', required: this.decisionReasonRequired,
+            placeholder: this.decisionReasonRequired ? 'Recorded with your decision' : 'Optional note for the student' }
+        : { label: 'Reason for rejecting', required: this.decisionReasonRequired, placeholder: 'Shown to the student and parents' },
     }).then((reason) => {
       if (reason === null) return;
       this.updatingLeaveIds.add(leave.id);

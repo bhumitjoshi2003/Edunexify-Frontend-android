@@ -120,7 +120,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
           this.classList = classes;
           // Admin-only convenience: show the first class's current-session insights
           // immediately. The student and period reports still require Load Report.
-          if (this.role === 'ADMIN' && !this.selectedClass && classes.length > 0) {
+          if ((this.role === 'ADMIN' || this.role === 'PRINCIPAL') && !this.selectedClass && classes.length > 0) {
             this.selectedClass = classes[0];
             this.selectedSectionId = null; // All Sections
             this.loadSectionsForClass(this.selectedClass);
@@ -135,7 +135,7 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
           this.managedClasses = classes;
           // Class names may arrive before IDs; resolve the initial class's sections
           // when both requests have completed, regardless of response order.
-          if (this.role === 'ADMIN' && this.selectedClass) {
+          if ((this.role === 'ADMIN' || this.role === 'PRINCIPAL') && this.selectedClass) {
             this.loadSectionsForClass(this.selectedClass);
           }
           this.cdr.markForCheck();
@@ -555,11 +555,11 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
   }
 
   canShowViewToggle(): boolean {
-    return this.role === 'ADMIN' || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'TEACHER';
+    return (this.role === 'ADMIN' || this.role === 'PRINCIPAL') || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'TEACHER';
   }
 
   canChangeClass(): boolean {
-    return this.role === 'ADMIN' || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN';
+    return (this.role === 'ADMIN' || this.role === 'PRINCIPAL') || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN';
   }
 
   /** The admin's selected class as an id (the class selector works with names). */

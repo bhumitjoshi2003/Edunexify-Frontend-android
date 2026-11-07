@@ -54,7 +54,7 @@ export class TeacherListComponent implements OnInit, OnDestroy {
     if (user) {
       this.loggedInUserRole = user.role;
 
-      if (this.loggedInUserRole === 'ADMIN') {
+      if ((this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL')) {
         this.loadAllTeachers();
       } else {
         this.logger.error('Non-admin user trying to access teacher list.');

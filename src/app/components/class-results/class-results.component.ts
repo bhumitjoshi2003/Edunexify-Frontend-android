@@ -232,6 +232,7 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
   }
 
   get isAdmin(): boolean { return this.role === 'ADMIN'; }
+  get canReleaseResults(): boolean { return this.isAdmin || this.role === 'PRINCIPAL'; }
   get isTeacher(): boolean { return this.role === 'TEACHER'; }
 
   get selectedExam(): ExamConfig | null {
@@ -249,7 +250,7 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
   /** ADMIN only (the server enforces it too): show results to students/parents and lock marks. */
   async publish(): Promise<void> {
     const exam = this.selectedExam;
-    if (!exam || !this.isAdmin || this.publishing) return;
+    if (!exam || !this.canReleaseResults || this.publishing) return;
     const missing = this.incompleteCount;
     const confirmed = await this.toast.confirm({
       title: 'Publish Results',
@@ -259,13 +260,13 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
       cancelText: 'Cancel',
       danger: false,
     });
-    if (!confirmed) return;
-    this.changeStatus(this.examService.publishResults(exam.id), 'Results Published', `${exam.examName} results are now visible to students and parents.`);
+    if (!confirmed || this.selectedExamId !== exam.id || this.publishing) return;
+    this.changeStatus(this.role === 'PRINCIPAL' ? this.examService.releaseByPrincipal(exam.id, true) : this.examService.publishResults(exam.id), 'Results Published', `${exam.examName} results are now visible to students and parents.`);
   }
 
   async unpublish(): Promise<void> {
     const exam = this.selectedExam;
-    if (!exam || !this.isAdmin || this.publishing) return;
+    if (!exam || !this.canReleaseResults || this.publishing) return;
     const confirmed = await this.toast.confirm({
       title: 'Unpublish Results',
       message: `${exam.examName} results will be hidden from students and parents immediately, and marks can be edited again.`,
@@ -273,8 +274,8 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
       cancelText: 'Cancel',
       danger: true,
     });
-    if (!confirmed) return;
-    this.changeStatus(this.examService.unpublishResults(exam.id), 'Results Unpublished', `${exam.examName} results are hidden again.`);
+    if (!confirmed || this.selectedExamId !== exam.id || this.publishing) return;
+    this.changeStatus(this.role === 'PRINCIPAL' ? this.examService.releaseByPrincipal(exam.id, false) : this.examService.unpublishResults(exam.id), 'Results Unpublished', `${exam.examName} results are hidden again.`);
   }
 
   private changeStatus(request$: import('rxjs').Observable<ExamConfig>, title: string, message: string): void {

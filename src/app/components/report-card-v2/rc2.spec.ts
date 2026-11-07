@@ -67,12 +67,12 @@ describe('Report Card V2 (Phase 1)', () => {
     });
   });
 
-  it('routes: Setup and Design are ADMIN-only; Remarks and Generate & Preview are ADMIN + TEACHER', () => {
+  it('routes: Setup and Design are ADMIN + PRINCIPAL; Remarks adds TEACHER; Generate & Preview stays ADMIN + TEACHER', () => {
     const dash = routes.find(r => r.path === 'dashboard')!;
     const find = (p: string) => dash.children!.find(c => c.path === p)!.data!['roles'];
-    expect(find('report-cards-v2/setup')).toEqual(['ADMIN']);
-    expect(find('report-cards-v2/design')).toEqual(['ADMIN']);
-    expect(find('report-cards-v2/remarks')).toEqual(['ADMIN', 'TEACHER']);
+    expect(find('report-cards-v2/setup')).toEqual(['ADMIN', 'PRINCIPAL']);
+    expect(find('report-cards-v2/design')).toEqual(['ADMIN', 'PRINCIPAL']);
+    expect(find('report-cards-v2/remarks')).toEqual(['ADMIN', 'TEACHER', 'PRINCIPAL']);
     expect(find('report-cards-v2/generate')).toEqual(['ADMIN', 'TEACHER']);
   });
 
@@ -226,7 +226,9 @@ describe('Report Card V2 (Phase 1)', () => {
     expect(route('bulk-report-cards').data!['roles']).toEqual(['ADMIN']);
     expect(await (route('bulk-report-cards').loadComponent as any)()).toBe(Rc2PublishedComponent);
     expect(route('report-card-documents').data!['roles']).toEqual(['STUDENT', 'PARENT']);
-    expect(route('report-card-documents/:id').data!['roles']).toEqual(['STUDENT', 'PARENT', 'ADMIN']);
+    // The Principal reads issued documents (capability-guarded) but has no publication page.
+    expect(route('report-card-documents/:id').data!['roles']).toEqual(['STUDENT', 'PARENT', 'ADMIN', 'PRINCIPAL']);
+    expect(route('report-card-documents/:id').data!['principalOperation']).toBe('ISSUED_REPORT_CARD_READ');
   });
 
   it('Published: no setup for the class shows the setup link, never templates', () => {

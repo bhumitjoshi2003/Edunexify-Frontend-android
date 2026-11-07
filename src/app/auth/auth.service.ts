@@ -57,6 +57,13 @@ export class AuthService {
     );
   }
 
+  /** Revoke every session only after a successful server response. */
+  logoutAll(): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/logout-all`, {}, {withCredentials: true}).pipe(tap(() => {
+      this.authStateService.clearUser();clearIntendedRoute();
+    }));
+  }
+
   changePassword(request: ChangePasswordRequest): Observable<string> {
     return this.http.post(`${this.apiUrl}/change-password`, request, { responseType: 'text', withCredentials: true });
   }

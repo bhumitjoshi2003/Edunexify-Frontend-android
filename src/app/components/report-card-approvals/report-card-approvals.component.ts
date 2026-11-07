@@ -5,10 +5,11 @@ import {
   Inject,
   OnDestroy,
   OnInit,
+  Optional,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   MAT_DIALOG_DATA,
@@ -84,6 +85,9 @@ export class ReportCardApprovalsComponent implements OnInit, OnDestroy {
   selectedStudent = '';
   reason = '';
   returning = false;
+  private focusSetup: number | null = null;
+  private focusSection: number | null = null;
+  private focusedKey = '';
   private destroyed = false;
   private destroy$ = new Subject<void>();
   private reviewRequests$ = new Subject<{
@@ -100,11 +104,20 @@ export class ReportCardApprovalsComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private delivery: ReportCardPdfDeliveryService,
     private toast: ToastService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    @Optional() private route: ActivatedRoute | null
   ) {
     this.role = auth.getUserRole();
   }
   ngOnInit(): void {
+    this.route?.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const setup = Number(params.get('setupId'));
+      const section = Number(params.get('sectionId'));
+      this.focusSetup = Number.isSafeInteger(setup) && setup > 0 ? setup : null;
+      this.focusSection = Number.isSafeInteger(section) && section > 0 ? section : null;
+      this.focusedKey = '';
+      if (this.items.length) this.focusNotification();
+    });
     this.queueRequests$
       .pipe(
         switchMap(() =>
@@ -119,7 +132,7 @@ export class ReportCardApprovalsComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe((items) => {
-        if (items) this.items = items;
+        if (items) { this.items = items;this.focusNotification(); }
         this.loading = false;
         this.cdr.markForCheck();
       });
@@ -144,6 +157,15 @@ export class ReportCardApprovalsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
     this.load();
+  }
+  private focusNotification(): void {
+    if (!this.focusSetup) return;
+    const key = `${this.focusSetup}:${this.focusSection ?? 'all'}`;
+    if (this.focusedKey === key) return;
+    this.focusedKey = key;
+    const item = this.items.find(entry => entry.setupId === this.focusSetup && entry.sectionId === this.focusSection);
+    if (item) this.review(item);
+    else this.error = 'The report-card review referenced by this notification is no longer available to your account.';
   }
   ngOnDestroy(): void {
     this.destroyed = true;

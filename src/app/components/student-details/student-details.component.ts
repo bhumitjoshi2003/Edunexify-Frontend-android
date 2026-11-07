@@ -554,11 +554,12 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
   // ── Admin lifecycle extras ─────────────────────────────────────────
 
   private loadAdminExtras(): void {
-    if (this.getUserRole() !== 'ADMIN' || !this.studentId) return;
+    if (!['ADMIN', 'PRINCIPAL'].includes(this.getUserRole()) || !this.studentId) return;
     this.studentService.getEnrollmentHistory(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
       next: history => { this.enrollmentHistory = history; this.enrollmentHistoryFailed = false; this.cdr.markForCheck(); },
       error: () => { this.enrollmentHistory = []; this.enrollmentHistoryFailed = true; this.cdr.markForCheck(); }
     });
+    if (this.getUserRole() !== 'ADMIN') return;
     this.studentService.getLoginStatus(this.studentId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
       next: status => { this.loginStatus = status; this.cdr.markForCheck(); },
       error: () => { this.loginStatus = null; this.cdr.markForCheck(); }

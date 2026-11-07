@@ -5,7 +5,7 @@
 <!-- ═══════════════════════════════════════════════════════════════
      Copy Teaching Configuration — advanced/occasional action, collapsed by default
 ════════════════════════════════════════════════════════════════ -->
-<div class="tc-section">
+<div class="tc-section" *ngIf="fullAdministration">
   <button type="button" class="tc-section-header" (click)="toggleSection('copy')" [attr.aria-expanded]="expanded.copy">
     <span class="tc-section-icon tc-icon-indigo">⇄</span>
     <span class="tc-section-heading">
@@ -153,7 +153,7 @@
      stays available for APPLIED_BUT_DRIFTED recovery — e.g. a direct Teacher-profile edit
      drifting away from configuration — or re-syncing after fixing an ineligible/invalid row).
 ════════════════════════════════════════════════════════════════ -->
-<div class="tc-section tc-section-important" *ngIf="session?.current">
+<div class="tc-section tc-section-important" *ngIf="fullAdministration && session?.current">
   <button type="button" class="tc-section-header" (click)="toggleSection('activation')" [attr.aria-expanded]="expanded.activation">
     <span class="tc-section-icon tc-icon-amber">⚡</span>
     <span class="tc-section-heading">
