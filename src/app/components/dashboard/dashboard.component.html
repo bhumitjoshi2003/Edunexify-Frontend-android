@@ -33,6 +33,10 @@
              (click)="closeSidebarOnMobile()" title="Principal Dashboard">
             <mat-icon>school</mat-icon><span>Principal Dashboard</span>
           </a>
+          <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
+             (click)="closeSidebarOnMobile()" title="My Signature">
+            <mat-icon>draw</mat-icon><span>My Signature</span>
+          </a>
         </app-nav-group>
       </ng-container>
 
@@ -208,6 +212,10 @@
         <a class="nav-item" routerLink="/dashboard/teacher-dashboard" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Dashboard">
           <mat-icon>home</mat-icon><span>Dashboard</span>
+        </a>
+        <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="My Signature">
+          <mat-icon>draw</mat-icon><span>My Signature</span>
         </a>
         <a class="nav-item" routerLink="/dashboard/teacher-checkin" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Check-in">
