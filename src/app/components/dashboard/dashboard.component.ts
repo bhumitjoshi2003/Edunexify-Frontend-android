@@ -333,6 +333,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   fetchUnreadCount(): void {
+    if (this.isPrincipal()) return; // Principal inbox is not enabled in the initial role rollout.
     this.notificationState.refreshUnread();
   }
 
@@ -349,6 +350,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const labels: Record<string, string> = {
       'STUDENT': 'Student',
       'TEACHER': 'Teacher',
+      'PRINCIPAL': 'Principal',
       'ADMIN': 'Admin',
       'SUB_ADMIN': 'Sub Admin',
       'SUPER_ADMIN': 'Super Admin',
