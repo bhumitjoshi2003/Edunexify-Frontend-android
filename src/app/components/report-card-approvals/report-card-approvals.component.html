@@ -9,7 +9,7 @@
     </button>
   </header>
   <p class="hint">
-    Review a frozen revision before approving.
+    Review the cards, then approve when it is your turn.
     <a routerLink="/dashboard/my-signature" *ngIf="role !== 'ADMIN'"
       >Manage your signature</a
     >. Saving a signature never approves a report card.
@@ -75,19 +75,28 @@
       <span class="edu-sk-shimmer edu-sk-table-line"></span>
     </div>
     <ng-container *ngIf="summary as s">
-      <p>{{ s.academicSession }} · {{ label(s.state.status) }}</p>
-      <p class="revision">
-        Review revision <strong>{{ s.revisionId }}</strong>
+      <div class="review-state">
+        <span class="status">{{ label(s.state.status) }}</span>
+        <span>{{ s.academicSession }}</span>
+      </div>
+      <p class="next-step" *ngIf="s.state.status === 'PENDING_TEACHER'">
+        Waiting for the class teacher to review and approve these cards. The Principal can approve after that.
       </p>
-      <p class="hint">
-        Attendance cutoff: {{ s.attendanceCutoff }}. Teacher:
-        {{ s.teacherUserId }}.
-        {{
-          s.includeIncomplete
-            ? "Incomplete cards are included."
-            : "Incomplete cards are excluded."
-        }}
+      <p class="next-step" *ngIf="s.state.status === 'TEACHER_APPROVED'">
+        Teacher review complete. The Principal can now approve or request corrections.
       </p>
+      <p class="next-step" *ngIf="s.state.status === 'PRINCIPAL_APPROVED'">
+        Principal approval complete. Only the Admin can issue official report cards with the approved signatures.
+      </p>
+      <details class="review-details">
+        <summary>Review information</summary>
+        <dl>
+          <div><dt>Revision ID</dt><dd>{{ s.revisionId }}</dd></div>
+          <div><dt>Attendance up to</dt><dd>{{ s.attendanceCutoff }}</dd></div>
+          <div><dt>Assigned teacher ID</dt><dd>{{ s.teacherUserId }}</dd></div>
+          <div><dt>Incomplete cards</dt><dd>{{ s.includeIncomplete ? 'Included' : 'Excluded' }}</dd></div>
+        </dl>
+      </details>
       <div class="metrics">
         <div>
           <strong>{{ s.totalStudents }}</strong
@@ -134,12 +143,11 @@
           (click)="preview()"
           [disabled]="!selectedStudent || busy"
         >
-          Preview revision PDF
+          Preview report card
         </button>
       </div>
-      <p class="hint">
-        Previews, summary and approvals use this revision. Changed content
-        requires a fresh review. Only an Admin can publish official documents.
+      <p class="preview-note">
+        This is an unsigned review copy, not the final report card. Teacher and Principal signatures appear on the official PDF after both approvals and Admin publication.
       </p>
       <div class="actions">
         <button
