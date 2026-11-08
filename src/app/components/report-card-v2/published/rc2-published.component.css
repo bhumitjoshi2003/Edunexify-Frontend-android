@@ -6,6 +6,11 @@
 .pub-result-msg { margin: 0 0 6px; font-weight: 700; }
 .pub-ok { color: #15803d; }
 .pub-bad { color: #b91c1c; }
+.pub-progress { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--edu-border, #e2e8f0); border-radius: 12px; background: var(--edu-bg-light, #f8fafc); }
+.pub-progress-label { margin: 0 0 8px; font-weight: 700; color: var(--edu-text, #1e293b); }
+.pub-bar { height: 8px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.pub-bar-fill { display: block; height: 100%; border-radius: inherit; background: var(--rc2-accent, #4f46e5); transition: width 0.4s ease; }
+@media (prefers-reduced-motion: reduce) { .pub-bar-fill { transition: none; } }
 .pub-list-title { margin: 10px 0 4px; font-size: var(--edu-text-sm, 0.82rem); font-weight: 800; color: #475569; }
 .pub-list { margin: 0; padding-left: 18px; font-size: var(--edu-text-sm, 0.82rem); color: var(--edu-text, #1e293b); max-height: 220px; overflow-y: auto; }
 .pub-list li { margin: 2px 0; }

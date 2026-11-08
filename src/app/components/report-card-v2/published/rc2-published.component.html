@@ -81,14 +81,24 @@
 
       <div class="pub-actions">
         <label class="rc2-check pub-check">
-          <input type="checkbox" [(ngModel)]="includeIncomplete" (ngModelChange)="checkReadiness()" [disabled]="busy !== null" />
+          <input type="checkbox" [(ngModel)]="includeIncomplete" (ngModelChange)="checkReadiness()" [disabled]="busy !== null || publishing" />
           <span>Include students with missing marks</span>
         </label>
-        <button type="button" class="rc2-btn rc2-btn-primary" (click)="publish()" [disabled]="busy !== null || blockedByWholeClass || approvalPolicyState !== 'ready' || !publicationReady">
-          {{ busy === 'publish' ? 'Publishing…' : (active && !blockedByWholeClass ? 'Republish (new version)' : 'Publish') }}
+        <button type="button" class="rc2-btn rc2-btn-primary" (click)="publish()" [disabled]="busy !== null || publishing || blockedByWholeClass || approvalPolicyState !== 'ready' || !publicationReady">
+          {{ busy === 'publish' ? 'Starting…' : publishing ? 'Publishing…' : (active && !blockedByWholeClass ? 'Republish (new version)' : 'Publish') }}
         </button>
       </div>
-      <p class="rc2-hint">All exams in this report card must have published results. {{ busy === 'publish' ? 'Generating every report card — this can take a minute.' : 'Nothing is published unless every report card is generated successfully.' }}</p>
+      <p class="rc2-hint">All exams in this report card must have published results. Nothing is published unless every report card is generated successfully.</p>
+
+      <!-- Background publication in progress -->
+      <div class="pub-progress" *ngIf="publishing && job as j" role="status" aria-live="polite">
+        <p class="pub-progress-label">{{ jobLabel }}</p>
+        <div class="pub-bar" role="progressbar" aria-label="Report cards generated" aria-valuemin="0"
+             [attr.aria-valuemax]="j.total" [attr.aria-valuenow]="j.phase === 'ACTIVATING' ? j.total : j.processed">
+          <span class="pub-bar-fill" [style.width.%]="jobPercent"></span>
+        </div>
+        <p class="rc2-hint">Students and parents see nothing until every report card is ready. You can leave this page — publishing continues on the server.</p>
+      </div>
 
       <!-- Outcome of the last publish attempt -->
       <div class="pub-result" *ngIf="lastResult" role="status">

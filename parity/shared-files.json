@@ -123,7 +123,11 @@
     "src/app/components/report-card-v2/setup/rc2-setup.component.ts": "30ee057fb36397ca087a06202389197da7fb0765ec6f87fe3aca1132147d4fb9",
     "src/app/components/report-card-v2/setup/rc2-setup.component.html": "7ed65281f5159bc0f214b66d131ea62680336d73b6805aba41499d239cdfe443",
     "src/app/components/holiday-calendar/holiday-calendar.component.ts": "3cbcef42fa55ab46cf3ab1caa0d1832de660d779ecab58d6f693f2fae214a3ba",
-    "src/app/components/notice/notice.component.html": "fec290309a82897825ba3a098f7c6e692537bc0241c1f8b5d416d67f312c5239"
+    "src/app/components/notice/notice.component.html": "fec290309a82897825ba3a098f7c6e692537bc0241c1f8b5d416d67f312c5239",
+    "src/app/services/report-card-v2.service.ts": "8e819971b43e9144f73c9207b2ac2f6487acf95695a7c6c7c39b82cf225d73c2",
+    "src/app/components/report-card-v2/published/rc2-published.component.ts": "aea85912c4962d02e5ad5c340bb0620cbe526f73defbe5c68890d69692df5d8d",
+    "src/app/components/report-card-v2/published/rc2-published.component.html": "6a5a38d19bebb05d114e739f480251f08a4b6ec1cb344ed753c608904dda0f4c",
+    "src/app/components/report-card-v2/published/rc2-published.component.css": "38db2e21954b7bb5e64165ba16e98cd258179286413d9112cfd2210ea7079235"
   },
   "platformSpecific": [
     {
@@ -208,6 +212,10 @@
     "src/app/components/report-card-v2/setup/rc2-setup.component.ts",
     "src/app/components/report-card-v2/setup/rc2-setup.component.html",
     "src/app/components/holiday-calendar/holiday-calendar.component.ts",
-    "src/app/components/notice/notice.component.html"
+    "src/app/components/notice/notice.component.html",
+    "src/app/services/report-card-v2.service.ts",
+    "src/app/components/report-card-v2/published/rc2-published.component.ts",
+    "src/app/components/report-card-v2/published/rc2-published.component.html",
+    "src/app/components/report-card-v2/published/rc2-published.component.css"
   ]
 }

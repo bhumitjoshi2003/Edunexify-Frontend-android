@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Rc2SetupComponent } from './setup/rc2-setup.component';
@@ -21,7 +21,7 @@ import { Rc2MyReportCardsComponent } from './documents/rc2-my-report-cards.compo
 import { Rc2DocumentViewComponent } from './documents/rc2-document-view.component';
 import { VerifyRcComponent } from '../verify-rc/verify-rc.component';
 import { HttpClient } from '@angular/common/http';
-import { Publication, ReportCardDocument } from '../../services/report-card-v2.service';
+import { Publication, PublicationJob, ReportCardDocument } from '../../services/report-card-v2.service';
 
 /** Report Card V2 screens: the app only collects input and shows backend results / PDFs. */
 describe('Report Card V2 (Phase 1)', () => {
@@ -42,9 +42,10 @@ describe('Report Card V2 (Phase 1)', () => {
   beforeEach(() => {
     api = jasmine.createSpyObj('ReportCardV2Service', ['listSetups', 'availableExams', 'createSetup', 'updateSetup', 'deleteSetup',
       'getRemarks', 'saveRemarks', 'getSummary', 'previewPdf', 'getDesign', 'listActivities',
-      'listPublications', 'publish', 'withdraw', 'publicationDocuments', 'bulkCheck', 'downloadZip', 'send',
+      'listPublications', 'startPublication', 'publicationJob', 'latestPublicationJob', 'withdraw', 'publicationDocuments', 'bulkCheck', 'downloadZip', 'send',
       'myDocuments', 'getDocument', 'documentPdf']);
     api.listSetups.and.returnValue(of([setup]));
+    api.latestPublicationJob.and.returnValue(of(null));
     api.availableExams.and.returnValue(of([
       { id: 11, examName: 'Half Yearly', resultStatus: 'PUBLISHED', subjects: 5 },
       { id: 12, examName: 'Annual', resultStatus: 'DRAFT', subjects: 5 },
@@ -244,12 +245,20 @@ describe('Report Card V2 (Phase 1)', () => {
     expect(api.listPublications).not.toHaveBeenCalled();
   });
 
-  it('Published: shows the active version and its stored documents, and publishes/republishes after confirmation', async () => {
+  const job = (over: Partial<PublicationJob> = {}): PublicationJob => ({
+    id: 'job-1', setupId: 5, sectionId: null, sectionName: null, includeIncomplete: true, version: 2, status: 'RUNNING',
+    phase: 'GENERATING', total: 24, processed: 0, failed: 0, message: null, excludedIncomplete: [], failures: [],
+    publicationId: null, requestedBy: 'admin', createdAt: '2026-09-29T10:00:00', startedAt: null, finishedAt: null, ...over,
+  });
+
+  it('Published: shows the active version and its stored documents; a failed background publication lists the failures', fakeAsync(() => {
     api.listPublications.and.returnValue(of([publication(), publication({ id: 40, version: 0 as any, status: 'SUPERSEDED' })]));
     api.publicationDocuments.and.returnValue(of([document()]));
     toast.confirm.and.resolveTo(true);
-    api.publish.and.returnValue(of({ published: false, publication: null, documents: 0, excludedIncomplete: [],
-      failed: [{ studentId: 'S2', studentName: 'Bina', reason: 'storage offline' }], message: 'Nothing was published: 1 card(s) could not be generated.' }));
+    api.startPublication.and.returnValue(of(job({ status: 'QUEUED', phase: 'QUEUED' })));
+    api.publicationJob.and.returnValue(of(job({ status: 'FAILED', phase: 'FAILED', processed: 1, failed: 1,
+      failures: [{ studentId: 'S2', studentName: 'Bina', reason: 'storage offline' }],
+      message: 'Nothing was published: 1 card(s) could not be generated.' })));
     const fixture = TestBed.createComponent(Rc2PublishedComponent);
     const c = fixture.componentInstance;
     fixture.detectChanges();
@@ -262,13 +271,80 @@ describe('Report Card V2 (Phase 1)', () => {
     expect(api.publicationDocuments).toHaveBeenCalledWith(41);
 
     c.includeIncomplete = true;
-    await c.publish();
+    c.publish();
+    tick();
     fixture.detectChanges();
-    expect(api.publish).toHaveBeenCalledWith(5, null, true);
-    expect(toast.error).toHaveBeenCalledWith('Nothing was published', jasmine.any(String));
+    expect(api.startPublication).toHaveBeenCalledWith(5, null, true, jasmine.any(String));
+    expect(el.textContent).toContain('waiting to start');
+    expect(c.publishing).toBeTrue();
+    tick(2000);
+    fixture.detectChanges();
+    expect(toast.error).toHaveBeenCalledWith('Nothing was published', 'Nothing was published: 1 card(s) could not be generated.');
+    expect(c.publishing).toBeFalse();
     expect(el.textContent).toContain('Bina');
     expect(el.textContent).toContain('storage offline');
-  });
+    tick(10000);
+    expect(api.publicationJob).toHaveBeenCalledTimes(1); // polling stops once the job has finished
+  }));
+
+  it('Published: follows background progress, then reloads the versions once every card is published', fakeAsync(() => {
+    api.listPublications.and.returnValue(of([publication()]));
+    api.publicationDocuments.and.returnValue(of([document()]));
+    toast.confirm.and.resolveTo(true);
+    api.startPublication.and.returnValue(of(job()));
+    const states = [job({ processed: 12 }), job({ processed: 24, phase: 'ACTIVATING' }),
+      job({ status: 'SUCCEEDED', phase: 'SUCCEEDED', processed: 24, publicationId: 42, message: 'Published version 2 — 24 report card(s).' })];
+    api.publicationJob.and.callFake(() => of(states.shift()!));
+    const fixture = TestBed.createComponent(Rc2PublishedComponent);
+    const c = fixture.componentInstance;
+    fixture.detectChanges();
+    c.onContext(ctx());
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    c.publish();
+    tick();
+    tick(2000);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('12 of 24 report cards generated');
+    const bar = el.querySelector('[role="progressbar"]')!;
+    expect(bar.getAttribute('aria-valuenow')).toBe('12');
+    expect(c.jobPercent).toBe(50);
+    expect((el.querySelector('.pub-actions .rc2-btn-primary') as HTMLButtonElement).disabled).toBeTrue();
+    expect(api.listPublications).toHaveBeenCalledTimes(1);
+    tick(2000);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('publishing all 24 report cards together');
+    tick(2000);
+    fixture.detectChanges();
+    expect(toast.success).toHaveBeenCalledWith('Report cards republished', 'Published version 2 — 24 report card(s).');
+    expect(api.listPublications).toHaveBeenCalledTimes(2);
+    expect(el.querySelector('[role="progressbar"]')).toBeNull();
+  }));
+
+  it('Published: a publication still running elsewhere is resumed when the page opens, and Publish waits for it', fakeAsync(() => {
+    api.listPublications.and.returnValue(of([]));
+    api.latestPublicationJob.and.returnValue(of(job({ processed: 3 })));
+    api.publicationJob.and.returnValue(of(job({ processed: 4 })));
+    const fixture = TestBed.createComponent(Rc2PublishedComponent);
+    const c = fixture.componentInstance;
+    fixture.detectChanges();
+    c.onContext(ctx());
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(api.latestPublicationJob).toHaveBeenCalledWith(5);
+    expect(el.textContent).toContain('3 of 24 report cards generated');
+    expect(el.textContent).toContain('Students and parents see nothing until every report card is ready');
+    c.publish();
+    expect(api.startPublication).not.toHaveBeenCalled();
+    tick(2000);
+    fixture.detectChanges();
+    expect(el.textContent).toContain('4 of 24 report cards generated');
+    api.latestPublicationJob.and.returnValue(of(null));
+    c.onContext(ctx(null));                     // leaving the setup stops following it
+    tick(10000);
+    expect(api.publicationJob).toHaveBeenCalledTimes(1);
+    fixture.destroy();
+  }));
 
   it('Published: a section is not published over an active whole-class version', () => {
     api.listPublications.and.returnValue(of([publication()]));
