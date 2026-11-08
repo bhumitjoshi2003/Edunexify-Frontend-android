@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 /** Report Card V2: setup, school design, remarks, Generate & Preview (live) and published
@@ -81,6 +81,21 @@ export interface ReportCardDocument {
   id: number; publicationId: number; studentId: string; studentName: string; title: string; sessionLabel: string;
   className: string; sectionName: string | null; version: number; status: PublicationStatus; reference: string; issuedAt: string;
 }
+/**
+ * A background publication. Progress counts stored cards; nothing is visible to students until
+ * status is SUCCEEDED. FAILED means nothing was published (see message and failures).
+ */
+export interface PublicationJob {
+  id: string; setupId: number; sectionId: number | null; sectionName: string | null; includeIncomplete: boolean;
+  version: number; status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  phase: 'QUEUED' | 'GENERATING' | 'ACTIVATING' | 'SUCCEEDED' | 'FAILED';
+  total: number; processed: number; failed: number; message: string | null;
+  excludedIncomplete: StudentProblem[]; failures: StudentProblem[]; publicationId: number | null;
+  requestedBy: string; createdAt: string; startedAt: string | null; finishedAt: string | null;
+}
+export function publicationJobFinished(job: PublicationJob): boolean {
+  return job.status === 'SUCCEEDED' || job.status === 'FAILED';
+}
 export interface BulkCheck { total: number; available: number; missing: StudentProblem[]; }
 export interface SendResult { documents: number; queued: number; message: string; }
 
@@ -154,8 +169,17 @@ export class ReportCardV2Service {
   listPublications(setupId: number): Observable<Publication[]> {
     return this.http.get<Publication[]>(`${this.base}/setups/${setupId}/publications`);
   }
-  publish(setupId: number, sectionId: number | null, includeIncomplete: boolean): Observable<PublishResult> {
-    return this.http.post<PublishResult>(`${this.base}/setups/${setupId}/publications`, { sectionId, includeIncomplete });
+  /** Starts publishing in the background (202). The same requestId never starts a second job. */
+  startPublication(setupId: number, sectionId: number | null, includeIncomplete: boolean, requestId: string | null): Observable<PublicationJob> {
+    return this.http.post<PublicationJob>(`${this.base}/setups/${setupId}/publication-jobs`, { sectionId, includeIncomplete, requestId });
+  }
+  publicationJob(jobId: string): Observable<PublicationJob> {
+    return this.http.get<PublicationJob>(`${this.base}/publication-jobs/${encodeURIComponent(jobId)}`);
+  }
+  /** The setup's most recent publication job, or null when it has none (204). */
+  latestPublicationJob(setupId: number): Observable<PublicationJob | null> {
+    return this.http.get<PublicationJob>(`${this.base}/setups/${setupId}/publication-jobs/latest`, { observe: 'response' })
+      .pipe(map(r => r.status === 204 ? null : r.body));
   }
   withdraw(publicationId: number, reason: string | null): Observable<Publication> {
     return this.http.post<Publication>(`${this.base}/publications/${publicationId}/withdraw`, { reason });

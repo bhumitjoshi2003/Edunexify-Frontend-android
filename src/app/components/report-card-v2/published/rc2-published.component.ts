@@ -5,10 +5,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { EMPTY, Subject, Subscription, catchError, switchMap, takeUntil, takeWhile, timer } from 'rxjs';
 import { Rc2Context, Rc2ContextComponent } from '../rc2-context.component';
 import {
-  BulkCheck, Publication, PublishResult, ReportCardDocument, ReportCardV2Service,
+  BulkCheck, Publication, PublicationJob, PublishResult, ReportCardDocument, ReportCardV2Service, publicationJobFinished,
 } from '../../../services/report-card-v2.service';
 import { ReportCardPdfDeliveryService } from '../../../services/report-card-pdf-delivery.service';
 import { ToastService } from '../../../services/toast.service';
@@ -18,6 +18,10 @@ import { ToastService } from '../../../services/toast.service';
  * freezes every student's card (the backend renders and stores each PDF once); republishing
  * issues a new version; withdrawing hides it from students and parents while keeping the record.
  * Generate & Preview is the live view; everything here is the stored copy.
+ *
+ * Publishing runs as a background job on the server: Publish starts it and this page follows its
+ * progress (also after a reload, or when another administrator started it). Students and parents
+ * see the new version only once every card is stored.
  */
 @Component({
   selector: 'app-rc2-published',
@@ -48,6 +52,9 @@ export class Rc2PublishedComponent implements OnDestroy {
   busyDoc: number | null = null;
   zipId: number | null = null;
   lastResult: PublishResult | null = null;
+  /** The publication job being followed (running, or just finished). */
+  job: PublicationJob | null = null;
+  private jobSub?: Subscription;
   bulk: BulkCheck | null = null;
   previewUrl: SafeResourceUrl | null = null;
   previewName = '';
@@ -67,6 +74,7 @@ export class Rc2PublishedComponent implements OnDestroy {
   ) {}
 
   ngOnDestroy(): void {
+    this.jobSub?.unsubscribe();
     this.closePreview();
     this.destroy$.next();
     this.destroy$.complete();
@@ -77,7 +85,9 @@ export class Rc2PublishedComponent implements OnDestroy {
     this.checkReadiness();
     this.lastResult = null;
     this.bulk = null;
+    this.stopFollowing();
     this.load();
+    this.resumeJob();
   }
 
   async enableApprovals(): Promise<void> {
@@ -164,9 +174,29 @@ export class Rc2PublishedComponent implements OnDestroy {
     });
   }
 
+  /** A publication of this setup is still being generated (by this or another administrator). */
+  get publishing(): boolean { return !!this.job && !publicationJobFinished(this.job); }
+
+  get jobPercent(): number {
+    const j = this.job;
+    if (!j || !j.total) return 0;
+    return j.phase === 'ACTIVATING' ? 100 : Math.round((100 * j.processed) / j.total);
+  }
+
+  get jobLabel(): string {
+    const j = this.job;
+    if (!j) return '';
+    const scope = j.sectionName ? `Section ${j.sectionName}` : 'the whole class';
+    switch (j.phase) {
+      case 'QUEUED': return `Version ${j.version} for ${scope}: waiting to start…`;
+      case 'ACTIVATING': return `Version ${j.version} for ${scope}: publishing all ${j.total} report cards together…`;
+      default: return `Version ${j.version} for ${scope}: ${j.processed} of ${j.total} report cards generated`;
+    }
+  }
+
   async publish(): Promise<void> {
     const setup = this.ctx?.setup;
-    if (!setup || this.busy || this.approvalPolicyState !== 'ready' || !this.publicationReady) return;
+    if (!setup || this.busy || this.publishing || this.approvalPolicyState !== 'ready' || !this.publicationReady) return;
     const context = this.ctx;
     const targetSection = this.sectionId;
     const includeIncomplete = this.includeIncomplete;
@@ -184,24 +214,70 @@ export class Rc2PublishedComponent implements OnDestroy {
     this.busy = 'publish';
     this.lastResult = null;
     this.cdr.markForCheck();
-    this.api.publish(setup.id, targetSection, includeIncomplete).pipe(takeUntil(this.destroy$)).subscribe({
-      next: res => {
+    // One id per click: a resent request returns the job it already started.
+    const requestId = globalThis.crypto?.randomUUID?.() ?? null;
+    this.api.startPublication(setup.id, targetSection, includeIncomplete, requestId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: job => {
         this.busy = null;
-        this.lastResult = res;
-        if (res.published) {
-          this.toast.success(republish ? 'Report cards republished' : 'Report cards published', res.message);
-          this.load();
-        } else {
-          this.toast.error('Nothing was published', res.message);
-        }
+        if (this.ctx === context) this.follow(job);
         this.cdr.markForCheck();
       },
       error: e => {
         this.busy = null;
         this.toast.error('Could not publish', e?.error?.message || 'Please try again.');
+        this.resumeJob(); // a job may still have been started (e.g. the response was lost)
         this.cdr.markForCheck();
       },
     });
+  }
+
+  /** Follows the setup's job if one is still running (page reload, or another administrator's). */
+  private resumeJob(): void {
+    const setupId = this.ctx?.setup?.id;
+    if (!setupId) return;
+    const context = this.ctx;
+    this.api.latestPublicationJob(setupId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: job => { if (job && !publicationJobFinished(job) && this.ctx === context) this.follow(job); },
+      error: () => { /* progress is optional; publishing itself is unaffected */ },
+    });
+  }
+
+  private follow(job: PublicationJob): void {
+    this.jobSub?.unsubscribe();
+    this.job = job;
+    this.cdr.markForCheck();
+    if (publicationJobFinished(job)) { this.finished(job); return; }
+    // A missed poll (network) is retried on the next tick; the job keeps running on the server.
+    this.jobSub = timer(2000, 2000).pipe(
+      switchMap(() => this.api.publicationJob(job.id).pipe(catchError(() => EMPTY))),
+      takeWhile(j => !publicationJobFinished(j), true),
+      takeUntil(this.destroy$),
+    ).subscribe(j => {
+      this.job = j;
+      if (publicationJobFinished(j)) this.finished(j);
+      this.cdr.markForCheck();
+    });
+  }
+
+  private finished(job: PublicationJob): void {
+    const published = job.status === 'SUCCEEDED';
+    this.lastResult = {
+      published, publication: null, documents: published ? job.total : 0,
+      excludedIncomplete: job.excludedIncomplete, failed: job.failures,
+      message: job.message || (published ? `Published version ${job.version}.` : 'Nothing was published.'),
+    };
+    if (published) {
+      this.toast.success(job.version > 1 ? 'Report cards republished' : 'Report cards published', this.lastResult.message);
+      this.load();
+    } else {
+      this.toast.error('Nothing was published', this.lastResult.message);
+    }
+  }
+
+  private stopFollowing(): void {
+    this.jobSub?.unsubscribe();
+    this.jobSub = undefined;
+    this.job = null;
   }
 
   async withdraw(p: Publication): Promise<void> {
