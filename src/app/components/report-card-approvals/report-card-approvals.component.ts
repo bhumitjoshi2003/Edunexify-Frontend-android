@@ -31,28 +31,29 @@ import {
 @Component({
   standalone: true,
   imports: [MatDialogModule],
-  template: `<div class="review-preview">
-    <button type="button" mat-dialog-close>Close preview</button
-    ><iframe [src]="url" title="Frozen report card review"></iframe>
+  template: `<div class="review-preview" role="region" aria-label="Report card review preview">
+    <div class="review-preview__header">
+      <div>
+        <h2>Report card preview</h2>
+        <p>Review copy · Not an issued report card</p>
+      </div>
+      <button class="review-preview__close" type="button" mat-dialog-close aria-label="Close report card preview" title="Close preview">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <iframe [src]="url" title="Frozen report card review"></iframe>
   </div>`,
   styles: [
     `
-      .review-preview {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 12px;
-        height: 85dvh;
-      }
-      .review-preview iframe {
-        flex: 1;
-        width: 100%;
-        border: 0;
-      }
-      button {
-        align-self: flex-end;
-        padding: 10px;
-      }
+      .review-preview { display:flex; flex-direction:column; height:min(86dvh, 1000px); min-height:320px; background:#f8fafc; overflow:hidden; }
+      .review-preview__header { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 16px; background:#fff; border-bottom:1px solid #e2e8f0; }
+      .review-preview__header h2 { font-size:1.05rem; margin:0; color:#1e293b; font-weight:700; }
+      .review-preview__header p { margin:3px 0 0; font-size:.8rem; color:#64748b; }
+      .review-preview__close { width:40px; height:40px; flex:none; display:grid; place-items:center; border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; color:#334155; font:inherit; font-size:1.8rem; line-height:1; cursor:pointer; }
+      .review-preview__close:hover { background:#e2e8f0; }
+      .review-preview__close:focus-visible { outline:3px solid #0ea5e9; outline-offset:2px; }
+      .review-preview iframe { flex:1; width:100%; min-height:0; border:0; }
+      @media (max-width:600px) { .review-preview { height:90dvh; } .review-preview__header { padding:10px 12px; } }
     `,
   ],
 })

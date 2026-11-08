@@ -176,3 +176,14 @@ textarea {
     width: 100%;
   }
 }
+
+.review-state { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:18px; color:var(--edu-text-sec, #64748b); }
+.next-step { background:#eff6ff; color:#1e3a5f; border:1px solid #bfdbfe; padding:12px 14px; border-radius:12px; line-height:1.5; }
+.review-details { margin:10px 0; font-size:.88rem; color:var(--edu-text-sec, #64748b); }
+.review-details summary { cursor:pointer; display:inline-block; padding:6px 0; color:#315b84; font-weight:600; }
+.review-details dl { background:var(--edu-bg-light, #f8fafc); border:1px solid var(--edu-border,#e2e8f0); border-radius:12px; padding:12px; margin:8px 0; }
+.review-details dl div { display:grid; grid-template-columns:minmax(100px,160px) minmax(0,1fr); gap:12px; padding:6px 0; }
+.review-details dt { font-weight:600; }
+.review-details dd { margin:0; overflow-wrap:anywhere; }
+.preview-note { font-size:.88rem; color:#475569; background:#f8fafc; border-left:3px solid #94a3b8; padding:10px 12px; line-height:1.5; }
+@media(max-width:580px) { .review-details dl div { grid-template-columns:1fr; gap:2px; } }
