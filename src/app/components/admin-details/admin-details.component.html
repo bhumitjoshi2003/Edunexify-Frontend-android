@@ -67,19 +67,19 @@
       <div class="ad-hero-text">
         <span class="ad-hero-badge"><i></i>{{ isNewAdmin ? 'New admin' : 'Admin profile' }}</span>
         <h1 class="ad-hero-name">{{ isNewAdmin ? 'Create New Admin' : (updatedDetails.name || 'Admin') }}</h1>
-        <div class="ad-hero-meta" *ngIf="!isNewAdmin"><span>▣ {{ updatedDetails.adminId }}</span><span *ngIf="updatedDetails.gender">◉ {{ updatedDetails.gender }}</span></div>
+        <div class="ad-hero-meta" *ngIf="!isNewAdmin"><span>▣ {{ updatedDetails.adminId }}</span></div>
       </div>
 
       <!-- Action buttons -->
       <div class="ad-hero-actions">
-        <button type="button" class="ad-btn ad-btn-edit" *ngIf="!isEditing && canEdit()" (click)="enableEditMode()">✎ Edit</button>
+        <button type="button" class="ad-btn ad-btn-edit ad-btn-icon" *ngIf="!isEditing && canEdit()" (click)="enableEditMode()" title="Edit admin" aria-label="Edit admin"><span class="ad-pencil-icon" aria-hidden="true">✎</span></button>
         <ng-container *ngIf="isEditing">
           <button type="submit" class="ad-btn ad-btn-save">✓ Save changes</button>
           <button type="button" class="ad-btn ad-btn-cancel-edit" (click)="cancelEdit()">Cancel</button>
         </ng-container>
-        <button type="button" class="ad-btn ad-btn-pwd" (click)="openPasswordModal()"
-          *ngIf="!isNewAdmin && loggedInUserId === adminId">
-          🔐 <span class="ad-password-label">Change password</span>
+        <button type="button" class="ad-btn ad-btn-pwd ad-btn-icon" (click)="openPasswordModal()"
+          *ngIf="!isNewAdmin && loggedInUserId === adminId" title="Change password" aria-label="Change password">
+          <span class="ad-password-icon" aria-hidden="true">🔐</span>
         </button>
         <button type="button" class="ad-btn ad-btn-pwd" (click)="sendSetupLink()" *ngIf="canSendSetupLink()"
           [disabled]="sendingSetupLink" title="Email this administrator a one-time link to set their own password">
