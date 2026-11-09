@@ -713,7 +713,7 @@
 
         <div class="pm-actions">
           <button mat-menu-item class="pm-action"
-          *ngIf="isStudent() || isTeacher() || isAdmin()"
+          *ngIf="isStudent() || isTeacher() || isAdmin() || isPrincipal()"
           (click)="navigateToMyProfile()">
             <mat-icon>account_circle</mat-icon>
             <span>View profile</span>
