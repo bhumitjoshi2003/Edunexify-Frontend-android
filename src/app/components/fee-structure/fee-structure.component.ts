@@ -1,3 +1,4 @@
+import { feeSchoolKey, feeRuleWrite, latestFeeRule } from '../../utils/fee-editor.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +15,7 @@ import { ParentPortalService } from '../../services/parent-portal.service';
 import { FeeHead } from '../../interfaces/fee-head';
 import { FeeStructureRule } from '../../interfaces/fee-rule';
 import { AcademicSession } from '../../interfaces/academic-session';
+import { schoolDateKey } from '../../utils/school-date.util';
 
 @Component({
   selector: 'app-fee-structure',
@@ -25,6 +27,19 @@ import { AcademicSession } from '../../interfaces/academic-session';
 })
 export class FeeStructureComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private ruleRequest$ = new Subject<void>();
+  private generation = 0;
+  private destroyed = false;
+  private loaded: { school: string; session: AcademicSession; generation: number } | null = null;
+  saving = false;
+  rulesError = '';
+  effectiveDate = '';
+  timezone = 'Asia/Kolkata';
+  get schoolToday(): string { return schoolDateKey(new Date(), this.timezone); }
+  canSave(): boolean { return !!this.loaded && this.matches(this.loaded) && !this.rulesLoading && !this.rulesError && !this.saving; }
+  private matches(c: NonNullable<FeeStructureComponent['loaded']>): boolean {
+    return !this.destroyed && c.school === feeSchoolKey(this.authStateService) && c.session.id === this.currentSession?.id && c.generation === this.generation;
+  }
 
   sessions: AcademicSession[] = [];
   currentSession: AcademicSession | null = null;
@@ -65,12 +80,14 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnDestroy(): void {
+    this.destroyed = true; this.generation++;
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   ngOnInit(): void {
     const role = this.authStateService.getUserRole();
+    if (role === 'ADMIN' && typeof this.schoolService.getSettings === 'function') this.schoolService.getSettings().pipe(takeUntil(this.destroy$)).subscribe({ next: s => {this.timezone = s.timezone || this.timezone;}, error: () => {} });
     if (role === 'PARENT') {
       const requestedStudentId = this.route.snapshot.queryParamMap.get('studentId');
       if (!requestedStudentId) {
@@ -87,6 +104,7 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
           if (!allowed) {
             this.subjectStudentId = '';
             this.accessDenied = true;
+            this.isLoading = false;
             this.toast.error('Fee structure access unavailable', 'Please contact the school administrator.');
             this.cdr.markForCheck();
             return;
@@ -109,6 +127,7 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
   }
 
   private loadInitialData(): void {
+    const initialSchool = feeSchoolKey(this.authStateService);
     this.isLoading = true;
     forkJoin({
       sessions: this.sessionService.getAllSessions(),
@@ -116,6 +135,7 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
       feeHeads: this.feeHeadService.getActiveFeeHeads(this.subjectStudentId || undefined),
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ sessions, classes, feeHeads }) => {
+        if (this.destroyed || initialSchool !== feeSchoolKey(this.authStateService)) return;
         this.sessions = sessions;
         this.classes = this.subjectClassName ? classes.filter(c => c === this.subjectClassName) : classes;
         this.feeHeads = feeHeads;
@@ -132,6 +152,8 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
+        if (this.destroyed || initialSchool !== feeSchoolKey(this.authStateService)) return;
+        this.rulesError = 'Could not load fee editor setup. Please retry.';
         this.isLoading = false;
         this.cdr.markForCheck();
         this.toast.error('Error', 'Failed to load data.');
@@ -139,24 +161,39 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
     });
   }
 
+  retryLoad(): void { if (!this.currentSession) this.loadInitialData(); else this.loadRules(); }
+
   loadRules(): void {
-    if (!this.currentSession) return;
+    if (this.saving || this.destroyed) return;
+    this.ruleRequest$.next(); const generation = ++this.generation;
+    this.loaded = null; this.rulesError = ''; this.effectiveDate = ''; this.isEditing = false;
+    this.feeGrid = {}; this.originalGrid = {}; this.loadedRules = []; this.orphanFeeRuleClassNames = [];
+    if (!this.currentSession || this.accessDenied) { this.rulesLoading = false; this.cdr.markForCheck(); return; }
+    const context = { school: feeSchoolKey(this.authStateService), session: { ...this.currentSession }, generation };
+    this.feeGrid = {};
+    this.originalGrid = {};
+    this.loadedRules = [];
+    this.orphanFeeRuleClassNames = [];
     this.rulesLoading = true;
     this.isLoading = false;
     this.cdr.markForCheck();
 
     const rules$ = this.subjectClassName
-      ? this.feeRuleService.getRulesBySessionAndClass(this.currentSession.id, this.subjectClassName, this.subjectStudentId)
-      : this.feeRuleService.getRulesBySession(this.currentSession.id);
+      ? this.feeRuleService.getRulesBySessionAndClass(context.session.id, this.subjectClassName, this.subjectStudentId)
+      : this.feeRuleService.getRulesBySession(context.session.id);
     rules$
-      .pipe(takeUntil(this.destroy$)).subscribe({
+      .pipe(takeUntil(this.ruleRequest$), takeUntil(this.destroy$)).subscribe({
         next: (rules) => {
+          if (!this.matches(context)) return;
+          this.loaded = context;
           this.buildGrid(rules);
           this.originalGrid = JSON.parse(JSON.stringify(this.feeGrid));
           this.rulesLoading = false;
           this.cdr.markForCheck();
         },
         error: () => {
+          if (!this.matches(context)) return;
+          this.rulesError = 'Could not load fee rules. Please retry.';
           this.rulesLoading = false;
           this.cdr.markForCheck();
           this.toast.error('Error', 'Failed to load fee rules.');
@@ -164,7 +201,10 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
       });
   }
 
+  private loadedRules: FeeStructureRule[] = [];
+
   private buildGrid(rules: FeeStructureRule[]): void {
+    this.loadedRules = rules;
     this.feeGrid = {};
     for (const cls of this.classes) {
       this.feeGrid[cls] = {};
@@ -176,7 +216,7 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
     // authoritative — a rule for a className with no matching configured class is a data
     // inconsistency, never a reason to fabricate a new grid row for it.
     const orphanClassNames = new Set<string>();
-    for (const rule of rules) {
+    for (const rule of rules.filter(r => latestFeeRule(rules, r.feeHeadId, r.className) === r)) {
       if (this.feeGrid[rule.className]) {
         this.feeGrid[rule.className][rule.feeHeadId] = rule.amount / 100;
       } else {
@@ -200,6 +240,8 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
   }
 
   changeSession(session: AcademicSession): void {
+    if (this.saving || this.destroyed) return;
+    const origin = this.currentSession;
     if (this.isEditing) {
       this.toast.confirm({
         title: 'Confirm Navigation',
@@ -207,7 +249,7 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
         confirmText: 'Yes, continue!',
         cancelText: 'No, stay here',
       }).then((confirmed) => {
-        if (confirmed) {
+        if (confirmed && !this.destroyed && !this.saving && this.currentSession === origin) {
           this.currentSession = session;
           this.isEditing = false;
           this.loadRules();
@@ -220,77 +262,34 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
     }
   }
 
-  edit(): void {
-    this.isEditing = true;
-    this.cdr.markForCheck();
-  }
+  edit(): void { if (this.canSave()) { this.isEditing = true; this.cdr.markForCheck(); } }
 
   save(): void {
-    if (!this.currentSession) return;
-    this.toast.confirm({
-      title: 'Save Changes?',
-      message: 'Do you want to save the fee structure changes?',
-      confirmText: 'Save',
-      cancelText: 'Cancel',
-    }).then((confirmed) => {
-      if (!confirmed) return;
-
-      this.isEditing = false;
-      this.cdr.markForCheck();
-
-      const sessionId = this.currentSession!.id;
-      const today = new Date().toISOString().split('T')[0];
-
-      // Build save calls per class
-      const saveCalls: { [cls: string]: Observable<FeeStructureRule[]> } = {};
-      for (const cls of this.classes) {
-        const rules: FeeStructureRule[] = this.feeHeads
-          .filter(fh => (this.feeGrid[cls]?.[fh.id!] ?? 0) > 0)
-          .map(fh => ({
-            feeHeadId: fh.id!,
-            academicSessionId: sessionId,
-            className: cls,
-            amount: Math.round((this.feeGrid[cls][fh.id!] || 0) * 100), // rupees → paise
-            effectiveFrom: today,
-          }));
-
-        // Issue #22: Validate no duplicate fee head IDs per class
-        const feeHeadIds = rules.map((r: any) => r.feeHeadId ?? r.feeHead?.id);
-        const uniqueIds = new Set(feeHeadIds.filter(Boolean));
-        if (uniqueIds.size !== feeHeadIds.filter(Boolean).length) {
-          this.isEditing = true;
-          this.cdr.markForCheck();
-          this.toast.error('Duplicate Fee Heads', 'Each fee head can only appear once per class.');
-          return;
-        }
-
-        if (rules.length > 0) {
-          saveCalls[cls] = this.feeRuleService.saveRulesForClass(sessionId, cls, rules);
-        }
+    if (!this.canSave() || !this.loaded) return;
+    const context = this.loaded;
+    const payloads: { [cls: string]: FeeStructureRule[] } = {};
+    try {
+      for (const cls of [...this.classes]) {
+        const rows = this.feeHeads.map(fh => ({ feeHeadId: fh.id!, academicSessionId: context.session.id, className: cls,
+          amount: Math.round((this.feeGrid[cls]?.[fh.id!] ?? 0) * 100), effectiveFrom: context.session.startDate }));
+        if (rows.length) payloads[cls] = feeRuleWrite(rows, this.loadedRules, context.session, cls, this.effectiveDate, this.schoolToday);
       }
-
-      if (Object.keys(saveCalls).length === 0) {
-        this.originalGrid = JSON.parse(JSON.stringify(this.feeGrid));
-        this.toast.success('Saved', 'Fee structure saved (no amounts set).');
-        return;
-      }
-
-      forkJoin(saveCalls).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
-          this.originalGrid = JSON.parse(JSON.stringify(this.feeGrid));
-          this.toast.success('Saved', `Fee structure for ${this.currentSession!.label} saved.`);
-        },
-        error: (err) => {
-          this.isEditing = true;
-          this.cdr.markForCheck();
-          this.logger.error('Error saving fee structure:', err);
-          this.toast.error('Error', 'Failed to save. Please try again.');
-        }
+    } catch (error) { this.toast.error('Effective date / amount', (error as Error).message); return; }
+    if (!Object.keys(payloads).length) { this.toast.info('No changes', 'No fee heads are available to save.'); return; }
+    this.saving = true; this.cdr.markForCheck();
+    this.toast.confirm({ title: 'Save Changes?', message: `Save fee rules for ${context.session.label}?`, confirmText: 'Save', cancelText: 'Cancel' }).then(confirmed => {
+      if (!confirmed || !this.matches(context)) { this.saving = false; if (!this.destroyed) this.cdr.markForCheck(); return; }
+      const calls = Object.fromEntries(Object.entries(payloads).map(([cls, payload]) => [cls, this.feeRuleService.saveRulesForClass(context.session.id, cls, payload)]));
+      forkJoin(calls).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => { this.saving = false; if (!this.matches(context)) return; this.isEditing = false; this.toast.success('Saved', `Fee structure for ${context.session.label} saved.`); this.loadRules(); },
+        error: e => { this.saving = false; if (!this.matches(context)) return; this.isEditing = true; this.toast.error('Error', typeof e?.error === 'string' ? e.error : e?.error?.message || 'Could not save fee rules.'); this.cdr.markForCheck(); }
       });
     });
   }
 
   cancel(): void {
+    if (this.saving || !this.loaded) return;
+    const context = this.loaded;
     this.toast.confirm({
       title: 'Cancel Editing?',
       message: 'Are you sure you want to discard your changes?',
@@ -298,7 +297,7 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
       cancelText: 'No, keep editing',
       danger: true,
     }).then((confirmed) => {
-      if (confirmed) {
+      if (confirmed && !this.saving && this.matches(context)) {
         this.isEditing = false;
         this.feeGrid = JSON.parse(JSON.stringify(this.originalGrid));
         this.cdr.markForCheck();

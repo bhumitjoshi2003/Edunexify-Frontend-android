@@ -1,14 +1,15 @@
+import { schoolDateKey, studentExitDateError } from '../../utils/school-date.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../services/toast.service';
-import { Subject, forkJoin, takeUntil, switchMap } from 'rxjs';
-import { Location } from '@angular/common';
+import { Subject, takeUntil } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
@@ -16,6 +17,8 @@ import { Section } from '../../interfaces/section';
 import { GuardianLink } from '../../interfaces/parent-portal';
 import { ParentPortalService } from '../../services/parent-portal.service';
 import { StudentExitRequest, PendingDuesInfo, EnrollmentHistoryItem, StudentLoginStatus } from '../../interfaces/student';
+import { ClassSectionConfig } from '../../utils/class-section-config';
+import { passwordPolicyViolation } from '../../utils/password-policy.util';
 
 interface StudentDetails {
   studentId?: string;
@@ -82,19 +85,22 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     { value: 7, label: 'October' }, { value: 8, label: 'November' }, { value: 9, label: 'December' },
     { value: 10, label: 'January' }, { value: 11, label: 'February' }, { value: 12, label: 'March' }
   ];
-  classList: string[] = [];
-  managedClasses: SchoolClass[] = [];
-  sections: Section[] = [];
+  /** Class list, managed classes and the edited class's sections (see utils/class-section-config.ts).
+   * Created in ngOnInit; the profile itself never waits on it. */
+  config!: ClassSectionConfig;
+  get classList(): string[] { return this.config?.classList ?? []; }
+  get managedClasses(): SchoolClass[] { return this.config?.managedClasses ?? []; }
+  get sections(): Section[] { return this.config?.sections ?? []; }
 
   // Exit modal state
   showExitModal = false;
   exitLoading = false;
-  acknowledgedDues: boolean = false;
+  acknowledgedDues = false;
   exitRequest: StudentExitRequest = {
     exitType: 'WITHDRAWN',
     reasonForLeaving: '',
     conductAtLeaving: '',
-    leavingDate: new Date().toISOString().split('T')[0],
+    leavingDate: schoolDateKey(),
     exitRemarks: ''
   };
   pendingDues: PendingDuesInfo | null = null;
@@ -135,32 +141,32 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     public router: Router,
     private studentService: StudentService,
     private authService: AuthService,
-    private location: Location,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService,
     private schoolService: SchoolService,
+    private toast: ToastService,
     private sectionService: SectionService
   ) { }
 
   ngOnInit(): void {
+    // Resolved first: the details load below decides what to fetch based on the role.
     this.role = this.authService.getUserRole();
+    if (this.role === 'ADMIN') {
+      this.schoolService.getSettings().pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        next: settings => { this.schoolTimezone = settings.timezone || 'Asia/Kolkata'; this.cdr.markForCheck(); },
+        error: err => this.logger.error('Could not load school timezone; using the default school zone', err),
+      });
+    }
+    // Class configuration loads independently of the profile: a slow or failed class list only
+    // gates the class/section edit controls, never the profile itself.
+    this.config = new ClassSectionConfig({
+      getClasses: () => this.schoolService.getClasses(),
+      getManagedClasses: () => this.schoolService.getManagedClasses(),
+      getSectionsForClass: (classId) => this.sectionService.getSectionsForClass(classId),
+    }, () => this.cdr.markForCheck(), this.ngUnsubscribe);
+    this.config.load();
 
-    // Load both class lists first, then process route params.
-    // This ensures managedClasses is populated before loadStudentDetails
-    // calls loadSectionsForClass — preventing the race where sections never load.
-    forkJoin({
-      classes: this.schoolService.getClasses(),
-      managedClasses: this.schoolService.getManagedClasses(),
-    }).pipe(
-      takeUntil(this.ngUnsubscribe),
-      switchMap(({ classes, managedClasses }) => {
-        this.classList = classes;
-        this.managedClasses = managedClasses;
-        this.cdr.markForCheck();
-        return this.route.params;
-      })
-    ).subscribe((params) => {
+    this.route.params.pipe(takeUntil(this.ngUnsubscribe)).subscribe((params) => {
       this.studentId = params['studentId'];
       if (this.studentId) {
         this.loadStudentDetails(this.studentId);
@@ -194,7 +200,7 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     return this.role;
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authState.hasFeature(featureKey);
   }
 
@@ -202,6 +208,7 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     this.toast.confirm({
       title: 'Are you sure?',
       message: 'Do you want to edit the details?',
+      icon: 'warning',
       confirmText: 'Yes, edit it!',
       cancelText: 'Cancel',
     }).then((confirmed) => {
@@ -232,6 +239,13 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     if (!this.updatedDetails.name || this.updatedDetails.name.trim().length === 0) {
       this.validationErrors['name'] = true;
       errors.push("Student Name is mandatory.");
+      isValid = false;
+    }
+
+    // Section: required whenever the selected class has sections (B5-2).
+    if (!this.isExitStatus() && this.sections.length > 0 && this.updatedDetails.sectionId == null) {
+      this.validationErrors['sectionId'] = true;
+      errors.push("Select a section for this class.");
       isValid = false;
     }
 
@@ -268,10 +282,11 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
 
     if (!isValid) {
       this.toast.confirm({
+        icon: 'danger',
         title: 'Validation Failed',
         html: `<ul style="text-align: left;">${errors.map(err => `<li>${err}</li>`).join('')}</ul>`,
         confirmText: 'OK',
-        icon: 'danger',
+        danger: true,
       });
     }
 
@@ -280,6 +295,10 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
 
   async saveStudentDetails(): Promise<void> {
     if (!this.validateFields()) {
+      return;
+    }
+    if (this.updatedDetails?.className !== this.studentDetails?.className && this.config.sectionsPending) {
+      this.toast.warning('Sections still loading', 'Please wait for the section list, then choose a section if needed.');
       return;
     }
 
@@ -292,7 +311,6 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
         needsEffectiveMonth = true;
       }
     }
-
 
     if (needsEffectiveMonth) {
       const month = await this.toast.selectMonth({
@@ -428,8 +446,10 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
       this.toast.error('Error', 'New password and confirmation are required');
       return;
     }
-    if (this.cpNewPw.length < 6) {
-      this.toast.error('Error', 'New password must be at least 6 characters');
+    // The backend's password rule (utils/password-policy.util.ts); the value is sent exactly as typed.
+    const passwordError = passwordPolicyViolation(this.cpNewPw, 'New password');
+    if (passwordError) {
+      this.toast.error('Error', passwordError);
       return;
     }
     if (this.cpNewPw !== this.cpConfirmPw) {
@@ -492,9 +512,8 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
       this.toast.error('Unsupported File Type', 'Profile photo must be a JPEG, PNG, or WebP image.');
       return;
     }
-    // Issue #58: File size check
     if (file.size > 5 * 1024 * 1024) {
-      this.toast.error('File Too Large', 'Profile photo must be less than 5MB.');
+      this.toast.error('File Too Large', 'Photo must be under 5 MB.');
       return;
     }
 
@@ -523,22 +542,19 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
   }
 
   loadSectionsForClass(className: string): void {
-    const cls = this.managedClasses.find(c => c.name === className);
-    if (!cls) { this.sections = []; return; }
-    this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
-      next: sections => { this.sections = sections; this.cdr.markForCheck(); },
-      error: () => { this.sections = []; }
-    });
+    this.config.selectClass(className);
   }
 
   onClassChangeInEdit(className: string): void {
-    this.sections = [];
     if (this.updatedDetails) {
       this.updatedDetails.sectionId = undefined;
       this.updatedDetails.sectionName = undefined;
     }
     this.loadSectionsForClass(className);
   }
+
+  private schoolTimezone = 'Asia/Kolkata';
+  get todayStr(): string { return schoolDateKey(new Date(), this.schoolTimezone); }
 
   // ── Exit Workflow ──────────────────────────────────────────────────
 
@@ -674,16 +690,12 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
     return e?.message || e?.detail || fallback;
   }
 
-  get todayStr(): string {
-    return new Date().toISOString().split('T')[0];
-  }
-
   openExitModal(): void {
     this.exitRequest = {
       exitType: 'WITHDRAWN',
       reasonForLeaving: '',
       conductAtLeaving: '',
-      leavingDate: new Date().toISOString().split('T')[0],
+      leavingDate: this.todayStr,
       exitRemarks: ''
     };
     this.pendingDues = null;
@@ -713,24 +725,11 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
       this.toast.error('Required', 'Please set a leaving date.');
       return;
     }
+    const dateError = studentExitDateError(this.exitRequest.leavingDate, this.studentDetails?.joiningDate, this.todayStr);
+    if (dateError) { this.toast.error('Invalid Date', dateError); return; }
 
-    // Issue #34: Validate leaving date is not in the future and not before joining date
-    if (this.exitRequest.leavingDate) {
-      const leaving = new Date(this.exitRequest.leavingDate);
-      const today = new Date(); today.setHours(23, 59, 59, 999);
-      if (leaving > today) {
-        this.toast.error('Invalid Date', 'Leaving date cannot be in the future.');
-        return;
-      }
-      if (this.studentDetails?.joiningDate && leaving < new Date(this.studentDetails.joiningDate)) {
-        this.toast.error('Invalid Date', 'Leaving date cannot be before the student\'s joining date.');
-        return;
-      }
-    }
-
-    // Issue #12: Block exit if pending dues are unacknowledged
     if (this.pendingDues?.hasPendingDues && !this.acknowledgedDues) {
-      this.toast.error('Pending Dues', 'Student has outstanding fees. Please acknowledge before proceeding with exit.');
+      this.toast.error('Pending Dues', 'Please acknowledge the pending dues before proceeding.');
       return;
     }
 
@@ -856,9 +855,5 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
       },
       error: () => { /* optional follow-up; readmission itself already succeeded */ }
     });
-  }
-
-  goBack(): void {
-    this.location.back();
   }
 }

@@ -1,4 +1,5 @@
 <div class="payment-container">
-  <button (click)="initiatePayment()" class="pay-btn" [disabled]="this.paymentData.totalAmount === 0 || disabled">Pay
-    Now</button>
+  <button type="button" (click)="initiatePayment()" class="pay-btn" [disabled]="!canPay" [attr.aria-busy]="processing">
+    {{ buttonLabel }}
+  </button>
 </div>

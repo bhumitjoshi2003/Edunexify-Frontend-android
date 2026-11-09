@@ -52,3 +52,18 @@
 .fhm-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 60px 20px; color: #64748b; font-size: 0.88rem; background: #fff; border-radius: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
 .fhm-spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #7c3aed; border-radius: 50%; animation: fhm-spin 0.8s linear infinite; }
 @keyframes fhm-spin { to { transform: rotate(360deg); } }
+
+/* Review notice — shown only when a stored schedule looks like the older month format. */
+.fhm-review { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 16px;
+  background: #fffbeb; border: 1px solid #fde68a; }
+.fhm-review-icon { font-size: 1.2rem; line-height: 1; margin-top: 2px; }
+.fhm-review-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fhm-review-title { margin: 0; font-size: 0.85rem; font-weight: 800; color: #78350f; }
+.fhm-review-text { margin: 0; font-size: 0.78rem; line-height: 1.45; color: #92400e; }
+.fhm-review-list { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.fhm-review-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 0.78rem; }
+.fhm-review-link { border: 0; background: none; padding: 0; font: inherit; font-weight: 800; color: #b45309;
+  text-decoration: underline; cursor: pointer; }
+.fhm-review-meta { color: #a16207; overflow-wrap: anywhere; }
+.fhm-row--review { box-shadow: inset 3px 0 0 #f59e0b; }
+.fhm-badge-review { background: #fef3c7; color: #92400e; }

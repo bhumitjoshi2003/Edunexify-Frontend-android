@@ -13,11 +13,11 @@
     <div class="fr-form-row">
       <div class="fr-field">
         <label class="fr-label">Student ID</label>
-        <input class="fr-input" [(ngModel)]="studentId" placeholder="e.g. STU1024">
+        <input class="fr-input" [(ngModel)]="studentId" (ngModelChange)="onSessionChange()" placeholder="e.g. STU1024">
       </div>
       <div class="fr-field">
         <label class="fr-label">Session</label>
-        <input class="fr-input" [(ngModel)]="session" placeholder="e.g. 2025-2026">
+        <input class="fr-input" [(ngModel)]="session" (ngModelChange)="onSessionChange()" placeholder="e.g. 2025-2026">
       </div>
     </div>
 

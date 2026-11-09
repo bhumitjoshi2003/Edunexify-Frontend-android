@@ -1,0 +1,368 @@
+<!-- Inline icons (SVG, so buttons keep plain-text labels). -->
+<ng-template #iconCard><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="M2.5 10h19M6.5 15h4"/></svg></ng-template>
+<ng-template #iconBank><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 4l9 6M5 10v8m4-8v8m6-8v8m4-8v8M3 20h18"/></svg></ng-template>
+<ng-template #iconSpark><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5m7 7L18 18M18 6l-2.5 2.5m-7 7L6 18"/></svg></ng-template>
+<ng-template #iconCheck><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></ng-template>
+<ng-template #iconShield><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m8.8 12 2.2 2.2 4.4-4.4"/></svg></ng-template>
+<ng-template #iconKey><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m11 12 8.5-8.5M16 7l2.5 2.5M14 9l2 2"/></svg></ng-template>
+<ng-template #iconExternal><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></ng-template>
+<ng-template #iconCopy><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></svg></ng-template>
+<ng-template #iconClock><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></ng-template>
+<ng-template #iconAlert><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.8 19.5h18.4L12 4Z"/><path d="M12 10v4m0 3h.01"/></svg></ng-template>
+<ng-template #iconLock><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></ng-template>
+<ng-template #iconLink><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></ng-template>
+
+<section class="pc-card" data-testid="payment-connection" [attr.data-state]="step === null ? state : 'wizard'">
+  <header class="pc-header">
+    <div class="pc-icon"><ng-container [ngTemplateOutlet]="iconCard"></ng-container></div>
+    <div class="pc-heading">
+      <h2 class="pc-title">Online Payments</h2>
+      <p class="pc-subtitle">Let parents pay school fees online, straight to your school's bank account.</p>
+    </div>
+    <span class="pc-status" *ngIf="overview && step === null" data-testid="connection-status"
+          [class.pc-status-ok]="state === 'connected'"
+          [class.pc-status-wait]="state === 'waiting' || state === 'finish-setup'"
+          [class.pc-status-off]="state === 'not-connected' || state === 'unavailable'">
+      <span class="pc-status-dot" aria-hidden="true"></span>
+      <ng-container [ngSwitch]="state">
+        <ng-container *ngSwitchCase="'connected'">Connected</ng-container>
+        <ng-container *ngSwitchCase="'waiting'">Waiting for approval</ng-container>
+        <ng-container *ngSwitchCase="'finish-setup'">Almost done</ng-container>
+        <ng-container *ngSwitchDefault>Not connected</ng-container>
+      </ng-container>
+    </span>
+  </header>
+
+  <div class="pc-skeleton" *ngIf="loading && !overview" aria-label="Loading">
+    <span></span><span></span><span></span>
+  </div>
+  <div class="pc-callout pc-callout-neutral" *ngIf="loadFailed && !overview">
+    <span class="pc-callout-icon"><ng-container [ngTemplateOutlet]="iconAlert"></ng-container></span>
+    <span class="pc-callout-text">We couldn't load your online payment settings.</span>
+    <button type="button" class="pc-btn pc-btn-ghost pc-btn-sm" (click)="load()">Try again</button>
+  </div>
+
+  <ng-container *ngIf="overview">
+
+    <!-- ══════════ STATUS (outside the wizard) ══════════ -->
+    <ng-container *ngIf="step === null">
+
+      <div class="pc-callout pc-callout-info" *ngIf="usingTemporaryEdunexifyAccount" data-testid="temporary-account">
+        <span class="pc-callout-icon"><ng-container [ngTemplateOutlet]="iconClock"></ng-container></span>
+        <span class="pc-callout-text">
+          Online payments are temporarily handled through Edunexify until
+          <strong>{{ overview.platformFallbackUntil | date:'d MMM yyyy' }}</strong>
+          (a small online convenience fee applies). Connect your own Razorpay account before then.
+        </span>
+      </div>
+
+      <div class="pc-callout pc-callout-warn" *ngIf="notApproved as na" data-testid="not-approved">
+        <span class="pc-callout-icon"><ng-container [ngTemplateOutlet]="iconAlert"></ng-container></span>
+        <span class="pc-callout-text">
+          Your Razorpay connection wasn't approved<ng-container *ngIf="na.statusReason">: {{ na.statusReason }}</ng-container>.
+          Please connect again.
+        </span>
+      </div>
+
+      <ng-container [ngSwitch]="state">
+
+        <!-- Not connected -->
+        <div *ngSwitchCase="'not-connected'" class="pc-body pc-enter" data-testid="state-not-connected">
+          <div class="pc-intro">
+            <p class="pc-intro-lead">Connect your school's Razorpay account and parents can pay fees online. The money goes
+              directly to your school — Edunexify adds no extra fee.</p>
+            <ul class="pc-benefits">
+              <li>
+                <span class="pc-benefit-icon pc-tint-blue"><ng-container [ngTemplateOutlet]="iconBank"></ng-container></span>
+                <span><strong>Paid to your bank</strong><small>Fees settle in your school's own Razorpay account.</small></span>
+              </li>
+              <li>
+                <span class="pc-benefit-icon pc-tint-green"><ng-container [ngTemplateOutlet]="iconCheck"></ng-container></span>
+                <span><strong>Marked paid automatically</strong><small>No manual entry once a parent pays.</small></span>
+              </li>
+              <li>
+                <span class="pc-benefit-icon pc-tint-indigo"><ng-container [ngTemplateOutlet]="iconShield"></ng-container></span>
+                <span><strong>Reviewed for safety</strong><small>Edunexify checks every connection before it goes live.</small></span>
+              </li>
+            </ul>
+            <div class="pc-cta-row">
+              <button type="button" class="pc-btn pc-btn-primary pc-btn-lg" (click)="startWizard()" data-testid="connect">
+                Connect Razorpay
+              </button>
+              <span class="pc-cta-hint">Takes about 5 minutes · keep your Razorpay login handy</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngSwitchCase="'unavailable'" class="pc-body pc-enter" data-testid="state-unavailable">
+          <div class="pc-callout pc-callout-neutral">
+            <span class="pc-callout-icon"><ng-container [ngTemplateOutlet]="iconClock"></ng-container></span>
+            <span class="pc-callout-text">Online payment setup is temporarily unavailable. Please contact Edunexify support.</span>
+          </div>
+        </div>
+
+        <!-- Keys verified, Razorpay side not finished -->
+        <div *ngSwitchCase="'finish-setup'" class="pc-body pc-enter" data-testid="state-finish-setup">
+          <div class="pc-status-panel pc-panel-wait">
+            <div class="pc-panel-copy">
+              <p class="pc-panel-title">One last step in Razorpay.</p>
+              <p>Your Razorpay account was verified. Finish the setup in Razorpay so Edunexify can confirm payments automatically.</p>
+              <button type="button" class="pc-btn pc-btn-primary" (click)="askToReveal(waiting!)">Finish Razorpay setup</button>
+            </div>
+            <ng-container *ngTemplateOutlet="tracker; context: { $implicit: waiting! }"></ng-container>
+          </div>
+        </div>
+
+        <!-- Waiting for approval -->
+        <div *ngSwitchCase="'waiting'" class="pc-body pc-enter" data-testid="state-waiting">
+          <div class="pc-status-panel pc-panel-wait">
+            <div class="pc-panel-copy">
+              <p class="pc-panel-title">Waiting for Edunexify approval</p>
+              <p>We're reviewing your Razorpay connection. Online payments will become available after approval.</p>
+              <button type="button" class="pc-btn pc-btn-link" (click)="askToReveal(waiting!)">View setup instructions again</button>
+            </div>
+            <ng-container *ngTemplateOutlet="tracker; context: { $implicit: waiting! }"></ng-container>
+          </div>
+        </div>
+
+        <!-- Connected -->
+        <div *ngSwitchCase="'connected'" class="pc-body pc-enter" data-testid="state-connected">
+          <div class="pc-success">
+            <span class="pc-success-badge"><ng-container [ngTemplateOutlet]="iconCheck"></ng-container></span>
+            <p>Parents can now pay fees directly to your school through Razorpay.</p>
+          </div>
+          <dl class="pc-facts" *ngIf="connected as c">
+            <div class="pc-fact">
+              <dt>Razorpay account</dt>
+              <dd><code class="pc-mono">{{ c.maskedKeyId }}</code></dd>
+            </div>
+            <div class="pc-fact">
+              <dt>Connected on</dt>
+              <dd>{{ c.activatedAt | date:'d MMM yyyy' }}</dd>
+            </div>
+            <div class="pc-fact" [class.pc-fact-ok]="confirmationsWorking">
+              <dt>Payment confirmations</dt>
+              <dd data-testid="confirmations">
+                <ng-container *ngIf="confirmationsWorking; else notYet">
+                  <span class="pc-live-dot" aria-hidden="true"></span>Working — last received {{ c.lastWebhookAt | date:'d MMM yyyy, h:mm a' }}
+                </ng-container>
+                <ng-template #notYet><span class="pc-muted-inline">Not received yet — this updates after the first online payment.</span></ng-template>
+              </dd>
+            </div>
+          </dl>
+
+          <div class="pc-callout pc-callout-info" *ngIf="waiting as w" data-testid="switch-waiting">
+            <span class="pc-callout-icon"><ng-container [ngTemplateOutlet]="iconClock"></ng-container></span>
+            <span class="pc-callout-text">
+              <ng-container *ngIf="w.setupConfirmedAt; else switchSetup">
+                Your new Razorpay account ({{ w.maskedKeyId }}) is waiting for Edunexify approval. The current account keeps
+                working until then.
+              </ng-container>
+              <ng-template #switchSetup>
+                Your new Razorpay account ({{ w.maskedKeyId }}) was verified.
+                <button type="button" class="pc-btn pc-btn-link" (click)="askToReveal(w)">Finish its Razorpay setup</button>
+              </ng-template>
+            </span>
+          </div>
+
+          <details class="pc-manage">
+            <summary>Manage connection</summary>
+            <div class="pc-manage-body">
+              <button type="button" class="pc-manage-item" (click)="askToReveal(connected!)">
+                <span class="pc-manage-icon"><ng-container [ngTemplateOutlet]="iconLink"></ng-container></span>
+                <span><strong>View setup instructions</strong><small>See the Razorpay setup details again.</small></span>
+              </button>
+              <button type="button" class="pc-manage-item" (click)="startWizard()">
+                <span class="pc-manage-icon"><ng-container [ngTemplateOutlet]="iconKey"></ng-container></span>
+                <span><strong>Connect a different Razorpay account</strong><small>Your current account keeps working until a new one is approved.</small></span>
+              </button>
+            </div>
+          </details>
+        </div>
+      </ng-container>
+
+      <!-- Password before showing the setup details again -->
+      <form *ngIf="revealFor" class="pc-reveal pc-enter" (ngSubmit)="reveal()" data-testid="reveal-form">
+        <div class="pc-reveal-head">
+          <span class="pc-reveal-icon"><ng-container [ngTemplateOutlet]="iconLock"></ng-container></span>
+          <p>For your security, confirm your Edunexify password to see the setup details.</p>
+        </div>
+        <input type="text" class="pc-hidden-username" name="username" autocomplete="username" [value]="username"
+               readonly tabindex="-1" aria-hidden="true">
+        <label class="pc-label" for="pcRevealPassword">Your Edunexify password</label>
+        <input id="pcRevealPassword" name="current-password" class="pc-input" type="password"
+               autocomplete="current-password" [(ngModel)]="revealPassword">
+        <p class="pc-error" *ngIf="revealError" role="alert">{{ revealError }}</p>
+        <div class="pc-actions">
+          <button type="button" class="pc-btn pc-btn-ghost" (click)="cancelReveal()">Cancel</button>
+          <button type="submit" class="pc-btn pc-btn-primary" [disabled]="revealing">{{ revealing ? 'Checking…' : 'Continue' }}</button>
+        </div>
+      </form>
+    </ng-container>
+
+    <!-- ══════════ WIZARD ══════════ -->
+    <div *ngIf="step !== null" class="pc-wizard" data-testid="wizard">
+      <ol class="pc-stepper" aria-label="Progress">
+        <li *ngFor="let label of stepLabels; let i = index"
+            [class.pc-stepper-done]="step > i + 1" [class.pc-stepper-now]="step === i + 1"
+            [attr.aria-current]="step === i + 1 ? 'step' : null">
+          <span class="pc-stepper-dot">
+            <ng-container *ngIf="step > i + 1; else stepNum"><ng-container [ngTemplateOutlet]="iconCheck"></ng-container></ng-container>
+            <ng-template #stepNum>{{ i + 1 }}</ng-template>
+          </span>
+          <span class="pc-stepper-label">{{ label }}</span>
+        </li>
+      </ol>
+      <p class="pc-step-label">Step {{ step }} of 4</p>
+
+      <!-- STEP 1 -->
+      <div *ngIf="step === 1" class="pc-step pc-enter" data-testid="step-1">
+        <h3 class="pc-step-title">Open your school's Razorpay account</h3>
+        <p class="pc-step-lead">You'll need two values from Razorpay to connect your account securely.</p>
+        <div class="pc-hint-card">
+          <div class="pc-mode-demo" aria-hidden="true">
+            <span class="pc-mode-off">Test mode</span>
+            <span class="pc-mode-switch"><span></span></span>
+            <span class="pc-mode-on">Live mode</span>
+          </div>
+          <p class="pc-muted">Make sure the switch at the top of Razorpay says <strong>Live mode</strong>.</p>
+        </div>
+        <div class="pc-actions">
+          <a class="pc-btn pc-btn-ghost" [href]="razorpayDashboardUrl" target="_blank" rel="noopener noreferrer">
+            Open Razorpay Dashboard <span class="pc-btn-icon"><ng-container [ngTemplateOutlet]="iconExternal"></ng-container></span>
+          </a>
+          <button type="button" class="pc-btn pc-btn-primary" (click)="ready()">I'm ready</button>
+        </div>
+        <button type="button" class="pc-btn pc-btn-link pc-cancel" (click)="cancelWizard()">Cancel</button>
+      </div>
+
+      <!-- STEP 2 — Razorpay values only; no password field in this form -->
+      <form *ngIf="step === 2" class="pc-step pc-enter" data-testid="step-2" autocomplete="off" (ngSubmit)="continueFromKeys()">
+        <h3 class="pc-step-title">Copy your Razorpay keys</h3>
+        <p class="pc-step-lead">In Razorpay, go to <span class="pc-path">Account &amp; Settings</span> → <span class="pc-path">API Keys</span> →
+          <span class="pc-path">Generate Key</span>, then copy the two values here.</p>
+        <div class="pc-field">
+          <label class="pc-label" for="pcRzpKeyId">Razorpay Key ID</label>
+          <input id="pcRzpKeyId" name="rzp-key-id" class="pc-input pc-input-mono" type="text" [(ngModel)]="keyId"
+                 placeholder="rzp_live_…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                 data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+        </div>
+        <div class="pc-field">
+          <label class="pc-label" for="pcRzpKeySecret">Razorpay Key Secret</label>
+          <div class="pc-input-row">
+            <input id="pcRzpKeySecret" name="rzp-key-secret" class="pc-input pc-input-mono" type="text" [(ngModel)]="keySecret"
+                   [class.pc-masked]="canMaskText && !showKeySecret"
+                   autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                   data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+            <button type="button" class="pc-btn pc-btn-ghost" *ngIf="canMaskText" (click)="showKeySecret = !showKeySecret"
+                    [attr.aria-pressed]="showKeySecret">{{ showKeySecret ? 'Hide' : 'Show' }}</button>
+          </div>
+        </div>
+        <p class="pc-muted">Both values come directly from Razorpay. Razorpay shows the Key Secret only once, so copy it now.</p>
+        <p class="pc-error" *ngIf="stepError" role="alert">{{ stepError }}</p>
+        <div class="pc-actions">
+          <button type="button" class="pc-btn pc-btn-ghost" (click)="back()">Back</button>
+          <button type="submit" class="pc-btn pc-btn-primary">Continue</button>
+        </div>
+      </form>
+
+      <!-- STEP 3 — Edunexify password only; a separate form from the Razorpay values -->
+      <form *ngIf="step === 3" class="pc-step pc-enter" data-testid="step-3" (ngSubmit)="verify()">
+        <div class="pc-step-head">
+          <span class="pc-step-icon pc-tint-indigo"><ng-container [ngTemplateOutlet]="iconShield"></ng-container></span>
+          <div>
+            <h3 class="pc-step-title">Confirm it's you</h3>
+            <p class="pc-step-lead">Enter your Edunexify password. We'll then check your keys with Razorpay.</p>
+          </div>
+        </div>
+        <input type="text" class="pc-hidden-username" name="username" autocomplete="username" [value]="username"
+               readonly tabindex="-1" aria-hidden="true">
+        <div class="pc-field">
+          <label class="pc-label" for="pcPassword">Your Edunexify password</label>
+          <input id="pcPassword" name="current-password" class="pc-input" type="password" autocomplete="current-password"
+                 [(ngModel)]="password">
+        </div>
+        <p class="pc-error" *ngIf="stepError" role="alert">{{ stepError }}</p>
+        <div class="pc-actions">
+          <button type="button" class="pc-btn pc-btn-ghost" (click)="back()" [disabled]="verifying">Back</button>
+          <button type="submit" class="pc-btn pc-btn-primary" [class.pc-btn-busy]="verifying" [disabled]="verifying">
+            {{ verifying ? 'Checking with Razorpay…' : 'Verify Razorpay account' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- STEP 4 -->
+      <div *ngIf="step === 4 && setup as s" class="pc-step pc-enter" data-testid="step-4">
+        <h3 class="pc-step-title">Finish Razorpay setup</h3>
+        <p class="pc-step-lead">Razorpay needs one final connection so Edunexify can automatically confirm successful payments.</p>
+
+        <div class="pc-copy-grid">
+          <div class="pc-copy-field">
+            <span class="pc-label">Connection URL</span>
+            <div class="pc-copy-box">
+              <code class="pc-value" data-testid="connection-url">{{ s.connectionUrl }}</code>
+              <button type="button" class="pc-btn pc-btn-copy" (click)="copy(s.connectionUrl, 'Connection URL')">
+                <span class="pc-btn-icon"><ng-container [ngTemplateOutlet]="iconCopy"></ng-container></span>Copy
+              </button>
+            </div>
+          </div>
+          <div class="pc-copy-field">
+            <span class="pc-label">Security code</span>
+            <div class="pc-copy-box">
+              <code class="pc-value" data-testid="security-code">{{ showSecurityCode ? s.securityCode : '••••••••••••••••' }}</code>
+              <button type="button" class="pc-btn pc-btn-ghost pc-btn-sm" (click)="showSecurityCode = !showSecurityCode">
+                {{ showSecurityCode ? 'Hide' : 'Show' }}
+              </button>
+              <button type="button" class="pc-btn pc-btn-copy" (click)="copy(s.securityCode, 'Security code')">
+                <span class="pc-btn-icon"><ng-container [ngTemplateOutlet]="iconCopy"></ng-container></span>Copy
+              </button>
+            </div>
+            <p class="pc-muted"><span class="pc-inline-icon"><ng-container [ngTemplateOutlet]="iconLock"></ng-container></span>
+              Keep this code private. Edunexify created it for your school.</p>
+          </div>
+        </div>
+
+        <div class="pc-help" data-testid="razorpay-instructions">
+          <p class="pc-help-title">In Razorpay:</p>
+          <ol class="pc-timeline">
+            <li><a [href]="razorpayDashboardUrl" target="_blank" rel="noopener noreferrer">Open Razorpay Dashboard ↗</a>
+              (in <strong>Live mode</strong>)</li>
+            <li>Go to <strong>Account &amp; Settings → Webhooks</strong></li>
+            <li>Click <strong>Add New Webhook</strong></li>
+            <li>Paste the <em>Connection URL</em> into the box called <strong>Webhook URL</strong></li>
+            <li>Paste the <em>Security code</em> into the box called <strong>Secret</strong></li>
+            <li>Under <strong>Active Events</strong>, tick exactly these:
+              <span class="pc-events">
+                <span class="pc-event" *ngFor="let ev of s.razorpayEvents"><strong>{{ ev }}</strong></span>
+              </span>
+            </li>
+            <li>Click <strong>Create Webhook</strong></li>
+          </ol>
+        </div>
+
+        <div class="pc-actions pc-actions-end">
+          <button type="button" class="pc-btn pc-btn-ghost" (click)="closeSetup()">I'll do this later</button>
+          <button type="button" class="pc-btn pc-btn-primary" (click)="completeSetup()" [disabled]="confirming">
+            {{ confirming ? 'Saving…' : 'I\'ve completed this in Razorpay' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</section>
+
+<!-- Progress tracker for a verified connection (waiting / almost done). -->
+<ng-template #tracker let-g>
+  <ol class="pc-tracker" aria-label="Connection progress">
+    <li *ngFor="let t of trackerFor(g)" [class.pc-tracker-done]="t.done" [class.pc-tracker-now]="t.current">
+      <span class="pc-tracker-dot">
+        <ng-container *ngIf="t.done"><ng-container [ngTemplateOutlet]="iconCheck"></ng-container></ng-container>
+      </span>
+      <span class="pc-tracker-text">
+        <span class="pc-tracker-label">{{ t.label }}</span>
+        <span class="pc-tracker-detail" *ngIf="t.detail">{{ t.detail | date:'d MMM, h:mm a' }}</span>
+        <span class="pc-tracker-detail" *ngIf="!t.detail && t.current">In progress</span>
+      </span>
+    </li>
+  </ol>
+</ng-template>

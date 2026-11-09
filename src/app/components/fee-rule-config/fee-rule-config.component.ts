@@ -1,3 +1,5 @@
+import { AuthStateService } from '../../auth/auth-state.service';
+import { feeSchoolKey, feeRuleWrite, latestFeeRule } from '../../utils/fee-editor.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +13,7 @@ import { FeeStructureRule } from '../../interfaces/fee-rule';
 import { AcademicSession } from '../../interfaces/academic-session';
 import { ToastService } from '../../services/toast.service';
 import { LoggerService } from '../../services/logger.service';
+import { schoolDateKey } from '../../utils/school-date.util';
 
 @Component({
   selector: 'app-fee-rule-config',
@@ -22,6 +25,19 @@ import { LoggerService } from '../../services/logger.service';
 })
 export class FeeRuleConfigComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private ruleRequest$ = new Subject<void>();
+  private generation = 0;
+  private destroyed = false;
+  private loaded: { school: string; session: AcademicSession; cls: string; generation: number } | null = null;
+  private history: FeeStructureRule[] = [];
+  rulesError = '';
+  effectiveDate = '';
+  timezone = 'Asia/Kolkata';
+  get schoolToday(): string { return schoolDateKey(new Date(), this.timezone); }
+  canSave(): boolean { return !!this.loaded && !this.rulesLoading && !this.saving && !this.rulesError && this.matches(this.loaded); }
+  private matches(c: NonNullable<FeeRuleConfigComponent['loaded']>): boolean {
+    return !this.destroyed && c.school === feeSchoolKey(this.authState) && c.session.id === this.selectedSessionId && c.cls === this.selectedClass && c.generation === this.generation;
+  }
 
   sessions: AcademicSession[] = [];
   classes: string[] = [];
@@ -36,6 +52,7 @@ export class FeeRuleConfigComponent implements OnInit, OnDestroy {
   editing = false;
 
   constructor(
+    private authState: AuthStateService,
     private feeHeadService: FeeHeadService,
     private feeRuleService: FeeRuleService,
     private sessionService: AcademicSessionService,
@@ -46,6 +63,8 @@ export class FeeRuleConfigComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    const initialSchool = feeSchoolKey(this.authState);
+    if (typeof this.schoolService.getSettings === 'function') this.schoolService.getSettings().pipe(takeUntil(this.destroy$)).subscribe({next: s => { this.timezone = s.timezone || this.timezone; }, error: () => {} });
     this.isLoading = true;
     forkJoin({
       sessions: this.sessionService.getAllSessions(),
@@ -53,6 +72,7 @@ export class FeeRuleConfigComponent implements OnInit, OnDestroy {
       feeHeads: this.feeHeadService.getActiveFeeHeads(),
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ sessions, classes, feeHeads }) => {
+        if (this.destroyed || initialSchool !== feeSchoolKey(this.authState)) return;
         this.sessions = sessions;
         this.classes = classes;
         this.feeHeads = feeHeads;
@@ -62,6 +82,8 @@ export class FeeRuleConfigComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (e) => {
+        if (this.destroyed || initialSchool !== feeSchoolKey(this.authState)) return;
+        this.rulesError = 'Could not load fee editor setup. Please retry.';
         this.logger.error('Failed to load config data', e);
         this.toast.error('Error', 'Failed to load data.');
         this.isLoading = false;
@@ -71,80 +93,57 @@ export class FeeRuleConfigComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true; this.generation++; this.ruleRequest$.next();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  retryLoad(): void { if (!this.sessions.length || !this.feeHeads.length) { this.rulesError = ''; this.ngOnInit(); } else this.loadRules(); }
+
   onFilterChange(): void {
-    if (this.selectedSessionId && this.selectedClass) {
-      this.loadRules();
-    }
-  }
-
-  loadRules(): void {
-    if (!this.selectedSessionId || !this.selectedClass) return;
-    this.rulesLoading = true;
-    this.editing = false;
-    this.cdr.markForCheck();
-    this.feeRuleService.getRulesBySessionAndClass(this.selectedSessionId, this.selectedClass)
-      .pipe(takeUntil(this.destroy$)).subscribe({
-        next: (rules) => {
-          // Ensure one rule per fee head
-          this.rules = this.feeHeads.map(fh => {
-            const existing = rules.find(r => r.feeHeadId === fh.id);
-            return existing ?? {
-              feeHeadId: fh.id!,
-              feeHeadName: fh.name,
-              feeHeadCode: fh.code,
-              academicSessionId: this.selectedSessionId!,
-              className: this.selectedClass,
-              amount: 0,
-              effectiveFrom: new Date().toISOString().split('T')[0],
-            };
-          });
-          this.rulesLoading = false;
-          this.cdr.markForCheck();
-        },
-        error: (e) => {
-          this.logger.error('Failed to load rules', e);
-          this.toast.error('Error', 'Failed to load fee rules.');
-          this.rulesLoading = false;
-          this.cdr.markForCheck();
-        }
-      });
-  }
-
-  startEditing(): void {
-    this.editing = true;
-    this.cdr.markForCheck();
-  }
-
-  cancelEditing(): void {
-    this.editing = false;
+    if (this.saving) { if (this.loaded) { this.selectedSessionId = this.loaded.session.id; this.selectedClass = this.loaded.cls; } return; }
     this.loadRules();
   }
 
-  saveRules(): void {
-    if (!this.selectedSessionId || !this.selectedClass) return;
-    this.saving = true;
-    this.cdr.markForCheck();
-    this.feeRuleService.saveRulesForClass(this.selectedSessionId, this.selectedClass, this.rules)
-      .pipe(takeUntil(this.destroy$)).subscribe({
-        next: (saved) => {
-          this.rules = saved;
-          this.editing = false;
-          this.saving = false;
-          this.toast.success('Saved', 'Fee rules saved.');
-          this.cdr.markForCheck();
+  loadRules(): void {
+    if (this.saving || this.destroyed) return;
+    this.ruleRequest$.next(); const generation = ++this.generation;
+    this.rules = []; this.history = []; this.loaded = null; this.rulesError = ''; this.rulesLoading = false; this.editing = false; this.effectiveDate = '';
+    const session = this.sessions.find(s => s.id === this.selectedSessionId);
+    if (!session || !this.selectedClass) { this.cdr.markForCheck(); return; }
+    const context = { school: feeSchoolKey(this.authState), session: { ...session }, cls: this.selectedClass, generation };
+    this.rulesLoading = true; this.cdr.markForCheck();
+    this.feeRuleService.getRulesBySessionAndClass(context.session.id, context.cls)
+      .pipe(takeUntil(this.ruleRequest$), takeUntil(this.destroy$)).subscribe({
+        next: history => {
+          if (!this.matches(context)) return;
+          this.history = history.map(r => ({ ...r }));
+          this.rules = this.feeHeads.map(fh => ({ ...(latestFeeRule(history, fh.id!, context.cls) ?? {
+            feeHeadId: fh.id!, feeHeadName: fh.name, feeHeadCode: fh.code, academicSessionId: context.session.id,
+            className: context.cls, amount: 0, effectiveFrom: context.session.startDate,
+          }) }));
+          this.loaded = context; this.rulesLoading = false; this.cdr.markForCheck();
         },
-        error: (e) => {
-          this.logger.error('Failed to save rules', e);
-          this.toast.error('Error', 'Could not save fee rules.');
-          this.saving = false;
-          this.cdr.markForCheck();
-        }
+        error: () => { if (!this.matches(context)) return; this.rulesError = 'Could not load fee rules. Please retry.'; this.rulesLoading = false; this.cdr.markForCheck(); }
       });
   }
+
+  startEditing(): void { if (this.canSave()) { this.editing = true; this.cdr.markForCheck(); } }
+  cancelEditing(): void { if (!this.saving) this.loadRules(); }
+  saveRules(): void {
+    if (!this.canSave() || !this.loaded) return;
+    const context = this.loaded;
+    let payload: FeeStructureRule[];
+    try { payload = feeRuleWrite(this.rules, this.history, context.session, context.cls, this.effectiveDate, this.schoolToday); }
+    catch (error) { this.toast.error('Effective date / amount', (error as Error).message); return; }
+    this.saving = true; this.cdr.markForCheck();
+    this.feeRuleService.saveRulesForClass(context.session.id, context.cls, payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.saving = false; if (!this.matches(context)) return; this.editing = false; this.toast.success('Saved', 'Fee rules saved.'); this.loadRules(); },
+      error: e => { this.saving = false; if (!this.matches(context)) return; this.toast.error('Error', typeof e?.error === 'string' ? e.error : e?.error?.message || 'Could not save fee rules.'); this.cdr.markForCheck(); }
+    });
+  }
+
+  loadedSessionEnd(): string { return this.loaded?.session.endDate ?? ''; }
 
   formatAmount(paise: number): string {
     return (paise / 100).toFixed(2);

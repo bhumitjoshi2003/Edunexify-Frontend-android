@@ -1,7 +1,11 @@
+import { AcademicSessionService } from '../../services/academic-session.service';
+import { AcademicSession } from '../../interfaces/academic-session';
+import { feeMonthLabel } from '../../utils/fee-session.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, take, takeUntil } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { FeesService } from '../../services/fees.service';
 import { SchoolService } from '../../services/school.service';
 import { FeesCalculationService } from '../../services/fees-calculation.service';
@@ -30,6 +34,8 @@ interface PreviewRow extends RecalculationEntry {
 })
 export class FeeRecalculationComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private request$ = new Subject<void>();
+  sessions: AcademicSession[] = [];
 
   studentId = '';
   session = '';
@@ -47,23 +53,48 @@ export class FeeRecalculationComponent implements OnInit, OnDestroy {
     private feesService: FeesService,
     private schoolService: SchoolService,
     private feesCalc: FeesCalculationService,
+    private sessionsApi: AcademicSessionService,
     private toast: ToastService,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
-    this.schoolService.getSettings().pipe(take(1), takeUntil(this.destroy$)).subscribe({
-      next: (settings) => {
-        this.feesCalc.setStartMonth(settings.academicYearStartMonth ?? 4);
-        this.monthOptions = Array.from({ length: 12 }, (_, i) => {
-          const month = i + 1;
-          return { month, name: this.feesCalc.getMonthName(month), selectedForPreview: false };
-        });
+    // Opened from Fee Assignment → History & Reconciliation for one unresolved month: prefill the
+    // student, session and month(s). Nothing runs until the admin previews and applies.
+    const params = this.route.snapshot.queryParamMap;
+    this.studentId = params.get('studentId') ?? this.studentId;
+    this.session = params.get('session') ?? this.session;
+    const prefillMonths = (params.get('months') ?? '').split(',').map(Number)
+      .filter(m => Number.isInteger(m) && m >= 1 && m <= 12);
+    const prefill = () => {
+      this.onSessionChange();
+      if (prefillMonths.length) {
+        this.monthOptions.forEach(m => m.selectedForPreview = prefillMonths.includes(m.month));
         this.cdr.markForCheck();
-      },
-      error: (e) => this.logger.error('Failed to load school settings; month names may default to an April-start school.', e),
+      }
+    };
+    this.sessionsApi.getAllSessions().pipe(take(1), takeUntil(this.destroy$)).subscribe({
+      next: sessions => { this.sessions = sessions; prefill(); },
+      error: e => { this.logger.error('Session dates unavailable', e); prefill(); },
     });
+  }
+
+  onSessionChange(): void {
+    this.request$.next();
+    this.previewRows = [];
+    this.applyResults = null;
+    this.previewRequested = false;
+    this.loadingPreview = false;
+    this.monthOptions = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1, name: this.monthLabel(i + 1), selectedForPreview: false,
+    }));
+    this.cdr.markForCheck();
+  }
+
+  private monthLabel(month: number): string {
+    return feeMonthLabel(this.sessions.find(s => s.label === this.session)?.startDate, month);
   }
 
   ngOnDestroy(): void {
@@ -96,7 +127,7 @@ export class FeeRecalculationComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     this.feesService.previewRecalculation(this.studentId.trim(), this.session.trim(), months)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.request$), takeUntil(this.destroy$))
       .subscribe({
         next: (entries) => {
           this.previewRows = entries.map(e => this.toPreviewRow(e));
@@ -114,7 +145,7 @@ export class FeeRecalculationComponent implements OnInit, OnDestroy {
   }
 
   private toPreviewRow(e: RecalculationEntry): PreviewRow {
-    return { ...e, monthName: this.feesCalc.getMonthName(e.month), includeInApply: e.ok };
+    return { ...e, monthName: this.monthLabel(e.month), includeInApply: e.ok };
   }
 
   toggleIncludeInApply(row: PreviewRow): void {
@@ -146,7 +177,7 @@ export class FeeRecalculationComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     this.feesService.applyRecalculation(this.studentId.trim(), this.session.trim(), monthsToApply, this.reason.trim())
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.request$), takeUntil(this.destroy$))
       .subscribe({
         next: (entries) => {
           this.applyResults = entries.map(e => this.toPreviewRow(e));

@@ -10,12 +10,16 @@
 
   <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="isLoading" aria-busy="true" aria-label="Loading fee rules">
     <div class="edu-sk-grid">
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
     </div>
     <div class="edu-sk-panel">
       <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
-      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
     </div>
   </div>
 
@@ -25,14 +29,14 @@
     <div class="frc-filters">
       <div class="frc-field">
         <label class="frc-label">Session</label>
-        <select class="frc-select" [(ngModel)]="selectedSessionId" (ngModelChange)="onFilterChange()">
+        <select [disabled]="saving" class="frc-select" [(ngModel)]="selectedSessionId" (ngModelChange)="onFilterChange()">
           <option [ngValue]="null" disabled>Select session</option>
           <option *ngFor="let s of sessions" [ngValue]="s.id">{{ s.label }}{{ s.current ? ' (Current)' : '' }}</option>
         </select>
       </div>
       <div class="frc-field">
         <label class="frc-label">Class</label>
-        <select class="frc-select" [(ngModel)]="selectedClass" (ngModelChange)="onFilterChange()">
+        <select [disabled]="saving" class="frc-select" [(ngModel)]="selectedClass" (ngModelChange)="onFilterChange()">
           <option value="" disabled>Select class</option>
           <option *ngFor="let c of classes" [value]="c">{{ c }}</option>
         </select>
@@ -44,8 +48,9 @@
       <p>Loading rules...</p>
     </div>
 
+    <div role="alert" class="frc-card" *ngIf="rulesError">{{ rulesError }} <button (click)="retryLoad()">Retry</button></div>
     <!-- Rules table -->
-    <div class="frc-card" *ngIf="!rulesLoading && rules.length > 0">
+    <div class="frc-card" *ngIf="!rulesLoading && !rulesError && rules.length > 0">
       <div class="frc-card-header">
         <h2 class="frc-card-title">Fee amounts for {{ selectedClass }}</h2>
         <button class="frc-btn frc-btn-outline" (click)="startEditing()" *ngIf="!editing">Edit</button>
@@ -60,7 +65,7 @@
           <span class="frc-td frc-td-name">{{ rule.feeHeadName || getFeeHeadName(rule.feeHeadId) }}</span>
           <span class="frc-td frc-td-amount" *ngIf="!editing">{{ rule.amount }}</span>
           <input class="frc-input frc-td-amount" *ngIf="editing"
-            type="number" [(ngModel)]="rule.amount" min="0">
+            type="number" [(ngModel)]="rule.amount" [disabled]="saving" min="0">
         </div>
         <div class="frc-table-footer">
           <span class="frc-tf">Total</span>
@@ -68,9 +73,13 @@
         </div>
       </div>
 
+      <div class="frc-effective" *ngIf="editing">
+        <label>Changes effective from <input type="date" [(ngModel)]="effectiveDate" [min]="schoolToday" [max]="loadedSessionEnd()" [disabled]="saving"></label>
+        <p>Choose a date for changed amounts. First-time rules cover the session; unchanged amounts keep their dates.</p>
+      </div>
       <div class="frc-form-actions" *ngIf="editing">
         <button class="frc-btn frc-btn-outline" (click)="cancelEditing()">Cancel</button>
-        <button class="frc-btn frc-btn-primary" (click)="saveRules()" [disabled]="saving">
+        <button class="frc-btn frc-btn-primary" (click)="saveRules()" [disabled]="!canSave()">
           {{ saving ? 'Saving...' : 'Save Rules' }}
         </button>
       </div>

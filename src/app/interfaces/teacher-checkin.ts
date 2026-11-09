@@ -42,6 +42,9 @@ export interface TeacherAttendanceSummary {
   onTimePercentage: number;
   attendancePercentage: number;
   trackingStartDate: string | null;
+  /** Own current-month summary only: whether this teacher is expected to attend today
+   *  (false on a holiday, their day off or approved leave); null/absent otherwise. */
+  expectedToday?: boolean | null;
   records: TeacherAttendanceRecord[];
 }
 
@@ -73,5 +76,14 @@ export interface TeacherAttendanceTodaySummary {
   absentCount: number;
   halfDayCount: number;
   onLeaveCount: number;
+  /** Teachers expected to attend today — 0 on a holiday. */
+  expectedCount: number;
+  /** Expected teachers with no attendance record yet. */
   notCheckedInCount: number;
+}
+
+/** A teacher who can be marked on a date: expected to attend and not recorded yet. */
+export interface MarkableTeacher {
+  teacherId: string;
+  name: string;
 }

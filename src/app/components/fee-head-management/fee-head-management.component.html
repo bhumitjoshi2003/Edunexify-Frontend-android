@@ -13,16 +13,38 @@
 
   <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="isLoading" aria-busy="true" aria-label="Loading fee heads">
     <div class="edu-sk-grid">
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
     </div>
     <div class="edu-sk-panel">
       <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
-      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
     </div>
   </div>
-
   <ng-container *ngIf="!isLoading">
+
+    <!-- Only when a stored schedule looks like the older month format. Nothing is changed for the school. -->
+    <div class="fhm-review" *ngIf="!showForm && suspiciousSchedules.length" role="status" data-testid="fee-head-review">
+      <div class="fhm-review-icon">⚠️</div>
+      <div class="fhm-review-body">
+        <p class="fhm-review-title">Some fee schedules may need a quick review</p>
+        <p class="fhm-review-text">
+          {{ suspiciousSchedules.length === 1 ? 'This fee head' : 'These fee heads' }} may have been set up with an older
+          month format. Please check the due months below are what you intend before generating fees. Nothing has been
+          changed automatically.
+        </p>
+        <ul class="fhm-review-list">
+          <li *ngFor="let head of suspiciousSchedules">
+            <button type="button" class="fhm-review-link" (click)="openEdit(head)">{{ head.name }}</button>
+            <span class="fhm-review-meta">{{ head.code }} · {{ getFrequencyLabel(head.frequency) }} · due {{ parseDueMonths(head.dueMonths) }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <!-- Form overlay -->
     <div class="fhm-card" *ngIf="showForm">
@@ -91,7 +113,7 @@
       </div>
 
       <div class="fhm-list" *ngIf="feeHeads.length > 0">
-        <div class="fhm-row" *ngFor="let fh of feeHeads" (click)="openEdit(fh)">
+        <div class="fhm-row" *ngFor="let fh of feeHeads" (click)="openEdit(fh)" [class.fhm-row--review]="needsReview(fh)">
           <div class="fhm-row-main">
             <span class="fhm-row-name">{{ fh.name }}</span>
             <span class="fhm-row-code">{{ fh.code }}</span>
@@ -100,6 +122,7 @@
             <span class="fhm-badge">{{ getFrequencyLabel(fh.frequency) }}</span>
             <span class="fhm-badge fhm-badge-dim" *ngIf="fh.optional">Optional</span>
             <span class="fhm-badge fhm-badge-inactive" *ngIf="!fh.active">Inactive</span>
+            <span class="fhm-badge fhm-badge-review" *ngIf="needsReview(fh)">Review schedule</span>
           </div>
           <div class="fhm-row-months">{{ parseDueMonths(fh.dueMonths) }}</div>
         </div>

@@ -1,49 +1,51 @@
 /* ── Form Wrapper ─────────────────────────────────────────────── */
 .rt-wrap {
-  padding: 16px 16px 20px;
-  font-family: 'Segoe UI', sans-serif;
+  padding: 24px 28px 28px;
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
 }
 
 /* ── Sections ─────────────────────────────────────────────────── */
 .rt-section {
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .rt-section-label {
-  margin: 0 0 10px;
-  font-size: 0.66rem;
+  margin: 0 0 11px;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #059669;
-  padding-left: 9px;
+  padding-left: 10px;
   border-left: 3px solid #059669;
 }
 
 .rt-section-hint {
-  margin: -4px 0 12px;
-  font-size: 0.76rem;
+  margin: -6px 0 14px;
+  font-size: 0.78rem;
   color: #6b7280;
 }
 
-/* ── Grid — always single column on Android ───────────────────── */
+/* ── Grid ─────────────────────────────────────────────────────── */
 .rt-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
 }
 
-.rt-field-full { grid-column: 1; }
+.rt-field-full {
+  grid-column: 1 / -1;
+}
 
 /* ── Field ────────────────────────────────────────────────────── */
 .rt-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .rt-label {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -54,14 +56,14 @@
 
 .rt-input {
   width: 100%;
-  padding: 9px 11px;
+  padding: 9px 12px;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   background: #f8fafc;
   color: #1e293b;
   font-family: inherit;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
@@ -71,6 +73,7 @@
 .rt-input:focus {
   border-color: #059669;
   background: #fff;
+  box-shadow: 0 0 0 3px rgba(5,150,105,0.1);
 }
 
 .rt-select {
@@ -78,12 +81,12 @@
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 12px;
-  padding-right: 28px;
+  padding-right: 30px;
   cursor: pointer;
 }
 
 .rt-err {
-  font-size: 0.7rem;
+  font-size: 0.71rem;
   color: #ef4444;
   font-weight: 500;
 }
@@ -91,40 +94,50 @@
 /* ── Actions ──────────────────────────────────────────────────── */
 .rt-actions {
   display: flex;
-  gap: 8px;
-  padding-top: 14px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
   border-top: 1px solid #f1f5f9;
   margin-top: 4px;
 }
 
 .rt-btn-cancel,
 .rt-btn-save {
-  flex: 1;
-  padding: 11px 16px;
+  padding: 10px 24px;
   border: none;
   border-radius: 10px;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  text-align: center;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
 .rt-btn-cancel {
   background: #f1f5f9;
   color: #64748b;
 }
-.rt-btn-cancel:active { background: #e2e8f0; }
+.rt-btn-cancel:hover { background: #e2e8f0; }
 
 .rt-btn-save {
   background: linear-gradient(135deg, #059669, #34d399);
   color: #fff;
-  box-shadow: 0 3px 10px rgba(5,150,105,0.28);
+  box-shadow: 0 4px 12px rgba(5,150,105,0.28);
 }
-.rt-btn-save:active { opacity: 0.85; }
+.rt-btn-save:hover { opacity: 0.9; transform: translateY(-1px); }
+.rt-btn-save:active { transform: translateY(0); }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .rt-wrap { padding: 18px 16px 22px; }
+  .rt-grid { grid-template-columns: 1fr; }
+  .rt-field-full { grid-column: 1; }
+  .rt-actions { justify-content: stretch; }
+  .rt-btn-cancel, .rt-btn-save { flex: 1; text-align: center; }
+}
 
 .rt-btn-cancel:disabled,
-.rt-btn-save:disabled { cursor: not-allowed; opacity: 0.65; }
+.rt-btn-save:disabled { cursor: not-allowed; opacity: 0.65; transform: none; }
 
 .rt-registering-overlay {
   position: fixed;

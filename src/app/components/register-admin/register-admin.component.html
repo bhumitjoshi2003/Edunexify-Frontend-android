@@ -1,118 +1,76 @@
-<div class="ra-page">
+<div class="registration-container">
+    <div class="form-card">
+        <div class="card-header">
+            <h2>Register New Administrator</h2>
+            <p>Fill in the details to create a new administrative account.</p>
+        </div>
 
-  <!-- ── Hero ──────────────────────────────────────────────────────── -->
-  <div class="ra-hero">
-    <div class="ra-hero-left">
-      <div class="ra-hero-icon">👤</div>
-      <div>
-        <h1 class="ra-hero-title">Register Admin</h1>
-        <p class="ra-hero-sub">Create a new administrator account</p>
-      </div>
+        <form #regForm="ngForm" (ngSubmit)="onSubmit(regForm)" novalidate>
+            <div class="form-grid">
+
+                <div class="field-group" *ngIf="isSuperAdmin" style="grid-column: 1 / -1;">
+                    <label>School <span class="req">*</span></label>
+                    <select name="schoolId" [(ngModel)]="adminData.schoolId" #schoolField="ngModel" required [disabled]="schoolsLoading">
+                        <option [ngValue]="null" disabled>{{ schoolsLoading ? 'Loading schools…' : '— Select a school —' }}</option>
+                        <option *ngFor="let s of schools" [ngValue]="s.id">{{ schoolLabel(s) }}</option>
+                    </select>
+                    <small class="error-text" *ngIf="schoolField.invalid && schoolField.touched">School is required</small>
+                </div>
+
+                <div class="field-group">
+                    <label>Admin ID <span class="req">*</span></label>
+                    <input type="text" name="adminId" [(ngModel)]="adminData.adminId" #adminId="ngModel" required maxlength="100" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,99}"
+                        placeholder="ADM-001" [class.invalid-field]="adminId.invalid && adminId.touched">
+                    <small class="error-text" *ngIf="adminId.invalid && adminId.touched">ID is required</small>
+                </div>
+
+                <div class="field-group">
+                    <label>Full Name <span class="req">*</span></label>
+                    <input type="text" name="name" [(ngModel)]="adminData.name" #name="ngModel" required maxlength="255"
+                        placeholder="John Doe" [class.invalid-field]="name.invalid && name.touched">
+                    <small class="error-text" *ngIf="name.invalid && name.touched">Name is required</small>
+                </div>
+
+                <div class="field-group">
+                    <label>Email Address <span class="req">*</span></label>
+                    <input type="email" name="email" [(ngModel)]="adminData.email" #email="ngModel" required email
+                        placeholder="admin@example.com" [class.invalid-field]="email.invalid && email.touched">
+                    <small class="error-text" *ngIf="email.invalid && email.touched">Valid email required</small>
+                </div>
+
+                <div class="field-group">
+                    <label>Phone Number <span class="req">*</span></label>
+                    <input type="text" name="phone" [(ngModel)]="adminData.phoneNumber" #phone="ngModel" required
+                        pattern="^[0-9]{10}$" placeholder="10-digit number"
+                        [class.invalid-field]="phone.invalid && phone.touched">
+                    <small class="error-text" *ngIf="phone.invalid && phone.touched">10 digits required</small>
+                </div>
+
+                <div class="field-group">
+                    <label>Gender <span class="req">*</span></label>
+                    <select name="gender" [(ngModel)]="adminData.gender" #gender="ngModel" required
+                        [class.invalid-field]="gender.invalid && gender.touched">
+                        <option value="" disabled selected>Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <small class="error-text" *ngIf="gender.invalid && gender.touched">Gender is required</small>
+                </div>
+
+                <div class="field-group">
+                    <label>Date of Birth <span class="req">*</span></label>
+                    <input type="date" name="dob" [(ngModel)]="adminData.dob" #dob="ngModel" required
+                        [class.invalid-field]="dob.invalid && dob.touched">
+                    <small class="error-text" *ngIf="dob.invalid && dob.touched">DOB is required</small>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" (click)="cancel()">Cancel</button>
+                <button type="submit" class="btn-submit">Register Admin</button>
+            </div>
+        </form>
     </div>
-    <div class="ra-blob ra-blob-1"></div>
-    <div class="ra-blob ra-blob-2"></div>
-  </div>
-
-  <!-- ── Form card ─────────────────────────────────────────────────── -->
-  <div class="ra-card">
-    <h2 class="ra-card-title">
-      <span class="ra-card-title-icon">📋</span>
-      Account Details
-    </h2>
-
-    <form #regForm="ngForm" (ngSubmit)="onSubmit(regForm)" novalidate>
-      <div class="ra-grid">
-
-        <div class="ra-field ra-field-full" *ngIf="isSuperAdmin">
-          <label class="ra-label">School <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">🏫</span>
-            <select name="schoolId" class="ra-input ra-select" [(ngModel)]="adminData.schoolId"
-              #schoolField="ngModel" required [disabled]="schoolsLoading"
-              [class.ra-invalid]="schoolField.invalid && schoolField.touched">
-              <option [ngValue]="null" disabled>{{ schoolsLoading ? 'Loading schools…' : '— Select a school —' }}</option>
-              <option *ngFor="let s of schools" [ngValue]="s.id">{{ schoolLabel(s) }}</option>
-            </select>
-          </div>
-          <small class="ra-error-text" *ngIf="schoolField.invalid && schoolField.touched">School is required</small>
-        </div>
-
-        <div class="ra-field">
-          <label class="ra-label">Admin ID <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">🆔</span>
-            <input type="text" name="adminId" class="ra-input" [(ngModel)]="adminData.adminId"
-              #adminId="ngModel" required placeholder="ADM-001"
-              [class.ra-invalid]="adminId.invalid && adminId.touched">
-          </div>
-          <small class="ra-error-text" *ngIf="adminId.invalid && adminId.touched">ID is required</small>
-        </div>
-
-        <div class="ra-field">
-          <label class="ra-label">Full Name <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">👤</span>
-            <input type="text" name="name" class="ra-input" [(ngModel)]="adminData.name"
-              #name="ngModel" required placeholder="John Doe"
-              [class.ra-invalid]="name.invalid && name.touched">
-          </div>
-          <small class="ra-error-text" *ngIf="name.invalid && name.touched">Name is required</small>
-        </div>
-
-        <div class="ra-field">
-          <label class="ra-label">Email Address <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">📧</span>
-            <input type="email" name="email" class="ra-input" [(ngModel)]="adminData.email"
-              #email="ngModel" required email placeholder="admin@example.com"
-              [class.ra-invalid]="email.invalid && email.touched">
-          </div>
-          <small class="ra-error-text" *ngIf="email.invalid && email.touched">Valid email required</small>
-        </div>
-
-        <div class="ra-field">
-          <label class="ra-label">Phone Number <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">📞</span>
-            <input type="text" name="phone" class="ra-input" [(ngModel)]="adminData.phoneNumber"
-              #phone="ngModel" required pattern="^[0-9]{10}$" placeholder="10-digit number"
-              [class.ra-invalid]="phone.invalid && phone.touched">
-          </div>
-          <small class="ra-error-text" *ngIf="phone.invalid && phone.touched">10 digits required</small>
-        </div>
-
-        <div class="ra-field">
-          <label class="ra-label">Gender <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">⚧</span>
-            <select name="gender" class="ra-input ra-select" [(ngModel)]="adminData.gender"
-              #gender="ngModel" required [class.ra-invalid]="gender.invalid && gender.touched">
-              <option value="" disabled selected>Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <small class="ra-error-text" *ngIf="gender.invalid && gender.touched">Gender is required</small>
-        </div>
-
-        <div class="ra-field">
-          <label class="ra-label">Date of Birth <span class="ra-req">*</span></label>
-          <div class="ra-input-wrap">
-            <span class="ra-input-icon">📅</span>
-            <input type="date" name="dob" class="ra-input" [(ngModel)]="adminData.dob"
-              #dob="ngModel" required [class.ra-invalid]="dob.invalid && dob.touched">
-          </div>
-          <small class="ra-error-text" *ngIf="dob.invalid && dob.touched">Date of birth is required</small>
-        </div>
-
-      </div>
-
-      <div class="ra-actions">
-        <button type="button" class="ra-btn ra-btn-cancel" (click)="cancel()">Cancel</button>
-        <button type="submit" class="ra-btn ra-btn-submit">Register Admin</button>
-      </div>
-    </form>
-  </div>
-
 </div>

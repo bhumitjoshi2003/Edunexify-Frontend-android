@@ -1,0 +1,226 @@
+<div class="pp-page">
+
+  <!-- ── Hero ───────────────────────────────────────────────────────── -->
+  <div class="pp-hero">
+    <div class="pp-blob pp-blob-1"></div>
+    <div class="pp-blob pp-blob-2"></div>
+    <div class="pp-hero-left">
+      <div class="pp-hero-icon">💳</div>
+      <div>
+        <h1 class="pp-hero-title">Payment Pricing</h1>
+        <p class="pp-hero-sub">Global Razorpay &amp; Edunexify pricing — applies to every school, not a per-school setting.</p>
+      </div>
+    </div>
+    <button type="button" class="pp-btn pp-btn-hero" *ngIf="!loading && !loadError" (click)="openForm()">
+      + Schedule New Pricing
+    </button>
+  </div>
+
+  <!-- ── Loading ──────────────────────────────────────────────────────── -->
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading payment pricing">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
+
+  <!-- ── Error ───────────────────────────────────────────────────────── -->
+  <div class="pp-card pp-error-card" *ngIf="!loading && loadError">
+    <div class="pp-empty-icon">⚠️</div>
+    <p class="pp-empty-title">Could not load payment pricing</p>
+    <p class="pp-empty-sub">Something went wrong while contacting the server. Please try again.</p>
+    <button type="button" class="pp-btn pp-btn-primary" (click)="retry()">Retry</button>
+  </div>
+
+  <!-- ── Empty (never configured) ───────────────────────────────────── -->
+  <div class="pp-card pp-empty-card" *ngIf="isEmpty">
+    <div class="pp-empty-icon">💸</div>
+    <p class="pp-empty-title">Payment pricing has not been configured yet.</p>
+    <p class="pp-empty-sub">Online payments are unavailable to parents and students until an initial pricing version is created.</p>
+    <button type="button" class="pp-btn pp-btn-primary pp-btn-lg" (click)="openForm()">
+      + Create Initial Pricing
+    </button>
+  </div>
+
+  <ng-container *ngIf="!loading && !loadError && !isEmpty">
+
+    <!-- ── Current Pricing ──────────────────────────────────────────── -->
+    <div class="pp-card">
+      <div class="pp-card-header">
+        <div class="pp-card-title-row">
+          <div class="pp-card-icon-box">💰</div>
+          <div>
+            <h2 class="pp-card-title">Current Pricing</h2>
+            <p class="pp-card-subtitle">What parents are charged on every online payment right now</p>
+          </div>
+        </div>
+        <div class="pp-status-badge pp-status-active" *ngIf="current">ACTIVE</div>
+      </div>
+
+      <div *ngIf="current" class="pp-grid">
+        <div class="pp-grid-item">
+          <span class="pp-grid-label">Razorpay Gateway Rate</span>
+          <span class="pp-grid-value">{{ bpsToPercent(current.gatewayRateBps) }}%</span>
+        </div>
+        <div class="pp-grid-item">
+          <span class="pp-grid-label">Gateway GST</span>
+          <span class="pp-grid-value">{{ bpsToPercent(current.gatewayTaxRateBps) }}%</span>
+        </div>
+        <div class="pp-grid-item">
+          <span class="pp-grid-label">Edunexify Transaction Fee</span>
+          <span class="pp-grid-value">&#8377;{{ paiseToRupees(current.edunexifyTransactionFeePaise) }}</span>
+        </div>
+        <div class="pp-grid-item">
+          <span class="pp-grid-label">Effective Since</span>
+          <span class="pp-grid-value pp-grid-value-sm">{{ current.effectiveFrom | date: 'd MMM yyyy, h:mm a' }}</span>
+        </div>
+      </div>
+
+      <div class="pp-inline-empty" *ngIf="!current">
+        <span class="pp-inline-empty-icon">⏳</span>
+        <span>No pricing is active right now — see Upcoming Pricing below for the next scheduled version.</span>
+      </div>
+    </div>
+
+    <!-- ── Upcoming Pricing ─────────────────────────────────────────── -->
+    <div class="pp-card" *ngIf="scheduled.length">
+      <div class="pp-card-header">
+        <div class="pp-card-title-row">
+          <div class="pp-card-icon-box pp-icon-box-amber">🗓️</div>
+          <div>
+            <h2 class="pp-card-title">Upcoming Pricing</h2>
+            <p class="pp-card-subtitle">Scheduled changes that have not taken effect yet</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pp-upcoming-row" *ngFor="let c of scheduled">
+        <div class="pp-upcoming-main">
+          <div class="pp-upcoming-values">
+            <span class="pp-upcoming-item">
+              <span class="pp-grid-label">Gateway Rate</span>
+              <span class="pp-upcoming-change" *ngIf="current">{{ bpsToPercent(current.gatewayRateBps) }}% &rarr; </span>
+              <strong>{{ bpsToPercent(c.gatewayRateBps) }}%</strong>
+            </span>
+            <span class="pp-upcoming-item">
+              <span class="pp-grid-label">Gateway GST</span>
+              <span class="pp-upcoming-change" *ngIf="current">{{ bpsToPercent(current.gatewayTaxRateBps) }}% &rarr; </span>
+              <strong>{{ bpsToPercent(c.gatewayTaxRateBps) }}%</strong>
+            </span>
+            <span class="pp-upcoming-item">
+              <span class="pp-grid-label">Edunexify Fee</span>
+              <span class="pp-upcoming-change" *ngIf="current">&#8377;{{ paiseToRupees(current.edunexifyTransactionFeePaise) }} &rarr; </span>
+              <strong>&#8377;{{ paiseToRupees(c.edunexifyTransactionFeePaise) }}</strong>
+            </span>
+          </div>
+          <div class="pp-upcoming-meta">
+            <span class="pp-status-badge pp-status-scheduled">SCHEDULED</span>
+            <span class="pp-upcoming-date">Effective {{ c.effectiveFrom | date: 'd MMM yyyy, h:mm a' }}</span>
+          </div>
+        </div>
+        <button type="button" class="pp-btn pp-btn-danger-ghost" (click)="cancelScheduled(c)">Cancel Scheduled Change</button>
+      </div>
+    </div>
+
+    <!-- ── Pricing History ──────────────────────────────────────────── -->
+    <div class="pp-card" *ngIf="history.length">
+      <div class="pp-card-header">
+        <div class="pp-card-title-row">
+          <div class="pp-card-icon-box pp-icon-box-indigo">📜</div>
+          <div>
+            <h2 class="pp-card-title">Pricing History</h2>
+            <p class="pp-card-subtitle">Previous and cancelled pricing versions</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pp-table-wrap">
+        <table class="pp-table">
+          <thead>
+            <tr>
+              <th>Rate</th>
+              <th>GST</th>
+              <th>Edunexify Fee</th>
+              <th>Effective From</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of history">
+              <td>{{ bpsToPercent(c.gatewayRateBps) }}%</td>
+              <td>{{ bpsToPercent(c.gatewayTaxRateBps) }}%</td>
+              <td>&#8377;{{ paiseToRupees(c.edunexifyTransactionFeePaise) }}</td>
+              <td>{{ c.effectiveFrom | date: 'd MMM yyyy, h:mm a' }}</td>
+              <td>
+                <span class="pp-status-badge" [class.pp-status-cancelled]="c.status === 'CANCELLED'"
+                      [class.pp-status-historical]="c.status === 'HISTORICAL'">{{ c.status }}</span>
+              </td>
+              <td class="pp-table-meta">
+                <span *ngIf="c.createdBy">{{ c.createdBy }}<br></span>
+                <span *ngIf="c.cancelledBy" class="pp-table-meta-cancelled">cancelled by {{ c.cancelledBy }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ── Schedule / Create Pricing modal ─────────────────────────────── -->
+  <div class="pp-modal-overlay" *ngIf="showForm" (click)="cancelForm()">
+    <div class="pp-modal" (click)="$event.stopPropagation()">
+      <h3 class="pp-modal-title">Schedule New Pricing Version</h3>
+      <p class="pp-modal-note">This never edits current pricing — it schedules a new, immutable version.</p>
+
+      <form (ngSubmit)="submit()" class="pp-form">
+        <div class="pp-form-group">
+          <label class="pp-label">Gateway Rate (%)</label>
+          <input class="pp-input" type="text" inputmode="decimal" name="gatewayRatePercent"
+                 [(ngModel)]="gatewayRatePercent" placeholder="2.20" required />
+        </div>
+        <div class="pp-form-group">
+          <label class="pp-label">Gateway GST (%)</label>
+          <input class="pp-input" type="text" inputmode="decimal" name="gatewayTaxPercent"
+                 [(ngModel)]="gatewayTaxPercent" placeholder="18.00" required />
+        </div>
+        <div class="pp-form-group">
+          <label class="pp-label">Edunexify Transaction Fee (&#8377;)</label>
+          <input class="pp-input" type="text" inputmode="decimal" name="edunexifyFeeRupees"
+                 [(ngModel)]="edunexifyFeeRupees" placeholder="20.00" required />
+        </div>
+
+        <fieldset class="pp-effective">
+          <legend>Effective</legend>
+          <label class="pp-radio">
+            <input type="radio" name="scheduleMode" value="immediate" [(ngModel)]="scheduleMode" />
+            Immediately
+          </label>
+          <label class="pp-radio">
+            <input type="radio" name="scheduleMode" value="scheduled" [(ngModel)]="scheduleMode" />
+            Schedule for later
+          </label>
+          <input *ngIf="scheduleMode === 'scheduled'" class="pp-input" type="datetime-local"
+                 name="effectiveFromLocal" [(ngModel)]="effectiveFromLocal" />
+        </fieldset>
+
+        <div class="pp-modal-actions">
+          <button type="button" class="pp-btn pp-btn-ghost" (click)="cancelForm()" [disabled]="submitting">Cancel</button>
+          <button type="submit" class="pp-btn pp-btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Scheduling…' : 'Review & Schedule' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

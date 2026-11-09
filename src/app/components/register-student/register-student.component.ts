@@ -1,17 +1,20 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { StudentService } from '../../services/student.service';
 import { Router } from '@angular/router';
-import { ToastService } from '../../services/toast.service';
-import { CommonModule } from '@angular/common';
-import { AuthStateService } from '../../auth/auth-state.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
-import { strictEmailValidator, pastDateValidator, phoneValidator } from '../../validators/shared.validators';
+import { ToastService } from '../../services/toast.service';
+import { CommonModule } from '@angular/common';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { strictEmailValidator, pastDateValidator, phoneValidator, nonBlankValidator } from '../../validators/shared.validators';
+import { ClassSectionConfig } from '../../utils/class-section-config';
+import { registrationCredentialsDialog } from '../../utils/registration.util';
+import { schoolDateKey } from '../../utils/school-date.util';
 
 @Component({
   selector: 'app-register-student',
@@ -24,10 +27,13 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   studentForm: FormGroup;
   isBusUser = false;
-  classList: string[] = [];
-  managedClasses: SchoolClass[] = [];
-  sections: Section[] = [];
+  /** Class list, managed classes and the selected class's sections (see utils/class-section-config.ts). */
+  readonly config: ClassSectionConfig;
   isSubmitting = false;
+
+  get classList(): string[] { return this.config.classList; }
+  get managedClasses(): SchoolClass[] { return this.config.managedClasses; }
+  get sections(): Section[] { return this.config.sections; }
 
   constructor(
     private fb: FormBuilder,
@@ -35,13 +41,13 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
     private router: Router,
     private authState: AuthStateService,
     private logger: LoggerService,
-    private toast: ToastService,
-    private cdr: ChangeDetectorRef,
     private schoolService: SchoolService,
-    private sectionService: SectionService
+    private sectionService: SectionService,
+    private toast: ToastService,
+    private cdr: ChangeDetectorRef
   ) {
     this.studentForm = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, nonBlankValidator()]],
       email: ['', [Validators.required, strictEmailValidator()]],
       phoneNumber: ['', phoneValidator()],
       dob: ['', [Validators.required, pastDateValidator()]],
@@ -49,11 +55,20 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
       gender: ['', Validators.required],
       fatherName: [''],
       motherName: [''],
-      sectionId: [null],
+      // Required whenever the chosen class has sections (B5-2); a sectionless class allows none.
+      sectionId: [null, (c: AbstractControl) => this.config?.sections.length && c.value == null ? { required: true } : null],
       takesBus: [false],
       distance: [''],
       joiningDate: ['', Validators.required]
     });
+    this.config = new ClassSectionConfig({
+      getClasses: () => this.schoolService.getClasses(),
+      getManagedClasses: () => this.schoolService.getManagedClasses(),
+      getSectionsForClass: (classId) => this.sectionService.getSectionsForClass(classId),
+    }, () => {
+      this.studentForm.get('sectionId')?.updateValueAndValidity({ emitEvent: false });
+      this.cdr.markForCheck();
+    }, this.destroy$);
   }
 
   ngOnDestroy(): void {
@@ -62,7 +77,7 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
   }
 
   get todayStr(): string {
-    return new Date().toISOString().split('T')[0];
+    return schoolDateKey(new Date());
   }
 
   ngOnInit(): void {
@@ -73,32 +88,11 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
       return;
     }
 
-    forkJoin({
-      classList: this.schoolService.getClasses(),
-      managedClasses: this.schoolService.getManagedClasses()
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ classList, managedClasses }) => {
-        this.classList = classList;
-        this.managedClasses = managedClasses;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.toast.error('Error', 'Failed to load class list.');
-      }
-    });
-    // Load sections when class changes — managedClasses is guaranteed populated by the time
-    // the user can interact with the class dropdown
+    this.config.load();
+    // A new class clears the section; a slower response for the previous class is discarded.
     this.studentForm.get('className')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(className => {
-      this.sections = [];
       this.studentForm.get('sectionId')?.setValue(null);
-      if (!className) return;
-      const cls = this.managedClasses.find(c => c.name === className);
-      if (cls) {
-        this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.destroy$)).subscribe({
-          next: sections => { this.sections = sections; this.cdr.markForCheck(); },
-          error: (err) => this.logger.error('Failed to load sections', err)
-        });
-      }
+      this.config.selectClass(className);
     });
     this.studentForm.get('takesBus')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       this.isBusUser = value;
@@ -113,6 +107,11 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
 
   onSubmit() {
     if (this.isSubmitting) return;
+
+    if (this.studentForm.valid && this.config.sectionsPending) {
+      this.toast.warning('Sections still loading', 'Please wait for the section list, then choose a section if needed.');
+      return;
+    }
 
     if (this.studentForm.valid) {
       this.isSubmitting = true;
@@ -130,10 +129,10 @@ export class RegisterStudentComponent implements OnInit, OnDestroy {
         })
       ).subscribe({
         next: () => {
-          this.toast.success('Student Registered!', `Edunexify Student ID: ${generatedStudentId}. Initial password: Date of birth in YYYYMMDD format. ` +
-            'Example: 23 May 1990 → 19900523. The user must create a new password during their first login.');
+          this.toast.confirm(registrationCredentialsDialog('student', generatedStudentId));
           this.studentForm.reset();
           this.isBusUser = false;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.logger.error('Error registering student:', error);

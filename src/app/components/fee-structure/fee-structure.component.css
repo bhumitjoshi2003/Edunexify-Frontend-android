@@ -29,12 +29,23 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 .fs-hero-icon {
   font-size: 1.7rem;
-  background: rgba(255,255,255,0.18); border-radius: 14px;
-  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.16); border-radius: 14px;
+  width: 50px; height: 50px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .fs-hero-title { margin: 0; font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.2px; }
 .fs-hero-sub   { margin: 2px 0 0; font-size: 0.78rem; color: rgba(255,255,255,0.78); }
+
+/* ── Orphan fee-rule warning ───────────────────────────────────── */
+.fs-orphan-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #78350f;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
 
 /* ── Controls Card ─────────────────────────────────────────────── */
 .fs-controls {
@@ -93,25 +104,21 @@ input[type="number"]::-webkit-inner-spin-button {
   background: #f0f9ff;
   color: #0369a1;
   padding: 11px 14px;
-  text-align: left;
+  text-align: center;
   font-size: 0.72rem; font-weight: 700;
   letter-spacing: 0.4px; text-transform: uppercase;
   white-space: nowrap;
   border-bottom: 2px solid #bae6fd;
-  vertical-align: bottom;
 }
-.fs-table th:not(:first-child) {
-  text-align: center;
-}
+.fs-table th:first-child { text-align: left; }
 
 .fs-table td {
   padding: 11px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-}
-.fs-table td:not(:first-child) {
   text-align: center;
 }
+.fs-table td:first-child { text-align: left; }
 .fs-table tbody tr:last-child td { border-bottom: none; }
 .fs-table tbody tr:nth-child(even) { background: #fafbfc; }
 .fs-table tbody tr:hover td { background: #f0f9ff; }
@@ -137,7 +144,6 @@ input[type="number"]::-webkit-inner-spin-button {
   border: 1.5px solid #e2e8f0; border-radius: 8px;
   font-size: 0.82rem; color: #374151; background: #f8fafc;
   outline: none; font-family: inherit; transition: border-color 0.15s;
-  text-align: center;
 }
 .fs-input:focus { border-color: #0369a1; box-shadow: 0 0 0 2px rgba(3,105,161,0.08); }
 
@@ -301,3 +307,9 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .fs-input { width: 80px; }
 }
+
+/* Keep this editor usable with long labels and narrow amount/date controls. */
+.fs-effective { margin: 12px 0; overflow-wrap: anywhere; }
+.fs-effective input { max-width: 100%; min-width: 0; box-sizing: border-box; }
+
+.fs-th-content { max-width: 240px; white-space: normal; overflow-wrap: anywhere; }

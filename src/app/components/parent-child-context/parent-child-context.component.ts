@@ -31,6 +31,10 @@ export class ParentChildContextComponent implements OnChanges {
    *  never flips to a child the click didn't actually succeed for. The host page still gets
    *  this event either way and is responsible for its own eligibility check + user feedback. */
   @Output() childSelected = new EventEmitter<ChildAccess>();
+  /** True while the host page can't change child (e.g. an online checkout is open for the
+   *  current one): the tabs are disabled and a pick is ignored, so the shared selection never
+   *  moves away from the child the page is still working on. */
+  @Input() locked = false;
 
   children: ChildAccess[] = [];
   child: ChildAccess | null = null;
@@ -66,7 +70,7 @@ export class ParentChildContextComponent implements OnChanges {
   }
 
   selectChild(child: ChildAccess): void {
-    if (child.studentId === this.studentId) return;
+    if (this.locked || child.studentId === this.studentId) return;
     // Belt-and-suspenders alongside visibleChildren's filtering: even if this were somehow
     // invoked for an ineligible child, the shared (sidebar-driving) selection must never move
     // to a child the switch didn't actually succeed for. The host page's own onChildTabSelected

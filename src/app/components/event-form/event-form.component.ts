@@ -10,17 +10,18 @@ import { environment } from '../../../environments/environment';
 import { Subject, takeUntil } from 'rxjs';
 import { SchoolService } from '../../services/school.service';
 import { ToastService } from '../../services/toast.service';
+import { schoolDateKey } from '../../utils/school-date.util';
 
 export const dateRangeValidator: ValidatorFn = (control: AbstractControl): { [key: string]: boolean } | null => {
   const startDate = control.get('startDate')?.value;
   const endDate = control.get('endDate')?.value;
 
-  if (startDate && endDate) {
+  if (startDate) {
     // Convert dates to YYYY-MM-DD for accurate comparison if they are strings
     const startDateStr = typeof startDate === 'string' ? startDate : new Date(startDate).toISOString().split('T')[0];
-    const endDateStr = typeof endDate === 'string' ? endDate : new Date(endDate).toISOString().split('T')[0];
+    const endDateStr = !endDate ? startDateStr : typeof endDate === 'string' ? endDate : new Date(endDate).toISOString().split('T')[0];
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = schoolDateKey(new Date());
     if (startDateStr < today) {
       return { 'pastDateInvalid': true };
     }
@@ -41,6 +42,9 @@ export const dateRangeValidator: ValidatorFn = (control: AbstractControl): { [ke
 })
 export class EventFormComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  submitting = false;
+  private creationPayload = '';
+  private creationRequestId = '';
 
   eventForm: FormGroup;
   isEditMode: boolean = false;
@@ -71,7 +75,7 @@ export class EventFormComponent implements OnInit, OnDestroy {
       title: ['', Validators.required],
       description: ['', Validators.required],
       startDate: ['', Validators.required],
-      endDate: ['', Validators.required],
+      endDate: [''],
       startTime: [''],
       endTime: [''],
       location: [''],
@@ -244,8 +248,11 @@ export class EventFormComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
+    if (this.submitting) return;
     if (this.eventForm.valid) {
       // Get a copy of current form values
+      this.submitting = true;
+      this.cdr.markForCheck();
       const rawFormValue = this.eventForm.value;
 
       // Process targetAudience to ensure it's always an array of strings
@@ -253,9 +260,9 @@ export class EventFormComponent implements OnInit, OnDestroy {
       const formTargetAudience = rawFormValue.targetAudience;
 
       if (Array.isArray(formTargetAudience)) {
-        processedTargetAudience = formTargetAudience.map(s => String(s).trim().toUpperCase()).filter(s => s);
+        processedTargetAudience = formTargetAudience.map(s => String(s).trim()).filter(s => s);
       } else if (typeof formTargetAudience === 'string' && formTargetAudience.length > 0) {
-        processedTargetAudience = formTargetAudience.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+        processedTargetAudience = formTargetAudience.split(',').map(s => s.trim()).filter(s => s);
       }
 
       // Prepare event data for backend
@@ -278,13 +285,16 @@ export class EventFormComponent implements OnInit, OnDestroy {
         // never pass through our own backend), then create/update the event with the returned
         // object key.
         const targetEventId = this.isEditMode ? this.eventId : null;
-        this.eventService.uploadEventImageDirect(this.selectedFile, targetEventId).subscribe({
+        this.eventService.uploadEventImageDirect(this.selectedFile, targetEventId).pipe(takeUntil(this.destroy$)).subscribe({
           next: (uploadResponse) => {
             eventData.imageUrl = uploadResponse.objectKey;
+            this.selectedFile = null;
+            this.eventForm.patchValue({ imageUrl: uploadResponse.objectKey });
             this.proceedToSaveEvent(eventData);
           },
           error: (uploadError) => {
             this.logger.error('Error uploading image:', uploadError);
+            this.submitting = false; this.cdr.markForCheck();
             this.toast.error('Upload Failed', 'Failed to upload image. Event not saved.');
           }
         });
@@ -309,22 +319,31 @@ export class EventFormComponent implements OnInit, OnDestroy {
     // Assuming your service methods handle authorization headers internally or expect them.
     // Make sure your service methods (updateEvent, createEvent) have the correct signatures.
     if (this.isEditMode && this.eventId !== null) {
-      this.eventService.updateEvent(this.eventId, eventData).subscribe({ // Assuming service takes eventData directly
+      this.eventService.updateEvent(this.eventId, eventData).pipe(takeUntil(this.destroy$)).subscribe({ // Assuming service takes eventData directly
         next: () => {
+          this.submitting = false; this.cdr.markForCheck();
           this.router.navigate(['/dashboard/event-calendar']);
         },
         error: (err) => {
           this.logger.error('Error updating event:', err);
+          this.submitting = false; this.cdr.markForCheck();
           this.toast.error('Update Failed', 'Failed to update event. Please try again.');
         }
       });
     } else {
-      this.eventService.createEvent(eventData).subscribe({ // Assuming service takes eventData directly
+      const payload = JSON.stringify(eventData);
+      if (payload !== this.creationPayload) {
+        this.creationPayload = payload;
+        this.creationRequestId = crypto.randomUUID();
+      }
+      this.eventService.createEvent(eventData, this.creationRequestId).pipe(takeUntil(this.destroy$)).subscribe({ // Assuming service takes eventData directly
         next: () => {
+          this.submitting = false; this.cdr.markForCheck();
           this.router.navigate(['/dashboard/event-calendar']);
         },
         error: (err) => {
           this.logger.error('Error creating event:', err);
+          this.submitting = false; this.cdr.markForCheck();
           this.toast.error('Create Failed', 'Failed to create event. Please try again.');
         }
       });

@@ -176,15 +176,6 @@
         </div>
       </div>
 
-      <a class="ad-secondary-row" *ngIf="setupHealth" routerLink="/dashboard/school-setup">
-        <mat-icon>task_alt</mat-icon>
-        <div>
-          <strong>School setup</strong>
-          <span>{{ setupHealth.completionPercentage }}% complete · {{ setupHealth.completedRequired }} of {{ setupHealth.totalRequired }} essentials ready</span>
-        </div>
-        <mat-icon>chevron_right</mat-icon>
-      </a>
-
       <a class="ad-secondary-row" *ngIf="staffAdoption" routerLink="/dashboard/staff-adoption">
         <mat-icon>groups</mat-icon>
         <div>

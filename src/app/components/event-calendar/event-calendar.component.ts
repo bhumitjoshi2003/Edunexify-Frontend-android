@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { isPlatformBrowser } from '@angular/common';
@@ -61,6 +62,9 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   currentUserClass: string | null = null;
 
   selectedEvent: CalendarEvent | null = null;
+  deletingEvent = false;
+  savingEvent = false;
+  private destroyed = false;
   showSidebar = false;
   isEditing = false;
   eventForm!: FormGroup; // Defined here, initialized in constructor or initEventForm
@@ -172,6 +176,7 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -283,30 +288,8 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   private populateEvents(): void {
     this.eventMap.clear();
 
-    const filtered = this.allEvents.filter(event => {
-      const eventTargetAudiences = Array.isArray(event.targetAudience) ? event.targetAudience : [];
-
-      if (this.currentUserRole === 'ADMIN') {
-        return true;
-      }
-
-      if (eventTargetAudiences.includes('ALL')) {
-        return true;
-      }
-
-      if (this.currentUserRole === 'STUDENT') {
-        const isTargetedToStudentRole = eventTargetAudiences.includes('STUDENTS');
-        const isTargetedToStudentClass = this.currentUserClass && eventTargetAudiences.some(audience => audience === this.currentUserClass);
-        return isTargetedToStudentRole || isTargetedToStudentClass;
-      }
-
-      if (this.currentUserRole === 'TEACHER') {
-        const isTargetedToTeacherRole = eventTargetAudiences.includes('TEACHERS');
-        const isTargetedToTeacherClass = this.currentUserClass && eventTargetAudiences.some(audience => audience === this.currentUserClass);
-        return isTargetedToTeacherRole || isTargetedToTeacherClass;
-      }
-      return false;
-    });
+    // The API has already enforced visibility (including authorized parent-child audiences).
+    const filtered = this.allEvents;
 
     filtered.forEach(ev => {
       const start = new Date(ev.startDate);
@@ -526,7 +509,10 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   }
 
   saveEventChanges(): void {
+    if (this.savingEvent || this.deletingEvent || this.destroyed) return;
     if (this.eventForm.valid && this.selectedEvent && this.selectedEvent.id) {
+      this.savingEvent = true;
+      this.cdr.markForCheck();
       const eventIdToUpdate: number = this.selectedEvent.id;
       const formValue = this.eventForm.value;
 
@@ -537,11 +523,11 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
       if (typeof formTargetAudience === 'string') {
         processedTargetAudience = formTargetAudience
           .split(',')
-          .map((audience: string) => audience.trim().toUpperCase())
+          .map((audience: string) => audience.trim())
           .filter((audience: string) => audience !== '');
       } else if (Array.isArray(formTargetAudience)) {
         processedTargetAudience = formTargetAudience
-          .map((audience: any) => String(audience).trim().toUpperCase())
+          .map((audience: any) => String(audience).trim())
           .filter((audience: string) => audience !== '');
       }
 
@@ -565,14 +551,17 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
       if (this.selectedFile) {
         // Case 1: A new file has been selected — direct-to-object-storage upload first (bytes
         // never pass through our own backend), then update the event with the returned key.
-        this.eventService.uploadEventImageDirect(this.selectedFile, eventIdToUpdate).subscribe({
+        this.eventService.uploadEventImageDirect(this.selectedFile, eventIdToUpdate).pipe(takeUntil(this.destroy$)).subscribe({
           next: (response) => {
             updatedEvent.imageUrl = response.objectKey;
+            this.selectedFile = null;
+            this.eventForm.patchValue({ imageUrl: response.objectKey });
             this.proceedToUpdateEvent(eventIdToUpdate, updatedEvent);
           },
           error: (err) => {
             this.logger.error('Error uploading image:', err);
-            alert('Failed to upload image. Event not saved.');
+            this.savingEvent = false; this.cdr.markForCheck();
+            this.toast.error('Upload failed', 'Event not saved. Please try again.');
           }
         });
       } else {
@@ -589,14 +578,16 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   }
 
   private proceedToUpdateEvent(eventId: number, event: CalendarEvent): void {
-    this.eventService.updateEvent(eventId, event).subscribe({
+    this.eventService.updateEvent(eventId, event).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.savingEvent = false; this.cdr.markForCheck();
         this.refreshCalendar(); // Refresh calendar to show updated event
         this.closeSidebar(); // Close sidebar after successful update
       },
       error: (err) => {
         this.logger.error('Error updating event:', err);
-        alert('Failed to save event. Please try again.');
+        this.savingEvent = false; this.cdr.markForCheck();
+        this.toast.error('Save failed', 'Please try again.');
       }
     });
   }
@@ -724,26 +715,36 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
   }
 
   async deleteCurrentEvent(): Promise<void> {
-    if (!this.selectedEvent?.id) return;
-    const confirmed = await this.toast.confirm({
-      title: 'Delete Event?',
-      message: `Delete "${this.selectedEvent.title}"? This cannot be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      danger: true,
-    });
-    if (!confirmed) return;
-    this.eventService.deleteEvent(this.selectedEvent.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.toast.success('Deleted', 'Event has been removed.');
-          this.selectedEvent = null;
-          this.closeSidebar();
-          this.loadEvents();
-        },
-        error: () => this.toast.error('Error', 'Failed to delete event.')
+    const target = this.selectedEvent;
+    if (!target?.id || this.deletingEvent || this.destroyed) return;
+    const id = target.id;
+    const title = target.title;
+    this.deletingEvent = true; // Includes the deferred confirmation, not just the HTTP call.
+    // The sidebar and its backdrop stack above the dialog overlay and would swallow every click
+    // and tap on the confirmation: hide them (keeping the selection) while it is open.
+    this.showSidebar = false;
+    this.cdr.markForCheck();
+    let deleted = false;
+    try {
+      const confirmed = await this.toast.confirm({
+        title: 'Delete Event?', message: `Delete "${title}"? This cannot be undone.`,
+        confirmText: 'Delete', cancelText: 'Cancel', danger: true,
       });
+      if (!confirmed || this.destroyed || this.selectedEvent !== target) return;
+      await firstValueFrom(this.eventService.deleteEvent(id).pipe(takeUntil(this.destroy$)));
+      if (this.destroyed) return;
+      deleted = true;
+      this.toast.success('Deleted', 'Event has been removed.');
+      if (this.selectedEvent === target) this.closeSidebar();
+      this.loadEvents();
+    } catch {
+      if (!this.destroyed) this.toast.error('Error', 'Failed to delete event.');
+    } finally {
+      this.deletingEvent = false;
+      // Cancelled or failed: bring the same event's details back, unless it was closed meanwhile.
+      if (!deleted && this.selectedEvent === target) this.showSidebar = true;
+      if (!this.destroyed) this.cdr.markForCheck();
+    }
   }
 
   isMissingAttendance(date: Date | null): boolean {

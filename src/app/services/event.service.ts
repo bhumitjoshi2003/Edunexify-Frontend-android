@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { CalendarEvent } from '../interfaces/event-calendar.component';
+import { CalendarEvent, EventWriteRequest } from '../interfaces/event-calendar.component';
 import { UploadRequestResponse, UploadCompleteResponse } from '../interfaces/upload';
 
 @Injectable({
@@ -17,8 +17,8 @@ export class EventService {
   constructor(private http: HttpClient) { }
 
   // Changed 'Event' to 'CalendarEvent'
-  createEvent(event: CalendarEvent): Observable<CalendarEvent> {
-    return this.http.post<CalendarEvent>(this.apiUrl, event);
+  createEvent(event: CalendarEvent, requestId: string): Observable<CalendarEvent> {
+    return this.http.post<CalendarEvent>(this.apiUrl, { ...this.writeFields(event), requestId });
   }
 
   // Changed 'Event' to 'CalendarEvent'
@@ -32,7 +32,16 @@ export class EventService {
   }
 
   updateEvent(id: number, event: CalendarEvent): Observable<CalendarEvent> {
-    return this.http.put<CalendarEvent>(`${this.apiUrl}/${id}`, event);
+    return this.http.put<CalendarEvent>(`${this.apiUrl}/${id}`, this.writeFields(event));
+  }
+
+  /** Strict write contract: never round-trip server id/tenant/audit metadata. */
+  private writeFields(event: CalendarEvent): EventWriteRequest {
+    const { title, description, startDate, endDate, startTime, endTime, location, category,
+      targetAudience, videoLinks, imageUrl } = event;
+    return { title, description, startDate, endDate: endDate || null, startTime: startTime || null,
+      endTime: endTime || null, location, category, targetAudience,
+      videoLinks: (videoLinks ?? []).filter(link => link.trim().length > 0), imageUrl };
   }
 
   deleteEvent(id: number): Observable<void> {

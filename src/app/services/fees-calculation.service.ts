@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PaymentData } from '../interfaces/payment-data';
+import { emptyPaymentData } from '../utils/fee-payment.util';
 
 @Injectable({
   providedIn: 'root'
@@ -33,24 +34,6 @@ export class FeesCalculationService {
   }
 
   createEmptyPaymentData(): PaymentData {
-    return {
-      totalAmount: 0,
-      monthSelectionString: '000000000000',
-      totalTuitionFee: 0,
-      totalAnnualCharges: 0,
-      totalLabCharges: 0,
-      totalEcaProject: 0,
-      totalBusFee: 0,
-      totalExaminationFee: 0,
-      studentId: '',
-      studentName: '',
-      className: '',
-      session: '',
-      paidManually: false,
-      amountPaid: 0,
-      additionalCharges: 0,
-      lateFees: 0,
-      platformFee: 0,
-    };
+    return emptyPaymentData();
   }
 }

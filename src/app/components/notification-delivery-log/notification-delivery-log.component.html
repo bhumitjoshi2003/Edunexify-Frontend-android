@@ -1,0 +1,282 @@
+<div class="ndl-page">
+  <div class="ndl-hero">
+    <div class="ndl-blob ndl-blob-1"></div>
+    <div class="ndl-blob ndl-blob-2"></div>
+    <div class="ndl-hero-icon"><mat-icon>mark_email_read</mat-icon></div>
+    <div>
+      <h1 class="ndl-hero-title">Notification Delivery</h1>
+      <p class="ndl-hero-sub">Push, email and in-app delivery state across every school.</p>
+    </div>
+  </div>
+
+  <p class="ndl-note">
+    <mat-icon>info</mat-icon>
+    <span>"Accepted" means the provider (FCM or the mail server) took the message. Edunexify has no device or inbox
+      delivery receipts, so accepted does not prove the recipient received it.</span>
+  </p>
+
+  <div class="ndl-views" role="tablist" aria-label="Notification delivery views">
+    <button type="button" role="tab" [attr.aria-selected]="view === 'summary'" [class.active]="view === 'summary'"
+            (click)="showSummary()">Summary</button>
+    <button type="button" role="tab" [attr.aria-selected]="view === 'details'" [class.active]="view === 'details'"
+            (click)="showDetails()">Delivery Details</button>
+  </div>
+
+  <div class="ndl-filters">
+    <div class="ndl-filter-group" *ngIf="view === 'details'">
+      <label for="ndl-status">Status</label>
+      <select id="ndl-status" [(ngModel)]="filterStatus">
+        <option value="">All</option>
+        <option *ngFor="let s of statuses" [value]="s">{{ statusLabel(s) }}</option>
+      </select>
+    </div>
+    <div class="ndl-filter-group" *ngIf="view === 'details'">
+      <label for="ndl-channel">Channel</label>
+      <select id="ndl-channel" [(ngModel)]="filterChannel">
+        <option value="">All</option>
+        <option *ngFor="let c of channels" [value]="c.value">{{ c.label }}</option>
+      </select>
+    </div>
+    <div class="ndl-filter-group">
+      <label for="ndl-event">Event type</label>
+      <select id="ndl-event" [(ngModel)]="filterEventCode">
+        <option value="">All</option>
+        <option *ngFor="let e of eventCodes" [value]="e">{{ eventLabel(e) }}</option>
+      </select>
+    </div>
+    <div class="ndl-filter-group">
+      <label for="ndl-school">School</label>
+      <select id="ndl-school" [(ngModel)]="filterSchoolId">
+        <option value="">All schools</option>
+        <option *ngFor="let s of schools" [value]="s.id">{{ s.name }}</option>
+      </select>
+    </div>
+    <div class="ndl-filter-group" *ngIf="view === 'summary'">
+      <label for="ndl-search">Search</label>
+      <input id="ndl-search" type="text" [(ngModel)]="filterSearch" placeholder="Title or message" (keyup.enter)="applyFilters()" />
+    </div>
+    <div class="ndl-filter-group" *ngIf="view === 'details'">
+      <label for="ndl-recipient">Recipient ID</label>
+      <input id="ndl-recipient" type="text" [(ngModel)]="filterRecipient" placeholder="e.g. S1024" (keyup.enter)="applyFilters()" />
+    </div>
+    <div class="ndl-filter-group">
+      <label for="ndl-from">From</label>
+      <input id="ndl-from" type="date" [(ngModel)]="filterFrom" />
+    </div>
+    <div class="ndl-filter-group">
+      <label for="ndl-to">To</label>
+      <input id="ndl-to" type="date" [(ngModel)]="filterTo" />
+    </div>
+    <div class="ndl-filter-actions">
+      <button type="button" class="ndl-apply" (click)="applyFilters()">Apply</button>
+      <button type="button" class="ndl-reset" (click)="resetFilters()">Reset</button>
+    </div>
+  </div>
+
+  <!-- ── Summary: one row per notification publication ── -->
+  <ng-container *ngIf="view === 'summary'">
+    <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="summaryLoading" aria-busy="true" aria-label="Loading notification summary">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
+    <div class="ndl-state error" *ngIf="!summaryLoading && summaryFailed">
+      <mat-icon>cloud_off</mat-icon>
+      <strong>{{ summaryError || 'The notification summary is temporarily unavailable.' }}</strong>
+      <button type="button" (click)="loadSummary(summaryPage)">Retry</button>
+    </div>
+    <div class="ndl-state" *ngIf="!summaryLoading && !summaryFailed && !summaryRows.length">
+      <mat-icon>inbox</mat-icon><strong>No notifications match these filters.</strong>
+    </div>
+
+    <div class="ndl-table-wrapper" *ngIf="!summaryLoading && !summaryFailed && summaryRows.length">
+      <table class="ndl-table ndl-summary-table">
+        <thead>
+          <tr><th>Notification</th><th>Recipients</th><th>Push</th><th>Email</th><th>In-app</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of summaryRows; trackBy: summaryKey" (click)="drillDown(s)" tabindex="0" (keyup.enter)="drillDown(s)">
+            <td class="ndl-summary-main">
+              <strong class="ndl-summary-title">{{ s.title }}</strong>
+              <span class="ndl-summary-preview" *ngIf="s.messagePreview">{{ s.messagePreview }}</span>
+              <span class="ndl-summary-meta">{{ s.createdAt | date:'d MMM yyyy, h:mm a' }} · {{ s.schoolName || (s.schoolId ? '#' + s.schoolId : 'Platform-wide') }} · {{ eventLabel(s.eventCode) }}</span>
+            </td>
+            <td class="ndl-summary-total">{{ s.totalRecipients | number }}</td>
+            <td><ng-container *ngTemplateOutlet="channelCell; context: { $implicit: s.push }"></ng-container></td>
+            <td><ng-container *ngTemplateOutlet="channelCell; context: { $implicit: s.email }"></ng-container></td>
+            <td>
+              <div class="ndl-bar" *ngIf="s.inApp.stored" [attr.aria-label]="s.inApp.opened + ' of ' + s.inApp.stored + ' opened'">
+                <span class="seg seg-opened" [style.width.%]="pct(s.inApp.opened, s.inApp.stored)"></span>
+                <span class="seg seg-stored" [style.width.%]="pct(s.inApp.unopened, s.inApp.stored)"></span>
+              </div>
+              <ul class="ndl-counts" *ngIf="s.inApp.stored; else noInbox">
+                <li>{{ s.inApp.stored | number }} stored</li>
+                <li class="c-opened">{{ s.inApp.opened | number }} opened</li>
+                <li class="c-muted">{{ s.inApp.unopened | number }} unopened</li>
+              </ul>
+              <ng-template #noInbox><span class="ndl-none">No recipients</span></ng-template>
+            </td>
+            <td class="ndl-summary-go"><mat-icon>chevron_right</mat-icon></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ndl-pagination" *ngIf="!summaryLoading && !summaryFailed && (summaryPage > 0 || summaryHasNext)">
+      <button type="button" (click)="prevSummaryPage()" [disabled]="summaryPage === 0">Previous</button>
+      <span>Page {{ summaryPage + 1 }}</span>
+      <button type="button" (click)="nextSummaryPage()" [disabled]="!summaryHasNext">Next</button>
+    </div>
+  </ng-container>
+
+  <ng-template #channelCell let-c>
+    <ng-container *ngIf="c; else noChannel">
+      <div class="ndl-bar" [attr.aria-label]="c.accepted + ' of ' + c.total + ' accepted'">
+        <span class="seg seg-accepted" [style.width.%]="pct(c.accepted, c.total)"></span>
+        <span class="seg seg-failed" [style.width.%]="pct(c.failed, c.total)"></span>
+        <span class="seg seg-retrying" [style.width.%]="pct(c.retrying, c.total)"></span>
+        <span class="seg seg-queued" [style.width.%]="pct(c.queued, c.total)"></span>
+        <span class="seg seg-skipped" [style.width.%]="pct(c.skipped, c.total)"></span>
+      </div>
+      <ul class="ndl-counts">
+        <li class="c-accepted">{{ c.accepted | number }} accepted</li>
+        <li class="c-failed" *ngIf="c.failed">{{ c.failed | number }} failed</li>
+        <li class="c-retrying" *ngIf="c.retrying">{{ c.retrying | number }} retrying</li>
+        <li class="c-muted" *ngIf="c.queued">{{ c.queued | number }} queued</li>
+        <li class="c-muted" *ngIf="c.skipped">{{ c.skipped | number }} skipped</li>
+      </ul>
+    </ng-container>
+    <ng-template #noChannel><span class="ndl-none">Not sent</span></ng-template>
+  </ng-template>
+
+  <!-- ── Delivery Details: recipient-level log (unchanged), optionally pinned to one notification ── -->
+  <ng-container *ngIf="view === 'details'">
+  <div class="ndl-drill" *ngIf="drillNotification">
+    <mat-icon>filter_alt</mat-icon>
+    <span>Showing recipients of <strong>{{ drillNotification.title }}</strong> <span class="ndl-mono">#{{ drillNotification.id }}</span></span>
+    <button type="button" (click)="clearDrillDown()" aria-label="Show all notifications"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading notification deliveries">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
+  <div class="ndl-state error" *ngIf="!loading && failed">
+    <mat-icon>cloud_off</mat-icon>
+    <strong>{{ errorMessage || 'Notification delivery data is temporarily unavailable.' }}</strong>
+    <button type="button" (click)="load(page)">Retry</button>
+  </div>
+  <div class="ndl-state" *ngIf="!loading && !failed && !rows.length">
+    <mat-icon>inbox</mat-icon><strong>No deliveries match these filters.</strong>
+  </div>
+
+  <div class="ndl-table-wrapper" *ngIf="!loading && !failed && rows.length">
+    <table class="ndl-table">
+      <thead>
+        <tr>
+          <th>Time</th><th>School</th><th>Recipient</th><th>Event</th><th>Channel</th>
+          <th>Status</th><th>Attempts</th><th>Last error</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of rows; trackBy: rowKey" (click)="open(r)" [class.is-selected]="selected === r"
+            tabindex="0" (keyup.enter)="open(r)">
+          <td class="ndl-nowrap">{{ r.createdAt | date:'d MMM, h:mm:ss a' }}</td>
+          <td>{{ r.schoolName || ('#' + r.schoolId) }}</td>
+          <td class="ndl-nowrap"><strong>{{ r.recipientUserId }}</strong><span class="ndl-role" *ngIf="r.recipientRole">{{ r.recipientRole }}</span></td>
+          <td>{{ eventLabel(r.eventCode) }}</td>
+          <td><span class="ndl-channel">{{ channelLabel(r.channel) }}</span></td>
+          <td class="ndl-nowrap">
+            <span class="ndl-chip" [ngClass]="statusClass(r.status)">{{ statusLabel(r.status, r.channel) }}</span>
+            <span class="ndl-opened" *ngIf="r.channel === 'IN_APP' && r.read">Opened</span>
+          </td>
+          <td class="ndl-num">{{ r.channel === 'IN_APP' ? '—' : r.attemptCount }}</td>
+          <td class="ndl-error-cell" [title]="r.lastError || ''">{{ r.lastError || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ndl-pagination" *ngIf="!loading && !failed && (page > 0 || hasNext)">
+    <button type="button" (click)="prevPage()" [disabled]="page === 0">Previous</button>
+    <span>Page {{ page + 1 }}</span>
+    <button type="button" (click)="nextPage()" [disabled]="!hasNext">Next</button>
+  </div>
+  </ng-container>
+
+  <div class="ndl-overlay" *ngIf="selected" (click)="close()">
+    <div class="ndl-drawer" (click)="$event.stopPropagation()" role="dialog" aria-label="Delivery details">
+      <button type="button" class="ndl-close" (click)="close()" aria-label="Close"><mat-icon>close</mat-icon></button>
+      <div class="ndl-drawer-loading" *ngIf="detailLoading"><span class="spinner"></span></div>
+      <p class="ndl-drawer-failed" *ngIf="!detailLoading && detailFailed">This delivery record could not be loaded. It may have been removed by retention cleanup.</p>
+
+      <ng-container *ngIf="!detailLoading && detail">
+        <span class="ndl-drawer-kicker">{{ channelLabel(detail.channel) }} · {{ eventLabel(detail.eventCode) }}</span>
+        <h2>{{ detail.title }}</h2>
+
+        <div class="ndl-drawer-status">
+          <span class="ndl-chip" [ngClass]="statusClass(detail.status)">{{ statusLabel(detail.status, detail.channel) }}</span>
+          <p>{{ statusMeaning(detail.status, detail.channel) }}</p>
+          <p *ngIf="detail.channel === 'IN_APP'">
+            {{ detail.read ? 'The recipient opened it in the app' : 'Not opened in the app yet' }}<ng-container *ngIf="detail.readAt"> — {{ detail.readAt | date:'d MMM yyyy, h:mm a' }}</ng-container>.
+          </p>
+        </div>
+
+        <dl class="ndl-facts">
+          <dt>School</dt><dd>{{ detail.schoolName || ('#' + detail.schoolId) }}</dd>
+          <dt>Recipient</dt><dd>{{ detail.recipientUserId }}<ng-container *ngIf="detail.recipientRole"> · {{ detail.recipientRole }}</ng-container></dd>
+          <ng-container *ngIf="detail.maskedDestination"><dt>Email</dt><dd>{{ detail.maskedDestination }}</dd></ng-container>
+          <dt>Created</dt><dd>{{ detail.createdAt | date:'d MMM yyyy, h:mm:ss a' }}</dd>
+          <ng-container *ngIf="detail.channel !== 'IN_APP'">
+            <dt>Attempts</dt><dd>{{ detail.attemptCount }} of {{ detail.maxAttempts }}</dd>
+            <ng-container *ngIf="detail.sentAt"><dt>Accepted at</dt><dd>{{ detail.sentAt | date:'d MMM yyyy, h:mm:ss a' }}</dd></ng-container>
+            <ng-container *ngIf="detail.nextAttemptAt"><dt>Next attempt</dt><dd>{{ detail.nextAttemptAt | date:'d MMM yyyy, h:mm:ss a' }}</dd></ng-container>
+            <ng-container *ngIf="detail.processingStartedAt"><dt>Sending since</dt><dd>{{ detail.processingStartedAt | date:'d MMM yyyy, h:mm:ss a' }}</dd></ng-container>
+            <dt>Provider message ID</dt>
+            <dd class="ndl-mono">{{ detail.providerMessageId || (detail.channel === 'EMAIL' ? 'Not provided by the mail integration' : '—') }}</dd>
+          </ng-container>
+          <dt>Notification ID</dt><dd class="ndl-mono">{{ detail.notificationId }}</dd>
+          <ng-container *ngIf="detail.sourceEntityType"><dt>Source</dt><dd class="ndl-mono">{{ detail.sourceEntityType }} {{ detail.sourceEntityId }}</dd></ng-container>
+        </dl>
+
+        <div class="ndl-error-box" *ngIf="detail.lastError">
+          <strong>Last error</strong>
+          <pre>{{ detail.lastError }}</pre>
+        </div>
+
+        <div class="ndl-section">
+          <strong>Message</strong>
+          <p class="ndl-message">{{ detail.message }}</p>
+        </div>
+
+        <div class="ndl-section" *ngIf="detail.relatedChannels.length">
+          <strong>Other channels for this recipient</strong>
+          <ul class="ndl-related">
+            <li *ngFor="let c of detail.relatedChannels">
+              <span class="ndl-channel">{{ channelLabel(c.channel) }}</span>
+              <span class="ndl-chip" [ngClass]="statusClass(c.status)">{{ statusLabel(c.status, c.channel) }}</span>
+              <span class="ndl-related-meta" *ngIf="c.channel === 'IN_APP'">{{ c.read ? 'Opened' : 'Not opened' }}</span>
+              <span class="ndl-related-meta" *ngIf="c.channel !== 'IN_APP'">{{ c.attemptCount }} attempt{{ c.attemptCount === 1 ? '' : 's' }}</span>
+              <span class="ndl-related-error" *ngIf="c.lastError">{{ c.lastError }}</span>
+            </li>
+          </ul>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

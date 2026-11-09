@@ -38,21 +38,21 @@
 
   <!-- ── Controls card ──────────────────────────────────────────────── -->
   <div class="bf-card" *ngIf="!accessDenied">
-    <div class="bf-controls" *ngIf="!isLoading">
+    <div class="bf-controls">
       <div class="bf-control-group" *ngIf="sessions.length > 0">
         <label class="bf-label">Session</label>
-        <select class="bf-select" [ngModel]="currentSession" (ngModelChange)="changeSession($event)">
+        <select [disabled]="saving" class="bf-select" [ngModel]="currentSession" (ngModelChange)="changeSession($event)">
           <option *ngFor="let session of sessions; trackBy: trackBySession"
             [ngValue]="session">{{ session.label }}{{ session.current ? ' (Current)' : '' }}</option>
         </select>
       </div>
       <div class="bf-actions">
-        <button *ngIf="!isEditing && canEdit() && sessions.length > 0" class="bf-btn bf-btn-primary" (click)="edit()">✎ Edit</button>
+        <button *ngIf="!isEditing && canEdit() && sessions.length > 0" class="bf-btn bf-btn-primary" (click)="edit()" [disabled]="!canSave()">✎ Edit</button>
         <ng-container *ngIf="isEditing && canEdit()">
-          <button class="bf-btn bf-btn-success" (click)="save()">✓ Save</button>
-          <button class="bf-btn bf-btn-danger" (click)="cancel()">✕ Cancel</button>
-          <button class="bf-btn bf-btn-ghost" (click)="addRow()">＋ Row</button>
-          <button class="bf-btn bf-btn-ghost" (click)="removeRow()">－ Row</button>
+          <button class="bf-btn bf-btn-success" (click)="save()" [disabled]="!canSave()">✓ Save</button>
+          <button class="bf-btn bf-btn-danger" (click)="cancel()" [disabled]="saving">✕ Cancel</button>
+          <button class="bf-btn bf-btn-ghost" (click)="addRow()" [disabled]="saving">＋ Row</button>
+          <button class="bf-btn bf-btn-ghost" (click)="removeRow()" [disabled]="saving">－ Row</button>
         </ng-container>
       </div>
     </div>
@@ -78,14 +78,16 @@
     </div>
 
     <!-- No sessions yet -->
-    <div class="bf-empty-state" *ngIf="!isLoading && sessions.length === 0">
+    <div class="bf-empty-state" *ngIf="!isLoading && !loadError && sessions.length === 0">
       <div class="bf-empty-icon">🚌</div>
       <p class="bf-empty-title">No academic sessions found</p>
       <p style="font-size:0.85rem; color:#94a3b8; margin:6px 0 0">Create a session in School Settings first.</p>
     </div>
 
+    <div role="alert" *ngIf="loadError">{{ loadError }} <button (click)="retryLoad()">Retry</button></div>
+    <p *ngIf="isEditing">Ranges include both endpoints. Leave a gap between ranges; an open-ended range must be last.</p>
     <!-- Table -->
-    <div class="bf-table-wrap" *ngIf="!isLoading && sessions.length > 0">
+    <div class="bf-table-wrap" *ngIf="!isLoading && !loadError && sessions.length > 0">
       <table class="bf-table">
         <thead>
           <tr>
@@ -97,15 +99,15 @@
         <tbody>
           <tr *ngFor="let fee of busFeeStructures; trackBy: trackByIndex">
             <td data-label="Min Distance">
-              <input *ngIf="isEditing" type="number" class="bf-input" [(ngModel)]="fee.minDistance" min="0" />
+              <input *ngIf="isEditing" type="number" class="bf-input" [disabled]="saving" [(ngModel)]="fee.minDistance" min="0" />
               <span *ngIf="!isEditing">{{ fee.minDistance }} km</span>
             </td>
             <td data-label="Max Distance">
-              <input *ngIf="isEditing" type="number" class="bf-input" [(ngModel)]="fee.maxDistance" min="0" />
+              <input *ngIf="isEditing" type="number" class="bf-input" [disabled]="saving" [(ngModel)]="fee.maxDistance" min="0" />
               <span *ngIf="!isEditing">{{ fee.maxDistance !== null ? fee.maxDistance + ' km' : 'Above' }}</span>
             </td>
             <td data-label="Fee">
-              <input *ngIf="isEditing" type="number" class="bf-input" [(ngModel)]="fee.fees" min="0" />
+              <input *ngIf="isEditing" type="number" class="bf-input" [disabled]="saving" [(ngModel)]="fee.fees" min="0" />
               <span *ngIf="!isEditing" class="bf-fee-val">₹ {{ fee.fees | number }}</span>
             </td>
           </tr>

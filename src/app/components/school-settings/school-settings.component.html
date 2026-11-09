@@ -37,15 +37,18 @@
   <!-- ── Loading ──────────────────────────────────────────────────────── -->
   <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading school settings">
     <div class="edu-sk-grid">
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
     </div>
     <div class="edu-sk-panel">
       <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
-      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
     </div>
   </div>
-
   <ng-container *ngIf="!loading && settings">
 
     <!-- ── Tabs ─────────────────────────────────────────────────────── -->
@@ -496,65 +499,7 @@
 
     <!-- ══════════ RAZORPAY TAB ══════════ -->
     <ng-container *ngIf="activeTab === 'razorpay'">
-      <div class="ss-card">
-        <div class="ss-card-header">
-          <div class="ss-card-title-row">
-            <div class="ss-card-icon-box ss-icon-box-purple">💳</div>
-            <div>
-              <h2 class="ss-card-title">Payment Integration</h2>
-              <p class="ss-card-subtitle">Razorpay gateway configuration</p>
-            </div>
-          </div>
-          <div class="ss-rzp-status-chip" [class.ss-rzp-chip-ok]="settings.razorpayConfigured"
-               [class.ss-rzp-chip-warn]="!settings.razorpayConfigured">
-            {{ settings.razorpayConfigured ? '✓ Configured' : '⚠ Not Set' }}
-          </div>
-        </div>
-
-        <div class="ss-rzp-banner" [class.ss-rzp-banner-ok]="settings.razorpayConfigured"
-             [class.ss-rzp-banner-warn]="!settings.razorpayConfigured">
-          <div class="ss-rzp-banner-icon">{{ settings.razorpayConfigured ? '🔐' : '🔓' }}</div>
-          <div>
-            <p class="ss-rzp-banner-title">
-              {{ settings.razorpayConfigured ? 'School-specific keys active' : 'Using platform default keys' }}
-            </p>
-            <p class="ss-rzp-banner-sub">
-              {{ settings.razorpayConfigured
-                ? 'All fee payments route through your Razorpay account directly.'
-                : 'No school-specific keys set. Add your own keys for direct settlements.' }}
-            </p>
-          </div>
-        </div>
-
-        <ng-container *ngIf="isAdmin">
-          <div class="ss-section-divider"><span>Update Keys</span></div>
-          <div class="ss-rzp-security-note">
-            🔒 Keys are encrypted at rest. The secret is write-only and never returned to the browser.
-          </div>
-          <div class="ss-form-grid">
-            <div class="ss-form-group ss-full">
-              <label class="ss-label">Razorpay Key ID</label>
-              <input class="ss-input" type="text" [(ngModel)]="razorpayKeyId"
-                     placeholder="rzp_live_xxxxxxxxxxxxxxxxxx" autocomplete="off">
-            </div>
-            <div class="ss-form-group ss-full">
-              <label class="ss-label">Razorpay Key Secret</label>
-              <input class="ss-input" type="password" [(ngModel)]="razorpayKeySecret"
-                     placeholder="Enter key secret" autocomplete="new-password">
-            </div>
-          </div>
-          <div class="ss-form-actions">
-            <button class="ss-btn ss-btn-primary" (click)="saveRazorpayKeys()"
-                    [disabled]="savingRazorpay">
-              {{ savingRazorpay ? 'Saving…' : settings.razorpayConfigured ? '🔄 Update Keys' : '+ Add Keys' }}
-            </button>
-          </div>
-        </ng-container>
-
-        <div class="ss-rzp-readonly-msg" *ngIf="!isAdmin">
-          Contact your school administrator to configure payment keys.
-        </div>
-      </div>
+      <app-school-payment-connection *ngIf="onlinePaymentsEnabled"></app-school-payment-connection>
     </ng-container>
 
     <!-- ══════════ FEATURES TAB ══════════ -->
@@ -564,8 +509,8 @@
           <div class="ss-card-title-row">
             <div class="ss-card-icon-box ss-icon-box-amber">⚡</div>
             <div>
-              <h2 class="ss-card-title">Active Features</h2>
-              <p class="ss-card-subtitle">Manage which plan features are enabled</p>
+              <h2 class="ss-card-title">Features</h2>
+              <p class="ss-card-subtitle">What your plan includes, and which plan features are turned on for your school</p>
             </div>
           </div>
         </div>
@@ -576,6 +521,27 @@
         </div>
 
         <ng-container *ngIf="!featuresLoading && schoolFeatures.length > 0">
+          <div class="ss-feat-group" *ngIf="coreFeatures.length">
+            <div class="ss-feat-group-header">
+              <span class="ss-feat-group-label">Included in every plan</span>
+              <span class="ss-feat-group-count">{{ coreFeatures.length }}</span>
+            </div>
+            <div class="ss-feat-grid">
+              <div class="ss-feat-card ss-feat-always" *ngFor="let feat of coreFeatures">
+                <div class="ss-feat-card-body">
+                  <div class="ss-feat-status-dot ss-dot-on"></div>
+                  <div class="ss-feat-card-text">
+                    <span class="ss-feat-card-name">{{ feat.displayName }}</span>
+                    <span class="ss-feat-card-desc" *ngIf="feat.description">{{ feat.description }}</span>
+                  </div>
+                </div>
+                <div class="ss-feat-card-ctrl">
+                  <span class="ss-feat-badge ss-feat-badge-always">In every plan</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <ng-container *ngFor="let group of featuresByCategory()">
             <div class="ss-feat-group">
               <div class="ss-feat-group-header">
@@ -585,24 +551,30 @@
               <div class="ss-feat-grid">
                 <div class="ss-feat-card" *ngFor="let feat of group.features"
                      [class.ss-feat-on]="feat.effectivelyOn"
-                     [class.ss-feat-always]="feat.isAlwaysOn"
-                     [class.ss-feat-notgranted]="!feat.planGranted && !feat.isAlwaysOn">
+                     [class.ss-feat-notgranted]="!feat.planGranted">
                   <div class="ss-feat-card-body">
                     <div class="ss-feat-status-dot" [class.ss-dot-on]="feat.effectivelyOn"></div>
                     <div class="ss-feat-card-text">
                       <span class="ss-feat-card-name">{{ feat.displayName }}</span>
                       <span class="ss-feat-card-desc" *ngIf="feat.description">{{ feat.description }}</span>
+                      <span class="ss-feat-card-meta" *ngIf="feat.dependsOn?.length">Needs {{ feat.dependsOn!.join(' and ') }}</span>
+                      <span class="ss-feat-card-meta" *ngIf="feat.planGranted && !feat.effectivelyOn && feat.overrideState !== 'DISABLED'">Off — {{ feat.dependsOn?.join(' and ') }} is off</span>
                     </div>
                   </div>
                   <div class="ss-feat-card-ctrl">
-                    <span class="ss-feat-badge ss-feat-badge-always" *ngIf="feat.isAlwaysOn">Always On</span>
-                    <span class="ss-feat-badge ss-feat-badge-locked" *ngIf="!feat.planGranted && !feat.isAlwaysOn">Not in Plan</span>
-                    <label class="ss-toggle" *ngIf="feat.planGranted && !feat.isAlwaysOn"
-                           [class.ss-toggle-saving]="savingFeatureKey === feat.featureKey">
+                    <ng-container *ngIf="!feat.planGranted">
+                      <span class="ss-feat-badge ss-feat-badge-addon" *ngIf="feat.addOnEligible && !feat.effectivelyOn">Add-on</span>
+                      <span class="ss-feat-badge ss-feat-badge-always" *ngIf="feat.effectivelyOn">Added for your school</span>
+                      <span class="ss-feat-badge ss-feat-badge-locked" *ngIf="!feat.addOnEligible && !feat.effectivelyOn">Not in plan</span>
+                    </ng-container>
+                    <label class="ss-toggle" *ngIf="feat.planGranted"
+                           [class.ss-toggle-saving]="savingFeatureKey === feat.featureKey"
+                           [attr.title]="feat.overrideState === 'DISABLED' ? 'Turned off for your school' : 'On'">
                       <input type="checkbox"
+                             [attr.aria-label]="(feat.overrideState === 'DISABLED' ? 'Turn on ' : 'Turn off ') + feat.displayName"
                              [checked]="feat.overrideState !== 'DISABLED'"
                              [disabled]="savingFeatureKey === feat.featureKey"
-                             (change)="toggleFeatureOverride(feat)">
+                             (change)="toggleFeatureOverride(feat); $any($event.target).checked = feat.overrideState !== 'DISABLED'">
                       <span class="ss-toggle-track"></span>
                     </label>
                   </div>
@@ -910,7 +882,7 @@
           <div class="ss-sa-item">
             <span class="ss-sa-label">Teacher Attendance Reminder</span>
             <span class="ss-sa-value" *ngIf="settings.teacherAttendanceReminderEnabled">
-              {{ settings.teacherAttendanceReminderTime || 'Not set' }} ({{ settings.timezone || 'Asia/Kolkata' }})
+              {{ formatReminderTime(settings.teacherAttendanceReminderTime) }} ({{ settings.timezone || 'Asia/Kolkata' }})
             </span>
             <span class="ss-sa-value" *ngIf="!settings.teacherAttendanceReminderEnabled">Disabled</span>
           </div>

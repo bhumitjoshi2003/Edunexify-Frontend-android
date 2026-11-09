@@ -9,9 +9,7 @@
         <p class="sa-hero-sub">Platform overview &amp; school management</p>
       </div>
     </div>
-    <button class="sa-refresh-btn" (click)="loadOverview()" [disabled]="loading" title="Refresh">
-      ↻
-    </button>
+    <button class="sa-refresh-btn" (click)="loadOverview()" [disabled]="loading" title="Refresh">↻</button>
     <div class="sa-blob sa-blob-1"></div>
     <div class="sa-blob sa-blob-2"></div>
   </div>
@@ -19,15 +17,18 @@
   <!-- ── Loading ───────────────────────────────────────────────────────────── -->
   <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading platform dashboard">
     <div class="edu-sk-grid">
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
-      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
     </div>
     <div class="edu-sk-panel">
       <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
-      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
     </div>
   </div>
-
   <ng-container *ngIf="!loading">
 
     <!-- ── Tabs ───────────────────────────────────────────────────────────── -->
@@ -41,6 +42,10 @@
       <button class="sa-tab" [class.sa-tab-active]="activeTab === 'plans'"
               (click)="activeTab = 'plans'; loadPlansTab()">
         Plans &amp; Config
+      </button>
+      <button class="sa-tab" [class.sa-tab-active]="activeTab === 'health'"
+              (click)="activeTab = 'health'; loadHealthTab()">
+        Subscription Health
       </button>
     </div>
 
@@ -67,6 +72,7 @@
           <div class="sa-stat-body">
             <div class="sa-stat-val">{{ stats.totalSchools }}</div>
             <div class="sa-stat-lbl">Total Schools</div>
+            <div class="sa-stat-sub">{{ activeCount }} active</div>
           </div>
         </div>
         <div class="sa-stat-card">
@@ -128,7 +134,7 @@
       <div class="sa-card sa-mb16" *ngIf="showOnboardForm">
         <div class="sa-card-header">
           <h3 class="sa-card-title">🏫 Onboard New School</h3>
-          <button class="sa-btn-ghost" (click)="cancelOnboard()">✕</button>
+          <button class="sa-btn-ghost" (click)="showOnboardForm = false">✕</button>
         </div>
 
         <div class="sa-section-label">School Details</div>
@@ -137,14 +143,14 @@
           <div class="sa-form-group">
             <label>School Name *</label>
             <input class="sa-input" type="text" name="schoolName" [(ngModel)]="onboardForm.name"
-              #schoolName="ngModel" required placeholder="Full school name"
-              (blur)="generateSlug()" [class.sa-input-error]="schoolName.invalid && schoolName.touched">
+              #schoolName="ngModel" required placeholder="Full school name" (blur)="generateSlug()"
+              [class.sa-input-error]="schoolName.invalid && schoolName.touched">
             <small class="sa-field-error" *ngIf="schoolName.invalid && schoolName.touched">School name is required.</small>
           </div>
           <div class="sa-form-group">
             <label>Slug *</label>
             <input class="sa-input" type="text" name="slug" [(ngModel)]="onboardForm.slug"
-              #slug="ngModel" required pattern="^[a-z0-9][a-z0-9-]*$" placeholder="e.g. ias"
+              #slug="ngModel" required pattern="^[a-z0-9][a-z0-9-]*$" placeholder="auto-generated"
               [class.sa-input-error]="slug.invalid && slug.touched">
             <small class="sa-hint" *ngIf="!(slug.invalid && slug.touched)">Unique identifier. Lowercase, hyphens only.</small>
             <small class="sa-field-error" *ngIf="slug.errors?.['required'] && slug.touched">Slug is required.</small>
@@ -235,7 +241,7 @@
             <small class="sa-field-error" *ngIf="adminDob.invalid && adminDob.touched">Date of birth is required.</small>
           </div>
           <div class="sa-form-group">
-            <label>Gender</label>
+            <label>Gender *</label>
             <select class="sa-input" name="adminGender" [(ngModel)]="onboardForm.adminGender">
               <option value="">— Select —</option>
               <option value="Male">Male</option>
@@ -244,12 +250,8 @@
             </select>
           </div>
           <div class="sa-form-group">
-            <label>Admin Password *</label>
-            <input class="sa-input" type="password" name="adminPassword" [(ngModel)]="onboardForm.adminPassword"
-              #adminPassword="ngModel" required minlength="6" placeholder="Temporary password"
-              [class.sa-input-error]="adminPassword.invalid && adminPassword.touched">
-            <small class="sa-field-error" *ngIf="adminPassword.errors?.['required'] && adminPassword.touched">Password is required.</small>
-            <small class="sa-field-error" *ngIf="adminPassword.errors?.['minlength'] && adminPassword.touched">Minimum 6 characters.</small>
+            <label>Admin Password</label>
+            <small class="sa-field-hint">The administrator receives an email with a secure link to set their own password. No password is chosen or shared here.</small>
           </div>
           <div class="sa-form-group">
             <label>Trial Plan <span class="sa-label-opt">(optional)</span></label>
@@ -257,18 +259,19 @@
               <option [ngValue]="null">— No trial, assign manually later —</option>
               <option *ngFor="let p of plans" [ngValue]="p.id">{{ p.name }} ({{ p.tier }})</option>
             </select>
-            <small class="sa-field-hint">If selected, a trial subscription is auto-created ({{ subscriptionConfig?.defaultTrialDays ?? 30 }} days).</small>
+            <small class="sa-field-hint" *ngIf="!onboardForm.trialPlanId">Select a plan to auto-create a trial subscription on onboarding.</small>
           </div>
           <div class="sa-form-group" *ngIf="onboardForm.trialPlanId">
-            <label>Trial End Date <span class="sa-label-opt">(optional)</span></label>
-            <input class="sa-input" type="date" name="trialEndsAt" [(ngModel)]="onboardForm.trialEndsAt" [min]="today">
+            <label>Trial End Date</label>
+            <input class="sa-input" type="date" name="trialEndsAt" [(ngModel)]="onboardForm.trialEndsAt"
+                   [min]="today">
             <small class="sa-field-hint">Leave blank to use global default ({{ subscriptionConfig?.defaultTrialDays ?? 30 }} days from today).</small>
           </div>
         </div>
         </form>
 
         <div class="sa-form-actions">
-          <button class="sa-btn-secondary" (click)="cancelOnboard()" [disabled]="onboarding">Cancel</button>
+          <button class="sa-btn-secondary" (click)="showOnboardForm = false" [disabled]="onboarding">Cancel</button>
           <button class="sa-btn-primary" (click)="submitOnboard()" [disabled]="onboarding">
             {{ onboarding ? 'Onboarding…' : 'Onboard School' }}
           </button>
@@ -308,7 +311,7 @@
                     title="Manage Subscription">
               🔑 Sub
             </button>
-            <button class="sa-btn-edit" (click)="openEdit(school)" *ngIf="editingSchoolId !== school.id">
+            <button class="sa-btn-edit" (click)="startEdit(school)" *ngIf="editingSchoolId !== school.id">
               Edit
             </button>
           </div>
@@ -338,7 +341,9 @@
               <input class="sa-input" type="text" [(ngModel)]="editForm.slug"
                      placeholder="e.g. indraacademy" autocomplete="off" autocorrect="off"
                      autocapitalize="none" spellcheck="false">
-              <small class="sa-hint" *ngIf="editForm.slug">URL: <strong>{{ editForm.slug }}.edunexify.co.in</strong></small>
+              <small class="sa-hint" *ngIf="editForm.slug">
+                URL: <strong>{{ editForm.slug }}.edunexify.co.in</strong>
+              </small>
               <small class="sa-hint" *ngIf="!editForm.slug">Lowercase letters, digits, hyphens. Changing this updates the school's subdomain.</small>
             </div>
             <div class="sa-form-group">
@@ -398,12 +403,6 @@
               <label>Expiry Date</label>
               <input class="sa-input" type="date" [(ngModel)]="editForm.expiryDate">
             </div>
-            <div class="sa-form-group sa-active-toggle">
-              <label class="sa-toggle-label">
-                <input type="checkbox" [(ngModel)]="editForm.active">
-                <span>School Active</span>
-              </label>
-            </div>
           </div>
 
           <div class="sa-section-label sa-mt16">Admin Account</div>
@@ -414,15 +413,11 @@
               <code class="sa-admin-id">{{ school.adminUserId }}</code>
               <span class="sa-id-readonly">(cannot be changed)</span>
             </div>
-            <button class="sa-btn-password-toggle" (click)="showPasswordField = !showPasswordField">
-              {{ showPasswordField ? '✕ Cancel password change' : '🔑 Change Admin Password' }}
+            <button type="button" class="sa-btn-password-toggle" *ngIf="school.adminUserId"
+                    (click)="sendSetupLink(school.adminUserId)" [disabled]="sendingSetupLinkFor === school.adminUserId"
+                    title="Email the administrator a one-time link to set their own password">
+              {{ sendingSetupLinkFor === school.adminUserId ? 'Sending…' : '✉️ Send setup link' }}
             </button>
-          </div>
-          <div class="sa-form-group sa-password-field" *ngIf="showPasswordField">
-            <label>New Admin Password</label>
-            <input class="sa-input" type="password" [(ngModel)]="editForm.newAdminPassword"
-                   placeholder="Minimum 6 characters">
-            <small class="sa-hint">Leave blank to keep the current password.</small>
           </div>
 
           <div class="sa-edit-actions">
@@ -444,11 +439,13 @@
 
           <div class="sa-section-label sa-mt8">Subscription Management</div>
 
+          <!-- Loading -->
           <div *ngIf="loadingSubFor === school.id" class="sa-sub-loading">
             <div class="sa-spinner sa-spinner-sm"></div> Loading…
           </div>
 
           <ng-container *ngIf="loadingSubFor !== school.id">
+            <!-- Current subscription status -->
             <ng-container *ngIf="schoolSubscriptions.get(school.id) as sub">
               <div class="sa-sub-status-row">
                 <span class="sa-sub-status-badge" [ngClass]="subStatusClass(sub.status)">
@@ -463,9 +460,10 @@
                 <span *ngIf="sub.graceEndsAt" class="sa-date-chip sa-date-grace">Grace ends: {{ sub.graceEndsAt | date:'d MMM yyyy' }}</span>
               </div>
 
-              <!-- ── Usage bars ── -->
+              <!-- ── Usage bars ─────────────────────────────────────────── -->
               <div class="sa-usage-section" *ngIf="sub.maxStudents || sub.maxStaff">
 
+                <!-- Students -->
                 <div class="sa-usage-item" *ngIf="sub.maxStudents">
                   <div class="sa-usage-row">
                     <span class="sa-usage-label">Students</span>
@@ -482,13 +480,14 @@
                     </div>
                   </div>
                   <div class="sa-usage-hint sa-usage-hint--danger" *ngIf="subUsagePctRaw(sub.activeStudents, sub.maxStudents) >= sub.studentHardLimitPct">
-                    ⛔ Hard limit — registrations blocked.
+                    ⛔ Hard limit reached — registrations blocked for this school.
                   </div>
                   <div class="sa-usage-hint sa-usage-hint--warn" *ngIf="subUsagePctRaw(sub.activeStudents, sub.maxStudents) >= sub.studentSoftLimitPct && subUsagePctRaw(sub.activeStudents, sub.maxStudents) < sub.studentHardLimitPct">
-                    ⚠️ Approaching limit ({{ subUsagePctRaw(sub.activeStudents, sub.maxStudents) }}%).
+                    ⚠️ Approaching student limit ({{ subUsagePctRaw(sub.activeStudents, sub.maxStudents) }}%).
                   </div>
                 </div>
 
+                <!-- Staff -->
                 <div class="sa-usage-item" *ngIf="sub.maxStaff">
                   <div class="sa-usage-row">
                     <span class="sa-usage-label">Staff</span>
@@ -505,7 +504,7 @@
                     </div>
                   </div>
                   <div class="sa-usage-hint sa-usage-hint--danger" *ngIf="subUsagePctRaw(sub.currentStaff, sub.maxStaff) >= sub.staffHardLimitPct">
-                    ⛔ Hard limit — staff registrations blocked.
+                    ⛔ Hard limit reached — staff registrations blocked.
                   </div>
                   <div class="sa-usage-hint sa-usage-hint--warn" *ngIf="subUsagePctRaw(sub.currentStaff, sub.maxStaff) >= sub.staffSoftLimitPct && subUsagePctRaw(sub.currentStaff, sub.maxStaff) < sub.staffHardLimitPct">
                     ⚠️ Approaching staff limit ({{ subUsagePctRaw(sub.currentStaff, sub.maxStaff) }}%).
@@ -514,9 +513,12 @@
 
               </div>
             </ng-container>
-            <p *ngIf="!schoolSubscriptions.get(school.id)" class="sa-sub-no-sub">No subscription assigned yet.</p>
+            <p *ngIf="!schoolSubscriptions.get(school.id)" class="sa-sub-no-sub">
+              No subscription assigned yet.
+            </p>
 
-            <div class="sa-form-grid sa-mt8">
+            <!-- Assignment / update form -->
+            <div class="sa-form-grid sa-form-grid-3 sa-mt8">
               <div class="sa-form-group">
                 <label>Plan *</label>
                 <select class="sa-input" [(ngModel)]="subForm.planId">
@@ -538,7 +540,7 @@
               </div>
               <div class="sa-form-group sa-col-span-2">
                 <label>Notes</label>
-                <input class="sa-input" type="text" [(ngModel)]="subForm.notes" placeholder="Optional">
+                <input class="sa-input" type="text" [(ngModel)]="subForm.notes" placeholder="Optional notes">
               </div>
             </div>
 
@@ -548,81 +550,96 @@
                 {{ savingSubFor === school.id ? 'Saving…' : (schoolSubscriptions.get(school.id) ? 'Update Subscription' : 'Assign Subscription') }}
               </button>
               <button class="sa-btn-ghost" (click)="applyDefaultTrial()"
-                      title="Auto-fill trial end date from global default">
+                      title="Auto-fill trial end date using global default trial duration">
                 ⏱ Apply Default Trial ({{ subscriptionConfig?.defaultTrialDays ?? 30 }}d)
               </button>
               <button class="sa-btn-outline" (click)="doRefreshEntitlement(school.id)"
-                      [disabled]="refreshingSubFor === school.id">
-                {{ refreshingSubFor === school.id ? '⟳ Refreshing…' : '⟳ Refresh' }}
+                      [disabled]="refreshingSubFor === school.id"
+                      title="Rebuild entitlement from current subscription">
+                {{ refreshingSubFor === school.id ? '⟳ Refreshing…' : '⟳ Refresh Entitlement' }}
               </button>
             </div>
 
             <!-- ── Per-school feature overrides ── -->
-            <div class="sa-section-label sa-mt8">Feature Overrides</div>
-            <p class="sa-sub-feature-note">Enable or disable individual features for this school, overriding their plan.</p>
+            <div class="sa-section-label sa-mt16">Feature Access Overrides</div>
+            <p class="sa-sub-feature-note">
+              Enable features beyond the plan (e.g. for trial access) or disable features the plan grants.
+              Changes apply immediately after entitlement refresh.
+            </p>
 
             <div *ngIf="loadingFeaturesFor === school.id" class="sa-sub-loading">
               <div class="sa-spinner sa-spinner-sm"></div> Loading features…
             </div>
 
             <ng-container *ngIf="loadingFeaturesFor !== school.id && schoolFeatures.get(school.id) as features">
-              <div *ngFor="let group of schoolFeaturesByCategory(features)" class="sa-feat-category-group">
+              <ng-container *ngFor="let group of schoolFeaturesByCategory(features)">
                 <div class="sa-feat-category">{{ group.category }}</div>
                 <div class="sa-feat-grid">
-                  <div *ngFor="let f of group.items" class="sa-feat-item"
+                  <div class="sa-feat-item" *ngFor="let f of group.items"
                        [class.sa-feat-on]="f.effectivelyOn"
                        [class.sa-feat-enabled-override]="f.overrideState === 'ENABLED'"
                        [class.sa-feat-disabled-override]="f.overrideState === 'DISABLED'">
                     <span class="sa-feat-name">{{ f.displayName }}</span>
-                    <span class="sa-feat-badge" [class.sa-feat-badge-off]="!f.effectivelyOn">
-                      {{ f.effectivelyOn ? 'ON' : 'OFF' }}
-                    </span>
-                    <div class="sa-feat-actions">
+                    <span class="sa-feat-badge" *ngIf="f.overrideState === 'ENABLED'">+SUPER</span>
+                    <span class="sa-feat-badge sa-feat-badge-off" *ngIf="f.overrideState === 'DISABLED'">OFF</span>
+                    <div class="sa-feat-actions" *ngIf="featureActions(f) as actions">
                       <button class="sa-feat-btn"
-                              *ngIf="f.overrideState !== 'ENABLED'"
-                              [disabled]="savingFeatureFor === f.featureKey"
-                              (click)="setSchoolFeatureOverride(school.id, f.featureKey, 'ENABLED')">Enable</button>
+                              *ngIf="actions.enable"
+                              [disabled]="isSavingFeature(school.id, f.featureKey)"
+                              (click)="setSchoolFeatureOverride(school.id, f.featureKey, 'ENABLED')"
+                              title="Enable for this school (beyond plan)">
+                        Enable
+                      </button>
                       <button class="sa-feat-btn sa-feat-btn-off"
-                              *ngIf="f.overrideState !== 'DISABLED'"
-                              [disabled]="savingFeatureFor === f.featureKey"
-                              (click)="setSchoolFeatureOverride(school.id, f.featureKey, 'DISABLED')">Disable</button>
+                              *ngIf="actions.disable"
+                              [disabled]="isSavingFeature(school.id, f.featureKey)"
+                              (click)="setSchoolFeatureOverride(school.id, f.featureKey, 'DISABLED')"
+                              title="Disable for this school">
+                        Disable
+                      </button>
                       <button class="sa-feat-btn sa-feat-btn-reset"
-                              *ngIf="f.overrideState !== 'DEFAULT'"
-                              [disabled]="savingFeatureFor === f.featureKey"
-                              (click)="setSchoolFeatureOverride(school.id, f.featureKey, 'DEFAULT')">Reset</button>
+                              *ngIf="actions.reset"
+                              [disabled]="isSavingFeature(school.id, f.featureKey)"
+                              (click)="setSchoolFeatureOverride(school.id, f.featureKey, 'DEFAULT')"
+                              title="Remove override (revert to plan default)">
+                        Reset
+                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </ng-container>
             </ng-container>
+
           </ng-container>
         </div>
 
       </div>
     </ng-container>
 
-    <!-- ══════════════ PLANS TAB ══════════════ -->
-    <ng-container *ngIf="activeTab === 'plans'">
+  <!-- ══════════════ PLANS TAB ══════════════ -->
+  <ng-container *ngIf="activeTab === 'plans'">
 
-      <div *ngIf="plansLoading" class="sa-loading">
-        <div class="sa-spinner"></div>
-        <p>Loading plans…</p>
+    <!-- Loading -->
+    <div *ngIf="plansLoading" class="sa-loading">
+      <div class="sa-spinner"></div>
+      <p>Loading plans…</p>
+    </div>
+
+    <ng-container *ngIf="!plansLoading">
+
+      <!-- ── Plan list header ── -->
+      <div class="sa-section-header">
+        <h2 class="sa-section-title">Subscription Plans</h2>
+        <button class="sa-btn-primary" (click)="openCreatePlan()">+ New Plan</button>
       </div>
 
-      <ng-container *ngIf="!plansLoading">
-
-        <!-- ── Plans header ── -->
-        <div class="sa-section-header">
-          <h2 class="sa-section-title">Subscription Plans</h2>
-          <button class="sa-btn-primary sa-btn-sm" (click)="openCreatePlan()">+ New Plan</button>
-        </div>
-
-        <!-- ── Plan cards ── -->
-        <div *ngFor="let plan of plans" class="sa-plan-card" [class.sa-plan-inactive]="!plan.isActive">
+      <!-- ── Plan cards ── -->
+      <div class="sa-plans-grid">
+        <div class="sa-plan-card" *ngFor="let plan of plans" [class.sa-plan-inactive]="!plan.isActive">
 
           <!-- Plan header -->
           <div class="sa-plan-header">
-            <div class="sa-plan-header-left">
+            <div>
               <span class="sa-plan-tier-badge" [attr.data-tier]="plan.tier">{{ plan.tier }}</span>
               <h3 class="sa-plan-name">{{ plan.name }}</h3>
               <span class="sa-plan-visibility">{{ plan.isPublic ? 'Public' : 'Custom / Hidden' }}</span>
@@ -636,16 +653,16 @@
           <!-- Limits -->
           <div class="sa-plan-limits">
             <div class="sa-plan-limit-item">
-              <span>🎓</span>
+              <span class="sa-limit-icon">🎓</span>
               <span>{{ plan.maxStudents != null ? plan.maxStudents + ' students' : 'Unlimited students' }}</span>
               <span class="sa-limit-pct">soft {{ plan.studentSoftLimitPct }}% · hard {{ plan.studentHardLimitPct }}%</span>
             </div>
             <div class="sa-plan-limit-item">
-              <span>👩‍🏫</span>
+              <span class="sa-limit-icon">👩‍🏫</span>
               <span>{{ plan.maxStaff != null ? plan.maxStaff + ' staff' : 'Unlimited staff' }}</span>
             </div>
             <div class="sa-plan-limit-item">
-              <span>💾</span>
+              <span class="sa-limit-icon">💾</span>
               <span>{{ plan.storageGbLimit != null ? plan.storageGbLimit + ' GB storage' : 'Unlimited storage' }}</span>
             </div>
           </div>
@@ -664,7 +681,7 @@
                          (change)="togglePlanFeature(plan, f.featureKey)">
                   <span class="sa-feature-name">{{ f.displayName }}</span>
                   <span *ngIf="isAlwaysOnFeature(f.featureKey)" class="sa-always-on-badge">Always On</span>
-                  <span *ngIf="isPlanFeaturePendingRemoval(plan, f.featureKey)" class="sa-removal-badge">pending</span>
+                  <span *ngIf="isPlanFeaturePendingRemoval(plan, f.featureKey)" class="sa-removal-badge">removal pending</span>
                 </label>
               </div>
             </div>
@@ -672,138 +689,197 @@
 
           <!-- Removal policy picker (scoped to this plan) -->
           <div *ngIf="removingFeatureKey && removingPlanId === plan.id" class="sa-removal-picker">
-            <p>Remove <strong>{{ removingFeatureKey }}</strong> from <strong>{{ plan.name }}</strong>?</p>
-            <select [(ngModel)]="removalPolicy" class="sa-input">
+            <p>When should <strong>{{ removingFeatureKey }}</strong> be removed from <strong>{{ plan.name }}</strong>?</p>
+            <select [(ngModel)]="removalPolicy" class="sa-select">
               <option *ngFor="let p of removalPolicies" [value]="p.value">{{ p.label }}</option>
             </select>
             <div class="sa-removal-actions">
-              <button class="sa-btn-danger sa-btn-sm" (click)="confirmRemoveFeature(plan)">Confirm</button>
-              <button class="sa-btn-ghost" (click)="cancelRemoveFeature()">Cancel</button>
+              <button class="sa-btn-danger-sm" (click)="confirmRemoveFeature(plan)">Confirm removal</button>
+              <button class="sa-btn-ghost-sm" (click)="cancelRemoveFeature()">Cancel</button>
             </div>
           </div>
 
           <!-- Pending changes notice -->
-          <div *ngIf="plan.pendingChanges.length > 0" class="sa-pending-notice">
-            ⏳ {{ plan.pendingChanges.length }} pending change(s)
+          <div *ngIf="plan.pendingChanges.length > 0" class="sa-pending-changes">
+            <span>⏳</span>
+            <span>{{ plan.pendingChanges.length }} pending change(s) — features will update on their scheduled date.</span>
           </div>
 
           <!-- Plan actions -->
           <div class="sa-plan-actions">
-            <button class="sa-btn-edit" (click)="openEditPlan(plan)">Edit limits &amp; pricing</button>
-            <button *ngIf="plan.isActive" class="sa-btn-danger sa-btn-sm" (click)="deactivatePlan(plan)">Deactivate</button>
+            <button class="sa-btn-sm" (click)="openEditPlan(plan)">Edit limits &amp; pricing</button>
+            <button *ngIf="plan.isActive" class="sa-btn-danger-sm" (click)="deactivatePlan(plan)">Deactivate</button>
             <ng-container *ngIf="!plan.isActive">
-              <span class="sa-inactive-label">Inactive</span>
+              <span class="sa-inactive-badge">Inactive</span>
               <button class="sa-btn-reactivate" (click)="reactivatePlan(plan)">Reactivate</button>
             </ng-container>
           </div>
 
         </div>
+      </div>
 
-        <!-- ── Global Subscription Config ── -->
-        <div class="sa-config-section">
-          <div class="sa-section-header">
-            <h2 class="sa-section-title">Global Subscription Settings</h2>
-            <button *ngIf="!editingConfig" class="sa-btn-edit" (click)="startEditConfig()">Edit</button>
+      <!-- ── Plan create/edit form ── -->
+      <div *ngIf="showPlanForm" class="sa-modal-overlay" (click)="cancelPlanForm()">
+        <div class="sa-modal" (click)="$event.stopPropagation()">
+          <h3 class="sa-modal-title">{{ editingPlanId ? 'Edit Plan' : 'New Plan' }}</h3>
+
+          <div class="sa-form-grid-2">
+            <div class="sa-field">
+              <label>Plan Name *</label>
+              <input [(ngModel)]="planForm.name" placeholder="e.g. Enterprise Plus" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label>Tier *</label>
+              <select [(ngModel)]="planForm.tier" class="sa-select">
+                <option value="CAMPUS">CAMPUS</option>
+                <option value="ACADEMY">ACADEMY</option>
+                <option value="INSTITUTE">INSTITUTE</option>
+                <option value="CUSTOM">CUSTOM</option>
+              </select>
+            </div>
+            <div class="sa-field">
+              <label>Max Students (blank = unlimited)</label>
+              <input type="number" [(ngModel)]="planForm.maxStudents" placeholder="e.g. 500" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label>Max Staff (blank = unlimited)</label>
+              <input type="number" [(ngModel)]="planForm.maxStaff" placeholder="e.g. 30" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label>Storage GB (blank = unlimited)</label>
+              <input type="number" [(ngModel)]="planForm.storageGbLimit" placeholder="e.g. 5" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label>Priority Score</label>
+              <input type="number" [(ngModel)]="planForm.priorityScore" placeholder="e.g. 100" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label>Monthly Price (₹)</label>
+              <input type="number" [(ngModel)]="planForm.monthlyPricePaise" placeholder="in paise, e.g. 99900 = ₹999" class="sa-input">
+            </div>
+            <div class="sa-field">
+              <label>Annual Price (₹)</label>
+              <input type="number" [(ngModel)]="planForm.annualPricePaise" placeholder="in paise, e.g. 999900 = ₹9999" class="sa-input">
+            </div>
+            <div class="sa-field sa-field-row">
+              <label>
+                <input type="checkbox" [(ngModel)]="planForm.isPublic"> Show on public pricing page
+              </label>
+            </div>
           </div>
 
-          <div class="sa-config-grid" *ngIf="!editingConfig && subscriptionConfig">
-            <div class="sa-config-item">
-              <span class="sa-config-label">Grace Period</span>
-              <span class="sa-config-value">{{ subscriptionConfig.gracePeriodDays }} days</span>
-            </div>
-            <div class="sa-config-item">
-              <span class="sa-config-label">Default Trial Duration</span>
-              <span class="sa-config-value">{{ subscriptionConfig.defaultTrialDays }} days</span>
-            </div>
-            <div class="sa-config-item">
-              <span class="sa-config-label">Expiry Warning</span>
-              <span class="sa-config-value">{{ subscriptionConfig.expiryNotifyDays }} day(s) before</span>
-            </div>
+          <div class="sa-modal-actions">
+            <button class="sa-btn-primary" (click)="savePlan()" [disabled]="savingPlan">
+              {{ savingPlan ? 'Saving…' : 'Save Plan' }}
+            </button>
+            <button class="sa-btn-ghost" (click)="cancelPlanForm()">Cancel</button>
           </div>
+        </div>
+      </div>
 
-          <div class="sa-form-grid" *ngIf="editingConfig">
-            <div class="sa-form-group">
-              <label>Grace Period (days)</label>
-              <input type="number" [(ngModel)]="configForm.gracePeriodDays" class="sa-input" min="0">
-            </div>
-            <div class="sa-form-group">
-              <label>Default Trial (days)</label>
-              <input type="number" [(ngModel)]="configForm.defaultTrialDays" class="sa-input" min="1">
-            </div>
-            <div class="sa-form-group">
-              <label>Expiry Notification (days before)</label>
-              <input type="number" [(ngModel)]="configForm.expiryNotifyDays" class="sa-input" min="1">
-            </div>
-            <div class="sa-form-actions sa-col-span-2">
-              <button class="sa-btn-secondary" (click)="cancelEditConfig()">Cancel</button>
-              <button class="sa-btn-primary" (click)="saveConfig()">Save</button>
-            </div>
+      <!-- ── Global Subscription Config ── -->
+      <div class="sa-config-section">
+        <div class="sa-section-header">
+          <h2 class="sa-section-title">Global Subscription Settings</h2>
+          <button *ngIf="!editingConfig" class="sa-btn-sm" (click)="startEditConfig()">Edit</button>
+        </div>
+
+        <div class="sa-config-grid" *ngIf="!editingConfig && subscriptionConfig">
+          <div class="sa-config-item">
+            <span class="sa-config-label">Grace Period</span>
+            <span class="sa-config-value">{{ subscriptionConfig.gracePeriodDays }} days</span>
+          </div>
+          <div class="sa-config-item">
+            <span class="sa-config-label">Default Trial Duration</span>
+            <span class="sa-config-value">{{ subscriptionConfig.defaultTrialDays }} days</span>
+          </div>
+          <div class="sa-config-item">
+            <span class="sa-config-label">Expiry Warning (days before)</span>
+            <span class="sa-config-value">{{ subscriptionConfig.expiryNotifyDays }} day(s)</span>
           </div>
         </div>
 
-      </ng-container>
-    </ng-container>
+        <div class="sa-config-grid" *ngIf="editingConfig">
+          <div class="sa-field">
+            <label>Grace Period (days)</label>
+            <input type="number" [(ngModel)]="configForm.gracePeriodDays" class="sa-input" min="0">
+          </div>
+          <div class="sa-field">
+            <label>Default Trial Duration (days)</label>
+            <input type="number" [(ngModel)]="configForm.defaultTrialDays" class="sa-input" min="1">
+          </div>
+          <div class="sa-field">
+            <label>Expiry Notification (days before)</label>
+            <input type="number" [(ngModel)]="configForm.expiryNotifyDays" class="sa-input" min="1">
+          </div>
+          <div class="sa-config-actions">
+            <button class="sa-btn-primary" (click)="saveConfig()">Save</button>
+            <button class="sa-btn-ghost" (click)="cancelEditConfig()">Cancel</button>
+          </div>
+        </div>
+      </div>
 
+    </ng-container>
   </ng-container>
 
-  <!-- ── Plan create/edit modal ── -->
-  <div *ngIf="showPlanForm" class="sa-modal-overlay" (click)="cancelPlanForm()">
-    <div class="sa-modal" (click)="$event.stopPropagation()">
-      <h3 class="sa-modal-title">{{ editingPlanId ? 'Edit Plan' : 'New Plan' }}</h3>
+    <!-- ══════════════ HEALTH TAB ══════════════ -->
+    <ng-container *ngIf="activeTab === 'health'">
 
-      <div class="sa-form-grid">
-        <div class="sa-form-group sa-col-span-2">
-          <label>Plan Name *</label>
-          <input [(ngModel)]="planForm.name" placeholder="e.g. Enterprise Plus" class="sa-input">
-        </div>
-        <div class="sa-form-group">
-          <label>Tier *</label>
-          <select [(ngModel)]="planForm.tier" class="sa-input">
-            <option value="CAMPUS">CAMPUS</option>
-            <option value="ACADEMY">ACADEMY</option>
-            <option value="INSTITUTE">INSTITUTE</option>
-            <option value="CUSTOM">CUSTOM</option>
-          </select>
-        </div>
-        <div class="sa-form-group">
-          <label>Priority Score</label>
-          <input type="number" [(ngModel)]="planForm.priorityScore" placeholder="e.g. 100" class="sa-input">
-        </div>
-        <div class="sa-form-group">
-          <label>Max Students</label>
-          <input type="number" [(ngModel)]="planForm.maxStudents" placeholder="blank = unlimited" class="sa-input">
-        </div>
-        <div class="sa-form-group">
-          <label>Max Staff</label>
-          <input type="number" [(ngModel)]="planForm.maxStaff" placeholder="blank = unlimited" class="sa-input">
-        </div>
-        <div class="sa-form-group">
-          <label>Storage (GB)</label>
-          <input type="number" [(ngModel)]="planForm.storageGbLimit" placeholder="blank = unlimited" class="sa-input">
-        </div>
-        <div class="sa-form-group">
-          <label>Monthly Price (paise)</label>
-          <input type="number" [(ngModel)]="planForm.monthlyPricePaise" placeholder="e.g. 99900 = ₹999" class="sa-input">
-        </div>
-        <div class="sa-form-group sa-col-span-2">
-          <label>Annual Price (paise)</label>
-          <input type="number" [(ngModel)]="planForm.annualPricePaise" placeholder="e.g. 999900 = ₹9999" class="sa-input">
-        </div>
-        <div class="sa-form-group sa-col-span-2">
-          <label class="sa-toggle-label">
-            <input type="checkbox" [(ngModel)]="planForm.isPublic">
-            <span>Show on public pricing page</span>
-          </label>
+      <div class="sa-section-header">
+        <h2 class="sa-section-title">Subscription Health</h2>
+        <button class="sa-btn-outline sa-btn-sm" (click)="reloadHealthTab()">Refresh</button>
+      </div>
+
+      <div class="sa-loading" *ngIf="healthLoading">
+        <div class="sa-spinner"></div>
+        <span>Loading health data…</span>
+      </div>
+
+      <div class="sa-health-table-wrap" *ngIf="!healthLoading">
+        <table class="sa-health-table" *ngIf="healthData.length > 0">
+          <thead>
+            <tr>
+              <th>School</th>
+              <th>Status</th>
+              <th>Plan</th>
+              <th>Tier</th>
+              <th>Key Date</th>
+              <th>Max Students</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of healthData" [class.sa-health-row-inactive]="!item.isActive">
+              <td class="sa-health-school-name">{{ item.schoolName }}</td>
+              <td>
+                <span class="sa-health-status {{ healthStatusClass(item.subscriptionStatus) }}">
+                  {{ item.subscriptionStatus || '—' }}
+                </span>
+              </td>
+              <td>{{ item.planName || '—' }}</td>
+              <td>{{ item.planTier || '—' }}</td>
+              <td>
+                <ng-container *ngIf="healthExpiryDate(item)">
+                  {{ healthExpiryDate(item) | date:'d MMM yyyy' }}
+                </ng-container>
+                <ng-container *ngIf="!healthExpiryDate(item)">—</ng-container>
+              </td>
+              <td>{{ item.maxStudents ?? '∞' }}</td>
+              <td>
+                <span class="sa-health-active-dot" [class.sa-health-active-dot--off]="!item.isActive">
+                  {{ item.isActive ? 'Yes' : 'No' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sa-empty" *ngIf="healthData.length === 0">
+          <p>No subscription data available.</p>
         </div>
       </div>
 
-      <div class="sa-modal-actions">
-        <button class="sa-btn-primary" (click)="savePlan()" [disabled]="savingPlan">
-          {{ savingPlan ? 'Saving…' : 'Save Plan' }}
-        </button>
-        <button class="sa-btn-ghost" (click)="cancelPlanForm()">Cancel</button>
-      </div>
-    </div>
-  </div>
+    </ng-container>
+
+  </ng-container><!-- end !loading -->
 
 </div>

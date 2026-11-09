@@ -4,7 +4,7 @@
 }
 
 .pay-btn {
-  background-color: #007bff;
+  background-color: #1e3a5f;
   color: white;
   padding: 10px 20px;
   font-size: 18px;
@@ -19,7 +19,7 @@
 }
 
 .pay-btn:hover {
-  background-color: #0056b3;
+  background-color: #1f6f8b;
 }
 
 .pay-btn:disabled {

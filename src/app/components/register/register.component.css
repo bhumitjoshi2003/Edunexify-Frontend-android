@@ -1,10 +1,16 @@
 /* ── Page ─────────────────────────────────────────────────────────── */
 .rg-page {
-  padding-bottom: 16px;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+  padding-bottom: 32px;
+  animation: rgFade 0.4s ease;
+}
+
+@keyframes rgFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Hero ─────────────────────────────────────────────────────────── */
@@ -12,9 +18,11 @@
   position: relative;
   background: linear-gradient(135deg, #064e3b 0%, #059669 55%, #34d399 100%);
   border-radius: 16px;
-  padding: 22px 24px;
+  padding: 14px 16px 18px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   overflow: hidden;
   color: #fff;
@@ -29,7 +37,6 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  flex: 1;
   position: relative;
   z-index: 1;
 }
@@ -50,7 +57,7 @@
   font-weight: 600;
   color: rgba(255,255,255,0.72);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
 }
 
 .rg-hero-title {
@@ -59,6 +66,7 @@
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.2px;
+  line-height: 1.1;
 }
 
 .rg-hero-sub {
@@ -67,29 +75,47 @@
   color: rgba(255,255,255,0.78);
 }
 
+.rg-hero-right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.rg-hero-chip {
+  padding: 7px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.3);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
 /* ── Tab Selector ────────────────────────────────────────────────── */
 .rg-tab-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
 .rg-tab-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  border-radius: 13px;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 14px;
   border: 2px solid #e2e8f0;
   background: #fff;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   position: relative;
   overflow: hidden;
-  width: 100%;
 }
 
 .rg-tab-card::before {
@@ -101,17 +127,21 @@
   transition: opacity 0.2s;
 }
 
-.rg-tab-card:active { opacity: 0.9; }
+.rg-tab-card:hover {
+  border-color: #34d399;
+  box-shadow: 0 6px 20px rgba(5,150,105,0.15);
+  transform: translateY(-2px);
+}
 
 .rg-tab-card.rg-tab-active {
   border-color: transparent;
-  box-shadow: 0 6px 20px rgba(5,150,105,0.28);
+  box-shadow: 0 8px 28px rgba(5,150,105,0.28);
 }
 
 .rg-tab-card.rg-tab-active::before { opacity: 1; }
 
 .rg-tab-icon {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   line-height: 1;
   flex-shrink: 0;
   position: relative;
@@ -121,7 +151,7 @@
 .rg-tab-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   flex: 1;
   min-width: 0;
   position: relative;
@@ -129,9 +159,10 @@
 }
 
 .rg-tab-title {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #1e293b;
+  letter-spacing: -0.1px;
   transition: color 0.2s;
 }
 
@@ -139,20 +170,22 @@
 
 .rg-tab-check,
 .rg-tab-arrow {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
+  transition: color 0.2s;
 }
 .rg-tab-check { color: #fff; }
 .rg-tab-arrow { color: #cbd5e1; }
+.rg-tab-card:hover .rg-tab-arrow { color: #059669; }
 
 /* ── Form Wrapper ────────────────────────────────────────────────── */
 .rg-form-wrap {
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
   border: 1px solid #f1f5f9;
   overflow: hidden;
 }
@@ -161,4 +194,11 @@ app-register-student,
 app-register-teacher {
   display: block;
   width: 100%;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .rg-tab-row { grid-template-columns: 1fr; }
+  .rg-hero-title { font-size: 1.25rem; }
+  .rg-hero-right { display: none; }
 }

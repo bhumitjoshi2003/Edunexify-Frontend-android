@@ -9,6 +9,12 @@ export function strictEmailValidator(): ValidatorFn {
   };
 }
 
+/** Required text that is more than whitespace (Validators.required accepts "   "). */
+export function nonBlankValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null =>
+    typeof control.value === 'string' && control.value.trim() === '' ? { required: true } : null;
+}
+
 /** 10-digit Indian mobile number */
 export function phoneValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {

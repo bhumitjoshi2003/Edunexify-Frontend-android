@@ -95,22 +95,23 @@
       </div>
       <p class="fa-month-hint" *ngIf="sessionMonthHint()">{{ sessionMonthHint() }}</p>
       <div class="fa-action-grid">
-        <label>Effective date<input type="date" [(ngModel)]="assignForm.effectiveDate" /></label>
+        <label>Effective date<input type="date" [ngModel]="assignForm.effectiveDate" (ngModelChange)="onEffectiveDateChange($event)" /></label>
         <label>Reason / note<input [(ngModel)]="assignForm.reason" placeholder="Required only for exclusions" /></label>
       </div>
-      <div class="fa-conflict" *ngIf="conflictMonth() as month">
-        <div>
-          <strong>{{ monthLabel(month, true) }} starts before the selected effective date</strong>
-          <p>Choose how this month should be handled for this generation only.</p>
+      <!-- Chosen by the admin: an actionable warning. Still today's default: a neutral explanation of
+           what the school policy will do, so nothing looks like an error the admin made. -->
+      <ng-container *ngIf="conflictMonth() as month">
+        <div class="fa-conflict" *ngIf="effectiveDateChosen" data-testid="effective-date-warning">
+          <div>
+            <strong>{{ monthLabel(month, true) }} starts before the selected effective date</strong>
+            <p>School Settings policy: {{ schoolPolicy }}. {{ effectiveMonthConsequence(month) }} Review the preview before generating.</p>
+          </div>
         </div>
-        <label>Handle {{ monthLabel(month) }}
-          <select [(ngModel)]="midMonthChoice">
-            <option value="FROM_EFFECTIVE_MONTH">Include the full month</option>
-            <option value="NEXT_MONTH">Exclude this month</option>
-            <option value="PRORATE_JOINING_MONTH">Include a partial fee</option>
-          </select>
-        </label>
-      </div>
+        <p class="fa-note fa-effective-note" *ngIf="!effectiveDateChosen" data-testid="effective-date-note">
+          The effective date is today by default. {{ effectiveMonthConsequence(month) }}
+          (School Settings policy: {{ schoolPolicy }}.) Pick an earlier date if fees should apply from the start of {{ monthLabel(month, true) }}.
+        </p>
+      </ng-container>
       <div class="fa-table-wrap">
         <table>
           <thead>
@@ -141,7 +142,7 @@
           </tbody>
         </table>
       </div>
-      <div class="fa-actions">
+      <div class="fa-actions app-fab-safe">
         <button class="fa-secondary danger" (click)="exclude()" [disabled]="working">Exclude</button>
         <button class="fa-secondary" (click)="preview()" [disabled]="working">Preview</button>
         <button class="fa-primary" (click)="generate()" [disabled]="working">Generate fees</button>
@@ -260,7 +261,7 @@
         <label>Valid until (optional)<input type="date" [(ngModel)]="editDiscountForm.validUntil" /></label>
         <label>Reason<input [(ngModel)]="editDiscountForm.reason" /></label>
       </div>
-      <div class="fa-actions">
+      <div class="fa-actions app-fab-safe">
         <button class="fa-secondary" (click)="cancelEditDiscount()" [disabled]="working">Cancel</button>
         <button class="fa-primary" (click)="saveDiscountEdit()" [disabled]="working">Save correction</button>
       </div>
@@ -299,7 +300,7 @@
         <label>Valid until (optional)<input type="date" [(ngModel)]="discountForm.validUntil" /></label>
         <label>Reason<input [(ngModel)]="discountForm.reason" /></label>
       </div>
-      <div class="fa-actions">
+      <div class="fa-actions app-fab-safe">
         <button class="fa-primary" (click)="createDiscount()" [disabled]="working">Apply to selected</button>
       </div>
       <p class="fa-note">Applies only to the students and months currently selected in the Assign &amp; Generate tab.</p>
@@ -317,7 +318,7 @@
         <label>Distance (km)<input type="number" min="0" [(ngModel)]="editTransportForm.distance" [disabled]="!editTransportForm.enabled" /></label>
         <label>Reason<input [(ngModel)]="editTransportForm.reason" /></label>
       </div>
-      <div class="fa-actions">
+      <div class="fa-actions app-fab-safe">
         <button class="fa-secondary" (click)="cancelEditTransport()" [disabled]="working">Cancel</button>
         <button class="fa-primary" (click)="saveTransportCorrection()" [disabled]="working">Save correction</button>
       </div>
@@ -336,7 +337,7 @@
         <label>Effective from<input type="date" [(ngModel)]="transportForm.effectiveFrom" /></label>
         <label>Reason<input [(ngModel)]="transportForm.reason" /></label>
       </div>
-      <div class="fa-actions">
+      <div class="fa-actions app-fab-safe">
         <button class="fa-primary" (click)="updateTransport()" [disabled]="working">Save transport change</button>
       </div>
       <p class="fa-note">Existing eligible unpaid months are recalculated automatically. Paid, partially paid, refunded, allocated or manually settled months remain protected.</p>
@@ -373,9 +374,31 @@
       <div class="fa-card-head">
         <div>
           <h2>Fee records need attention</h2>
-          <p>Some selected months were not generated. Review only these exceptions.</p>
+          <p>Months that were not generated, or were generated without a confirmed amount. Review only these exceptions.</p>
         </div>
         <label class="fa-check"><input type="checkbox" [(ngModel)]="showOnlyMissing" /> Show attention needed only</label>
+      </div>
+      <!-- Generated but unpaid months with no confirmed amount (no fee rule covered them, or no verified
+           snapshot). Identified here; correcting them stays an explicit admin action. -->
+      <div class="fa-unresolved" *ngIf="unresolvedMonthEntries().length" data-testid="unresolved-months">
+        <div class="fa-unresolved-head">
+          <strong>⚠ {{ unresolvedMonthEntries().length }} month{{ unresolvedMonthEntries().length === 1 ? '' : 's' }} without a confirmed amount</strong>
+          <span>Parents see "Amount unavailable" and can't pay these months. Nothing has been changed automatically.</span>
+        </div>
+        <div class="fa-unresolved-item" *ngFor="let entry of unresolvedMonthEntries(); trackBy: trackByUnresolved" data-testid="unresolved-month">
+          <div class="fa-unresolved-who">
+            <strong>{{ entry.row.studentName }}</strong>
+            <small>{{ entry.row.studentId }} · Class {{ entry.row.className }} · {{ session }}</small>
+          </div>
+          <div class="fa-unresolved-what">
+            <span class="fa-unresolved-month">{{ monthLabel(entry.month.month, true) }}</span>
+            <p>{{ entry.month.reason }}</p>
+            <p class="fa-unresolved-context" *ngIf="entry.month.ruleContext">{{ entry.month.ruleContext }}</p>
+            <p class="fa-unresolved-action"><strong>What to do:</strong> {{ entry.month.expectedAction }}</p>
+          </div>
+          <a class="fa-secondary fa-unresolved-link" routerLink="/dashboard/fee-recalculation"
+             [queryParams]="{ studentId: entry.row.studentId, session: session, months: entry.month.month }">Review &amp; recalculate</a>
+        </div>
       </div>
       <div class="fa-table-wrap">
         <table>
@@ -401,7 +424,7 @@
               <td>{{ formatAcademicMonths(row.generatedMonths) }}</td>
               <td><strong class="fa-missing">{{ formatAcademicMonths(row.missingMonths) }}</strong></td>
             </tr>
-            <tr *ngIf="!visibleReconciliationRows().length">
+            <tr *ngIf="!visibleReconciliationRows().length && !unresolvedMonthEntries().length">
               <td colspan="6" class="fa-empty">No students currently need attention.</td>
             </tr>
           </tbody>

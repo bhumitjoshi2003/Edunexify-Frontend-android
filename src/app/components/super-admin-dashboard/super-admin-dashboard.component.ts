@@ -1,19 +1,32 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { adminProfileError } from '../../utils/admin-validation.util';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
-import { SchoolService, SchoolSettings, PlanDetail, FeatureCatalogItem, GlobalSubscriptionConfig, SchoolFeature, SchoolSubscription } from '../../services/school.service';
+import { Subject, forkJoin, takeUntil } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { FestivalCampaign, FestivalCampaignService } from '../../services/festival-campaign.service';
-import { LoggerService } from '../../services/logger.service';
 
-interface DashboardStats {
-  totalSchools: number;
-  activeSchools: number;
-  totalStudents: number;
-  totalTeachers: number;
-  revenueThisMonth: number;
-}
+import {
+  SchoolService,
+  SuperAdminStats,
+  SchoolSettings,
+  PlanDetail,
+  FeatureCatalogItem,
+  GlobalSubscriptionConfig,
+  SubscriptionHealthItem,
+  SchoolFeature,
+  SchoolSubscription,
+} from '../../services/school.service';
+import { LoggerService } from '../../services/logger.service';
+import { activationDialog, activationResultMessage, schoolEditPayload, schoolOnboardPayload, schoolSlugFromName, onboardingResultDialog, setupLinkError, setupLinkFeedback } from '../../utils/school-admin.util';
+import { AdminService } from '../../services/admin.service';
+import { FeatureOverrideActions, featureOperationKey, featureOverrideActions, featureOverrideErrorMessage } from '../../utils/feature-override.util';
 
 interface OnboardForm {
   name: string;
@@ -29,7 +42,6 @@ interface OnboardForm {
   academicYearStartMonth: number;
   adminUserId: string;
   adminEmail: string;
-  adminPassword: string;
   adminName: string;
   adminPhone: string;
   adminDob: string;
@@ -38,26 +50,21 @@ interface OnboardForm {
   trialEndsAt: string;
 }
 
-interface EditSchoolForm {
-  // School info
+interface EditForm {
   name: string;
   slug: string;
-  boardType: string;
-  email: string;
-  phone: string;
-  website: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  contactPersonName: string;
-  // Subscription
-  plan: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  contactPersonName: string | null;
+  boardType: string | null;
+  plan: string | null;
   maxStudents: number | null;
-  expiryDate: string;
-  active: boolean;
-  // Password change
-  newAdminPassword: string;
+  expiryDate: string | null;
 }
 
 @Component({
@@ -71,10 +78,10 @@ interface EditSchoolForm {
 export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
-  activeTab: 'overview' | 'schools' | 'plans' = 'overview';
+  activeTab: 'overview' | 'schools' | 'plans' | 'health' = 'overview';
   festival: FestivalCampaign | null = null;
   festivalSaving = false;
-  stats: DashboardStats | null = null;
+  stats: SuperAdminStats | null = null;
   schools: SchoolSettings[] = [];
   loading = false;
 
@@ -85,9 +92,10 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
 
   // Edit form
   editingSchoolId: number | null = null;
-  editForm: EditSchoolForm = this.emptyEditForm();
+  editForm: EditForm = this.emptyEditForm();
   saving = false;
-  showPasswordField = false;
+  /** Admin ID a setup link is being sent for (blocks a second click). */
+  sendingSetupLinkFor: string | null = null;
 
   readonly legacyPlans = ['TRIAL', 'FREE', 'BASIC', 'STANDARD', 'PREMIUM', 'ENTERPRISE'];
   readonly boardTypes = ['CBSE', 'ICSE', 'STATE', 'IB', 'IGCSE', 'OTHER'];
@@ -101,9 +109,10 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private schoolService: SchoolService,
     private festivalService: FestivalCampaignService,
+    private logger: LoggerService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
-    private logger: LoggerService
+    private adminService: AdminService,
   ) {}
 
   ngOnInit(): void {
@@ -144,84 +153,64 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   loadOverview(): void {
     this.loading = true;
     this.cdr.markForCheck();
+
     forkJoin({
       stats: this.schoolService.getDashboard(),
       schools: this.schoolService.listAllSchools(),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ stats, schools }) => {
-        this.stats = stats;
-        this.schools = schools;
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: (e) => {
-        this.logger.error('Error loading super-admin data', e);
-        this.toast.error('Error', 'Failed to load dashboard data.');
-        this.loading = false;
-        this.cdr.markForCheck();
-      }
-    });
-  }
-
-  // ── Onboarding ──────────────────────────────────────────────────────────────
-
-  openOnboardForm(): void {
-    this.onboardForm = this.emptyOnboardForm();
-    this.showOnboardForm = true;
-    this.editingSchoolId = null;
-    if (!this.plans.length) {
-      this.schoolService.getPlans(true).pipe(takeUntil(this.destroy$)).subscribe({
-        next: (plans) => { this.plans = plans; this.cdr.markForCheck(); },
-        error: (err) => this.logger.error('Failed to load plans', err)
-      });
-    }
-    if (!this.subscriptionConfig) {
-      this.schoolService.getSubscriptionConfig().pipe(takeUntil(this.destroy$)).subscribe({
-        next: (config) => {
-          this.subscriptionConfig = config;
-          this.configForm = { gracePeriodDays: config.gracePeriodDays, defaultTrialDays: config.defaultTrialDays, expiryNotifyDays: config.expiryNotifyDays };
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ stats, schools }) => {
+          this.stats = stats;
+          this.schools = schools;
+          this.loading = false;
           this.cdr.markForCheck();
         },
-        error: (err) => this.logger.error('Failed to load subscription config', err)
+        error: (err) => {
+          this.logger.error('Failed to load super admin data', err);
+          this.loading = false;
+          this.cdr.markForCheck();
+          this.toast.error('Error', 'Failed to load dashboard data.');
+        },
       });
-    }
-    this.cdr.markForCheck();
-  }
-
-  cancelOnboard(): void {
-    this.showOnboardForm = false;
   }
 
   submitOnboard(): void {
+    if (this.onboarding) return;
     const error = this.validateOnboardForm();
     if (error) {
       this.toast.warning('Validation Error', error);
       return;
     }
+
     this.onboarding = true;
     this.cdr.markForCheck();
-    const payload = {
-      ...this.onboardForm,
-      trialEndsAt: this.onboardForm.trialEndsAt || null,
-      trialPlanId: this.onboardForm.trialPlanId || null,
-    };
 
-    this.schoolService.onboardSchool(payload).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (school) => {
-        this.schools = [school, ...this.schools];
-        this.showOnboardForm = false;
-        this.onboarding = false;
-        this.toast.success('Success', `School "${school.name}" onboarded successfully.`);
-        this.cdr.markForCheck();
-      },
-      error: (e) => {
-        this.logger.error('Error onboarding school', e);
-        const msg = e?.error?.message ?? e?.error ?? 'Failed to onboard school.';
-        this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to onboard school.');
-        this.onboarding = false;
-        this.cdr.markForCheck();
-      }
+    const payload = schoolOnboardPayload({
+      ...this.onboardForm,
+      trialPlanId: this.onboardForm.trialPlanId || null,
     });
+
+    this.schoolService
+      .onboardSchool(payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (school) => {
+          this.schools = [school, ...this.schools];
+          this.showOnboardForm = false;
+          this.onboardForm = this.emptyOnboardForm();
+          this.onboarding = false;
+          this.cdr.markForCheck();
+          this.toast.confirm(onboardingResultDialog(school, { userId: payload.adminUserId, email: payload.adminEmail }));
+        },
+        error: (err) => {
+          this.logger.error('Onboard failed', err);
+          this.onboarding = false;
+          this.cdr.markForCheck();
+          const msg = err?.error?.message ?? err?.error ?? 'Failed to onboard school.';
+          this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to onboard school.');
+        },
+      });
   }
 
   private validateEditForm(): string | null {
@@ -230,12 +219,11 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     const phoneRx = /^[0-9]{10}$/;
     const slugRx  = /^[a-z0-9][a-z0-9-]*$/;
 
-    if (!f.name.trim())                               return 'School name is required.';
-    if (f.slug.trim() && !slugRx.test(f.slug.trim())) return 'Slug must be lowercase letters, digits, and hyphens only.';
-    if (f.email && !emailRx.test(f.email.trim()))     return 'School email is not valid.';
-    if (f.phone && !phoneRx.test(f.phone.trim()))     return 'School phone must be exactly 10 digits.';
-    if (f.newAdminPassword && f.newAdminPassword.length < 6)
-                                                      return 'New admin password must be at least 6 characters.';
+    if (!f.name.trim())                             return 'School name is required.';
+    if (f.slug.trim() && !slugRx.test(f.slug.trim()))
+                                                    return 'Slug must be lowercase letters, digits, and hyphens only.';
+    if (f.email && !emailRx.test(f.email.trim()))   return 'School email is not valid.';
+    if (f.phone && !phoneRx.test(f.phone.trim()))   return 'School phone must be exactly 10 digits.';
     return null;
   }
 
@@ -257,43 +245,59 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     if (!f.adminPhone.trim())                         return 'Admin phone is required.';
     if (!phoneRx.test(f.adminPhone.trim()))           return 'Admin phone must be exactly 10 digits.';
     if (!f.adminDob)                                  return 'Admin date of birth is required.';
-    if (!f.adminPassword)                             return 'Admin password is required.';
-    if (f.adminPassword.length < 8)                   return 'Admin password must be at least 8 characters.';
-    if (!/[A-Z]/.test(f.adminPassword))               return 'Admin password must contain at least one uppercase letter.';
-    if (!/[0-9]/.test(f.adminPassword))               return 'Admin password must contain at least one number.';
+    if (!f.adminGender?.trim())                       return 'Admin gender is required.';
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/.test(f.adminUserId.trim())) return 'Admin ID must contain 1–100 letters, digits, dots, underscores or hyphens.';
+    const profileError = adminProfileError({ name: f.adminName, email: f.adminEmail, phoneNumber: f.adminPhone, dob: f.adminDob, gender: f.adminGender });
+    if (profileError) return profileError;
     return null;
   }
 
-  // ── Edit School ─────────────────────────────────────────────────────────────
-
-  openEdit(school: SchoolSettings): void {
+  startEdit(school: SchoolSettings): void {
     this.editingSchoolId = school.id;
-    this.showOnboardForm = false;
-    this.showPasswordField = false;
     this.editForm = {
-      name: school.name ?? '',
+      name: school.name,
       slug: school.slug ?? '',
-      boardType: school.boardType ?? '',
-      email: school.email ?? '',
-      phone: school.phone ?? '',
+      address: school.address,
+      city: school.city,
+      state: school.state,
+      pincode: school.pincode,
+      phone: school.phone,
+      email: school.email,
       website: school.website ?? '',
-      address: school.address ?? '',
-      city: school.city ?? '',
-      state: school.state ?? '',
-      pincode: school.pincode ?? '',
       contactPersonName: school.contactPersonName ?? '',
-      plan: school.plan ?? 'TRIAL',
-      maxStudents: school.maxStudents ?? null,
-      expiryDate: school.expiryDate ?? '',
-      active: school.active,
-      newAdminPassword: '',
+      boardType: school.boardType,
+      plan: school.plan,
+      maxStudents: school.maxStudents,
+      expiryDate: school.expiryDate,
     };
     this.cdr.markForCheck();
   }
 
+  /** Emails the school's administrator a fresh one-hour setup link (never a password). */
+  sendSetupLink(adminUserId: string | null | undefined): void {
+    if (!adminUserId || this.sendingSetupLinkFor) return;
+    this.sendingSetupLinkFor = adminUserId;
+    this.cdr.markForCheck();
+    this.adminService.sendSetupLink(adminUserId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (result) => {
+        this.sendingSetupLinkFor = null;
+        const feedback = setupLinkFeedback(result);
+        feedback.level === 'success' ? this.toast.success(feedback.title, feedback.message) : this.toast.info(feedback.title, feedback.message);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.logger.error('Setup link failed', err);
+        this.sendingSetupLinkFor = null;
+        this.toast.error('Setup link not sent', setupLinkError(err));
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   cancelEdit(): void {
     this.editingSchoolId = null;
-    this.showPasswordField = false;
+    this.editForm = this.emptyEditForm();
+    this.cdr.markForCheck();
   }
 
   saveEdit(): void {
@@ -305,116 +309,120 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const f = this.editForm;
-
     this.saving = true;
     this.cdr.markForCheck();
 
-    const payload: Partial<SchoolSettings> & Record<string, unknown> = {
-      name: f.name.trim(),
-      slug: f.slug.trim(),
-      boardType: f.boardType || null,
-      email: f.email || null,
-      phone: f.phone || null,
-      website: f.website || null,
-      address: f.address || null,
-      city: f.city || null,
-      state: f.state || null,
-      pincode: f.pincode || null,
-      contactPersonName: f.contactPersonName || null,
-      plan: f.plan || null,
-      maxStudents: f.maxStudents ?? null,
-      expiryDate: f.expiryDate || null,
-      active: f.active,
-    };
+    const payload = schoolEditPayload(this.editForm);
 
-    this.schoolService.updateSchoolAll(this.editingSchoolId, payload)
-      .pipe(takeUntil(this.destroy$)).subscribe({
+    this.schoolService
+      .updateSchoolAll(this.editingSchoolId, payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
         next: (updated) => {
-          this.schools = this.schools.map(s => s.id === updated.id ? updated : s);
+          this.schools = this.schools.map((s) =>
+            s.id === updated.id ? updated : s
+          );
 
-          // If password also needs reset
-          if (f.newAdminPassword.trim()) {
-            this.schoolService.resetAdminPassword(this.editingSchoolId!, f.newAdminPassword.trim())
-              .pipe(takeUntil(this.destroy$)).subscribe({
-                next: () => {
-                  this.toast.success('Saved', 'School updated and admin password changed.');
-                  this.saving = false;
-                  this.editingSchoolId = null;
-                  this.showPasswordField = false;
-                  this.cdr.markForCheck();
-                },
-                error: (e) => {
-                  this.logger.error('Error resetting password', e);
-                  this.toast.error('Warning', 'School info saved, but password reset failed.');
-                  this.saving = false;
-                  this.editingSchoolId = null;
-                  this.showPasswordField = false;
-                  this.cdr.markForCheck();
-                }
-              });
-          } else {
-            this.toast.success('Saved', 'School updated successfully.');
-            this.saving = false;
-            this.editingSchoolId = null;
-            this.showPasswordField = false;
-            this.cdr.markForCheck();
-          }
+          this.saving = false;
+          this.editingSchoolId = null;
+          this.cdr.markForCheck();
+          this.toast.success('Saved');
         },
-        error: (e) => {
-          this.logger.error('Error updating school', e);
-          const msg = e?.error?.message ?? 'Failed to update school.';
-          this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to update school.');
+        error: (err) => {
+          this.logger.error('Save failed', err);
           this.saving = false;
           this.cdr.markForCheck();
-        }
+          const msg = err?.error?.message;
+          this.toast.error('Error', typeof msg === 'string' && msg.trim() ? msg : 'Failed to save school settings.');
+        },
       });
   }
 
   confirmToggleActive(school: SchoolSettings): void {
-    const isActive = school.active;
-    this.toast.confirm({
-      title: isActive ? 'Deactivate School?' : 'Activate School?',
-      html: isActive
-        ? `This will deactivate <strong>${school.name}</strong> and prevent login for all its users.`
-        : `This will reactivate <strong>${school.name}</strong> and restore access for all its users.`,
-      icon: 'warning',
-      danger: isActive,
-      confirmText: isActive ? 'Yes, deactivate' : 'Yes, activate',
-      cancelText: 'Cancel',
-    }).then((confirmed) => {
+    const action = school.active ? 'deactivate' : 'activate';
+    this.toast.confirm(activationDialog(school)).then((confirmed) => {
       if (!confirmed) return;
-      this.schoolService.deleteSchool(school.id).pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => {
-          const newActive = !isActive;
-          this.schools = this.schools.map(s =>
-            s.id === school.id ? { ...s, active: newActive } : s
-          );
-          // Also update the edit form so the checkbox reflects the new state
-          if (this.editingSchoolId === school.id) {
-            this.editForm = { ...this.editForm, active: newActive };
-          }
-          this.toast.success('Done', `"${school.name}" has been ${newActive ? 'activated' : 'deactivated'}.`);
-          this.cdr.markForCheck();
-        },
-        error: (e) => {
-          this.logger.error('Error toggling school active state', e);
-          this.toast.error('Error', `Failed to ${isActive ? 'deactivate' : 'activate'} school.`);
-          this.cdr.markForCheck();
-        }
-      });
+
+      this.schoolService
+        .deleteSchool(school.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.schools = this.schools.map((s) =>
+              s.id === school.id ? { ...s, active: !s.active } : s
+            );
+            this.cdr.markForCheck();
+            this.toast.success('Done', activationResultMessage(school, !school.active));
+          },
+          error: (err) => {
+            this.logger.error('Toggle active failed', err);
+            this.toast.error('Error', `Failed to ${action} school.`);
+            this.cdr.markForCheck();
+          },
+        });
     });
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-
   generateSlug(): void {
-    this.onboardForm.slug = this.onboardForm.name.trim().toLowerCase()
-      .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.onboardForm.slug = schoolSlugFromName(this.onboardForm.name);
+    this.cdr.markForCheck();
+  }
+
+  formatCurrency(amount: number): string {
+    return `₹${amount.toLocaleString('en-IN')}`;
+  }
+
+  trackById(_: number, school: SchoolSettings): number {
+    return school.id;
   }
 
   get activeCount(): number {
-    return this.schools.filter(s => s.active).length;
+    return this.schools.filter((s) => s.active).length;
+  }
+
+  // ── Health Tab ────────────────────────────────────────────────────────────
+
+  healthData: SubscriptionHealthItem[] = [];
+  healthLoading = false;
+
+  reloadHealthTab(): void {
+    this.healthData = [];
+    this.loadHealthTab();
+  }
+
+  loadHealthTab(): void {
+    if (this.healthLoading || this.healthData.length) return;
+    this.healthLoading = true;
+    this.cdr.markForCheck();
+    this.schoolService.getSubscriptionHealth().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => {
+        this.healthData = data;
+        this.healthLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.logger.error('Failed to load subscription health', err);
+        this.healthLoading = false;
+        this.cdr.markForCheck();
+        this.toast.error('Error', 'Failed to load subscription health data.');
+      }
+    });
+  }
+
+  healthStatusClass(status: string | null): string {
+    switch (status) {
+      case 'ACTIVE':  return 'health-status-active';
+      case 'TRIAL':   return 'health-status-trial';
+      case 'GRACE':   return 'health-status-grace';
+      case 'EXPIRED': return 'health-status-expired';
+      default:        return 'health-status-none';
+    }
+  }
+
+  healthExpiryDate(item: SubscriptionHealthItem): string | null {
+    if (item.subscriptionStatus === 'TRIAL') return item.trialEndsAt;
+    if (item.subscriptionStatus === 'GRACE') return item.graceEndsAt;
+    return item.expiresAt;
   }
 
   // ── Plans Tab ─────────────────────────────────────────────────────────────
@@ -424,11 +432,13 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   subscriptionConfig: GlobalSubscriptionConfig | null = null;
   plansLoading = false;
 
+  // plan create/edit
   editingPlanId: number | null = null;
   showPlanForm = false;
   savingPlan = false;
   planForm = this.emptyPlanForm();
 
+  // feature removal policy picker
   removingFeatureKey: string | null = null;
   removingPlanId: number | null = null;
   removalPolicy = 'NEXT_MONTHLY';
@@ -439,18 +449,19 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     { value: 'NEXT_ANNUAL',    label: 'Next academic year (Apr 1)' },
   ];
 
+  // global config
   editingConfig = false;
   configForm = { gracePeriodDays: 15, defaultTrialDays: 30, expiryNotifyDays: 1 };
 
   loadPlansTab(): void {
-    if (this.plans.length && this.allFeatures.length) return;
+    if (this.plans.length && this.allFeatures.length) return; // already loaded
     this.plansLoading = true;
     this.cdr.markForCheck();
 
     forkJoin({
-      plans:    this.schoolService.getPlans(true),
+      plans:   this.schoolService.getPlans(true),
       features: this.schoolService.getFeatureCatalog(),
-      config:   this.schoolService.getSubscriptionConfig(),
+      config:  this.schoolService.getSubscriptionConfig(),
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ plans, features, config }) => {
         this.plans              = plans;
@@ -483,20 +494,29 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   openEditPlan(plan: PlanDetail): void {
     this.editingPlanId = plan.id;
     this.planForm = {
-      name: plan.name, tier: plan.tier, isPublic: plan.isPublic,
-      maxStudents: plan.maxStudents ?? null, studentSoftLimitPct: plan.studentSoftLimitPct,
-      studentHardLimitPct: plan.studentHardLimitPct, maxStaff: plan.maxStaff ?? null,
-      staffSoftLimitPct: plan.staffSoftLimitPct, staffHardLimitPct: plan.staffHardLimitPct,
-      storageGbLimit: plan.storageGbLimit ?? null, storageSoftLimitPct: plan.storageSoftLimitPct,
-      storageHardLimitPct: plan.storageHardLimitPct, monthlyPricePaise: plan.monthlyPricePaise ?? null,
-      annualPricePaise: plan.annualPricePaise ?? null, priorityScore: plan.priorityScore,
+      name:                 plan.name,
+      tier:                 plan.tier,
+      isPublic:             plan.isPublic,
+      maxStudents:          plan.maxStudents ?? null,
+      studentSoftLimitPct:  plan.studentSoftLimitPct,
+      studentHardLimitPct:  plan.studentHardLimitPct,
+      maxStaff:             plan.maxStaff ?? null,
+      staffSoftLimitPct:    plan.staffSoftLimitPct,
+      staffHardLimitPct:    plan.staffHardLimitPct,
+      storageGbLimit:       plan.storageGbLimit ?? null,
+      storageSoftLimitPct:  plan.storageSoftLimitPct,
+      storageHardLimitPct:  plan.storageHardLimitPct,
+      monthlyPricePaise:    plan.monthlyPricePaise ?? null,
+      annualPricePaise:     plan.annualPricePaise ?? null,
+      priorityScore:        plan.priorityScore,
     };
     this.showPlanForm = true;
     this.cdr.markForCheck();
   }
 
   cancelPlanForm(): void {
-    this.showPlanForm = false; this.editingPlanId = null;
+    this.showPlanForm  = false;
+    this.editingPlanId = null;
     this.cdr.markForCheck();
   }
 
@@ -519,13 +539,16 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
         } else {
           this.plans = [...this.plans, saved].sort((a, b) => a.priorityScore - b.priorityScore);
         }
-        this.showPlanForm = false; this.editingPlanId = null; this.savingPlan = false;
+        this.showPlanForm  = false;
+        this.editingPlanId = null;
+        this.savingPlan    = false;
         this.cdr.markForCheck();
         this.toast.success('Saved', `Plan "${saved.name}" has been saved.`);
       },
       error: (err) => {
         this.logger.error('Save plan failed', err);
-        this.savingPlan = false; this.cdr.markForCheck();
+        this.savingPlan = false;
+        this.cdr.markForCheck();
         this.toast.error('Error', 'Failed to save plan.');
       },
     });
@@ -534,16 +557,22 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   togglePlanFeature(plan: PlanDetail, featureKey: string): void {
     if (this.isAlwaysOnFeature(featureKey)) return;
     const hasIt = plan.features.some(f => f.featureKey === featureKey);
+
     if (!hasIt) {
+      // Add immediately
       this.schoolService.addFeatureToPlan(plan.id, featureKey)
         .pipe(takeUntil(this.destroy$)).subscribe({
-          next: () => { this.refreshPlan(plan.id); this.toast.success('Feature Added'); },
+          next: () => {
+            this.refreshPlan(plan.id);
+            this.toast.success('Feature Added');
+          },
           error: (err) => {
             const msg = err?.error?.message ?? err?.error ?? 'Failed to add feature.';
             this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to add feature.');
           },
         });
     } else {
+      // Show removal policy picker scoped to this plan
       this.removingFeatureKey = featureKey;
       this.removingPlanId     = plan.id;
       this.removalPolicy      = 'NEXT_MONTHLY';
@@ -557,12 +586,16 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     this.removingFeatureKey = null;
     this.removingPlanId     = null;
     this.cdr.markForCheck();
+
     this.schoolService.removeFeatureFromPlan(plan.id, key, this.removalPolicy)
       .pipe(takeUntil(this.destroy$)).subscribe({
-        next: () => { this.refreshPlan(plan.id); this.toast.success('Feature Scheduled'); },
+        next: () => {
+          this.refreshPlan(plan.id);
+          this.toast.success('Feature Scheduled', 'Removal scheduled successfully.');
+        },
         error: (err) => {
           const msg = err?.error?.message ?? err?.error ?? 'Failed to schedule feature removal.';
-          this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to schedule removal.');
+          this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to schedule feature removal.');
         },
       });
   }
@@ -580,8 +613,11 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
   deactivatePlan(plan: PlanDetail): void {
     this.toast.confirm({
       title: 'Deactivate Plan?',
-      message: `"${plan.name}" will no longer be assignable to new schools.`,
-      icon: 'warning', confirmText: 'Deactivate', cancelText: 'Cancel', danger: true,
+      message: `"${plan.name}" will no longer be assignable to new schools. Existing subscribers are unaffected.`,
+      icon: 'warning',
+      confirmText: 'Deactivate',
+      cancelText: 'Cancel',
+      danger: true,
     }).then(confirmed => {
       if (!confirmed) return;
       this.schoolService.deactivatePlan(plan.id)
@@ -600,7 +636,10 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     this.toast.confirm({
       title: 'Reactivate Plan?',
       message: `"${plan.name}" will become available for assignment to new schools again.`,
-      icon: 'info', confirmText: 'Reactivate', cancelText: 'Cancel', danger: false,
+      icon: 'info',
+      confirmText: 'Reactivate',
+      cancelText: 'Cancel',
+      danger: false,
     }).then(confirmed => {
       if (!confirmed) return;
       this.schoolService.reactivatePlan(plan.id)
@@ -619,11 +658,37 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     this.schoolService.updateSubscriptionConfig(this.configForm)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (updated) => {
-          this.subscriptionConfig = updated; this.editingConfig = false;
-          this.cdr.markForCheck(); this.toast.success('Config Saved');
+          this.subscriptionConfig = updated;
+          this.editingConfig      = false;
+          this.cdr.markForCheck();
+          this.toast.success('Config Saved');
         },
         error: () => this.toast.error('Error', 'Failed to save configuration.'),
       });
+  }
+
+  isPlanFeatureActive(plan: PlanDetail, featureKey: string): boolean {
+    return plan.features.some(f => f.featureKey === featureKey);
+  }
+
+  isPlanFeaturePendingRemoval(plan: PlanDetail, featureKey: string): boolean {
+    return plan.pendingChanges.some(
+      c => c.featureKey === featureKey && c.actionType === 'REMOVE'
+    );
+  }
+
+  formatPaise(paise: number | null): string {
+    if (paise == null) return '—';
+    return `₹${(paise / 100).toLocaleString('en-IN')}`;
+  }
+
+  featuresByCategory(): { category: string; features: FeatureCatalogItem[] }[] {
+    const map = new Map<string, FeatureCatalogItem[]>();
+    for (const f of this.allFeatures) {
+      if (!map.has(f.category)) map.set(f.category, []);
+      map.get(f.category)!.push(f);
+    }
+    return Array.from(map.entries()).map(([category, features]) => ({ category, features }));
   }
 
   startEditConfig(): void { this.editingConfig = true; this.cdr.markForCheck(); }
@@ -640,16 +705,6 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     planId: null, trialEndsAt: '', expiresAt: '', graceEndsAt: '', notes: ''
   };
 
-  // ── Per-school feature overrides (SUPER_ADMIN) ────────────────────────────
-
-  schoolFeatures = new Map<number, SchoolFeature[]>();
-  loadingFeaturesFor: number | null = null;
-  savingFeatureFor: string | null = null;
-
-  get today(): string {
-    return new Date().toISOString().substring(0, 10);
-  }
-
   toggleSubscriptionPanel(school: SchoolSettings): void {
     if (this.subscriptionPanelId === school.id) {
       this.subscriptionPanelId = null;
@@ -658,6 +713,7 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     }
     this.subscriptionPanelId = school.id;
     this.subForm = { planId: null, trialEndsAt: '', expiresAt: '', graceEndsAt: '', notes: '' };
+    // Ensure plans are loaded for the plan selector dropdown
     if (!this.plans.length) {
       this.schoolService.getPlans(true).pipe(takeUntil(this.destroy$)).subscribe({
         next: (plans) => { this.plans = plans; this.cdr.markForCheck(); },
@@ -739,6 +795,13 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Per-school feature overrides ─────────────────────────────────────────
+
+  schoolFeatures = new Map<number, SchoolFeature[]>();
+  loadingFeaturesFor: number | null = null;
+  /** In-flight override saves, keyed by school + feature (see utils/feature-override.util.ts). */
+  readonly savingFeatureKeys = new Set<string>();
+
   loadSchoolFeatures(schoolId: number): void {
     this.loadingFeaturesFor = schoolId;
     this.cdr.markForCheck();
@@ -751,35 +814,45 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
       error: () => {
         this.loadingFeaturesFor = null;
         this.cdr.markForCheck();
+        this.toast.error('Error', 'Failed to load school features.');
       }
     });
   }
 
   setSchoolFeatureOverride(schoolId: number, featureKey: string, overrideState: string): void {
-    this.savingFeatureFor = featureKey;
+    const key = featureOperationKey(schoolId, featureKey);
+    if (this.savingFeatureKeys.has(key)) return;
+    this.savingFeatureKeys.add(key);
     this.cdr.markForCheck();
     this.schoolService.setSuperAdminFeatureOverride(schoolId, featureKey, overrideState)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
-          this.savingFeatureFor = null;
-          this.loadSchoolFeatures(schoolId);
-          this.toast.success('Saved', `Feature override updated.`);
+          this.savingFeatureKeys.delete(key);
+          this.loadSchoolFeatures(schoolId); // reload: the backend decides the effective state
+          this.toast.success('Saved', 'Feature override updated.');
         },
         error: (err) => {
-          this.savingFeatureFor = null;
+          this.savingFeatureKeys.delete(key);
           this.cdr.markForCheck();
-          const msg = err?.error?.message ?? 'Failed to update feature override.';
-          this.toast.error('Error', typeof msg === 'string' ? msg : 'Failed to update feature override.');
+          this.toast.error('Error', featureOverrideErrorMessage(err));
         }
       });
   }
 
+  isSavingFeature(schoolId: number, featureKey: string): boolean {
+    return this.savingFeatureKeys.has(featureOperationKey(schoolId, featureKey));
+  }
+
+  featureActions(feature: SchoolFeature): FeatureOverrideActions {
+    return featureOverrideActions(feature);
+  }
+
+
   schoolFeaturesByCategory(features: SchoolFeature[]): { category: string; items: SchoolFeature[] }[] {
     const map = new Map<string, SchoolFeature[]>();
     for (const f of features) {
-      const cat = f.category ?? 'General';
-      if (!map.has(cat)) map.set(cat, []);
-      map.get(cat)!.push(f);
+      if (!map.has(f.category)) map.set(f.category, []);
+      map.get(f.category)!.push(f);
     }
     return Array.from(map.entries()).map(([category, items]) => ({ category, items }));
   }
@@ -794,11 +867,13 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Bar fill width — capped at 100% for display. */
   subUsagePct(current: number, max: number | null): number {
     if (!max || max <= 0) return 0;
     return Math.min(100, Math.round((current / max) * 100));
   }
 
+  /** Uncapped percentage — used for threshold comparisons against soft/hard limit pcts. */
   subUsagePctRaw(current: number, max: number | null): number {
     if (!max || max <= 0) return 0;
     return Math.round((current / max) * 100);
@@ -812,46 +887,63 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
     return '#10b981';
   }
 
-  isPlanFeatureActive(plan: PlanDetail, key: string): boolean {
-    return plan.features.some(f => f.featureKey === key);
-  }
-  isPlanFeaturePendingRemoval(plan: PlanDetail, key: string): boolean {
-    return plan.pendingChanges.some(c => c.featureKey === key && c.actionType === 'REMOVE');
-  }
-  formatPaise(paise: number | null): string {
-    return paise == null ? '—' : `₹${(paise / 100).toLocaleString('en-IN')}`;
-  }
-  featuresByCategory(): { category: string; features: FeatureCatalogItem[] }[] {
-    const map = new Map<string, FeatureCatalogItem[]>();
-    for (const f of this.allFeatures) {
-      if (!map.has(f.category)) map.set(f.category, []);
-      map.get(f.category)!.push(f);
-    }
-    return Array.from(map.entries()).map(([category, features]) => ({ category, features }));
-  }
-
   private refreshPlan(_planId: number): void {
-    this.schoolService.getPlans(true).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (plans) => { this.plans = plans; this.cdr.markForCheck(); },
-    });
+    this.schoolService.getPlans(true)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (plans) => {
+          this.plans = plans;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private emptyPlanForm() {
     return {
-      name: '', tier: 'CUSTOM', isPublic: false,
-      maxStudents: null as number | null, studentSoftLimitPct: 90, studentHardLimitPct: 105,
-      maxStaff: null as number | null, staffSoftLimitPct: 90, staffHardLimitPct: 105,
-      storageGbLimit: null as number | null, storageSoftLimitPct: 90, storageHardLimitPct: 105,
-      monthlyPricePaise: null as number | null, annualPricePaise: null as number | null,
+      name: '',
+      tier: 'CUSTOM',
+      isPublic: false,
+      maxStudents: null as number | null,
+      studentSoftLimitPct: 90,
+      studentHardLimitPct: 105,
+      maxStaff: null as number | null,
+      staffSoftLimitPct: 90,
+      staffHardLimitPct: 105,
+      storageGbLimit: null as number | null,
+      storageSoftLimitPct: 90,
+      storageHardLimitPct: 105,
+      monthlyPricePaise: null as number | null,
+      annualPricePaise: null as number | null,
       priorityScore: 100,
     };
   }
 
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+  openOnboardForm(): void {
+    this.onboardForm = this.emptyOnboardForm();
+    this.showOnboardForm = true;
+    this.editingSchoolId = null;
+    // Ensure plans are loaded for the trial plan selector
+    if (!this.plans.length) {
+      this.schoolService.getPlans(true).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (plans) => { this.plans = plans; this.cdr.markForCheck(); },
+        error: (err) => this.logger.error('Failed to load plans', err)
+      });
+    }
+    if (!this.subscriptionConfig) {
+      this.schoolService.getSubscriptionConfig().pipe(takeUntil(this.destroy$)).subscribe({
+        next: (config) => {
+          this.subscriptionConfig = config;
+          this.configForm = { gracePeriodDays: config.gracePeriodDays, defaultTrialDays: config.defaultTrialDays, expiryNotifyDays: config.expiryNotifyDays };
+          this.cdr.markForCheck();
+        },
+        error: (err) => this.logger.error('Failed to load subscription config', err)
+      });
+    }
+    this.cdr.markForCheck();
   }
 
-  trackById(_: number, item: SchoolSettings): number { return item.id; }
+  get today(): string {
+    return new Date().toISOString().substring(0, 10);
+  }
 
   applyDefaultTrial(): void {
     const days = this.subscriptionConfig?.defaultTrialDays ?? 30;
@@ -863,21 +955,44 @@ export class SuperAdminDashboardComponent implements OnInit, OnDestroy {
 
   private emptyOnboardForm(): OnboardForm {
     return {
-      name: '', slug: '', address: '', city: '', state: '', pincode: '',
-      phone: '', email: '', website: '', boardType: '',
+      name: '',
+      slug: '',
+      address: '',
+      city: '',
+      state: '',
+      pincode: '',
+      phone: '',
+      email: '',
+      website: '',
+      boardType: '',
       academicYearStartMonth: 4,
-      adminUserId: '', adminEmail: '', adminPassword: '',
-      adminName: '', adminPhone: '', adminDob: '', adminGender: '',
-      trialPlanId: null, trialEndsAt: '',
+      adminUserId: '',
+      adminEmail: '',
+      adminName: '',
+      adminPhone: '',
+      adminDob: '',
+      adminGender: '',
+      trialPlanId: null,
+      trialEndsAt: '',
     };
   }
 
-  private emptyEditForm(): EditSchoolForm {
+  private emptyEditForm(): EditForm {
     return {
-      name: '', slug: '', boardType: '', email: '', phone: '', website: '',
-      address: '', city: '', state: '', pincode: '', contactPersonName: '',
-      plan: 'TRIAL', maxStudents: null, expiryDate: '', active: true,
-      newAdminPassword: '',
+      name: '',
+      slug: '',
+      address: '',
+      city: '',
+      state: '',
+      pincode: '',
+      phone: '',
+      email: '',
+      website: '',
+      contactPersonName: '',
+      boardType: '',
+      plan: 'BASIC',
+      maxStudents: 500,
+      expiryDate: '',
     };
   }
 }

@@ -251,12 +251,12 @@
 
 
                     <div class="form-actions">
-                        <button type="submit" [disabled]="!eventForm.valid" class="save-btn">Save Changes</button>
+                        <button type="submit" [disabled]="!eventForm.valid || savingEvent || deletingEvent" class="save-btn">Save Changes</button>
                         <button type="button" class="cancel-btn" (click)="toggleEditMode($event)">Cancel</button>
                         <button *ngIf="canEditEvents && isEditing"
                                 type="button"
                                 class="ec-btn-delete"
-                                (click)="deleteCurrentEvent()">
+                                (click)="deleteCurrentEvent()" [disabled]="deletingEvent || savingEvent">
                           Delete Event
                         </button>
                     </div>
