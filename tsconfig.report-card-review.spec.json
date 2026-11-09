@@ -26,6 +26,11 @@
     "src/app/components/fee-assignment/*.spec.ts",
     "src/app/components/fee-recalculation/*.spec.ts",
     "src/app/components/fee-reminders/*.spec.ts",
-    "src/app/components/fee-head-management/*.spec.ts"
+    "src/app/components/fee-head-management/*.spec.ts",
+    "src/app/components/register/*.spec.ts",
+    "src/app/components/register-student/*.spec.ts",
+    "src/app/components/register-teacher/*.spec.ts",
+    "src/app/components/reset-password/*.spec.ts",
+    "src/app/components/event-form/*.spec.ts"
   ]
 }

@@ -1,110 +1,56 @@
-/* ── Page ─────────────────────────────────────────────────────────── */
+/* ── Page ──────────────────────────────────────────────────────────── */
 .ef-page {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   display: flex; flex-direction: column; gap: 14px;
-  padding-bottom: 16px;
+  padding-bottom: 20px;
 }
 
-/* ── Hero ─────────────────────────────────────────────────────────── */
+/* ── Hero ──────────────────────────────────────────────────────────── */
 .ef-hero {
   position: relative;
   background: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #22d3ee 100%);
   border-radius: 20px;
   padding: 22px 24px;
-  overflow: hidden;
-  color: #fff;
+  overflow: hidden; color: #fff;
+  display: flex; align-items: center;
 }
-
-.ef-blob {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.12;
-  pointer-events: none;
-}
-.ef-blob-1 { width: 130px; height: 130px; background: #fff; top: -40px; right: -30px; }
+.ef-blob { position: absolute; border-radius: 50%; opacity: 0.12; pointer-events: none; }
+.ef-blob-1 { width: 130px; height: 130px; background: #fff;    top: -40px; right: -30px; }
 .ef-blob-2 { width: 80px;  height: 80px;  background: #a5f3fc; bottom: -25px; left: 30%; }
 
-.ef-hero-row,
 .ef-hero-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  position: relative;
-  z-index: 1;
+  display: flex; align-items: center; gap: 14px;
+  position: relative; z-index: 1;
 }
-
-.ef-back-btn {
-  background: rgba(255,255,255,0.18);
-  border: 1.5px solid rgba(255,255,255,0.35);
-  color: #fff;
-  border-radius: 10px;
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-.ef-back-btn:hover { background: rgba(255,255,255,0.28); }
-
 .ef-hero-icon {
-  font-size: 1.8rem;
-  background: rgba(255,255,255,0.16);
-  border-radius: 14px;
-  width: 50px; height: 50px;
+  font-size: 1.6rem; flex-shrink: 0;
+  background: rgba(255,255,255,0.18); border-radius: 14px;
+  width: 52px; height: 52px;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  line-height: 1;
 }
+.ef-hero-title { font-size: 1.25rem; font-weight: 800; margin: 0 0 2px; color: #fff; letter-spacing: -0.2px; }
+.ef-hero-sub   { font-size: 0.78rem; font-weight: 500; color: rgba(255,255,255,0.8); margin: 0; }
 
-.ef-hero-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0 0 2px;
-  color: #fff;
-  letter-spacing: -0.3px;
-  line-height: 1.2;
-}
-
-.ef-hero-sub {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.85);
-  margin: 0;
-}
-
-/* ── Card ─────────────────────────────────────────────────────────── */
+/* ── Card ──────────────────────────────────────────────────────────── */
 .ef-card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  background: #fff; border-radius: 16px; padding: 18px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 }
-
 .ef-card-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin: 0 0 14px;
+  font-size: 0.72rem; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 16px;
 }
 
-/* ── Fields ───────────────────────────────────────────────────────── */
+/* ── Fields ────────────────────────────────────────────────────────── */
 .ef-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 12px;
+  display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px;
 }
 .ef-field:last-child { margin-bottom: 0; }
 
-.ef-row { display: flex; gap: 12px; }
+.ef-row { display: flex; gap: 14px; }
 
-.ef-field-half {
-  flex: 1;
-  min-width: 0;
-  margin-bottom: 12px;
-}
+.ef-field-half { flex: 1; min-width: 0; margin-bottom: 14px; }
+.ef-field-half:last-child { margin-bottom: 0; }
 
 .ef-label { font-size: 0.78rem; font-weight: 600; color: #475569; }
 .ef-required { color: #ef4444; margin-left: 2px; }
@@ -113,189 +59,122 @@
 .ef-input,
 .ef-textarea,
 .ef-select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-family: inherit;
-  color: #1e293b;
-  background: #f8fafc;
-  outline: none;
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid #e2e8f0; border-radius: 10px;
+  font-size: 0.88rem; font-family: inherit; color: #1e293b;
+  background: #f8fafc; outline: none;
   transition: border-color 0.15s, background 0.15s;
-  box-sizing: border-box;
-  -webkit-appearance: none;
-  appearance: none;
+  box-sizing: border-box; -webkit-appearance: none; appearance: none;
 }
-
-.ef-input:focus,
-.ef-textarea:focus,
-.ef-select:focus {
-  border-color: #0891b2;
-  background: #fff;
+.ef-input:focus, .ef-textarea:focus, .ef-select:focus {
+  border-color: #0891b2; background: #fff;
+  box-shadow: 0 0 0 3px rgba(8,145,178,0.1);
 }
-
 .ef-textarea { resize: vertical; min-height: 80px; }
-
 .ef-select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
-  cursor: pointer;
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer;
 }
 
 .ef-error { font-size: 0.72rem; color: #ef4444; font-weight: 500; }
 
-/* ── Audience Pill Grid ───────────────────────────────────────────── */
+/* ── Audience Pills ─────────────────────────────────────────────────── */
 .ef-audience-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
 }
-
 .ef-audience-pill {
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid #e2e8f0;
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 0.78rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  line-height: 1.4;
+  padding: 6px 16px; border-radius: 20px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc;
+  color: #64748b; font-size: 0.8rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: all 0.15s; line-height: 1.4;
 }
-
-.ef-audience-pill:active { opacity: 0.8; transform: scale(0.96); }
-
+.ef-audience-pill:hover:not(.ef-pill-active) { border-color: #a5f3fc; color: #0891b2; }
 .ef-pill-active {
-  background: #0891b2;
-  border-color: #0891b2;
-  color: #fff;
+  background: #0891b2; border-color: #0891b2; color: #fff;
   box-shadow: 0 2px 8px rgba(8,145,178,0.3);
 }
-.ef-pill-active:active { background: #0e7490; border-color: #0e7490; opacity: 1; }
+.ef-pill-active:hover { background: #0e7490; border-color: #0e7490; }
 
-/* ── Video Links ──────────────────────────────────────────────────── */
+/* ── Video Links ────────────────────────────────────────────────────── */
 .ef-video-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
-
-.ef-video-row { display: flex; gap: 8px; align-items: center; }
-.ef-video-row .ef-input { flex: 1; margin-bottom: 0; }
+.ef-video-row  { display: flex; gap: 8px; align-items: center; }
+.ef-video-row .ef-input { flex: 1; }
 
 .ef-remove-btn {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.2);
-  color: #dc2626;
-  border-radius: 8px;
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+  color: #dc2626; border-radius: 8px;
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.75rem;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s;
-  font-family: inherit;
+  font-size: 0.75rem; cursor: pointer; flex-shrink: 0;
+  transition: background 0.15s; font-family: inherit;
 }
 .ef-remove-btn:hover { background: rgba(239,68,68,0.2); }
 
 .ef-add-link-btn {
-  background: none;
-  border: 1.5px dashed #cbd5e1;
-  color: #0891b2;
-  border-radius: 10px;
-  padding: 8px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
+  background: none; border: 1.5px dashed #cbd5e1; color: #0891b2;
+  border-radius: 10px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; width: 100%; text-align: left;
   transition: border-color 0.15s, background 0.15s;
 }
 .ef-add-link-btn:hover { border-color: #0891b2; background: rgba(8,145,178,0.04); }
 
-/* ── File Upload ──────────────────────────────────────────────────── */
+/* ── File Upload ────────────────────────────────────────────────────── */
 .ef-file-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1.5px dashed #cbd5e1;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border: 1.5px dashed #cbd5e1;
+  border-radius: 10px; background: #f8fafc;
+  color: #475569; font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
 }
 .ef-file-label:hover { border-color: #0891b2; background: rgba(8,145,178,0.04); }
 .ef-file-label svg { flex-shrink: 0; color: #0891b2; }
 
 .ef-image-preview {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  padding: 8px;
-  border-radius: 10px;
-  background: #f1f5f9;
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 10px; padding: 10px;
+  border-radius: 10px; background: #f1f5f9;
 }
-
 .ef-image-preview img {
-  width: 64px; height: 64px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
+  width: 72px; height: 72px; object-fit: cover;
+  border-radius: 8px; flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
-
 .ef-remove-image-btn {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.25);
-  color: #dc2626;
-  border-radius: 8px;
-  padding: 5px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
+  color: #dc2626; border-radius: 8px; padding: 5px 12px;
+  font-size: 0.75rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background 0.15s;
 }
 .ef-remove-image-btn:hover { background: rgba(239,68,68,0.2); }
 
-/* ── Actions ──────────────────────────────────────────────────────── */
-.ef-actions { display: flex; gap: 10px; padding: 0 0 8px; }
+/* ── Actions ────────────────────────────────────────────────────────── */
+.ef-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+}
 
 .ef-btn-cancel {
-  flex: 1;
-  padding: 13px;
-  border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
-  font-size: 0.88rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
+  padding: 12px 28px; border-radius: 12px;
+  border: 1.5px solid #e2e8f0; background: #fff;
+  color: #475569; font-size: 0.9rem; font-weight: 700;
+  font-family: inherit; cursor: pointer; transition: background 0.15s;
 }
 .ef-btn-cancel:hover { background: #f1f5f9; }
 
 .ef-btn-save {
-  flex: 2;
-  padding: 13px;
-  border-radius: 12px;
-  border: none;
+  padding: 12px 32px; border-radius: 12px; border: none;
   background: linear-gradient(135deg, #0e7490, #0891b2);
-  color: #fff;
-  font-size: 0.88rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  box-shadow: 0 3px 12px rgba(14,116,144,0.35);
+  color: #fff; font-size: 0.9rem; font-weight: 700;
+  font-family: inherit; cursor: pointer; transition: opacity 0.15s;
+  box-shadow: 0 4px 14px rgba(14,116,144,0.35);
 }
 .ef-btn-save:hover { opacity: 0.9; }
 .ef-btn-save:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .ef-row { flex-direction: column; gap: 0; }
+  .ef-field-half { flex: unset; width: 100%; }
+  .ef-actions { flex-direction: column-reverse; }
+  .ef-btn-cancel, .ef-btn-save { width: 100%; text-align: center; padding: 13px; }
+  .ef-audience-pill { padding: 6px 12px; font-size: 0.76rem; }
+}

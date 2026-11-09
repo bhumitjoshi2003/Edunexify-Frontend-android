@@ -1,47 +1,47 @@
 /* ── Form Wrapper ─────────────────────────────────────────────── */
 .rs-wrap {
-  padding: 16px 16px 20px;
-  font-family: 'Segoe UI', sans-serif;
+  padding: 24px 28px 28px;
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
 }
 
 /* ── Sections ─────────────────────────────────────────────────── */
 .rs-section {
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .rs-section-label {
-  margin: 0 0 10px;
-  font-size: 0.66rem;
+  margin: 0 0 11px;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #059669;
-  padding-left: 9px;
+  padding-left: 10px;
   border-left: 3px solid #059669;
 }
 
 .rs-section-hint {
-  margin: -4px 0 12px;
-  font-size: 0.76rem;
+  margin: -6px 0 14px;
+  font-size: 0.78rem;
   color: #6b7280;
 }
 
-/* ── Grid — always single column on Android ───────────────────── */
+/* ── Grid ─────────────────────────────────────────────────────── */
 .rs-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
 }
 
 /* ── Field ────────────────────────────────────────────────────── */
 .rs-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .rs-label {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -52,14 +52,14 @@
 
 .rs-input {
   width: 100%;
-  padding: 9px 11px;
+  padding: 9px 12px;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   background: #f8fafc;
   color: #1e293b;
   font-family: inherit;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
@@ -69,6 +69,7 @@
 .rs-input:focus {
   border-color: #059669;
   background: #fff;
+  box-shadow: 0 0 0 3px rgba(5,150,105,0.1);
 }
 
 .rs-select {
@@ -76,12 +77,12 @@
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 12px;
-  padding-right: 28px;
+  padding-right: 30px;
   cursor: pointer;
 }
 
 .rs-err {
-  font-size: 0.7rem;
+  font-size: 0.71rem;
   color: #ef4444;
   font-weight: 500;
 }
@@ -94,28 +95,28 @@
   background: #f0fdf4;
   border: 1.5px solid #bbf7d0;
   border-radius: 12px;
-  padding: 10px 14px;
-  gap: 10px;
+  padding: 12px 16px;
+  gap: 12px;
 }
 
 .rs-bus-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.rs-bus-icon { font-size: 1.3rem; line-height: 1; }
+.rs-bus-icon { font-size: 1.4rem; line-height: 1; }
 
 .rs-bus-title {
-  margin: 0 0 1px;
-  font-size: 0.84rem;
+  margin: 0 0 2px;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #1e293b;
 }
 
 .rs-bus-sub {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.73rem;
   color: #64748b;
 }
 
@@ -123,8 +124,8 @@
 .rs-toggle {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 48px;
+  height: 26px;
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -138,61 +139,70 @@
   position: absolute;
   inset: 0;
   background: #cbd5e1;
-  border-radius: 24px;
+  border-radius: 26px;
   transition: background 0.3s;
 }
 .rs-toggle-track::before {
   content: '';
   position: absolute;
-  width: 18px; height: 18px;
+  width: 20px; height: 20px;
   left: 3px; top: 3px;
   background: #fff;
   border-radius: 50%;
   transition: transform 0.3s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
 }
 .rs-toggle input:checked + .rs-toggle-track { background: #059669; }
-.rs-toggle input:checked + .rs-toggle-track::before { transform: translateX(20px); }
+.rs-toggle input:checked + .rs-toggle-track::before { transform: translateX(22px); }
 
-.rs-distance { margin-top: 10px; }
+.rs-distance { margin-top: 12px; }
 
 /* ── Actions ──────────────────────────────────────────────────── */
 .rs-actions {
   display: flex;
-  gap: 8px;
-  padding-top: 14px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
   border-top: 1px solid #f1f5f9;
   margin-top: 4px;
 }
 
 .rs-btn-cancel,
 .rs-btn-save {
-  flex: 1;
-  padding: 11px 16px;
+  padding: 10px 24px;
   border: none;
   border-radius: 10px;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  text-align: center;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
 .rs-btn-cancel {
   background: #f1f5f9;
   color: #64748b;
 }
-.rs-btn-cancel:active { background: #e2e8f0; }
+.rs-btn-cancel:hover { background: #e2e8f0; }
 
 .rs-btn-save {
   background: linear-gradient(135deg, #059669, #34d399);
   color: #fff;
-  box-shadow: 0 3px 10px rgba(5,150,105,0.28);
+  box-shadow: 0 4px 12px rgba(5,150,105,0.28);
 }
-.rs-btn-save:active { opacity: 0.85; }
+.rs-btn-save:hover { opacity: 0.9; transform: translateY(-1px); }
+.rs-btn-save:active { transform: translateY(0); }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .rs-wrap { padding: 18px 16px 22px; }
+  .rs-grid { grid-template-columns: 1fr; }
+  .rs-actions { justify-content: stretch; }
+  .rs-btn-cancel, .rs-btn-save { flex: 1; text-align: center; }
+}
 
 .rs-btn-cancel:disabled,
-.rs-btn-save:disabled { cursor: not-allowed; opacity: 0.65; }
+.rs-btn-save:disabled { cursor: not-allowed; opacity: 0.65; transform: none; }
 
 .rs-registering-overlay {
   position: fixed;
@@ -230,3 +240,7 @@
 }
 
 @keyframes rs-spin { to { transform: rotate(360deg); } }
+
+/* Class/section configuration status */
+.rs-hint { font-size: 0.75rem; color: #64748b; }
+.rs-retry { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: #1d4ed8; text-decoration: underline; cursor: pointer; }

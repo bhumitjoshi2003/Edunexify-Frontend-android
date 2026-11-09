@@ -27,7 +27,8 @@ describe('RegisterTeacherComponent', () => {
     schoolService.getManagedClasses.and.returnValue(of([]));
     const sectionService = jasmine.createSpyObj('SectionService', ['getSectionsForClass']);
     sectionService.getSectionsForClass.and.returnValue(of([]));
-    toast = jasmine.createSpyObj('ToastService', ['error', 'success']);
+    toast = jasmine.createSpyObj('ToastService', ['error', 'confirm']);
+    toast.confirm.and.returnValue(Promise.resolve(true));
     const router = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
@@ -41,8 +42,7 @@ describe('RegisterTeacherComponent', () => {
         { provide: ToastService, useValue: toast },
         { provide: Router, useValue: router },
       ],
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(RegisterTeacherComponent);
     component = fixture.componentInstance;
@@ -93,6 +93,17 @@ describe('RegisterTeacherComponent', () => {
     expect(toast.error).toHaveBeenCalledWith('Error!', jasmine.stringMatching(/already has a class teacher/));
   });
 
+  it('B3-1: shows the backend email-conflict reason and shows no success dialog', () => {
+    teacherService.addTeacher.and.returnValue(throwError(() => ({ status: 409, error: 'Email address is already in use.' })));
+    component.teacherForm.patchValue({
+      name: 'Test', email: 'Ananya.Rao@E2E.invalid', gender: 'Female', dob: '1985-03-20', joiningDate: '2026-04-01'
+    });
+    component.onSubmit();
+    expect(toast.error).toHaveBeenCalledWith('Error!', 'Email address is already in use.');
+    expect(toast.confirm).not.toHaveBeenCalled();
+    expect(component.isSubmitting).toBeFalse();
+  });
+
   it('shows the DOB-based initial-password message and the Edunexify-generated Employee ID on success', () => {
     teacherService.addTeacher.and.returnValue(of({ teacherId: 'emp_26010007' } as any));
 
@@ -101,8 +112,11 @@ describe('RegisterTeacherComponent', () => {
     });
     component.onSubmit();
 
-    expect(toast.success).toHaveBeenCalledWith('Teacher Registered!', jasmine.stringMatching(/Date of birth in YYYYMMDD format/));
-    expect(toast.success).toHaveBeenCalledWith('Teacher Registered!', jasmine.stringMatching(/emp_26010007/));
+    expect(toast.confirm).toHaveBeenCalledWith(jasmine.objectContaining({
+      message: jasmine.stringMatching(/Date of birth in YYYYMMDD format/),
+    }));
+    expect(toast.confirm).toHaveBeenCalledWith(jasmine.objectContaining({
+      message: jasmine.stringMatching(/emp_26010007/),
+    }));
   });
-
 });

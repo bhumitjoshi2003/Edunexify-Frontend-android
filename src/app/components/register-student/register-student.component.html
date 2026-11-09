@@ -57,18 +57,29 @@
         </div>
         <div class="rs-field">
           <label class="rs-label">Class <span class="rs-req">*</span></label>
-          <select formControlName="className" class="rs-input rs-select">
-            <option value="" disabled selected></option>
+          <select formControlName="className" class="rs-input rs-select" [attr.disabled]="config.classesReady ? null : true" data-testid="class-select">
+            <option value="" disabled selected>{{ config.classesState === 'loading' ? 'Loading classes…' : '' }}</option>
             <option *ngFor="let className of classList" [value]="className">{{ className }}</option>
           </select>
+          <span class="rs-err" *ngIf="config.classesState === 'failed'" data-testid="classes-failed">
+            Classes couldn't be loaded. <button type="button" class="rs-retry" (click)="config.retry()">Retry</button>
+          </span>
           <span class="rs-err" *ngIf="studentForm.controls['className'].invalid && (studentForm.controls['className'].dirty || studentForm.controls['className'].touched)">Class is required.</span>
         </div>
-        <div class="rs-field" *ngIf="sections.length > 0">
+        <div class="rs-field" *ngIf="studentForm.value.className && (config.sectionsPending || config.sectionsState === 'failed')" data-testid="section-status">
           <label class="rs-label">Section</label>
+          <span class="rs-hint" *ngIf="config.sectionsPending">Loading sections…</span>
+          <span class="rs-err" *ngIf="config.sectionsState === 'failed'">
+            Sections couldn't be loaded. <button type="button" class="rs-retry" (click)="config.retry()">Retry</button>
+          </span>
+        </div>
+        <div class="rs-field" *ngIf="sections.length > 0" data-testid="section-field">
+          <label class="rs-label">Section <span class="rs-req">*</span></label>
           <select formControlName="sectionId" class="rs-input rs-select">
-            <option [ngValue]="null">-- None --</option>
+            <option [ngValue]="null" disabled>-- Select section --</option>
             <option *ngFor="let sec of sections" [ngValue]="sec.id">{{ sec.name }}</option>
           </select>
+          <span class="rs-err" *ngIf="studentForm.controls['sectionId'].invalid && (studentForm.controls['sectionId'].dirty || studentForm.controls['sectionId'].touched)">Section is required for this class.</span>
         </div>
         <div class="rs-field">
           <label class="rs-label">Joining Date <span class="rs-req">*</span></label>

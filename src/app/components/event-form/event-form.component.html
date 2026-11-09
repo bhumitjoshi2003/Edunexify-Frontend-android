@@ -5,12 +5,6 @@
     <div class="ef-blob ef-blob-1"></div>
     <div class="ef-blob ef-blob-2"></div>
     <div class="ef-hero-left">
-      <button type="button" class="ef-back-btn" (click)="onCancel()" title="Back">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
       <div class="ef-hero-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -154,7 +148,7 @@
     <!-- ── Actions ────────────────────────────────────────────────── -->
     <div class="ef-actions">
       <button type="button" class="ef-btn-cancel" (click)="onCancel()">Cancel</button>
-      <button type="submit" class="ef-btn-save" [disabled]="!eventForm.valid">
+      <button type="submit" class="ef-btn-save" [disabled]="!eventForm.valid || submitting">
         {{ isEditMode ? 'Update Event' : 'Create Event' }}
       </button>
     </div>

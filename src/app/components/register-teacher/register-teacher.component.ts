@@ -7,12 +7,14 @@ import { ToastService } from '../../services/toast.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AuthStateService } from '../../auth/auth-state.service';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
+import { Subject, forkJoin } from 'rxjs';
+import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { SchoolClass, SchoolService } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
 import { strictEmailValidator, pastDateValidator, phoneValidator } from '../../validators/shared.validators';
+import { registrationCredentialsDialog } from '../../utils/registration.util';
+import { schoolDateKey } from '../../utils/school-date.util';
 
 @Component({
   selector: 'app-register-teacher',
@@ -38,10 +40,10 @@ export class RegisterTeacherComponent implements OnInit, OnDestroy {
     private router: Router,
     private authState: AuthStateService,
     private logger: LoggerService,
-    private toast: ToastService,
-    private cdr: ChangeDetectorRef,
     private schoolService: SchoolService,
-    private sectionService: SectionService
+    private sectionService: SectionService,
+    private toast: ToastService,
+    private cdr: ChangeDetectorRef
   ) {
     this.teacherForm = this.fb.group({
       name: ['', Validators.required],
@@ -62,7 +64,7 @@ export class RegisterTeacherComponent implements OnInit, OnDestroy {
   }
 
   get todayStr(): string {
-    return new Date().toISOString().split('T')[0];
+    return schoolDateKey(new Date());
   }
 
   ngOnInit(): void {
@@ -171,9 +173,7 @@ export class RegisterTeacherComponent implements OnInit, OnDestroy {
         })
       ).subscribe({
         next: () => {
-          this.toast.success('Teacher Registered!', `Edunexify Employee ID: ${generatedTeacherId}. Initial password: Date of birth in YYYYMMDD format. ` +
-            'Example: 23 May 1990 → 19900523. The user must create a new password during their first login.' +
-            (joinsLater ? ' The login activates on the joining date.' : ''));
+          this.toast.confirm(registrationCredentialsDialog('teacher', generatedTeacherId, joinsLater));
           this.teacherForm.reset();
         },
         error: (error) => {

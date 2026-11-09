@@ -25,4 +25,6 @@ jobs:
         run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.report-card-review.spec.json --include='src/app/components/admin-details/*.spec.ts' --include='src/app/components/student-details/*.spec.ts'
       - name: Test fee configuration and reconciliation
         run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.report-card-review.spec.json --include='src/app/components/fee-structure/*.spec.ts' --include='src/app/components/fee-rule-config/*.spec.ts' --include='src/app/components/fee-assignment/*.spec.ts' --include='src/app/components/fee-recalculation/*.spec.ts' --include='src/app/components/fee-reminders/*.spec.ts' --include='src/app/components/fee-head-management/*.spec.ts'
+      - name: Test registration, password reset and event editing
+        run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.report-card-review.spec.json --include='src/app/components/register/*.spec.ts' --include='src/app/components/register-student/*.spec.ts' --include='src/app/components/register-teacher/*.spec.ts' --include='src/app/components/reset-password/*.spec.ts' --include='src/app/components/event-form/*.spec.ts'
       - run: npm run build:android
