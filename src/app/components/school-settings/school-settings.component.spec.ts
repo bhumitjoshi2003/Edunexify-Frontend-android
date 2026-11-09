@@ -36,7 +36,8 @@ describe('G2 Make Current activation parity', () => {
     logger = { error: jasmine.createSpy() };
     c = new SchoolSettingsComponent(
       {} as any, {} as any, {} as any, { markForCheck: () => {} } as any, logger, toast,
-      { snapshot: { queryParamMap: { get: () => null } } } as any, academicSessionService, {} as any
+      { snapshot: { queryParamMap: { get: () => null } } } as any, academicSessionService, {} as any,
+      {} as any, { run: (callback: () => unknown) => callback() } as any
     );
     c.sessions = [current, target];
   });
@@ -135,7 +136,8 @@ describe('Teacher attendance reminder settings', () => {
     logger = { error: jasmine.createSpy() };
     c = new SchoolSettingsComponent(
       schoolService, {} as any, {} as any, { markForCheck: () => {} } as any, logger, toast,
-      { snapshot: { queryParamMap: { get: () => null } } } as any, {} as any, {} as any
+      { snapshot: { queryParamMap: { get: () => null } } } as any, {} as any, {} as any,
+      {} as any, { run: (callback: () => unknown) => callback() } as any
     );
   });
 

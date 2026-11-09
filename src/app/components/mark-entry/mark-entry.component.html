@@ -24,8 +24,7 @@
   <!-- Filters -->
   <section *ngIf="role === 'PRINCIPAL'" class="me-filter-group">
     <label for="mark-correction-reason">Reason for mark corrections</label>
-    <textarea id="mark-correction-reason" [(ngModel)]="correctionReason" maxlength="500" rows="2" [disabled]="saving" aria-describedby="mark-correction-help"></textarea>
-    <p id="mark-correction-help">Your reason and changes are recorded in academic history. Published results and issued-document locks still apply.</p>
+    <textarea id="mark-correction-reason" [(ngModel)]="correctionReason" maxlength="500" rows="2" [disabled]="saving"></textarea>
   </section>
   <div class="me-filters">
     <div class="me-filter-group">

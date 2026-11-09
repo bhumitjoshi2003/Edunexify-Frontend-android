@@ -18,8 +18,7 @@ interface SignatureProfile { saved: boolean; imageBase64: string | null; updated
       <header class="signature-hero">
         <div>
           <span class="eyebrow">REPORT CARDS</span>
-          <h1>My signature</h1>
-          <p>Manage the signature used for report-card approvals.</p>
+          <h1>My Signature</h1>
         </div>
         <span class="hero-mark" aria-hidden="true">✍</span>
       </header>
@@ -71,11 +70,10 @@ interface SignatureProfile { saved: boolean; imageBase64: string | null; updated
     :host{display:block}
     .signature-page{color:var(--edu-text,#1e293b);padding:0 0 24px;font-family:Inter,"Segoe UI",sans-serif}
     .signature-page *{box-sizing:border-box}
-    .signature-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 24px;border-radius:20px;background:linear-gradient(115deg,#173957,#12676d);color:#fff;box-shadow:0 14px 28px rgba(17,62,78,.12)}
+    .signature-hero{display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:112px;padding:24px 28px;position:relative;overflow:hidden;border-radius:22px;background:radial-gradient(circle at 87% 5%,rgba(255,255,255,.18) 0 74px,transparent 75px),linear-gradient(118deg,#123b46,#087e88 58%,#11aaa8);color:#fff;box-shadow:0 16px 35px rgba(15,118,110,.16)}
     .eyebrow{display:block;font-size:.68rem;font-weight:800;letter-spacing:1.4px;color:#b8ede7;margin-bottom:5px}
-    .signature-hero h1{font-size:clamp(1.5rem,2.3vw,1.9rem);letter-spacing:-.5px;line-height:1.2;margin:0 0 5px;font-weight:750}
-    .signature-hero p{margin:0;color:#d8edf0;font-size:.9rem}
-    .hero-mark{display:grid;place-items:center;width:48px;height:48px;flex:none;border-radius:15px;background:rgba(255,255,255,.12);font-size:1.6rem}
+    .signature-hero h1{font-size:clamp(1.4rem,2.3vw,1.65rem);letter-spacing:-.5px;line-height:1.2;margin:0;font-weight:800}
+    .hero-mark{display:grid;place-items:center;width:52px;height:52px;flex:none;border-radius:16px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.13);font-size:1.65rem}
     .signature-card{margin-top:18px;background:#fff;border:1px solid #e3eaf1;border-radius:20px;padding:22px 24px;box-shadow:0 10px 26px rgba(28,54,80,.055)}
     .card-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:16px;border-bottom:1px solid #e9edf2}
     .card-heading h2{font-size:1.12rem;font-weight:750;margin:0 0 4px;color:#1b293f}
@@ -106,7 +104,7 @@ interface SignatureProfile { saved: boolean; imageBase64: string | null; updated
     .success{color:#087443}
     @media(max-width:680px){
       .signature-page{padding:0 0 20px}
-      .signature-hero{padding:18px 20px;border-radius:17px}
+      .signature-hero{padding:20px 18px;border-radius:18px}
       .hero-mark{width:40px;height:40px;font-size:1.35rem}
       .signature-card{padding:18px 16px;border-radius:17px;margin-top:14px}
       .signature-content{grid-template-columns:1fr;gap:16px}

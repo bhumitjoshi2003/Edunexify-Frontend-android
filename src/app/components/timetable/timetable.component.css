@@ -13,6 +13,7 @@
 /* ── Hero ─────────────────────────────────────────────────────── */
 .tt-hero {
   position: relative;
+  min-height: 96px;
   background: linear-gradient(135deg, #14532d 0%, #15803d 55%, #4ade80 100%);
   border-radius: 20px;
   padding: 22px 24px;
@@ -33,7 +34,7 @@
   font-size: 1.8rem;
   background: rgba(255,255,255,0.16);
   border-radius: 14px;
-  width: 50px; height: 50px;
+  width: 52px; height: 52px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -934,7 +935,7 @@
   }
 
   .tt-hero {
-    padding: 16px;
+    padding: 22px 24px;
     flex-wrap: wrap;
     gap: 12px;
   }

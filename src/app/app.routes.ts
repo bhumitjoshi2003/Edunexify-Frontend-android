@@ -66,12 +66,6 @@ export const routes: Routes = [
       },
       { path: 'wisdom/manage', loadComponent: () => import('./components/wisdom/wisdom-admin.component').then(m => m.WisdomAdminComponent), canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN','SUB_ADMIN'], featureKey: 'THOUGHT_OF_THE_DAY' } },
       {
-        path: 'active-sessions',
-        loadComponent: () => import('./components/active-sessions/active-sessions.component').then(m => m.ActiveSessionsComponent),
-        canActivate: [roleGuard, principalCapabilityGuard],
-        data: {principalOperation: 'OWN_SESSIONS', roles: ['STUDENT','TEACHER','ADMIN','SUB_ADMIN','PARENT','SUPER_ADMIN','PRINCIPAL']}
-      },
-      {
         path: 'notifications',
         loadComponent: () => import('./components/notification-center/notification-center.component').then(m => m.NotificationCenterComponent),
         canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'OWN_INBOX', roles: ['STUDENT', 'TEACHER', 'ADMIN', 'SUB_ADMIN', 'PARENT', 'SUPER_ADMIN', 'PRINCIPAL'] }

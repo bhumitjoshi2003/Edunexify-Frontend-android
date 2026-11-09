@@ -84,7 +84,6 @@
           <div class="nav-section-label">My Account</div>
           <a class="nav-item" routerLink="/dashboard/notifications" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My notifications"><mat-icon>notifications</mat-icon><span>My notifications</span></a>
           <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My signature"><mat-icon>draw</mat-icon><span>My signature</span></a>
-          <a class="nav-item" routerLink="/dashboard/active-sessions" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My active sessions"><mat-icon>devices</mat-icon><span>My active sessions</span></a>
         </app-nav-group>
       </ng-container>
 
@@ -277,14 +276,6 @@
            (click)="closeSidebarOnMobile()" title="Dashboard">
           <mat-icon>home</mat-icon><span>Dashboard</span>
         </a>
-        <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="My Signature">
-          <mat-icon>draw</mat-icon><span>My Signature</span>
-        </a>
-        <a class="nav-item" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Report Card Approvals">
-          <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
-        </a>
         <a class="nav-item" routerLink="/dashboard/teacher-checkin" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Check-in">
           <mat-icon>fingerprint</mat-icon><span>My Check-in</span>
@@ -292,6 +283,10 @@
         <a class="nav-item" routerLink="/dashboard/apply-teacher-leave" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Leave">
           <mat-icon>event_note</mat-icon><span>My Leave</span>
+        </a>
+        <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="My Signature">
+          <mat-icon>draw</mat-icon><span>My Signature</span>
         </a>
 
         </app-nav-group>
@@ -348,6 +343,12 @@
         <app-nav-group>
           <div class="nav-section-label">Report Cards</div>
 
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Report Card Approvals">
+          <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
+        </a>
+
+
 
         <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Remarks">
@@ -386,10 +387,6 @@
            (click)="closeSidebarOnMobile()" title="Dashboard">
           <mat-icon>home</mat-icon><span>Dashboard</span>
         </a>
-        <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/principal-management" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Principal Account">
-          <mat-icon>manage_accounts</mat-icon><span>Principal Account</span>
-        </a>
         <a class="nav-item" *ngIf="hasFeature('ANALYTICS')" routerLink="/dashboard/analytics" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Analytics">
           <mat-icon>insights</mat-icon><span>Analytics</span>
@@ -419,6 +416,10 @@
         <a class="nav-item" routerLink="/dashboard/admin-list" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Admins">
           <mat-icon>manage_accounts</mat-icon><span>Admins</span>
+        </a>
+        <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/principal-management" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Principal">
+          <mat-icon>workspace_premium</mat-icon><span>Principal</span>
         </a>
         <a class="nav-item" *ngIf="hasFeature('PARENT_PORTAL')" routerLink="/dashboard/parent-portal" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Parents & Guardians">

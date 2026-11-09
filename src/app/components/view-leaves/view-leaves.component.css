@@ -21,8 +21,9 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 20px 22px;
-  border-radius: 18px;
+  min-height: 96px;
+  padding: 22px 24px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #134e4a 0%, #0f766e 55%, #2dd4bf 100%);
   color: #fff;
   overflow: hidden;
@@ -44,8 +45,8 @@
 
 .vl-hero-icon {
   flex-shrink: 0;
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border-radius: 14px;
@@ -437,7 +438,7 @@
 /* ── Small phones ─────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .vl-page { gap: 12px; }
-  .vl-hero { padding: 16px; border-radius: 16px; gap: 12px; }
+  .vl-hero { padding: 22px 24px; border-radius: 20px; gap: 12px; }
   .vl-hero-icon { width: 44px; height: 44px; font-size: 1.3rem; border-radius: 12px; }
   .vl-hero-title { font-size: 1.1rem; }
   .vl-toolbar { padding: 12px; gap: 12px; border-radius: 16px; }
