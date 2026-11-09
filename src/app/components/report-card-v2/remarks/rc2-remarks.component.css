@@ -10,3 +10,8 @@
 @media (max-width: 700px) {
   .rc2-student { flex-basis: 100%; }
 }
+
+/* Keep the explanatory hero subtitle on tablets and desktops, but not phones. */
+@media (max-width: 767px) {
+  .rc2-hero-sub { display: none; }
+}
