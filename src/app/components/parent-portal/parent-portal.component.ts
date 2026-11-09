@@ -302,6 +302,12 @@ export class ParentPortalComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/report-card-documents'], { queryParams: { studentId: child.studentId } });
   }
 
+  openClassroom(child: ChildAccess, section: 'homework' | 'assessments' | 'class-updates'): void {
+    if (!this.hasFeature('CLASSROOM')) return;
+    this.childContext.select(child);
+    this.router.navigate(['/dashboard', section], { queryParams: { studentId: child.studentId } });
+  }
+
   openSchoolUpdates(): void { this.router.navigate(['/dashboard/notice']); }
 
   openTimetable(child: ChildAccess): void {
