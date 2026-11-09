@@ -213,6 +213,7 @@
 .sr-exam-body { padding: 20px; }
 
 /* ── Subject Table ───────────────────────────────────────────────── */
+.sr-table-scroll { width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 .sr-table {
   width: 100%;
   border-collapse: collapse;
@@ -335,46 +336,10 @@
     padding: 3px 8px;
   }
 
-  .sr-exam-body { padding: 0 0 4px; }
-
-  /* Card layout — make table a proper block so it respects parent padding */
-  .sr-table,
-  .sr-table tbody { display: block; width: 100%; }
-
-  .sr-table thead { display: none; }
-
-  .sr-table tbody tr {
-    display: block;
-    border-bottom: 1px solid #ecfeff;
-    padding: 4px 0;
-  }
-
-  .sr-table tbody tr:last-child { border-bottom: none; }
-  .sr-table tbody tr:hover td { background: transparent; }
-
-  .sr-table tbody td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 9px 14px;
-    border: none;
-    border-bottom: 1px solid #f0fdfa;
-    font-size: 0.88rem;
-  }
-
-  .sr-table tbody td:last-child { border-bottom: none; }
-
-  .sr-table tbody td::before {
-    content: attr(data-label);
-    font-weight: 700;
-    color: #0e7490;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    flex-shrink: 0;
-    margin-right: 10px;
-    min-width: 80px;
-  }
+  .sr-exam-body { padding: 10px 0 4px; }
+  .sr-table-scroll { max-width: 100%; }
+  .sr-table { min-width: 660px; margin-bottom: 16px; }
+  .sr-table th, .sr-table td { white-space: nowrap; padding: 9px 12px; }
 
   .sr-chart-wrapper {
     margin: 10px 14px;
