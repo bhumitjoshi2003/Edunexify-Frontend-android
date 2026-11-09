@@ -1,195 +1,121 @@
-.ra-page {
-  font-family: 'Segoe UI', sans-serif;
-  padding-bottom: 24px;
+.registration-container {
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    background-color: #f4f7f6;
+    min-height: 85vh;
 }
 
-/* ── Hero ─────────────────────────────────────────────────────────── */
-.ra-hero {
-  position: relative;
-  background: linear-gradient(135deg, #134e4a 0%, #0f766e 55%, #14b8a6 100%);
-  border-radius: 20px;
-  padding: 22px 24px;
-  margin: 0 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  overflow: hidden;
-  color: #fff;
+.form-card {
+    background: white;
+    width: 100%;
+    max-width: 850px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    padding: 40px;
+    border-top: 6px solid #1f6f8b;
 }
 
-.ra-blob {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.12;
-  pointer-events: none;
-}
-.ra-blob-1 { width: 130px; height: 130px; background: #fff; top: -40px; right: -30px; }
-.ra-blob-2 { width: 80px;  height: 80px;  background: #99f6e4; bottom: -20px; left: 30%; }
-
-.ra-hero-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: relative;
-  z-index: 1;
+.card-header {
+    margin-bottom: 30px;
 }
 
-.ra-hero-icon {
-  font-size: 1.7rem;
-  flex-shrink: 0;
+.card-header h2 {
+    color: #1f6f8b;
+    font-size: 1.8rem;
+    margin: 0;
 }
 
-.ra-hero-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0;
-  color: #fff;
-  letter-spacing: -0.3px;
-  line-height: 1.2;
+.card-header p {
+    color: #718096;
+    margin-top: 5px;
 }
 
-.ra-hero-sub {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.8);
-  margin: 3px 0 0;
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
 }
 
-/* ── Card ─────────────────────────────────────────────────────────── */
-.ra-card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 20px 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.ra-card-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin: 0 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
+.field-group label {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.9rem;
 }
 
-.ra-card-title-icon { font-size: 1rem; }
-
-/* ── Form Grid ────────────────────────────────────────────────────── */
-.ra-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+.req {
+    color: #e53e3e;
 }
 
-.ra-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+input,
+select {
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
-.ra-field-full {
-  grid-column: 1 / -1;
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #1f6f8b;
+    box-shadow: 0 0 0 3px rgba(31, 111, 139, 0.1);
 }
 
-.ra-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #374151;
+/* --- Validation State --- */
+.invalid-field {
+    border-color: #e53e3e !important;
+    background-color: #fff5f5;
 }
 
-.ra-req { color: #dc2626; }
-
-.ra-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
+.error-text {
+    color: #e53e3e;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 
-.ra-input-icon {
-  position: absolute;
-  left: 12px;
-  font-size: 0.95rem;
-  pointer-events: none;
-  z-index: 1;
+.form-actions {
+    margin-top: 40px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding-top: 20px;
+    border-top: 1px solid #edf2f7;
 }
 
-.ra-input {
-  width: 100%;
-  padding: 11px 14px 11px 38px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 0.88rem;
-  font-family: inherit;
-  color: #1e293b;
-  background: #f8fafc;
-  box-sizing: border-box;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  appearance: none;
+button {
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    border: none;
 }
 
-.ra-input:focus {
-  outline: none;
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(15,118,110,0.12);
-  background: #fff;
+.btn-submit {
+    background: #1f6f8b;
+    color: white;
 }
 
-.ra-invalid {
-  border-color: #dc2626 !important;
-  background: #fff5f5;
+.btn-submit:hover {
+    background: #14505d;
+    transform: translateY(-1px);
 }
 
-.ra-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2364748b' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  cursor: pointer;
-}
-
-.ra-error-text {
-  font-size: 0.7rem;
-  color: #dc2626;
-  font-weight: 600;
-}
-
-/* ── Actions ──────────────────────────────────────────────────────── */
-.ra-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.ra-btn {
-  padding: 12px 28px;
-  border-radius: 12px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  font-family: inherit;
-  transition: opacity 0.15s, transform 0.1s;
-}
-.ra-btn:active { transform: scale(0.97); }
-
-.ra-btn-submit {
-  background: linear-gradient(135deg, #0f766e, #14b8a6);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(15,118,110,0.3);
-}
-
-.ra-btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
+.btn-cancel {
+    background: #edf2f7;
+    color: #4a5568;
 }
 
 @media (max-width: 600px) {
-  .ra-grid { grid-template-columns: 1fr; }
-  .ra-actions { flex-direction: column; }
-  .ra-btn { width: 100%; text-align: center; }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
 }

@@ -6,9 +6,6 @@
     <div class="sd-blob sd-blob-2"></div>
 
     <div class="sd-hero-bar">
-      <button class="sd-back-icon" (click)="goBack()" title="Back">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
       <div class="sd-hero-btns">
         <button *ngIf="getUserRole() === 'ADMIN' && !isEditing" class="sd-pill" (click)="enableEditMode()">✏ Edit</button>
         <ng-container *ngIf="getUserRole() === 'ADMIN' && isEditing">
@@ -65,17 +62,28 @@
       <div class="sd-item">
         <span class="sd-item-label">Class</span>
         <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.className }}</span>
-        <select class="sd-item-input" *ngIf="isEditing && getUserRole() === 'ADMIN' && !isExitStatus()" [(ngModel)]="updatedDetails.className" (ngModelChange)="onClassChangeInEdit($event)">
+        <select class="sd-item-input" *ngIf="isEditing && getUserRole() === 'ADMIN' && !isExitStatus()" [(ngModel)]="updatedDetails.className" (ngModelChange)="onClassChangeInEdit($event)" [disabled]="!config.classesReady" data-testid="edit-class-select">
+          <option *ngIf="!config.classesReady" [value]="updatedDetails.className">{{ updatedDetails.className }}</option>
           <option *ngFor="let className of classList" [value]="className">{{ className }}</option>
         </select>
+        <span class="sd-config-note" *ngIf="isEditing && config.classesState === 'failed'" data-testid="classes-failed">
+          Classes couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
+        </span>
         <span class="sd-item-value" *ngIf="isEditing && (getUserRole() !== 'ADMIN' || isExitStatus())">{{ studentDetails.className }}</span>
+      </div>
+      <div class="sd-item" *ngIf="isEditing && !isExitStatus() && (config.sectionsPending || config.sectionsState === 'failed')" data-testid="section-status">
+        <span class="sd-item-label">Section</span>
+        <span class="sd-config-note" *ngIf="config.sectionsPending">Loading sections…</span>
+        <span class="sd-config-note" *ngIf="config.sectionsState === 'failed'">
+          Sections couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
+        </span>
       </div>
       <div class="sd-item" *ngIf="studentDetails.sectionName || (isEditing && sections.length > 0)">
         <span class="sd-item-label">Section</span>
         <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.sectionName }}</span>
         <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.sectionName }}</span>
         <select class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.sectionId">
-          <option [ngValue]="null">-- None --</option>
+          <option [ngValue]="null" disabled>-- Select section --</option>
           <option *ngFor="let sec of sections" [ngValue]="sec.id">{{ sec.name }}</option>
         </select>
       </div>
@@ -256,24 +264,16 @@
 
 </div>
 
-<div class="edu-page-skeleton" *ngIf="!studentDetails" aria-busy="true" aria-label="Loading student profile">
-  <div class="edu-sk-hero">
-    <span class="edu-sk-shimmer edu-sk-avatar"></span>
-    <div class="edu-sk-hero-copy">
-      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-sm"></span>
-      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-lg"></span>
+<div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="!studentDetails" aria-busy="true" aria-label="Loading student profile">
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
       <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
     </div>
   </div>
-  <div class="edu-sk-grid">
-    <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
-    <span class="edu-sk-shimmer edu-sk-card"></span><span class="edu-sk-shimmer edu-sk-card"></span>
-  </div>
-  <div class="edu-sk-panel">
-    <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
-    <span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span><span class="edu-sk-shimmer edu-sk-table-line"></span>
-  </div>
-</div>
 
 <!-- ── Change Password Modal ───────────────────────────────────────── -->
 <div class="cp-overlay" *ngIf="showPasswordModal" (click)="closePasswordModal()">
@@ -294,7 +294,7 @@
     <div class="cp-field">
       <label class="cp-label">New Password</label>
       <div class="cp-input-wrap">
-        <input [type]="cpShowNew ? 'text' : 'password'" [(ngModel)]="cpNewPw" placeholder="Enter new password (min 6 chars)" class="cp-input">
+        <input [type]="cpShowNew ? 'text' : 'password'" [(ngModel)]="cpNewPw" placeholder="8+ characters with A–Z, a–z and 0–9" class="cp-input">
         <button type="button" class="cp-toggle" (click)="cpShowNew = !cpShowNew">
           <svg *ngIf="!cpShowNew" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           <svg *ngIf="cpShowNew" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -385,9 +385,12 @@
 
     <div class="cp-field">
       <label class="cp-label">Class *</label>
-      <select class="cp-input" [(ngModel)]="readmitClassName" (ngModelChange)="onReadmitClassChange($event)">
+      <select class="cp-input" [(ngModel)]="readmitClassName" (ngModelChange)="onReadmitClassChange($event)" [disabled]="config.managedState !== 'ready'">
         <option *ngFor="let c of managedClasses" [value]="c.name">{{ c.name }}</option>
       </select>
+      <span class="sd-config-note" *ngIf="config.managedState === 'failed'">
+        Classes couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
+      </span>
     </div>
 
     <div class="cp-field" *ngIf="readmitSections.length">

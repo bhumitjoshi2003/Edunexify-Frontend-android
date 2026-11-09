@@ -1,3 +1,5 @@
+import { AcademicSessionService } from '../../services/academic-session.service';
+import { feeMonthLabel } from '../../utils/fee-session.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -34,12 +36,21 @@ export class FeeHeadManagementComponent implements OnInit, OnDestroy {
     { value: 'ONE_TIME', label: 'One-Time' },
   ];
 
-  allMonths = [
-    { value: 1, label: 'Jan' }, { value: 2, label: 'Feb' }, { value: 3, label: 'Mar' },
-    { value: 4, label: 'Apr' }, { value: 5, label: 'May' }, { value: 6, label: 'Jun' },
-    { value: 7, label: 'Jul' }, { value: 8, label: 'Aug' }, { value: 9, label: 'Sep' },
-    { value: 10, label: 'Oct' }, { value: 11, label: 'Nov' }, { value: 12, label: 'Dec' },
-  ];
+  allMonths = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Academic month ${i + 1}` }));
+
+  get suspiciousSchedules(): FeeHead[] {
+    return this.feeHeads.filter(head => {
+      try {
+        const months = JSON.parse(head.dueMonths || '[]').sort((a: number, b: number) => a - b).join(',');
+        return ((head.frequency === 'ANNUAL' || head.frequency === 'ONE_TIME') && months === '4')
+          || (head.frequency === 'SEMI_ANNUAL' && months === '4,10');
+      } catch { return true; }
+    });
+  }
+
+  needsReview(head: FeeHead): boolean {
+    return this.suspiciousSchedules.includes(head);
+  }
 
   selectedMonths: Set<number> = new Set();
 
@@ -48,9 +59,17 @@ export class FeeHeadManagementComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
+    private sessionsApi: AcademicSessionService,
   ) {}
 
   ngOnInit(): void {
+    this.sessionsApi.getCurrentSession().pipe(takeUntil(this.destroy$)).subscribe({
+      next: session => {
+        this.allMonths = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: feeMonthLabel(session.startDate, i + 1) }));
+        this.cdr.markForCheck();
+      },
+      error: e => this.logger.error('Session dates unavailable; showing academic ordinals', e),
+    });
     this.loadFeeHeads();
   }
 
@@ -172,10 +191,10 @@ export class FeeHeadManagementComponent implements OnInit, OnDestroy {
   private defaultMonthsForFrequency(frequency: FeeHead['frequency']): Set<number> {
     switch (frequency) {
       case 'MONTHLY': return new Set([1,2,3,4,5,6,7,8,9,10,11,12]);
-      case 'QUARTERLY': return new Set([4,7,10,1]); // Apr, Jul, Oct, Jan
-      case 'SEMI_ANNUAL': return new Set([4,10]);   // Apr, Oct
-      case 'ANNUAL': return new Set([4]);            // Apr (first month of academic year)
-      case 'ONE_TIME': return new Set([4]);
+      case 'QUARTERLY': return new Set([1,4,7,10]);
+      case 'SEMI_ANNUAL': return new Set([1,7]);
+      case 'ANNUAL': return new Set([1]);
+      case 'ONE_TIME': return new Set([1]);
       default: return new Set([1,2,3,4,5,6,7,8,9,10,11,12]);
     }
   }

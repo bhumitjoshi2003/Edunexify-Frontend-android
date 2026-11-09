@@ -18,6 +18,14 @@
     "src/app/components/fee-generation-target/*.spec.ts",
     "src/app/components/super-admin-payment-gateways/*.spec.ts",
     "src/app/components/notification-delivery-log/*.spec.ts",
-    "src/app/components/legal/*.spec.ts"
+    "src/app/components/legal/*.spec.ts",
+    "src/app/components/admin-details/*.spec.ts",
+    "src/app/components/student-details/*.spec.ts",
+    "src/app/components/fee-structure/*.spec.ts",
+    "src/app/components/fee-rule-config/*.spec.ts",
+    "src/app/components/fee-assignment/*.spec.ts",
+    "src/app/components/fee-recalculation/*.spec.ts",
+    "src/app/components/fee-reminders/*.spec.ts",
+    "src/app/components/fee-head-management/*.spec.ts"
   ]
 }

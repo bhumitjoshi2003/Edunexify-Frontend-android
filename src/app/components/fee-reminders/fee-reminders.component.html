@@ -98,8 +98,15 @@
         <span class="fr-stat-label">Overdue Students</span>
       </div>
       <div class="fr-stat-card" style="--c1:#7c3aed;--c2:#a78bfa">
-        <span class="fr-stat-value" style="font-size:1.1rem">₹{{ totalDue | number }}</span>
-        <span class="fr-stat-label">Total Due</span>
+        <!-- A student whose amount is unknown (totalDue null) is never counted as ₹0: the figure is
+             the known subtotal, and the unknown students are counted separately. -->
+        <span class="fr-stat-value" style="font-size:1.1rem" data-testid="reminder-total">{{
+          allAmountsUnknown ? 'Amount unavailable' : (totalDue | inr)
+        }}</span>
+        <span class="fr-stat-label" data-testid="reminder-total-label">
+          {{ amountUnknownCount > 0 && !allAmountsUnknown ? 'Known subtotal' : 'Total Due' }}
+          <ng-container *ngIf="amountUnknownCount > 0"> · amount unavailable for {{ amountUnknownCount }} student{{ amountUnknownCount === 1 ? '' : 's' }}</ng-container>
+        </span>
       </div>
       <div class="fr-stat-card" style="--c1:#b91c1c;--c2:#ef4444">
         <span class="fr-stat-value">{{ criticalCount }}</span>
@@ -182,7 +189,8 @@
             </td>
 
             <td data-label="Amount Due">
-              <span class="fr-amount">₹{{ s.totalDue | number }}</span>
+              <span class="fr-amount" *ngIf="s.totalDue !== null; else amountUnknown" data-testid="reminder-amount">{{ s.totalDue | inr }}</span>
+              <ng-template #amountUnknown><span class="fr-amount fr-amount-unknown" data-testid="reminder-amount">Amount unavailable</span></ng-template>
             </td>
 
             <td data-label="Last Payment">

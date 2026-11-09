@@ -86,7 +86,6 @@ input[type="number"]::-webkit-inner-spin-button {
   width: 100%; border-collapse: collapse; min-width: 340px;
 }
 
-/* Clean light header — matches fee-structure pattern */
 .bf-table th {
   background: #f0fdf4;
   color: #059669;
@@ -109,7 +108,6 @@ input[type="number"]::-webkit-inner-spin-button {
 .bf-table tbody tr:nth-child(even) { background: #fafbfc; }
 .bf-table tbody tr:hover td { background: #f0fdf4; }
 
-/* Fee value — green with emphasis */
 .bf-fee-val {
   font-weight: 700; color: #059669;
   font-size: 0.9rem;
@@ -184,3 +182,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .bf-input { width: 70px; }
 }
+
+/* Keep this editor usable with long labels and narrow amount/date controls. */
+.bf-input { max-width: 100%; box-sizing: border-box; }

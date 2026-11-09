@@ -44,3 +44,8 @@
 .frc-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 20px; color: #64748b; font-size: 0.88rem; background: #fff; border-radius: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
 .frc-spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #7c3aed; border-radius: 50%; animation: frc-spin 0.8s linear infinite; }
 @keyframes frc-spin { to { transform: rotate(360deg); } }
+
+/* Keep this editor usable with long labels and narrow amount/date controls. */
+.frc-effective { margin: 12px 0; overflow-wrap: anywhere; }
+.frc-effective input { max-width: 100%; min-width: 0; box-sizing: border-box; }
+ .frc-td-name { min-width: 0; overflow-wrap: anywhere; } .frc-input { min-width: 0; width: 140px; max-width: 45%; box-sizing: border-box; }

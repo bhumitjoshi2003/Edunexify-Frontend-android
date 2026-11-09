@@ -20,6 +20,14 @@
     <p class="fs-empty-sub">Open this page from the parent portal for a child you have fee-viewing access to.</p>
   </div>
 
+  <!-- Orphan fee-rule warning: rules exist for a class name with no matching configured
+       SchoolClass. Surfaced rather than silently dropped — see buildGrid(). -->
+  <div class="fs-orphan-warning" *ngIf="!accessDenied && orphanFeeRuleClassNames.length > 0" role="alert">
+    ⚠️ Fee rules exist for class name(s) not configured in Class Management:
+    <strong>{{ orphanFeeRuleClassNames.join(', ') }}</strong>.
+    These amounts are not shown below. Please review Class Management.
+  </div>
+
   <!-- Controls -->
   <div class="fs-controls" *ngIf="!isLoading && !accessDenied">
     <div class="fs-controls-row">
@@ -28,7 +36,7 @@
         <label class="fs-label" for="session-select">Session</label>
         <select id="session-select" class="fs-select"
           [ngModel]="currentSession"
-          (ngModelChange)="changeSession($event)">
+          (ngModelChange)="changeSession($event)" [disabled]="saving">
           <option *ngFor="let session of sessions; trackBy: trackBySession"
             [ngValue]="session">{{ session.label }}{{ session.current ? ' (Current)' : '' }}</option>
         </select>
@@ -36,12 +44,12 @@
 
       <div class="fs-action-buttons">
         <button *ngIf="!isEditing && canEdit() && feeHeads.length > 0 && hasData()"
-          class="fs-btn fs-btn-primary" (click)="edit()">
+          class="fs-btn fs-btn-primary" (click)="edit()" [disabled]="!canSave()">
           ✎ Edit
         </button>
         <ng-container *ngIf="isEditing">
-          <button class="fs-btn fs-btn-success" (click)="save()">✓ Save</button>
-          <button class="fs-btn fs-btn-danger" (click)="cancel()">✕ Cancel</button>
+          <button class="fs-btn fs-btn-success" (click)="save()" [disabled]="!canSave()">✓ Save</button>
+          <button class="fs-btn fs-btn-danger" (click)="cancel()" [disabled]="saving">✕ Cancel</button>
         </ng-container>
         <button *ngIf="canEdit()" class="fs-btn fs-btn-secondary"
           (click)="toggleFeeHeadForm()">
@@ -52,6 +60,11 @@
     </div>
   </div>
 
+  <div role="alert" *ngIf="rulesError">{{ rulesError }} <button (click)="retryLoad()">Retry</button></div>
+  <div class="fs-effective" *ngIf="isEditing">
+    <label>Changes effective from <input type="date" [(ngModel)]="effectiveDate" [min]="schoolToday" [max]="currentSession?.endDate ?? ''" [disabled]="saving"></label>
+    <p>Choose a date for changed amounts, including changes to zero. First-time rules cover the session.</p>
+  </div>
   <!-- Add Fee Head Form -->
   <div class="fs-fh-form" *ngIf="!accessDenied && showFeeHeadForm && canEdit()">
     <h3 class="fs-fh-form-title">Add New Fee Head</h3>
@@ -66,8 +79,7 @@
       </div>
       <div class="fs-fh-field">
         <label class="fs-label">Frequency</label>
-        <select class="fs-select" [ngModel]="newFeeHead.frequency"
-          (ngModelChange)="onNewFeeHeadFrequencyChange($event)">
+        <select class="fs-select" [ngModel]="newFeeHead.frequency" (ngModelChange)="onNewFeeHeadFrequencyChange($event)">
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
           <option value="SEMI_ANNUAL">Semi-Annual</option>
@@ -130,8 +142,7 @@
       </div>
       <div class="fs-fh-field">
         <label class="fs-label">Frequency</label>
-        <select class="fs-select" [ngModel]="editFeeHeadForm.frequency"
-          (ngModelChange)="onEditFeeHeadFrequencyChange($event)">
+        <select class="fs-select" [ngModel]="editFeeHeadForm.frequency" (ngModelChange)="onEditFeeHeadFrequencyChange($event)">
           <option value="MONTHLY">Monthly</option>
           <option value="QUARTERLY">Quarterly</option>
           <option value="SEMI_ANNUAL">Semi-Annual</option>
@@ -190,7 +201,7 @@
             </td>
             <td *ngFor="let fh of feeHeads; trackBy: trackByFeeHead"
               [attr.data-label]="fh.name">
-              <input *ngIf="isEditing" class="fs-input" type="number" min="0"
+              <input *ngIf="isEditing" class="fs-input" [disabled]="saving" type="number" min="0"
                 [(ngModel)]="feeGrid[cls][fh.id!]" />
               <span *ngIf="!isEditing" class="fs-cell-val">
                 {{ getGridValue(cls, fh.id!) | number }}

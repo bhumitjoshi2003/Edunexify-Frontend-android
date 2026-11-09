@@ -1,3 +1,5 @@
+import { Subject, takeUntil, finalize } from 'rxjs';
+import { adminProfileError, normalizeAdminProfile, adminDomainError } from '../../utils/admin-validation.util';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -5,7 +7,7 @@ import { AdminService } from '../../services/admin.service';
 import { SchoolService, SchoolSettings } from '../../services/school.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { ToastService } from '../../services/toast.service';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'app-register-admin',
@@ -15,7 +17,9 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
   styleUrl: './register-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RegisterAdminComponent implements OnInit {
+export class RegisterAdminComponent implements OnInit, OnDestroy {
+  submitting = false;
+  private destroy$ = new Subject<void>();
   adminData = {
     adminId: '',
     name: '',
@@ -35,15 +39,15 @@ export class RegisterAdminComponent implements OnInit {
     private schoolService: SchoolService,
     private authState: AuthStateService,
     private router: Router,
-    private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
     this.isSuperAdmin = this.authState.getUserRole() === 'SUPER_ADMIN';
     if (this.isSuperAdmin) {
       this.schoolsLoading = true;
-      this.schoolService.listAllSchools().subscribe({
+      this.schoolService.listAllSchools().pipe(takeUntil(this.destroy$)).subscribe({
         next: (schools) => {
           this.schools = schools.filter(s => s.active);
           this.schoolsLoading = false;
@@ -63,27 +67,39 @@ export class RegisterAdminComponent implements OnInit {
   }
 
   onSubmit(form: NgForm): void {
+    if (this.submitting) return;
     if (form.invalid) {
       Object.values(form.controls).forEach(control => control.markAsTouched());
-      this.toast.warning('Form Invalid', 'Please fill in all required fields correctly.');
+      this.toast.error('Form Invalid', 'Please fill in all required fields correctly.');
       return;
     }
 
     if (this.isSuperAdmin && !this.adminData.schoolId) {
-      this.toast.warning('Validation', 'Please select a school for this admin.');
+      this.toast.warning('Validation Error', 'Please select a school for this admin.');
       return;
     }
 
-    this.adminService.createAdmin(this.adminData as any).subscribe({
+    const validation = adminProfileError(this.adminData);
+    if (validation) { this.toast.error('Validation', validation); return; }
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/.test(this.adminData.adminId.trim())) {
+      this.toast.error('Validation', 'Admin ID must contain 1–100 letters, digits, dots, underscores or hyphens.'); return;
+    }
+    const payload = { ...this.adminData, ...normalizeAdminProfile(this.adminData), adminId: this.adminData.adminId.trim() };
+    this.submitting = true;
+    this.adminService.createAdmin(payload as any).pipe(takeUntil(this.destroy$), finalize(() => {
+      this.submitting = false; this.cdr.markForCheck();
+    })).subscribe({
       next: () => {
-        this.toast.success('Success!', 'New Administrator has been registered.');
+        this.toast.success('Success!', 'Administrator registered. They must use the emailed setup link to set a password. If the email does not arrive, use Forgot password with their ID and email.');
         this.router.navigate(['/dashboard/admin-list']);
       },
       error: (err) => {
-        this.toast.error('Error', err.error?.message || 'Failed to register admin. Check if ID/Email exists.');
+        this.toast.error('Error', adminDomainError(err));
       }
     });
   }
+
+  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
 
   cancel(): void {
     this.router.navigate(['/dashboard/admin-list']);

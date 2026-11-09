@@ -613,6 +613,11 @@ select.ss-input { appearance: auto; cursor: pointer; }
 }
 .ss-feat-badge-always { background: #dcfce7; color: #166534; }
 .ss-feat-badge-locked { background: #f1f5f9; color: #94a3b8; }
+.ss-feat-badge-addon { background: #ede9fe; color: #6d28d9; }
+
+/* Descriptions and dependency notes wrap rather than being cut off. */
+.ss-feat-card-desc { white-space: normal; overflow: visible; line-height: 1.4; }
+.ss-feat-card-meta { font-size: 0.68rem; font-weight: 600; color: #b45309; line-height: 1.35; }
 
 /* Toggle switch — polished */
 .ss-toggle {

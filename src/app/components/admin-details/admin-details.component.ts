@@ -1,3 +1,4 @@
+import { adminProfileError, adminDomainError } from '../../utils/admin-validation.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AdminService } from '../../services/admin.service';
@@ -7,7 +8,9 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { AuthService } from '../../auth/auth.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { ToastService } from '../../services/toast.service';
+import { setupLinkError, setupLinkFeedback } from '../../utils/school-admin.util';
 import { environment } from '../../../environments/environment';
+import { passwordPolicyViolation } from '../../utils/password-policy.util';
 
 interface Admin {
   adminId: string;
@@ -48,6 +51,9 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
   cpShowOldField = false;
 
   private ngUnsubscribe = new Subject<void>();
+
+  /** A setup-link request is in flight (blocks a double click). */
+  sendingSetupLink = false;
 
   // Photo upload state
   photoUploading = false;
@@ -130,6 +136,10 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.updatedDetails) {
+      const error = adminProfileError(this.updatedDetails);
+      if (error) { this.toast.error('Validation', error); return; }
+    }
     const action = this.isNewAdmin
       ? this.adminService.createAdmin(this.updatedDetails!)
       : this.adminService.updateAdmin(this.adminId, this.updatedDetails!);
@@ -137,7 +147,9 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
     this.toast.confirm({
       title: 'Confirm Save',
       message: 'Save administrator details?',
-      confirmText: 'Yes, Save'
+      icon: 'question',
+      confirmText: 'Yes, Save',
+      cancelText: 'Cancel',
     }).then((confirmed) => {
       if (confirmed) {
         action.pipe(takeUntil(this.ngUnsubscribe)).subscribe({
@@ -148,7 +160,7 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
             this.cdr.markForCheck();
             this.toast.success('Saved!', 'Admin details updated successfully.');
           },
-          error: (err) => this.toast.error('Error', err.error?.message || 'Server error occurred')
+          error: (err) => this.toast.error('Error', adminDomainError(err))
         });
       }
     });
@@ -179,8 +191,10 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
       this.toast.error('Error', 'New password and confirmation are required.');
       return;
     }
-    if (this.cpNewPw.length < 6) {
-      this.toast.error('Error', 'New password must be at least 6 characters.');
+    // The backend's password rule (utils/password-policy.util.ts); the value is sent exactly as typed.
+    const passwordError = passwordPolicyViolation(this.cpNewPw, 'New password');
+    if (passwordError) {
+      this.toast.error('Error', passwordError);
       return;
     }
     if (this.cpNewPw !== this.cpConfirmPw) {
@@ -207,8 +221,10 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
     this.toast.confirm({
       title: 'Are you sure?',
       message: 'This action cannot be undone!',
+      icon: 'warning',
+      danger: true,
       confirmText: 'Yes, Delete Admin',
-      danger: true
+      cancelText: 'Cancel',
     }).then((confirmed) => {
       if (confirmed) {
         this.adminService.deleteAdmin(this.adminId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
@@ -218,6 +234,32 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
           }
         });
       }
+    });
+  }
+
+  /** Another administrator's account: a super admin (any school) or an admin (their own school —
+   *  the server enforces it) may email them a fresh setup link instead of choosing a password. */
+  canSendSetupLink(): boolean {
+    return !this.isNewAdmin && !!this.adminId && this.loggedInUserId !== this.adminId
+      && (this.loggedInUserRole === 'SUPER_ADMIN' || this.loggedInUserRole === 'ADMIN');
+  }
+
+  sendSetupLink(): void {
+    if (!this.canSendSetupLink() || this.sendingSetupLink) return;
+    this.sendingSetupLink = true;
+    this.cdr.markForCheck();
+    this.adminService.sendSetupLink(this.adminId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+      next: (result) => {
+        this.sendingSetupLink = false;
+        const feedback = setupLinkFeedback(result);
+        feedback.level === 'success' ? this.toast.success(feedback.title, feedback.message) : this.toast.info(feedback.title, feedback.message);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.sendingSetupLink = false;
+        this.toast.error('Setup link not sent', setupLinkError(err));
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -277,9 +319,5 @@ export class AdminDetailsComponent implements OnInit, OnDestroy {
         this.toast.error('Upload failed', 'Could not upload photo. Please try again.');
       }
     });
-  }
-
-  goBack(): void {
-    this.router.navigate(['/dashboard/admin-list']);
   }
 }
