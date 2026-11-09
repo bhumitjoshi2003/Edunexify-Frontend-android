@@ -1,19 +1,24 @@
 <main class="approval-page">
-  <header>
-    <div>
-      <h1>Report card approvals</h1>
-      <p>Teacher review → Principal approval → Admin publication</p>
+  <header class="approval-hero">
+    <div class="hero-copy">
+      <span class="hero-eyebrow">REPORT CARDS · APPROVALS</span>
+      <h1>Approval queue</h1>
+      <p>Review cards, approve, and track each step.</p>
+      <div class="approval-steps" aria-label="Approval workflow">
+        <span><b>1</b> Teacher review</span>
+        <span class="step-arrow" aria-hidden="true">›</span>
+        <span><b>2</b> Principal approval</span>
+        <span class="step-arrow" aria-hidden="true">›</span>
+        <span><b>3</b> Publish</span>
+      </div>
     </div>
-    <button type="button" (click)="load()" [disabled]="loading || busy">
-      Refresh queue
-    </button>
+    <button class="btn-outline-light" type="button" (click)="load()" [disabled]="loading || busy">↻ Refresh queue</button>
   </header>
-  <p class="hint">
-    Review the cards, then approve when it is your turn.
-    <a routerLink="/dashboard/my-signature" *ngIf="role !== 'ADMIN'"
-      >Manage your signature</a
-    >. Saving a signature never approves a report card.
-  </p>
+  <div class="approval-tip">
+    <span class="tip-icon" aria-hidden="true">✓</span>
+    <span>Approve after checking the report cards. A saved signature does not count as approval.</span>
+    <a routerLink="/dashboard/my-signature" *ngIf="role !== 'ADMIN'">My signature</a>
+  </div>
   <p *ngIf="error" class="error" role="alert">{{ error }}</p>
   <div
     *ngIf="loading"
@@ -26,36 +31,32 @@
       *ngFor="let x of [1, 2, 3]"
     ></span>
   </div>
-  <section *ngIf="!loading && !items.length" class="panel">
-    <h2>No approval work is available</h2>
-    <p>
-      Only enabled setups and your authorized class sections appear here. Empty
-      or retired scopes do not block other work.
-    </p>
+  <section *ngIf="!loading && !items.length" class="panel empty-queue">
+    <span class="empty-queue-icon" aria-hidden="true">✓</span>
+    <h2>All caught up</h2>
+    <p>No report cards are waiting in your approval queue.</p>
   </section>
-  <section class="queue" aria-label="Approval queue" *ngIf="!loading">
-    <article class="panel" *ngFor="let item of items; trackBy: track">
-      <h2>{{ item.setupName }}</h2>
-      <p>Class {{ item.className }} · {{ item.sectionName || "No section" }}</p>
-      <span class="status">{{ label(item.status) }}</span
-      ><button type="button" (click)="review(item)" [disabled]="busy">
-        Open review
-      </button>
-    </article>
+  <section class="queue-section" aria-label="Approval queue" *ngIf="!loading && items.length">
+    <div class="queue-heading"><h2>Report cards to review</h2><span class="queue-count">{{ items.length }} {{ items.length === 1 ? 'setup' : 'setups' }}</span></div>
+    <div class="queue">
+      <article class="queue-card" *ngFor="let item of items; trackBy: track" [class.is-selected]="selected?.setupId === item.setupId && selected?.sectionId === item.sectionId">
+        <div class="queue-card-icon" aria-hidden="true">▤</div>
+        <div class="queue-card-copy">
+          <h3>{{ item.setupName }}</h3>
+          <p>Class {{ item.className }} <span aria-hidden="true">·</span> {{ item.sectionName || "No section" }}</p>
+        </div>
+        <span class="status" [ngClass]="item.status">{{ label(item.status) }}</span>
+        <button class="btn-primary" type="button" (click)="review(item)" [disabled]="busy">{{ selected === item ? 'Review open' : 'Open review' }} <span aria-hidden="true">→</span></button>
+      </article>
+    </div>
   </section>
-  <section class="panel" *ngIf="selected as item" aria-label="Review details">
-    <div class="section-head">
-      <h2>
-        {{ item.setupName }} · Class {{ item.className }} /
-        {{ item.sectionName || "No section" }}
-      </h2>
-      <button
-        type="button"
-        (click)="review(item)"
-        [disabled]="busy || reviewing"
-      >
-        Reload review
-      </button>
+  <section class="panel review-panel" *ngIf="selected as item" aria-label="Review details">
+    <div class="review-panel-head">
+      <div class="review-panel-heading">
+        <span class="section-eyebrow">CURRENT REVIEW</span>
+        <h2>{{ item.setupName }} <span>· Class {{ item.className }} / {{ item.sectionName || "No section" }}</span></h2>
+      </div>
+      <button class="btn-quiet" type="button" (click)="review(item)" [disabled]="busy || reviewing">↻ Reload review</button>
     </div>
     <label class="policy" *ngIf="role === 'TEACHER'"
       ><input
@@ -76,20 +77,20 @@
     </div>
     <ng-container *ngIf="summary as s">
       <div class="review-state">
-        <span class="status">{{ label(s.state.status) }}</span>
-        <span>{{ s.academicSession }}</span>
+        <span class="status" [ngClass]="s.state.status">{{ label(s.state.status) }}</span>
+        <span class="session-chip">{{ s.academicSession }}</span>
       </div>
       <p class="next-step" *ngIf="s.state.status === 'PENDING_TEACHER'">
-        Waiting for the class teacher to review and approve these cards. The Principal can approve after that.
+        Waiting for teacher review. Principal approval comes next.
       </p>
       <p class="next-step" *ngIf="s.state.status === 'TEACHER_APPROVED'">
-        Teacher review complete. The Principal can now approve or request corrections.
+        Teacher approved. Ready for Principal review.
       </p>
       <p class="next-step" *ngIf="s.state.status === 'PRINCIPAL_APPROVED'">
-        Principal approval complete. Only the Admin can issue official report cards with the approved signatures.
+        Approved by the Principal. Ready for Admin publication.
       </p>
       <details class="review-details">
-        <summary>Review information</summary>
+        <summary>Review details <span aria-hidden="true">⌄</span></summary>
         <dl>
           <div><dt>Revision ID</dt><dd>{{ s.revisionId }}</dd></div>
           <div><dt>Attendance up to</dt><dd>{{ s.attendanceCutoff }}</dd></div>
@@ -97,7 +98,7 @@
           <div><dt>Incomplete cards</dt><dd>{{ s.includeIncomplete ? 'Included' : 'Excluded' }}</dd></div>
         </dl>
       </details>
-      <div class="metrics">
+      <div class="metrics" aria-label="Report card readiness">
         <div>
           <strong>{{ s.totalStudents }}</strong
           >Total students
@@ -126,7 +127,8 @@
       <p *ngIf="s.state.returnReason" class="correction">
         <strong>Correction requested:</strong> {{ s.state.returnReason }}
       </p>
-      <label for="review-student">Student report card</label>
+      <div class="preview-heading"><h3>Preview a report card</h3><p>Check an individual student before approving.</p></div>
+      <label class="sr-only" for="review-student">Student report card</label>
       <div class="preview-controls">
         <select id="review-student" [(ngModel)]="selectedStudent">
           <option value="">Select a student</option>
@@ -147,9 +149,9 @@
         </button>
       </div>
       <p class="preview-note">
-        This is an unsigned review copy, not the final report card. Teacher and Principal signatures appear on the official PDF after both approvals and Admin publication.
+        Preview only · Signatures appear on the published PDF.
       </p>
-      <div class="actions">
+      <div class="actions" aria-label="Approval actions">
         <button
           *ngIf="role === 'TEACHER'"
           type="button"
