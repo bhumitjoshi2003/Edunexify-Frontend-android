@@ -218,28 +218,13 @@ export const routes: Routes = [
         loadComponent: () => import('./components/assessment-group-config/assessment-group-config.component').then(m => m.AssessmentGroupConfigComponent),
         canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL'], featureKey: 'EXAMS_RESULTS' }
       },
-      {
-        path: 'report-card-templates',
-        loadComponent: () => import('./components/report-card-template-config/report-card-template-config.component').then(m => m.ReportCardTemplateConfigComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'REPORT_CARDS' }
-      },
-      {
-        path: 'report-card-remarks',
-        loadComponent: () => import('./components/remarks-entry/remarks-entry.component').then(m => m.RemarksEntryComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARDS' }
-      },
       // Published Report Cards: the Report Card V2 frozen documents (the Phase 0 bulk page is no longer routed).
       {
         path: 'bulk-report-cards',
         loadComponent: () => import('./components/report-card-v2/published/rc2-published.component').then(m => m.Rc2PublishedComponent),
         canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'REPORT_CARDS' }
       },
-      {
-        path: 'class-overview',
-        loadComponent: () => import('./components/class-overview/class-overview.component').then(m => m.ClassOverviewComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN', 'TEACHER'], featureKey: 'REPORT_CARDS' }
-      },
-      // ── Report Card V2 (setup, design, remarks, Generate & Preview, published documents; Phase 0 stays live) ──
+      // ── Current report-card workflow: setup, design, remarks, approval and issued documents ──
       {
         path: 'report-cards-v2/setup',
         loadComponent: () => import('./components/report-card-v2/setup/rc2-setup.component').then(m => m.Rc2SetupComponent),
@@ -437,16 +422,6 @@ export const routes: Routes = [
         path: 'class-results',
         loadComponent: () => import('./components/class-results/class-results.component').then(m => m.ClassResultsComponent),
         canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'RESULTS_READ', roles: ['TEACHER', 'ADMIN', 'PRINCIPAL'], featureKey: 'EXAMS_RESULTS' }
-      },
-      {
-        path: 'report-card',
-        loadComponent: () => import('./components/report-card/report-card.component').then(m => m.ReportCardComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'], featureKey: 'REPORT_CARDS' }
-      },
-      {
-        path: 'report-card-gallery',
-        loadComponent: () => import('./components/report-card-demo/report-card-demo.component').then(m => m.ReportCardDemoComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'REPORT_CARDS' }
       },
 
       // ── Parent portal ────────────────────────────────────────────────

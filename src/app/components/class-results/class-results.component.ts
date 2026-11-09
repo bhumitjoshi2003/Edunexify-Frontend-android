@@ -305,17 +305,6 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
     return student.subjects.some(s => s.subjectName === subjectName);
   }
 
-  openReportCard(studentId: string, examId: number | null): void {
-    const queryParams: Record<string, string> = {
-      studentId,
-      session: this.selectedSession,
-      // Fallback for Back when the card has no in-app history (e.g. opened in a new tab).
-      returnUrl: this.router.url,
-    };
-    if (examId !== null) queryParams['examId'] = String(examId);
-    this.router.navigate(['/dashboard/report-card'], { queryParams });
-  }
-
   trackById(index: number, item: { id: number }): number { return item.id; }
   trackByStudentId(index: number, s: ClassStudentResult): string { return s.studentId; }
   trackByIndex(index: number): number { return index; }

@@ -98,7 +98,6 @@
           </th>
           <th>Total</th>
           <th>Result</th>
-          <th class="cr-th-action">Report</th>
         </tr>
       </thead>
       <tbody>
@@ -134,10 +133,6 @@
               <span class="cr-pass" [class.cr-fail]="student.passed === false">{{ student.passed ? 'Pass' : 'Fail' }}</span>
             </ng-container>
             <ng-template #pending><span class="cr-absent">Incomplete</span></ng-template>
-          </td>
-          <td class="cr-cell-action">
-            <button class="cr-btn-report" (click)="openReportCard(student.studentId, null)" title="Full Report Card">&#128438;</button>
-            <button class="cr-btn-report cr-btn-report-exam" (click)="openReportCard(student.studentId, selectedExamId)" title="This Exam">&#128196;</button>
           </td>
         </tr>
       </tbody>
