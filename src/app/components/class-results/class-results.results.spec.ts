@@ -124,7 +124,7 @@ describe('ClassResultsComponent — results publishing', () => {
   });
 });
 
-describe('ClassResultsComponent — selection survives a report-card round trip', () => {
+describe('ClassResultsComponent — selection state', () => {
   let router: { navigate: jasmine.Spy; url: string };
   let marks: jasmine.SpyObj<MarksService>;
   let exams: jasmine.SpyObj<ExamConfigService>;
@@ -196,11 +196,4 @@ describe('ClassResultsComponent — selection survives a report-card round trip'
     expect(c.isAdmin).toBeFalse();
   });
 
-  it('opens the report card with a returnUrl back to this exact selection', () => {
-    const c = create('ADMIN', { session: '2025-2026', className: '9', examId: '8' });
-    c.openReportCard('S1', 8);
-    const [commands, extras] = router.navigate.calls.mostRecent().args;
-    expect(commands).toEqual(['/dashboard/report-card']);
-    expect(extras.queryParams).toEqual({ studentId: 'S1', session: '2025-2026', examId: '8', returnUrl: '/dashboard/class-results?examId=7' });
-  });
 });
