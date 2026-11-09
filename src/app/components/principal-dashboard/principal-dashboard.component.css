@@ -261,16 +261,17 @@ td { font-variant-numeric: tabular-nums; }
 .pd-page {
   --pd-ink: #18283d;
   --pd-muted: #708198;
-  max-width: 1440px;
-  padding: 20px 18px 32px;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 24px;
   color: var(--pd-ink);
   font-family: Inter, "Segoe UI", sans-serif;
 }
 .pd-hero {
-  min-height: 166px;
-  padding: 29px 34px;
+  min-height: 0;
+  padding: 22px 24px;
   margin-bottom: 20px;
-  border-radius: 24px;
+  border-radius: 20px;
   background:
     radial-gradient(circle at 86% 12%, rgba(255,255,255,.15) 0 88px, transparent 89px),
     radial-gradient(circle at 107% 120%, rgba(255,255,255,.09) 0 175px, transparent 176px),
@@ -388,8 +389,8 @@ a.pd-tile { transition: transform .2s, border-color .2s, box-shadow .2s; }
   .pd-side > .pd-panel:last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
-  .pd-page { padding: 12px; }
-  .pd-hero { min-height: 140px; padding: 22px; border-radius: 20px; }
+  .pd-page { padding: 0 0 24px; }
+  .pd-hero { min-height: 0; padding: 18px 20px; border-radius: 18px; }
   .pd-today { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
   .pd-tile { min-height: 134px; padding: 14px; }
   .pd-tile-top mat-icon { width: 34px; height: 34px; flex-basis: 34px; font-size: 20px; }
