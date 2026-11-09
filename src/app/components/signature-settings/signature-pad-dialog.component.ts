@@ -52,9 +52,10 @@ export class SignaturePadDialogComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void { this.observer?.disconnect(); this.activePointer = null; }
   private point(e: PointerEvent): SignaturePoint {
     const rect = this.pad.nativeElement.getBoundingClientRect();
-    const scale = Math.min(rect.width / 1000, rect.height / 300);
-    return { x: Math.max(0, Math.min(1, (e.clientX - rect.left - (rect.width - 1000 * scale) / 2) / (1000 * scale))),
-      y: Math.max(0, Math.min(1, (e.clientY - rect.top - (rect.height - 300 * scale) / 2) / (300 * scale))) };
+    // The visible pad is the drawing area, even when a phone is much narrower
+    // than the 1000:300 PNG that we eventually export.
+    return { x: Math.max(0, Math.min(1, (e.clientX - rect.left) / Math.max(1, rect.width))),
+      y: Math.max(0, Math.min(1, (e.clientY - rect.top) / Math.max(1, rect.height))) };
   }
   begin(e: PointerEvent): void {
     if (this.activePointer !== null || e.button !== 0 || !e.isPrimary) return;
@@ -77,8 +78,7 @@ export class SignaturePadDialogComponent implements AfterViewInit, OnDestroy {
   private draw(canvas: HTMLCanvasElement): void {
     const ctx = canvas.getContext('2d'); if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const scale = Math.min(canvas.width / 1000, canvas.height / 300);
-    ctx.save();ctx.translate((canvas.width - 1000 * scale) / 2, (canvas.height - 300 * scale) / 2);ctx.scale(scale, scale);
+    ctx.save();ctx.scale(canvas.width / 1000, canvas.height / 300);
     ctx.strokeStyle = '#182a42';ctx.lineWidth = 4.5;ctx.lineCap = 'round';ctx.lineJoin = 'round';
     for (const stroke of this.strokes) {
       if (stroke.length < 2) continue;
@@ -101,7 +101,27 @@ export class SignaturePadDialogComponent implements AfterViewInit, OnDestroy {
     if (points.length < 3 || bounds.maxX - bounds.minX < .025 || bounds.maxY - bounds.minY < .01) {
       this.error = 'Draw a visible signature before continuing.';return;
     }
-    const canvas = document.createElement('canvas');canvas.width = 1000;canvas.height = 300;this.draw(canvas);
+    const canvas = document.createElement('canvas');canvas.width = 1000;canvas.height = 300;
+    // Fit the ink into the standard output without stretching a phone-shaped
+    // drawing into a wide, distorted signature.
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { this.error = 'Could not prepare the signature preview. Please try again.'; return; }
+    const rect = this.pad.nativeElement.getBoundingClientRect();
+    const sourceWidth = Math.max(1, rect.width), sourceHeight = Math.max(1, rect.height);
+    const inkWidth = Math.max(1, (bounds.maxX - bounds.minX) * sourceWidth);
+    const inkHeight = Math.max(1, (bounds.maxY - bounds.minY) * sourceHeight);
+    const scale = Math.min(920 / inkWidth, 220 / inkHeight);
+    const offsetX = (1000 - inkWidth * scale) / 2;
+    const offsetY = (300 - inkHeight * scale) / 2;
+    ctx.strokeStyle = '#182a42';ctx.lineWidth = Math.max(1.5, 4.5 * scale * sourceWidth / 1000);
+    ctx.lineCap = 'round';ctx.lineJoin = 'round';
+    for (const stroke of this.strokes) {
+      if (stroke.length < 2) continue;
+      ctx.beginPath();
+      ctx.moveTo(offsetX + (stroke[0].x - bounds.minX) * sourceWidth * scale, offsetY + (stroke[0].y - bounds.minY) * sourceHeight * scale);
+      for (const p of stroke.slice(1)) ctx.lineTo(offsetX + (p.x - bounds.minX) * sourceWidth * scale, offsetY + (p.y - bounds.minY) * sourceHeight * scale);
+      ctx.stroke();
+    }
     this.dialog.close(canvas.toDataURL('image/png').split(',')[1]);
   }
 }
