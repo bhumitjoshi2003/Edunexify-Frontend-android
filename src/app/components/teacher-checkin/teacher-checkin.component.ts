@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, interval, takeUntil } from 'rxjs';
+import { Subject, interval, takeUntil, forkJoin, shareReplay } from 'rxjs';
+import { schoolDateKey } from '../../utils/school-date.util';
 import { TeacherCheckinService } from '../../services/teacher-checkin.service';
 import { TeacherAttendanceRecord, TeacherAttendanceSummary } from '../../interfaces/teacher-checkin';
 import { AuthStateService } from '../../auth/auth-state.service';
@@ -11,7 +12,6 @@ import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import {
   formatTeacherAttendanceTime,
-  localDateKey,
   teacherAttendanceErrorMessage,
 } from '../../utils/teacher-attendance.util';
 
@@ -48,6 +48,9 @@ class AttendanceLocationError extends Error {
 })
 export class TeacherCheckinComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private monthlyRequest$ = new Subject<void>();
+  private schoolTimezone = 'Asia/Kolkata';
+  expectedToday: boolean | null = null;
   private readonly preferredAccuracyMetres = 50;
   private readonly maximumAccuracyMetres = 100;
   private readonly locationSamplingTimeoutMs = 25000;
@@ -95,7 +98,7 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
     this.userName = user?.name ?? 'Teacher';
     this.updateTime();
     interval(1000).pipe(takeUntil(this.destroy$)).subscribe(() => this.updateTime());
-    this.loadMonthlyData();
+    this.loadCalendar();
   }
 
   ngOnDestroy(): void {
@@ -105,19 +108,19 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
 
   private updateTime(): void {
     const now = new Date();
-    this.currentTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    this.currentTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: this.schoolTimezone });
     this.cdr.markForCheck();
   }
 
   get greeting(): string {
-    const h = new Date().getHours();
+    const h = Number(new Intl.DateTimeFormat('en-US', { timeZone: this.schoolTimezone, hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
     if (h < 12) return 'Good Morning';
     if (h < 17) return 'Good Afternoon';
     return 'Good Evening';
   }
 
   get todayDateStr(): string {
-    return new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: this.schoolTimezone });
   }
 
   get hasCheckedIn(): boolean {
@@ -128,47 +131,61 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
     return !!this.todayRecord?.checkOutTime;
   }
 
+  private loadCalendar(): void {
+    this.todayStateResolved = false;
+    this.attendanceLoadError = null;
+    this.checkinService.getCalendarConfig().pipe(takeUntil(this.destroy$)).subscribe({
+      next: config => {
+        this.schoolTimezone = config.timezone || 'Asia/Kolkata';
+        const schoolToday = schoolDateKey(new Date(), this.schoolTimezone);
+        this.selectedYear = Number(schoolToday.slice(0, 4));
+        this.selectedMonth = Number(schoolToday.slice(5, 7));
+        this.loadMonthlyData();
+      },
+      error: err => {
+        this.attendanceLoadError = teacherAttendanceErrorMessage(err, 'We could not load the school calendar. Please retry.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   loadMonthlyData(): void {
-    const now = new Date();
-    const isCurrentMonth = this.selectedMonth === now.getMonth() + 1
-      && this.selectedYear === now.getFullYear();
+    this.monthlyRequest$.next();
     this.isLoading = true;
-    if (isCurrentMonth) {
-      this.todayStateResolved = false;
-      this.attendanceLoadError = null;
-    }
+    this.todayStateResolved = false;
+    this.attendanceLoadError = null;
+    const today = schoolDateKey(new Date(), this.schoolTimezone);
+    const year = Number(today.slice(0, 4));
+    const month = Number(today.slice(5, 7));
+    const selected$ = this.checkinService.getMyAttendance(this.selectedMonth, this.selectedYear)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    const today$ = this.selectedMonth === month && this.selectedYear === year
+      ? selected$ : this.checkinService.getMyAttendance(month, year);
     this.cdr.markForCheck();
-    this.checkinService.getMyAttendance(this.selectedMonth, this.selectedYear)
-      .pipe(takeUntil(this.destroy$))
+    forkJoin({ selected: selected$, today: today$ })
+      .pipe(takeUntil(this.monthlyRequest$), takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          this.monthlyData = data;
-          this.findTodayRecord(data);
-          this.buildCalendar(data);
+          this.monthlyData = data.selected;
+          this.todayRecord = data.today.records.find(r => r.date === today) ?? null;
+          this.expectedToday = data.today.expectedToday ?? null;
+          this.buildCalendar(data.selected);
           this.isLoading = false;
-          if (isCurrentMonth) this.todayStateResolved = true;
+          this.todayStateResolved = this.expectedToday !== null || !!this.todayRecord;
+          if (!this.todayStateResolved) {
+            this.attendanceLoadError = "Today's attendance eligibility could not be confirmed. Please retry.";
+          }
           this.cdr.markForCheck();
         },
         error: (err) => {
           this.logger.error('Failed to load attendance data', err);
           this.isLoading = false;
-          if (isCurrentMonth) {
-            this.todayStateResolved = false;
-            this.attendanceLoadError = teacherAttendanceErrorMessage(
-              err,
-              'We could not load today\'s attendance. Check your connection and try again.'
-            );
-          }
+          this.todayStateResolved = false;
+          this.attendanceLoadError = teacherAttendanceErrorMessage(err,
+            'We could not load today\'s attendance. Check your connection and try again.');
           this.cdr.markForCheck();
         }
       });
-  }
-
-  private findTodayRecord(data: TeacherAttendanceSummary): void {
-    const now = new Date();
-    if (this.selectedMonth === now.getMonth() + 1 && this.selectedYear === now.getFullYear()) {
-      this.todayRecord = data.records.find(r => r.date === localDateKey(now)) ?? null;
-    }
   }
 
   private buildCalendar(data: TeacherAttendanceSummary): void {
@@ -199,16 +216,23 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
   }
 
   async checkIn(): Promise<void> {
-    if (!this.todayStateResolved) return;
+    if (!this.todayStateResolved || this.expectedToday !== true || this.todayRecord) return;
     if (this.hasCheckedIn) {
       this.toast.warning('Already Checked In', 'You have already checked in today.');
       return;
     }
     this.isCheckingIn = true;
     this.gpsError = null;
+    const requestDay = schoolDateKey(new Date(), this.schoolTimezone);
     this.cdr.markForCheck();
     try {
       const pos = await this.getPosition();
+      if (!this.todayStateResolved || this.expectedToday !== true || this.todayRecord ||
+          schoolDateKey(new Date(), this.schoolTimezone) !== requestDay) {
+        this.isCheckingIn = false;
+        this.cdr.markForCheck();
+        return;
+      }
       this.checkinService.checkIn({ latitude: pos.latitude, longitude: pos.longitude })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
@@ -531,7 +555,7 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
 
   isToday(day: CalendarDay): boolean {
     if (!day.fullDate) return false;
-    return day.fullDate === localDateKey(new Date());
+    return day.fullDate === schoolDateKey(new Date(), this.schoolTimezone);
   }
 
   retryAttendanceLoad(): void {
@@ -539,9 +563,9 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
   }
 
   private loadCurrentMonth(): void {
-    const now = new Date();
-    this.selectedMonth = now.getMonth() + 1;
-    this.selectedYear = now.getFullYear();
+    const today = schoolDateKey(new Date(), this.schoolTimezone);
+    this.selectedYear = Number(today.slice(0, 4));
+    this.selectedMonth = Number(today.slice(5, 7));
     this.loadMonthlyData();
   }
 

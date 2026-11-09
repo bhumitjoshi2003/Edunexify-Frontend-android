@@ -7,6 +7,7 @@ import { CheckoutQuote } from '../interfaces/checkout-quote';
 import { MonthFeeBreakdown } from '../interfaces/month-fee-breakdown';
 import { ManualPaymentRequest } from '../interfaces/manual-payment-request';
 import { RecalculationEntry } from '../interfaces/recalculation';
+import { PendingConfirmation } from '../interfaces/pending-confirmation';
 
 @Injectable({
   providedIn: 'root'
@@ -63,6 +64,8 @@ export class FeesService {
     return this.http.post<{ message: string; paymentId: string }>(`${this.baseUrl}/manual-payment`, request);
   }
 
+  /** Admin-only (Phase 5A). Computes what each selected month's snapshot WOULD become under
+   * the current fee configuration — writes nothing. */
   previewRecalculation(studentId: string, session: string, months: number[]): Observable<RecalculationEntry[]> {
     return this.http.post<RecalculationEntry[]>(`${this.baseUrl}/recalculate/preview`, { studentId, session, months });
   }
@@ -72,5 +75,12 @@ export class FeesService {
    * preview call sent back by the frontend. */
   applyRecalculation(studentId: string, session: string, months: number[], reason: string): Observable<RecalculationEntry[]> {
     return this.http.post<RecalculationEntry[]>(`${this.baseUrl}/recalculate/apply`, { studentId, session, months, reason });
+  }
+
+  /** Online payments for this student's session that were taken but not yet recorded — their
+   * months must not be offered for payment again. Server state: survives refresh and other devices. */
+  getPendingConfirmations(studentId: string, session: string): Observable<PendingConfirmation[]> {
+    return this.http.get<PendingConfirmation[]>(`${environment.apiUrl}/payments/pending-confirmations`,
+      { params: { studentId, session } });
   }
 }

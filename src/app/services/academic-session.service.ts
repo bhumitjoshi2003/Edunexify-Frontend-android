@@ -48,8 +48,9 @@ export class AcademicSessionService {
 
   /** Phase G: switching current now also activates that session's class-teacher configuration
    *  in the same atomic backend call — see SessionActivationOutcome for the combined result. */
-  setCurrentSession(sessionId: number): Observable<SessionActivationOutcome> {
-    return this.http.put<SessionActivationOutcome>(`${this.apiUrl}/${sessionId}/set-current`, {});
+  setCurrentSession(sessionId: number, confirmFutureActivation = false): Observable<SessionActivationOutcome> {
+    const options = confirmFutureActivation ? { params: { confirmFutureActivation: 'true' } } : {};
+    return this.http.put<SessionActivationOutcome>(`${this.apiUrl}/${sessionId}/set-current`, {}, options);
   }
 
   /** Read-only preview of what activating this session's class-teacher configuration would do

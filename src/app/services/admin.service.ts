@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { Admin } from '../interfaces/admin';
+import { normalizeAdminProfile } from '../utils/admin-validation.util';
 import { UploadRequestResponse, UploadCompleteResponse } from '../interfaces/upload';
 
 @Injectable({
@@ -25,11 +26,16 @@ export class AdminService {
   }
 
   createAdmin(admin: Admin): Observable<Admin> {
-    return this.http.post<Admin>(this.baseUrl, admin);
+    return this.http.post<Admin>(this.baseUrl, { ...normalizeAdminProfile(admin), adminId: admin.adminId.trim(), ...(admin.schoolId != null ? { schoolId: admin.schoolId } : {}) });
   }
 
   updateAdmin(adminId: string, admin: Admin): Observable<Admin> {
-    return this.http.put<Admin>(`${this.baseUrl}/${adminId}`, admin);
+    return this.http.put<Admin>(`${this.baseUrl}/${encodeURIComponent(adminId)}`, normalizeAdminProfile(admin));
+  }
+
+  /** Emails the administrator a fresh one-hour setup link (never a password). */
+  sendSetupLink(adminId: string): Observable<{ status: string; sentTo: string }> {
+    return this.http.post<{ status: string; sentTo: string }>(`${this.baseUrl}/${encodeURIComponent(adminId)}/setup-link`, {});
   }
 
   deleteAdmin(adminId: string): Observable<void> {
@@ -42,8 +48,8 @@ export class AdminService {
 
   /**
    * Direct-to-object-storage upload: ask the backend for a short-lived presigned URL, PUT the
-   * file bytes straight to object storage (never through this backend), then tell the backend
-   * the upload finished so it can verify and attach the reference.
+   * file bytes straight to object storage (never through this Angular app's own backend), then
+   * tell the backend the upload finished so it can verify and attach the reference.
    */
   uploadAdminPhotoDirect(adminId: string, file: File): Observable<UploadCompleteResponse> {
     const uploadRequestUrl = `${environment.apiUrl}/files/upload-request`;

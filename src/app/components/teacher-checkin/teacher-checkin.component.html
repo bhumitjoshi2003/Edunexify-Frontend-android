@@ -32,8 +32,14 @@
       </button>
     </div>
 
+    <div class="tc-action-body" *ngIf="todayStateResolved && todayRecord && !hasCheckedIn">
+      <p class="tc-action-prompt">Your attendance is already marked: {{ todayRecord.status.replaceAll('_', ' ') }}.</p>
+    </div>
     <!-- Not checked in yet -->
-    <ng-container *ngIf="todayStateResolved && !hasCheckedIn">
+    <div class="tc-action-body" *ngIf="todayStateResolved && !todayRecord && expectedToday === false">
+      <p class="tc-action-prompt">You are not expected to attend today.</p>
+    </div>
+    <ng-container *ngIf="todayStateResolved && !todayRecord && expectedToday === true">
       <div class="tc-action-body">
         <p class="tc-action-prompt">Tap the button below to mark your attendance</p>
         <div class="tc-checkin-orbit" [class.tc-checkin-orbit-loading]="isCheckingIn">

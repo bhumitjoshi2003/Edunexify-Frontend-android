@@ -1,4 +1,4 @@
-<app-wisdom-cards *ngIf="hasFeature('WISDOM')"></app-wisdom-cards>
+    <app-wisdom-cards *ngIf="hasFeature('THOUGHT_OF_THE_DAY')"></app-wisdom-cards>
 <div class="sd-page">
 
   <!-- ── Loading ──────────────────────────────────────────────────── -->
@@ -104,14 +104,14 @@
           <span>Attendance</span>
         </a>
 
-        <a class="sd-action-card" *ngIf="hasFeature('EXAM_MARKS')" routerLink="/dashboard/my-results">
+        <a class="sd-action-card" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/my-results">
           <div class="sd-action-icon" style="background:#fdf4ff;color:#a21caf">
             <mat-icon>grade</mat-icon>
           </div>
           <span>My Results</span>
         </a>
 
-        <a class="sd-action-card" *ngIf="hasFeature('REPORT_CARD')" routerLink="/dashboard/report-card-documents">
+        <a class="sd-action-card" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-card-documents">
           <div class="sd-action-icon" style="background:#f0fdf4;color:#15803d">
             <mat-icon>description</mat-icon>
           </div>
@@ -139,7 +139,7 @@
           <span>Fee Structure</span>
         </a>
 
-        <a class="sd-action-card" *ngIf="hasFeature('PAYMENT_COLLECTION')" routerLink="/dashboard/payment-history">
+        <a class="sd-action-card" *ngIf="hasFeature('ONLINE_PAYMENTS')" routerLink="/dashboard/payment-history">
           <div class="sd-action-icon" style="background:#ede9fe;color:#7c3aed">
             <mat-icon>receipt</mat-icon>
           </div>

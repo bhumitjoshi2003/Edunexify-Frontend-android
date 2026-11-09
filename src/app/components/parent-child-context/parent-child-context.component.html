@@ -6,7 +6,7 @@
 
 <nav class="child-tabs" *ngIf="isParent && child && showSwitcher && visibleChildren.length > 1" aria-label="Switch child">
   <button type="button" *ngFor="let c of visibleChildren; trackBy: trackByStudentId" class="child-tab"
-    [class.active]="c.studentId === studentId" (click)="selectChild(c)">
+    [class.active]="c.studentId === studentId" [disabled]="locked" [attr.title]="locked ? 'Finish or close the payment first' : null" (click)="selectChild(c)">
     <span class="child-tab-avatar">{{ c.studentName.charAt(0) }}</span>
     <span class="child-tab-text"><strong>{{ c.studentName }}</strong><small>Class {{ c.className }}{{ c.sectionName ? ' · ' + c.sectionName : '' }}</small></span>
   </button>
@@ -21,7 +21,7 @@
   </div>
 </aside>
 <nav class="child-tabs" *ngIf="isParent && invalid && visibleChildren.length" aria-label="Choose a child">
-  <button type="button" *ngFor="let c of visibleChildren; trackBy: trackByStudentId" class="child-tab" (click)="selectChild(c)">
+  <button type="button" *ngFor="let c of visibleChildren; trackBy: trackByStudentId" class="child-tab" [disabled]="locked" (click)="selectChild(c)">
     <span class="child-tab-avatar">{{ c.studentName.charAt(0) }}</span>
     <span class="child-tab-text"><strong>{{ c.studentName }}</strong><small>Class {{ c.className }}{{ c.sectionName ? ' · ' + c.sectionName : '' }}</small></span>
   </button>

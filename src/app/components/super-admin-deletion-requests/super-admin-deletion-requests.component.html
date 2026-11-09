@@ -1,0 +1,121 @@
+<div class="saq-page">
+  <div class="saq-hero">
+    <div class="saq-hero-icon"><mat-icon>person_remove</mat-icon></div>
+    <div>
+      <h1 class="saq-hero-title">Account Deletion Requests</h1>
+      <p class="saq-hero-sub">Move each request through its stages, fulfil it with the school, then record what was done and kept.</p>
+    </div>
+  </div>
+
+  <div class="saq-filters">
+    <div class="saq-filter-group">
+      <label>Status</label>
+      <select [(ngModel)]="filterStatus">
+        <option value="">All</option>
+        <option *ngFor="let s of statuses" [value]="s">{{ statusLabels[s] }}</option>
+      </select>
+    </div>
+    <button type="button" class="saq-apply" (click)="load(0)">Apply</button>
+  </div>
+
+  <div class="saq-loading" *ngIf="loading"><span class="spinner"></span>Loading requests…</div>
+  <div class="saq-state error" *ngIf="!loading && failed">
+    <mat-icon>cloud_off</mat-icon><strong>Deletion requests are temporarily unavailable.</strong>
+    <button type="button" (click)="load(currentPage)">Retry</button>
+  </div>
+  <div class="saq-state" *ngIf="!loading && !failed && !requests.length">
+    <mat-icon>task_alt</mat-icon><strong>No requests match this filter.</strong>
+  </div>
+
+  <div class="saq-table-wrapper" *ngIf="!loading && !failed && requests.length">
+    <table class="saq-table">
+      <thead>
+        <tr><th>Reference</th><th>User ID</th><th>Role</th><th>School</th><th>Status</th><th>Requested</th><th>Platform</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of requests" (click)="open(r)" [class.is-selected]="selected?.id === r.id">
+          <td class="saq-number">{{ r.reference }}</td>
+          <td>{{ r.userId }}</td>
+          <td>{{ r.userRole }}</td>
+          <td>{{ r.schoolName || r.schoolId }}</td>
+          <td><span class="saq-chip">{{ statusLabels[r.status] }}</span></td>
+          <td>{{ r.createdAt | date:'d MMM, h:mm a' }}</td>
+          <td>{{ r.platform }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="saq-pagination" *ngIf="!loading && !failed && totalPages > 1">
+    <button type="button" (click)="prevPage()" [disabled]="currentPage === 0">Previous</button>
+    <span>Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+    <button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages - 1">Next</button>
+  </div>
+
+  <div class="saq-overlay" *ngIf="selected" (click)="close()">
+    <div class="saq-drawer" (click)="$event.stopPropagation()">
+      <button type="button" class="saq-close" (click)="close()"><mat-icon>close</mat-icon></button>
+      <h2>{{ selected.reference }}</h2>
+      <div class="saq-drawer-meta">
+        <span>{{ selected.userId }} · {{ selected.userRole }}</span>
+        <span>{{ selected.schoolName || selected.schoolId }}</span>
+        <span>{{ selected.platform }}</span>
+        <span>Requested {{ selected.createdAt | date:'d MMM yyyy, h:mm a' }}</span>
+        <span *ngIf="selected.resolvedAt">Closed {{ selected.resolvedAt | date:'d MMM yyyy, h:mm a' }} by {{ selected.resolvedBy }}</span>
+      </div>
+      <p class="saq-drawer-description" *ngIf="selected.reason">{{ selected.reason }}</p>
+
+      <p class="saq-drawer-description" *ngIf="selectedIsOpen">
+        Saving a stage deletes nothing. Follow the runbook for each stage. Completing needs the login
+        deactivated by the school's exit workflow, access revoked here, and a record of what was deleted
+        and what the school keeps.
+      </p>
+
+      <div class="sadr-access" [class.is-clear]="access?.accessRemoved" data-testid="deletion-access">
+        <ng-container *ngIf="access">
+          <span>Login: <strong>{{ access.login }}</strong></span>
+          <span>Unrevoked sessions: <strong>{{ access.activeSessions }}</strong></span>
+          <span>Push tokens in this school: <strong>{{ access.pushTokens }}</strong></span>
+          <span *ngIf="access.login === 'OTHER_SCHOOL'">This user ID now belongs to another school. Do not act on it.</span>
+        </ng-container>
+        <span *ngIf="!access && !accessFailed">Checking access…</span>
+        <span *ngIf="accessFailed">Access check unavailable. <a href="" (click)="$event.preventDefault(); loadAccess()">Retry</a></span>
+        <button type="button" *ngIf="selected.status === 'PROCESSING'" (click)="revokeAccess()" [disabled]="!canRevoke">
+          {{ revoking ? 'Revoking…' : 'Revoke sessions & push tokens' }}
+        </button>
+      </div>
+
+      <div class="saq-drawer-controls">
+        <label class="saq-field">
+          <span>Status</span>
+          <select [(ngModel)]="statusDraft" [disabled]="!selectedIsOpen">
+            <option *ngFor="let s of allowedStatuses" [value]="s">{{ statusLabels[s] }}</option>
+          </select>
+        </label>
+        <label class="saq-field">
+          <span>Message to the requester</span>
+          <textarea [(ngModel)]="userMessageDraft" rows="3" maxlength="1000" [disabled]="!selectedIsOpen"
+            placeholder="Shown to the user with their request status."></textarea>
+        </label>
+        <label class="saq-field">
+          <span>Internal note</span>
+          <textarea [(ngModel)]="internalNoteDraft" rows="4" maxlength="4000" [disabled]="!selectedIsOpen"
+            placeholder="Visible only to Super Admin. How identity was verified, who at the school approved, what was deleted or anonymised, or why it was refused."></textarea>
+        </label>
+        <label class="saq-field">
+          <span>Retained by the school</span>
+          <textarea [(ngModel)]="retainedDataDraft" rows="3" maxlength="4000" [disabled]="!selectedIsOpen"
+            placeholder="Required to complete: which records are kept, why, and who decided — or that nothing is kept."></textarea>
+        </label>
+        <label class="sadr-confirm" *ngIf="selectedIsOpen && statusDraft === 'COMPLETED'">
+          <input type="checkbox" [(ngModel)]="fulfilmentConfirmed" data-testid="fulfilment-confirmed">
+          <span>I confirm every agreed deletion and anonymisation step has been carried out and verified.</span>
+        </label>
+        <p class="saq-drawer-description" *ngIf="selectedIsOpen && missing.length">Still needed: {{ missing.join('; ') }}.</p>
+        <button type="button" class="saq-save" (click)="save()" [disabled]="!canSave" *ngIf="selectedIsOpen">
+          {{ saving ? 'Saving…' : 'Save changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

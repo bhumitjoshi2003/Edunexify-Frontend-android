@@ -9,6 +9,7 @@ import {
   TeacherAttendanceSummary,
   TeacherAttendanceSessionSummary,
   TeacherAttendanceTodaySummary,
+  MarkableTeacher,
   SchoolTiming
 } from '../interfaces/teacher-checkin';
 
@@ -33,6 +34,15 @@ export class TeacherCheckinService {
 
   getByDate(date: string): Observable<TeacherAttendanceRecord[]> {
     return this.http.get<TeacherAttendanceRecord[]>(`${this.baseUrl}/date/${date}`);
+  }
+
+  /** Teachers expected to attend on the date who have no record yet — the manual-marking list. */
+  getMarkableTeachers(date: string): Observable<MarkableTeacher[]> {
+    return this.http.get<MarkableTeacher[]>(`${this.baseUrl}/date/${date}/markable-teachers`);
+  }
+
+  getCalendarConfig(): Observable<{ workingDays: string; timezone: string }> {
+    return this.http.get<{ workingDays: string; timezone: string }>(`${environment.apiUrl}/attendance/calendar-config`);
   }
 
   getMyAttendance(month: number, year: number): Observable<TeacherAttendanceSummary> {

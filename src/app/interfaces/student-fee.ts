@@ -1,6 +1,7 @@
 export type SnapshotStatus = 'COMPUTED' | 'NO_ACTIVE_RULE_THIS_MONTH';
 
 export interface StudentFee {
+  amountUnavailableReason?: string | null;
   id?: number;
   studentId: string;
   className: string;

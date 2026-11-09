@@ -1,0 +1,72 @@
+<main class="setup-page">
+  <div class="edu-page-skeleton edu-page-skeleton--content" *ngIf="loading" aria-busy="true" aria-label="Loading school readiness">
+    <span class="edu-sr-only">Checking school readiness</span>
+    <div class="edu-sk-grid">
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+      <span class="edu-sk-shimmer edu-sk-card"></span>
+    </div>
+    <div class="edu-sk-panel">
+      <span class="edu-sk-shimmer edu-sk-line edu-sk-line-md"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+      <span class="edu-sk-shimmer edu-sk-table-line"></span>
+    </div>
+  </div>
+  <div class="setup-error" *ngIf="error">
+    <mat-icon>cloud_off</mat-icon>
+    <h2>Setup status could not be loaded</h2>
+    <p>Your school data is safe. Please try again.</p>
+    <button type="button" (click)="load()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="health">
+    <header class="setup-hero">
+      <div class="setup-hero-blob setup-hero-blob-1"></div>
+      <div class="setup-hero-blob setup-hero-blob-2"></div>
+      <div class="setup-hero-left">
+        <div class="setup-hero-icon"><mat-icon>rocket_launch</mat-icon></div>
+        <div>
+          <span class="setup-eyebrow">GUIDED ONBOARDING</span>
+          <h1 class="setup-hero-title">School Setup</h1>
+          <p class="setup-hero-sub">{{ health.status === 'READY' ? 'Your essential school setup is ready.' : 'Complete the essentials first, then enable other modules when you need them.' }}</p>
+        </div>
+      </div>
+      <div class="setup-hero-score"><strong>{{ health.completionPercentage }}%</strong><span>essential setup</span></div>
+      <div class="setup-hero-progress-wrap">
+        <div class="setup-progress"><span [style.width.%]="health.completionPercentage"></span></div>
+        <small>{{ health.completedRequired }} of {{ health.totalRequired }} required items complete</small>
+      </div>
+    </header>
+
+    <section class="setup-section">
+      <div class="setup-section-heading"><div><h2>Essentials</h2><p>These determine the setup score.</p></div><span class="setup-chip required">Required</span></div>
+      <article class="setup-item" *ngFor="let item of items('REQUIRED'); let i = index" [class.complete]="item.status === 'COMPLETED'" [style.animation-delay.ms]="i * 40">
+        <span class="setup-item-icon"><mat-icon>{{ item.status === 'COMPLETED' ? 'check_circle' : 'error_outline' }}</mat-icon></span>
+        <div><h3>{{ item.title }}</h3><p>{{ item.description }}</p></div>
+        <a *ngIf="actionFor(item) as action" [routerLink]="action.route" [queryParams]="action.queryParams">{{ action.label }}<mat-icon>arrow_forward</mat-icon></a>
+      </article>
+    </section>
+
+    <section class="setup-section">
+      <div class="setup-section-heading"><div><h2>Recommended</h2><p>Helpful next steps that do not reduce your score.</p></div><span class="setup-chip recommended">Recommended</span></div>
+      <article class="setup-item" *ngFor="let item of items('RECOMMENDED'); let i = index" [class.complete]="item.status === 'COMPLETED'" [style.animation-delay.ms]="i * 40">
+        <span class="setup-item-icon"><mat-icon>{{ item.status === 'COMPLETED' ? 'check_circle' : 'info_outline' }}</mat-icon></span>
+        <div><h3>{{ item.title }}</h3><p>{{ item.description }}</p></div>
+        <a *ngIf="actionFor(item) as action" [routerLink]="action.route" [queryParams]="action.queryParams">{{ action.label }}<mat-icon>arrow_forward</mat-icon></a>
+      </article>
+    </section>
+
+    <section class="setup-section">
+      <div class="setup-section-heading"><div><h2>Optional modules</h2><p>Configure these only when your school chooses to use them.</p></div><span class="setup-chip optional">Optional</span></div>
+      <article class="setup-item" *ngFor="let item of items('OPTIONAL'); let i = index" [class.complete]="item.status === 'COMPLETED'" [class.na]="item.status === 'NOT_APPLICABLE'" [style.animation-delay.ms]="i * 40">
+        <span class="setup-item-icon"><mat-icon>{{ item.status === 'COMPLETED' ? 'check_circle' : item.status === 'NOT_APPLICABLE' ? 'remove_circle_outline' : 'radio_button_unchecked' }}</mat-icon></span>
+        <div><h3>{{ item.title }}</h3><p>{{ item.description }}</p></div>
+        <a *ngIf="actionFor(item) as action" [routerLink]="action.route" [queryParams]="action.queryParams">{{ action.label }}<mat-icon>arrow_forward</mat-icon></a>
+      </article>
+    </section>
+
+    <button class="setup-refresh" type="button" [disabled]="loading" (click)="load()"><mat-icon>refresh</mat-icon> Refresh setup status</button>
+  </ng-container>
+</main>

@@ -186,6 +186,32 @@
   font-weight: 600;
 }
 
+/* Total payable for the current selection (from the checkout quote) */
+.fee-table__row--total {
+  margin-top: 4px;
+  border-top: 2px solid #0d2b6b;
+  border-bottom: none;
+  font-weight: 800;
+  color: #0d2b6b;
+}
+.fee-table__row--total span:last-child { font-size: 1rem; }
+
+/* Multi-month: the month list under the header, and the one-month reference detail */
+.receipt-months {
+  padding: 8px 28px; background: #f4f7fc; border-bottom: 1px solid #e3e8f0;
+  font-size: 0.78rem; font-weight: 600; color: #334155; line-height: 1.5;
+}
+.fee-table--detail { opacity: 0.92; }
+.fee-table--detail .fee-table__header { border-bottom-width: 1px; color: #475569; }
+.fee-table__caption { margin: 6px 12px 2px; font-size: 0.72rem; color: #64748b; }
+.fee-table__pending { padding: 14px 40px; font-size: 0.8rem; color: #64748b; }
+
+@media (max-width: 560px) {
+  .fee-table { padding: 0 14px 12px; }
+  .receipt-months { padding: 8px 14px; }
+  .fee-table__pending { padding: 12px 18px; }
+}
+
 /* ── Footer ───────────────────────────────────── */
 
 .receipt-footer {

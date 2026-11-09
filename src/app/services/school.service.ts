@@ -33,7 +33,10 @@ export interface SchoolSettings {
   maxStudents: number | null;
   expiryDate: string | null;
   active: boolean;
+  /** The school has an ACTIVE own Razorpay gateway (approved by SUPER_ADMIN). */
   razorpayConfigured: boolean;
+  /** "yyyy-MM-dd" last day of the temporary Edunexify-account fallback; null = none. */
+  platformPaymentFallbackUntil?: string | null;
   adminUserId?: string;
   // Academic calendar settings
   academicYearStartMonth: number;   // 1=Jan, 4=Apr (default), 7=Jul, etc.
@@ -195,11 +198,20 @@ export interface SchoolFeature {
   displayName: string;
   description: string;
   category: string;
-  enabled: boolean;
+  enabled?: boolean;
   effectivelyOn: boolean;
   planGranted: boolean;
   overrideState: string;
   isAlwaysOn: boolean;
+  /** In every plan — shown read-only, never switched off. */
+  core?: boolean;
+  /** Display names of the features this one needs, and of the features that need it. */
+  dependsOn?: string[];
+  requiredBy?: string[];
+  /** Students or parents use its screens — switching it off is confirmed first. */
+  studentOrParentFacing?: boolean;
+  /** Can later be added to a plan without it (no pricing yet). */
+  addOnEligible?: boolean;
 }
 
 export interface RazorpayOrder {
@@ -214,6 +226,14 @@ export interface UpgradeVerification {
   razorpay_signature: string;
   planId: number | string;
   billingCycle?: string;
+}
+
+/** 202 from /subscription/upgrade/verify: payment received, Razorpay confirmation still in progress —
+ * the plan is activated automatically once Razorpay confirms. Not a failure. */
+export interface UpgradePending {
+  pending: true;
+  paymentId: string;
+  message: string;
 }
 
 export interface OnboardSchoolRequest {
@@ -231,7 +251,6 @@ export interface OnboardSchoolRequest {
   adminDob: string;
   adminGender: string;
   adminEmail: string;
-  adminPassword: string;
 }
 
 export interface SuperAdminStats {
@@ -353,10 +372,6 @@ export class SchoolService {
       );
   }
 
-  updateRazorpayKeys(keyId: string, keySecret: string): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/razorpay`, { keyId, keySecret });
-  }
-
   // ── SUPER_ADMIN ──────────────────────────────────────────────────────────────
 
   getDashboard(): Observable<SuperAdminStats> {
@@ -371,7 +386,7 @@ export class SchoolService {
     return this.http.post<SchoolSettings>(`${this.superAdminUrl}/schools`, data);
   }
 
-  updateSchoolAll(schoolId: number, data: Partial<SchoolSettings> & { newAdminPassword?: string }): Observable<SchoolSettings> {
+  updateSchoolAll(schoolId: number, data: Partial<SchoolSettings>): Observable<SchoolSettings> {
     return this.http.put<SchoolSettings>(`${this.superAdminUrl}/schools/${schoolId}`, data);
   }
 
@@ -384,9 +399,6 @@ export class SchoolService {
     return this.http.patch<SchoolSettings>(`${this.superAdminUrl}/schools/${schoolId}/subscription`, null, { params });
   }
 
-  resetAdminPassword(schoolId: number, newPassword: string): Observable<void> {
-    return this.http.patch<void>(`${this.superAdminUrl}/schools/${schoolId}/admin-password`, { newPassword });
-  }
 
   deleteSchool(schoolId: number): Observable<void> {
     return this.http.delete<void>(`${this.superAdminUrl}/schools/${schoolId}`);
@@ -431,8 +443,10 @@ export class SchoolService {
     return this.http.post<RazorpayOrder>(`${this.baseUrl}/subscription/upgrade/order`, { planId, billingCycle });
   }
 
-  verifyUpgradePayment(data: UpgradeVerification): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/subscription/upgrade/verify`, data);
+  /** Resolves with the activated subscription, or with {@link UpgradePending} (HTTP 202) while
+   * Razorpay's confirmation is still in progress. */
+  verifyUpgradePayment(data: UpgradeVerification): Observable<UpgradePending | unknown> {
+    return this.http.post<UpgradePending | unknown>(`${this.baseUrl}/subscription/upgrade/verify`, data);
   }
 
   // ── School-level feature overrides (ADMIN) ────────────────────────────────

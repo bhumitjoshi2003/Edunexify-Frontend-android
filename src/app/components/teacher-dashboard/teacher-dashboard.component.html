@@ -1,4 +1,4 @@
-    <app-wisdom-cards *ngIf="hasFeature('WISDOM')"></app-wisdom-cards>
+    <app-wisdom-cards *ngIf="hasFeature('THOUGHT_OF_THE_DAY')"></app-wisdom-cards>
 
 <div class="td-page">
   <div class="edu-page-skeleton" *ngIf="isLoading" aria-busy="true" aria-label="Loading teacher dashboard">
@@ -368,11 +368,11 @@
         ><a *ngIf="isClassTeacher" routerLink="/dashboard/teacher-attendance"
           ><span class="cyan"><mat-icon>how_to_reg</mat-icon></span
           ><strong>Mark Attendance</strong></a
-        ><a *ngIf="hasFeature('EXAM_MARKS')" routerLink="/dashboard/mark-entry"
+        ><a *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/mark-entry"
           ><span class="pink"><mat-icon>grade</mat-icon></span
           ><strong>Mark Entry</strong></a
         ><a
-          *ngIf="hasFeature('REPORT_CARD')"
+          *ngIf="hasFeature('REPORT_CARDS')"
           routerLink="/dashboard/report-cards-v2/remarks"
           ><span class="violet"><mat-icon>rate_review</mat-icon></span
           ><strong>Remarks</strong></a
