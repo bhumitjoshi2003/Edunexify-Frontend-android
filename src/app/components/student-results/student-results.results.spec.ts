@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { StudentResultsComponent } from './student-results.component';
 import { MarksService, ExamResult } from '../../services/marks.service';
@@ -64,5 +64,15 @@ describe('StudentResultsComponent — published results', () => {
     expect(el.querySelector('.sr-chip-pending')).not.toBeNull();
     expect(el.querySelectorAll('.sr-rank-badge').length).toBe(1);
     expect(fixture.componentInstance.completeResults.map(r => r.examId)).toEqual([1]);
+  });
+
+  it('opens issued report-card documents, with no legacy report button on each exam', () => {
+    const el = render([result({})]);
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    expect(el.querySelector('.sr-btn-report-sm')).toBeNull();
+    const button = el.querySelector('.sr-btn-report') as HTMLButtonElement;
+    expect(button.textContent).toContain('View Report Card');
+    button.click();
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/report-card-documents'], { queryParams: { studentId: 'S1' } });
   });
 });
