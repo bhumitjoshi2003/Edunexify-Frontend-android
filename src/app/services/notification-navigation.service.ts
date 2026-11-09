@@ -76,7 +76,18 @@ export class NotificationNavigationService {
         : '/dashboard/my-support-requests') + query;
     }
 
+    // The pre-approval report-card viewer was retired. Keep older inbox links
+    // useful without sending anyone to the unsigned legacy PDF.
+    if (path === '/dashboard/report-card') return this.reportCardDestination() + query;
+
     return `${this.historicalRouteAliases[path] ?? path}${query}`;
+  }
+
+  private reportCardDestination(): string {
+    const role = this.auth.getUserRole();
+    if (role === 'PARENT' || role === 'STUDENT') return '/dashboard/report-card-documents';
+    if (role === 'ADMIN') return '/dashboard/bulk-report-cards';
+    return '/dashboard/report-card-approvals';
   }
 
   private routeForEvent(action: NotificationAction): string | null {
@@ -112,7 +123,7 @@ export class NotificationNavigationService {
         if (action.sourceEntityType?.toUpperCase() === 'REPORTCARDDOCUMENT' && action.sourceEntityId) {
           return `/dashboard/report-card-documents/${encodeURIComponent(action.sourceEntityId)}`;
         }
-        return '/dashboard/report-card';
+        return this.reportCardDestination();
       default: return null;
     }
   }
