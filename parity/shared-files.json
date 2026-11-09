@@ -106,7 +106,7 @@
     "src/app/auth/principal-capability.guard.spec.ts": "04d173cfb56600089ad22c0aa725424d1bae0412257c37a53bfd7cb85f3e4aa2",
     "src/app/services/leadership-people.spec.ts": "20a3cdbc53d53d526f80a53bcc5302feffd3b7e9c8fdce544faec9968a5b08ef",
     "src/app/components/principal-dashboard/principal-dashboard.component.ts": "78a2b932aabb8c565d7c68740610f4cfc1cdfcf6eceddec867662c428b3ae9d0",
-    "src/app/components/signature-settings/signature-settings.component.ts": "d953ed5be272c3ca93a5247bdebacc2f40667c0fdbc967a363edfa98648fdfb5",
+    "src/app/components/signature-settings/signature-settings.component.ts": "e20021a4b64ddeb0ee9536501625d9505c0bf380da0c4f8bbfae7b3b0b654a14",
     "src/app/components/signature-settings/signature-pad-dialog.component.ts": "80ac63de8378e66655b8615ebfbe19344fe62b25f624f4a00c81ef1baedff6e8",
     "src/app/components/signature-settings/signature-pad-dialog.component.spec.ts": "411fc9d424ab2810bbe69d3b14c7ce34c860ffb8beff68c51cade4f8dbadd2b8",
     "src/app/components/signature-settings/signature-settings.component.spec.ts": "2dc45edde5f0e89d186cab8dc8c038a771094e5d4cad019971dabf3b08f75f87",
