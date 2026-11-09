@@ -106,12 +106,12 @@
     "src/app/auth/principal-capability.guard.spec.ts": "04d173cfb56600089ad22c0aa725424d1bae0412257c37a53bfd7cb85f3e4aa2",
     "src/app/services/leadership-people.spec.ts": "20a3cdbc53d53d526f80a53bcc5302feffd3b7e9c8fdce544faec9968a5b08ef",
     "src/app/components/principal-dashboard/principal-dashboard.component.ts": "78a2b932aabb8c565d7c68740610f4cfc1cdfcf6eceddec867662c428b3ae9d0",
-    "src/app/components/signature-settings/signature-settings.component.ts": "d953ed5be272c3ca93a5247bdebacc2f40667c0fdbc967a363edfa98648fdfb5",
+    "src/app/components/signature-settings/signature-settings.component.ts": "e20021a4b64ddeb0ee9536501625d9505c0bf380da0c4f8bbfae7b3b0b654a14",
     "src/app/components/signature-settings/signature-pad-dialog.component.ts": "80ac63de8378e66655b8615ebfbe19344fe62b25f624f4a00c81ef1baedff6e8",
     "src/app/components/signature-settings/signature-pad-dialog.component.spec.ts": "411fc9d424ab2810bbe69d3b14c7ce34c860ffb8beff68c51cade4f8dbadd2b8",
     "src/app/components/signature-settings/signature-settings.component.spec.ts": "2dc45edde5f0e89d186cab8dc8c038a771094e5d4cad019971dabf3b08f75f87",
-    "src/app/components/principal-dashboard/principal-dashboard.component.html": "279c2c360456cc453b4e741a55c1fee4ebbd85d9fb4fd5b485ea5b5279f7371c",
-    "src/app/components/principal-dashboard/principal-dashboard.component.css": "89add025d36b021e3ee1fee03d21c8359d236780d6f4885966efccbd6c3bf1b1",
+    "src/app/components/principal-dashboard/principal-dashboard.component.html": "faa7cfd66e365bbd0f8e77962638669b27ce7e88b0a8d3703449c36ca456d73c",
+    "src/app/components/principal-dashboard/principal-dashboard.component.css": "975cc8021057333614583ad0222645906ae1b84f6e207fd0f629959d6e2f8ad3",
     "src/app/components/principal-dashboard/principal-dashboard.component.spec.ts": "421d14fe2b3e23e6dc25cf19047e06034b0d1444aac762ad34923d76708a8e75",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.ts": "8901076e590b4f5c981d69431199ec845317144ef0549a1967489e5ca542752f",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.html": "886ad585b999d170fcda91356be278a3b342cf3fdccfbfe1ca9be8414c82417e",
@@ -127,7 +127,8 @@
     "src/app/services/report-card-v2.service.ts": "8e819971b43e9144f73c9207b2ac2f6487acf95695a7c6c7c39b82cf225d73c2",
     "src/app/components/report-card-v2/published/rc2-published.component.ts": "aea85912c4962d02e5ad5c340bb0620cbe526f73defbe5c68890d69692df5d8d",
     "src/app/components/report-card-v2/published/rc2-published.component.html": "6a5a38d19bebb05d114e739f480251f08a4b6ec1cb344ed753c608904dda0f4c",
-    "src/app/components/report-card-v2/published/rc2-published.component.css": "38db2e21954b7bb5e64165ba16e98cd258179286413d9112cfd2210ea7079235"
+    "src/app/components/report-card-v2/published/rc2-published.component.css": "38db2e21954b7bb5e64165ba16e98cd258179286413d9112cfd2210ea7079235",
+    "src/app/components/principal-my-profile/principal-my-profile.component.ts": "4b43a0de7132087c9e723dce0b055dab5ade4e7d0fb5a32dcacaa588195cce1f"
   },
   "platformSpecific": [
     {
@@ -216,6 +217,7 @@
     "src/app/services/report-card-v2.service.ts",
     "src/app/components/report-card-v2/published/rc2-published.component.ts",
     "src/app/components/report-card-v2/published/rc2-published.component.html",
-    "src/app/components/report-card-v2/published/rc2-published.component.css"
+    "src/app/components/report-card-v2/published/rc2-published.component.css",
+    "src/app/components/principal-my-profile/principal-my-profile.component.ts"
   ]
 }

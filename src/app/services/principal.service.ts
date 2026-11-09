@@ -63,6 +63,10 @@ export class PrincipalService {
 
   constructor(private http: HttpClient) {}
 
+  me(): Observable<PrincipalProfile> {
+    return this.http.get<PrincipalProfile>(`${this.endpoint}/me`);
+  }
+
   current(): Observable<PrincipalProfile[]> {
     return this.http.get<PrincipalProfile[]>(this.endpoint);
   }

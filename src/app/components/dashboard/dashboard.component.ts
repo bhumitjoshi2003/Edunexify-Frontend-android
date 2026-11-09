@@ -421,6 +421,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   navigateToMyProfile(): void {
+    if (this.isPrincipal()) {
+      this.router.navigate(['/dashboard/principal-profile']);
+      return;
+    }
     if (this.isStudent() && this.Id) {
       this.router.navigate(['/dashboard/student-details', this.Id]);
     }

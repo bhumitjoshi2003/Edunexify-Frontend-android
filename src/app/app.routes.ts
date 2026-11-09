@@ -47,6 +47,11 @@ export const routes: Routes = [
         canActivate: [roleGuard], data: { roles: ['PRINCIPAL'] }
       },
       {
+        path: 'principal-profile',
+        loadComponent: () => import('./components/principal-my-profile/principal-my-profile.component').then(m => m.PrincipalMyProfileComponent),
+        canActivate: [roleGuard], data: { roles: ['PRINCIPAL'] }
+      },
+      {
         path: 'principal-management',
         loadComponent: () => import('./components/principal-management/principal-management.component').then(m => m.PrincipalManagementComponent),
         canActivate: [roleGuard], data: { roles: ['ADMIN'] }
