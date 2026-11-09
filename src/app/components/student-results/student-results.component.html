@@ -25,8 +25,8 @@
         (click)="toggleProgress()">
         {{ showProgress ? '📋 Exam Details' : '📈 Progress Tracker' }}
       </button>
-      <button *ngIf="results.length > 0 && !showProgress" class="sr-btn-report" (click)="openReportCard(null)">
-        &#128438; Full Report Card
+      <button *ngIf="results.length > 0 && !showProgress" class="sr-btn-report" (click)="openReportCard()">
+        &#128438; View Report Card
       </button>
     </div>
   </div>
@@ -141,8 +141,7 @@
             <span class="sr-rank-badge" *ngIf="exam.overallRank !== null">Rank {{ exam.overallRank }}</span>
           </div>
         </div>
-        <div class="sr-exam-actions" (click)="$event.stopPropagation()">
-          <button class="sr-btn-report-sm" (click)="openReportCard(exam.examId)" title="Report Card">&#128438;</button>
+        <div class="sr-exam-actions">
           <span class="sr-chevron">{{ expandedExamId === exam.examId ? '▲' : '▼' }}</span>
         </div>
       </div>
