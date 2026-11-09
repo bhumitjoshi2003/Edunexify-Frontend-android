@@ -33,4 +33,14 @@ describe('Signature drawing dialog', () => {
     component['render']();expect(JSON.stringify(component.strokes)).toBe(before);expect(close).not.toHaveBeenCalled();
     component.use();expect(close).toHaveBeenCalledOnceWith(jasmine.stringMatching(/^iVBOR/));
   });
+  it('uses the full tall phone canvas instead of letterboxing strokes to a narrow strip', () => {
+    (canvas.getBoundingClientRect as jasmine.Spy).and.returnValue({left:10,top:20,width:300,height:360} as DOMRect);
+    component.begin(pointer(1,25,35));
+    component.move(pointer(1,295,365));
+    component.end(pointer(1,295,365));
+    expect(component.strokes[0][0].x).toBeCloseTo(.05, 3);
+    expect(component.strokes[0][0].y).toBeCloseTo(15 / 360, 3);
+    expect(component.strokes[0][1].x).toBeCloseTo(.95, 3);
+    expect(component.strokes[0][1].y).toBeCloseTo(345 / 360, 3);
+  });
 });
