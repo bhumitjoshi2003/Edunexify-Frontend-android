@@ -83,29 +83,45 @@ import { PrincipalProfile, PrincipalService } from '../../services/principal.ser
     :host{display:block}
     .profile-page{color:var(--edu-text,#1e293b);padding:0 0 24px;font-family:Inter,"Segoe UI",sans-serif}
     .profile-page *{box-sizing:border-box}
-    .profile-hero{background:linear-gradient(114deg,#103d50,#096e77 62%,#0ca6a0);border-radius:20px;padding:24px;color:white;box-shadow:0 16px 32px rgba(12,103,109,.14)}
+    .profile-hero{position:relative;overflow:hidden;min-height:142px;display:flex;align-items:center;background:radial-gradient(circle at 92% 0,rgba(255,255,255,.16) 0 86px,transparent 87px),linear-gradient(118deg,#123b46,#087e88 58%,#12aaa7);border-radius:22px;padding:26px 30px;color:white;box-shadow:0 16px 36px rgba(15,118,110,.16)}
     .identity{display:flex;align-items:center;gap:22px;min-width:0}
-    .avatar{width:100px;height:100px;border:3px solid rgba(255,255,255,.54);border-radius:24px;background:rgba(255,255,255,.13);display:grid;place-items:center;font-size:2rem;font-weight:800;flex:none;overflow:hidden}
+    .avatar{width:92px;height:92px;border:3px solid rgba(255,255,255,.48);border-radius:24px;background:linear-gradient(135deg,#15939b,#6dd5cf);display:grid;place-items:center;font-size:2rem;font-weight:800;flex:none;overflow:hidden;box-shadow:0 12px 24px rgba(7,43,51,.26)}
     .avatar img{width:100%;height:100%;object-fit:cover}
     .identity-copy{min-width:0}
     .badges{display:flex;flex-wrap:wrap;gap:9px;align-items:center;font-size:.7rem;letter-spacing:.5px;font-weight:800}
-    .badges span{padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.15)}
+    .badges span{padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.18)}
     .badges .active{background:#d8f9e9;color:#087756}
     .badges .inactive{background:#fbe4e4;color:#b42318}
     h1{margin:10px 0 10px;line-height:1.15;font-size:clamp(1.55rem,2.7vw,2.2rem);overflow-wrap:anywhere}
     .hero-meta{margin:5px 0;display:flex;gap:8px;align-items:center;color:#d7f0f0;min-width:0;font-size:.85rem;overflow-wrap:anywhere}
     .hero-meta mat-icon{font-size:18px;width:18px;height:18px;flex:none}
-    .profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
-    .detail-card{border-radius:20px;background:white;border:1px solid #e3ebf1;padding:22px;min-width:0;box-shadow:0 9px 25px rgba(21,50,78,.05)}
+    .profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+    .detail-card{border-radius:20px;background:white;border:1px solid #e5ebf2;padding:24px;min-width:0;box-shadow:0 10px 32px rgba(30,48,73,.06)}
     .card-title{display:flex;align-items:center;gap:13px;padding-bottom:15px;border-bottom:1px solid #ecf0f4}
-    .card-title>mat-icon{display:grid;place-items:center;padding:11px;width:46px;height:46px;font-size:24px;color:#087a77;border-radius:14px;background:#e6f6f3}
+    .card-title>mat-icon{display:grid;place-items:center;padding:10px;width:42px;height:42px;font-size:21px;color:#0f766e;border-radius:12px;background:#e7f8f5}
     .card-title h2{font-size:1.04rem;margin:0 0 3px;line-height:1.3}
     .card-title p{font-size:.78rem;color:#718198;margin:0}
-    dl{margin:12px 0 0}
-    dl>div{display:grid;grid-template-columns:minmax(125px,.75fr) minmax(0,1fr);gap:14px;align-items:start;padding:11px 0;border-bottom:1px solid #f0f3f6}
-    dl>div:last-child{border-bottom:0}
-    dt{font-size:.8rem;color:#75869c;font-weight:650}
-    dd{font-size:.83rem;font-weight:650;color:#253750;margin:0;overflow-wrap:anywhere}
+    dl{margin:18px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    dl>div{position:relative;display:flex;min-width:0;min-height:74px;flex-direction:column;justify-content:center;gap:5px;padding:14px 14px 14px 62px;border:1px solid #e8edf3;border-radius:14px;background:#fbfcfd;transition:background .18s,border-color .18s,box-shadow .18s}
+    dl>div:hover{background:#fcfefe;border-color:#c8e5e1;box-shadow:0 7px 16px rgba(15,118,110,.055)}
+    dl>div::before{content:'person_outline';position:absolute;left:14px;top:50%;transform:translateY(-50%);width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:#e9f7f5;color:#187e78;font:normal 19px/1 'Material Icons';font-feature-settings:'liga'}
+    .detail-card:nth-child(1) dl>div:nth-child(2)::before{content:'wc'}
+    .detail-card:nth-child(1) dl>div:nth-child(3)::before{content:'event'}
+    .detail-card:nth-child(2) dl>div:nth-child(1)::before{content:'mail_outline'}
+    .detail-card:nth-child(2) dl>div:nth-child(2)::before{content:'phone'}
+    .detail-card:nth-child(2) dl>div:nth-child(3)::before{content:'phone_in_talk'}
+    .detail-card:nth-child(2) dl>div:nth-child(4)::before{content:'place'}
+    .detail-card:nth-child(2) dl>div:nth-child(5)::before{content:'location_city'}
+    .detail-card:nth-child(2) dl>div:nth-child(6)::before{content:'markunread_mailbox'}
+    .detail-card:nth-child(3) dl>div:nth-child(1)::before{content:'school'}
+    .detail-card:nth-child(3) dl>div:nth-child(2)::before{content:'menu_book'}
+    .detail-card:nth-child(3) dl>div:nth-child(3)::before{content:'work_history'}
+    .detail-card:nth-child(3) dl>div:nth-child(4)::before{content:'business'}
+    .detail-card:nth-child(4) dl>div:nth-child(1)::before{content:'event_available'}
+    .detail-card:nth-child(4) dl>div:nth-child(2)::before{content:'badge'}
+    .detail-card:nth-child(4) dl>div:nth-child(3)::before{content:'fingerprint'}
+    dt{font-size:.68rem;color:#75869c;font-weight:650}
+    dd{font-size:.85rem;font-weight:700;color:#253750;margin:0;overflow-wrap:anywhere}
     dd.missing{color:#9aa9ba;font-style:italic;font-weight:500}
     dd.code{font-family:ui-monospace,monospace;letter-spacing:.4px}
     .profile-note{display:flex;align-items:center;gap:10px;color:#406e75;background:#eaf8f6;border:1px solid #d3ede9;padding:13px 16px;border-radius:13px;margin:18px 0 0;font-size:.83rem}
@@ -120,17 +136,19 @@ import { PrincipalProfile, PrincipalService } from '../../services/principal.ser
     .state-card h2{margin:10px 0}
     .state-card p{color:#65758c}
     button{padding:10px 18px;background:#173e61;border:0;border-radius:10px;color:white;cursor:pointer;font-weight:650}
-    @media(max-width:800px){.profile-grid{grid-template-columns:1fr}}
+    @media(max-width:1050px){dl{grid-template-columns:1fr}}
+    @media(max-width:800px){.profile-grid{grid-template-columns:1fr}dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:600px){
       .profile-page{padding:0 0 20px}
-      .profile-hero{border-radius:17px;padding:20px 16px}
+      .profile-hero{border-radius:18px;padding:20px 16px}
       .identity{gap:14px;align-items:flex-start}
       .avatar{width:68px;height:68px;border-radius:17px;font-size:1.5rem}
       h1{font-size:1.4rem;margin:8px 0}
       .hero-meta{font-size:.78rem}
       .detail-card{border-radius:16px;padding:18px 16px}
       .profile-grid{gap:12px;margin-top:13px}
-      dl>div{grid-template-columns:minmax(0,1fr);gap:5px;padding:10px 0}
+      dl{grid-template-columns:1fr;gap:10px}
+      dl>div{min-height:70px;padding:12px 12px 12px 60px}
       .card-title>mat-icon{width:40px;height:40px;font-size:21px;padding:9px}
       .profile-note{align-items:flex-start}
     }
