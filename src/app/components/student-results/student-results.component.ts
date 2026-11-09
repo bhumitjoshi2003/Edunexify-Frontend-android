@@ -440,13 +440,8 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
     return 'grade-c';
   }
 
-  openReportCard(examId: number | null): void {
-    const queryParams: Record<string, string> = {
-      studentId: this.studentId,
-      session: this.selectedSession,
-    };
-    if (examId !== null) queryParams['examId'] = String(examId);
-    this.router.navigate(['/dashboard/report-card'], { queryParams });
+  openReportCard(): void {
+    this.router.navigate(['/dashboard/report-card-documents'], { queryParams: { studentId: this.studentId } });
   }
 
   trackById(index: number, item: { examId: number }): number { return item.examId; }
