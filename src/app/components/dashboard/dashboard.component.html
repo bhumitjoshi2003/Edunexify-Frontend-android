@@ -277,14 +277,6 @@
            (click)="closeSidebarOnMobile()" title="Dashboard">
           <mat-icon>home</mat-icon><span>Dashboard</span>
         </a>
-        <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="My Signature">
-          <mat-icon>draw</mat-icon><span>My Signature</span>
-        </a>
-        <a class="nav-item" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Report Card Approvals">
-          <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
-        </a>
         <a class="nav-item" routerLink="/dashboard/teacher-checkin" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Check-in">
           <mat-icon>fingerprint</mat-icon><span>My Check-in</span>
@@ -292,6 +284,10 @@
         <a class="nav-item" routerLink="/dashboard/apply-teacher-leave" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="My Leave">
           <mat-icon>event_note</mat-icon><span>My Leave</span>
+        </a>
+        <a class="nav-item" routerLink="/dashboard/my-signature" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="My Signature">
+          <mat-icon>draw</mat-icon><span>My Signature</span>
         </a>
 
         </app-nav-group>
@@ -347,6 +343,12 @@
         </app-nav-group>
         <app-nav-group>
           <div class="nav-section-label">Report Cards</div>
+
+        <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Report Card Approvals">
+          <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
+        </a>
+
 
 
         <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active"
