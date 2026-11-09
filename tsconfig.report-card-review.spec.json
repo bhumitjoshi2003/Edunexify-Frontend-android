@@ -11,6 +11,13 @@
     "src/app/components/principal-management/*.spec.ts",
     "src/app/components/signature-settings/*.spec.ts",
     "src/app/components/view-leaves/*.spec.ts",
-    "src/app/components/notice/notice.component.principal.spec.ts"
+    "src/app/components/notice/notice.component.principal.spec.ts",
+    "src/app/components/fees/*.spec.ts",
+    "src/app/components/payment/*.spec.ts",
+    "src/app/components/super-admin-dashboard/*.spec.ts",
+    "src/app/components/fee-generation-target/*.spec.ts",
+    "src/app/components/super-admin-payment-gateways/*.spec.ts",
+    "src/app/components/notification-delivery-log/*.spec.ts",
+    "src/app/components/legal/*.spec.ts"
   ]
 }
