@@ -5,9 +5,9 @@
   --line: #e3eaf1;
   --teal: #0b7b78;
   --navy: #1b3a62;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 18px 18px 34px;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 28px;
   color: var(--ink);
   font-family: Inter, "Segoe UI", sans-serif;
 }
@@ -15,16 +15,16 @@
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .approval-hero {
   display: flex; justify-content: space-between; align-items: center; gap: 24px;
-  padding: 27px 30px;
-  border-radius: 24px;
+  padding: 18px 24px;
+  border-radius: 20px;
   color: white;
   background: linear-gradient(115deg, #133b58 0%, #12656c 100%);
   box-shadow: 0 16px 34px rgba(17, 62, 78, .13);
 }
-.hero-eyebrow, .section-eyebrow { display: block; margin-bottom: 8px; font-size: .7rem; letter-spacing: 1.4px; font-weight: 800; }
+.hero-eyebrow, .section-eyebrow { display: block; margin-bottom: 5px; font-size: .7rem; letter-spacing: 1.4px; font-weight: 800; }
 .hero-eyebrow { color: #b5ebe5; }
 .approval-hero h1 { margin: 0; font-size: clamp(1.55rem, 2.6vw, 2.1rem); line-height: 1.2; letter-spacing: -.5px; }
-.approval-hero p { margin: 8px 0 15px; font-size: .88rem; color: #d6e8f0; }
+.approval-hero p { margin: 5px 0 10px; font-size: .88rem; color: #d6e8f0; }
 .approval-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; font-size: .75rem; color: #ecfbfa; }
 .approval-steps span:not(.step-arrow) { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .approval-steps b { display: grid; place-items: center; width: 23px; height: 23px; border-radius: 50%; background: rgba(255,255,255,.18); font-size: .72rem; }
@@ -109,8 +109,8 @@ textarea { display: block; width: 100%; margin: 8px 0 12px; padding: 12px; borde
   .metrics { grid-template-columns: repeat(3, minmax(0,1fr)); }
 }
 @media (max-width: 620px) {
-  .approval-page { padding: 10px 8px 24px; }
-  .approval-hero { align-items: flex-start; flex-direction: column; padding: 22px 20px; border-radius: 17px; gap: 14px; }
+  .approval-page { padding: 0 0 24px; }
+  .approval-hero { align-items: flex-start; flex-direction: column; padding: 16px 18px; border-radius: 17px; gap: 10px; }
   .approval-steps { gap: 6px; font-size: .68rem; }
   .approval-steps b { width: 20px; height: 20px; }
   .approval-tip { align-items: flex-start; flex-wrap: wrap; }
