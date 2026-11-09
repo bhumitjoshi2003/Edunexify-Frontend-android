@@ -8,13 +8,6 @@
         <span *ngIf="schoolDate"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ schoolDate | date:'EEEE, d MMMM' }}</span>
       </div>
     </div>
-    <div class="pd-hero-side">
-      <button type="button" class="pd-hero-action" (click)="refresh()" [disabled]="overview.loading">
-        <mat-icon aria-hidden="true" [class.pd-spin]="overview.loading">refresh</mat-icon>
-        {{ overview.loading ? 'Refreshing…' : 'Refresh' }}
-      </button>
-      <small *ngIf="updatedAt">Updated {{ updatedAt | date:'shortTime' }}</small>
-    </div>
   </header>
 
   <!-- ── Today at school ───────────────────────────────────────────── -->
