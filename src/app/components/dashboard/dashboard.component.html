@@ -33,10 +33,6 @@
              (click)="closeSidebarOnMobile()" title="Principal Dashboard">
             <mat-icon>school</mat-icon><span>Principal Dashboard</span>
           </a>
-          <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
-             (click)="closeSidebarOnMobile()" title="Report Card Approvals">
-            <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
-          </a>
         </app-nav-group>
         <app-nav-group>
           <div class="nav-section-label">Students &amp; Staff</div>
@@ -75,6 +71,11 @@
         </app-nav-group>
         <app-nav-group *ngIf="hasFeature('REPORT_CARDS')">
           <div class="nav-section-label">Report Cards</div>
+          <a class="nav-item" routerLink="/dashboard/report-card-approvals" routerLinkActive="active"
+             (click)="closeSidebarOnMobile()" title="Report Card Approvals">
+            <mat-icon>fact_check</mat-icon><span>Report Card Approvals</span>
+          </a>
+
           <a class="nav-item" routerLink="/dashboard/report-cards-v2/setup" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report card setup"><mat-icon>tune</mat-icon><span>Report card setup</span></a>
           <a class="nav-item" routerLink="/dashboard/report-cards-v2/design" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report card design"><mat-icon>palette</mat-icon><span>Report card design</span></a>
           <a class="nav-item" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Remarks"><mat-icon>rate_review</mat-icon><span>Remarks</span></a>
