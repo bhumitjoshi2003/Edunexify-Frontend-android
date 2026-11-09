@@ -388,10 +388,6 @@
            (click)="closeSidebarOnMobile()" title="Dashboard">
           <mat-icon>home</mat-icon><span>Dashboard</span>
         </a>
-        <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/principal-management" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Principal Account">
-          <mat-icon>manage_accounts</mat-icon><span>Principal Account</span>
-        </a>
         <a class="nav-item" *ngIf="hasFeature('ANALYTICS')" routerLink="/dashboard/analytics" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Analytics">
           <mat-icon>insights</mat-icon><span>Analytics</span>
@@ -421,6 +417,10 @@
         <a class="nav-item" routerLink="/dashboard/admin-list" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Admins">
           <mat-icon>manage_accounts</mat-icon><span>Admins</span>
+        </a>
+        <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/principal-management" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Principal">
+          <mat-icon>workspace_premium</mat-icon><span>Principal</span>
         </a>
         <a class="nav-item" *ngIf="hasFeature('PARENT_PORTAL')" routerLink="/dashboard/parent-portal" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Parents & Guardians">
