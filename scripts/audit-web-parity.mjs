@@ -17,6 +17,16 @@ const navSource = read(join(app, 'components/dashboard/dashboard.component.html'
 const routePaths = (source) => new Set([...source.matchAll(/\bpath:\s*'([^']+)'/g)].map((m) => m[1]));
 const navPaths = (source) => new Set([...source.matchAll(/\brouterLink="(\/dashboard\/[^\"]+)"/g)].map((m) => m[1]));
 const errors = [];
+// A route can exist and allow PARENT while being completely unreachable from
+// that role's menu. Verify the child-scoped links explicitly.
+const parentNav = navSource.split('<!-- ── PARENT ──')[1]?.split('<!-- ── TEACHER ──')[0] ?? '';
+for (const path of ['homework', 'class-updates', 'assessments']) {
+  const anchor = parentNav.match(new RegExp(`<a\\b[^>]*routerLink="/dashboard/${path}"[^>]*>`, 's'))?.[0];
+  if (!anchor || !anchor.includes('hasFeature(\'CLASSROOM\')') ||
+      !anchor.includes('studentId: selectedChild.studentId')) {
+    errors.push(`Parent menu must expose child-scoped ${path} when CLASSROOM is enabled`);
+  }
+}
 // Desktop-only operational flows deliberately stay on the website. Do not
 // accidentally reintroduce these routes through automatic parity syncing.
 const webOnlyRoutes = new Set(['school-setup', 'fee-generation-target']);

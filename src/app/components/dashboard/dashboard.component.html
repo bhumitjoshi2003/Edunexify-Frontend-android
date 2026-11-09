@@ -201,6 +201,22 @@
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Timetable">
             <mat-icon>schedule</mat-icon><span>Timetable</span>
           </a>
+          <!-- Selected-child classroom content; the backend also validates the parent link. -->
+          <a class="nav-item" *ngIf="hasFeature('CLASSROOM')" routerLink="/dashboard/homework"
+             [queryParams]="{ studentId: selectedChild.studentId }"
+             routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Homework &amp; Classwork">
+            <mat-icon>menu_book</mat-icon><span>Homework &amp; Classwork</span>
+          </a>
+          <a class="nav-item" *ngIf="hasFeature('CLASSROOM')" routerLink="/dashboard/class-updates"
+             [queryParams]="{ studentId: selectedChild.studentId }"
+             routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Class Updates">
+            <mat-icon>campaign</mat-icon><span>Class Updates</span>
+          </a>
+          <a class="nav-item" *ngIf="hasFeature('CLASSROOM')" routerLink="/dashboard/assessments"
+             [queryParams]="{ studentId: selectedChild.studentId }"
+             routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Assessments">
+            <mat-icon>quiz</mat-icon><span>Assessments</span>
+          </a>
           <a class="nav-item" *ngIf="childCan('canViewResults')" routerLink="/dashboard/my-results"
              [queryParams]="{ studentId: selectedChild.studentId }"
              routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Results">
