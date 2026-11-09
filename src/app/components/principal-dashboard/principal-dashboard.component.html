@@ -20,8 +20,8 @@
   <!-- ── Today at school ───────────────────────────────────────────── -->
   <section class="pd-today" aria-label="Today at school">
     <ng-container *ngIf="overview.data as o; else todayPending">
-      <a class="pd-tile" routerLink="/dashboard/attendance-summary">
-        <span class="pd-tile-label">Students present</span>
+      <a class="pd-tile pd-tile-students" routerLink="/dashboard/attendance-summary">
+        <span class="pd-tile-top"><span class="pd-tile-label">Students present</span><mat-icon aria-hidden="true">groups</mat-icon></span>
         <strong *ngIf="o.todayAttendanceRate !== null; else notMarked" [class]="'pd-tone-' + rateTone(o.todayAttendanceRate)">
           {{ o.todayAttendanceRate | number:'1.0-1' }}%</strong>
         <ng-template #notMarked><strong class="pd-tone-none">{{ closedToday ? 'No school today' : 'Not marked yet' }}</strong></ng-template>
@@ -32,8 +32,8 @@
         </small>
       </a>
 
-      <div class="pd-tile" [class.pd-tile-muted]="staff.failed && !staff.data">
-        <span class="pd-tile-label">Staff present</span>
+      <div class="pd-tile pd-tile-staff" [class.pd-tile-muted]="staff.failed && !staff.data">
+        <span class="pd-tile-top"><span class="pd-tile-label">Staff present</span><mat-icon aria-hidden="true">badge</mat-icon></span>
         <ng-container *ngIf="staff.data as s; else staffPending">
           <strong>{{ staffPresent }}<span class="pd-of"> / {{ s.expectedCount ?? o.totalTeachers }}</span></strong>
           <small>
@@ -47,20 +47,20 @@
         </ng-template>
       </div>
 
-      <a class="pd-tile" routerLink="/dashboard/view-leaves">
-        <span class="pd-tile-label">Leave requests</span>
+      <a class="pd-tile pd-tile-leaves" routerLink="/dashboard/view-leaves">
+        <span class="pd-tile-top"><span class="pd-tile-label">Leave requests</span><mat-icon aria-hidden="true">event_note</mat-icon></span>
         <strong>{{ pendingLeaves }}</strong>
         <small>{{ o.pendingStudentLeaves }} student · {{ o.pendingTeacherLeaves }} teacher</small>
       </a>
 
-      <a class="pd-tile" *ngIf="reportCardsEnabled; else teachersTile" routerLink="/dashboard/report-card-approvals">
-        <span class="pd-tile-label">Report cards for you</span>
+      <a class="pd-tile pd-tile-reviews" *ngIf="reportCardsEnabled; else teachersTile" routerLink="/dashboard/report-card-approvals">
+        <span class="pd-tile-top"><span class="pd-tile-label">Report cards for you</span><mat-icon aria-hidden="true">fact_check</mat-icon></span>
         <strong>{{ o.awaitingPrincipalReview }}</strong>
         <small>{{ o.readyForPublication }} approved · {{ o.returnedForCorrection }} returned</small>
       </a>
       <ng-template #teachersTile>
-        <a class="pd-tile" routerLink="/dashboard/teacher-list">
-          <span class="pd-tile-label">Active teachers</span>
+        <a class="pd-tile pd-tile-staff" routerLink="/dashboard/teacher-list">
+          <span class="pd-tile-top"><span class="pd-tile-label">Active teachers</span><mat-icon aria-hidden="true">school</mat-icon></span>
           <strong>{{ o.totalTeachers }}</strong>
           <small>{{ o.totalStudents }} students enrolled</small>
         </a>
@@ -118,7 +118,7 @@
     <!-- ── Class attendance ─────────────────────────────────────────── -->
     <section class="pd-panel" aria-labelledby="pd-classes-title">
       <div class="pd-section-head">
-        <h2 id="pd-classes-title">Class attendance</h2>
+        <h2 id="pd-classes-title"><mat-icon aria-hidden="true">assessment</mat-icon>Class attendance</h2>
         <a routerLink="/dashboard/attendance-summary">Attendance reports</a>
       </div>
       <p class="pd-sub">Today's submission and this month's attendance rate</p>
@@ -162,7 +162,7 @@
       <!-- ── Coming up ──────────────────────────────────────────────── -->
       <section class="pd-panel" *ngIf="eventsEnabled" aria-labelledby="pd-events-title">
         <div class="pd-section-head">
-          <h2 id="pd-events-title">Coming up</h2>
+          <h2 id="pd-events-title"><mat-icon aria-hidden="true">event</mat-icon>Coming up</h2>
           <a routerLink="/dashboard/event-calendar">All events</a>
         </div>
         <ul class="pd-events" *ngIf="events.data?.length">
@@ -182,7 +182,7 @@
       <!-- ── Report-card workflow ───────────────────────────────────── -->
       <section class="pd-panel" *ngIf="reportCardsEnabled && overview.data as o" aria-labelledby="pd-rc-title">
         <div class="pd-section-head">
-          <h2 id="pd-rc-title">Report-card reviews</h2>
+          <h2 id="pd-rc-title"><mat-icon aria-hidden="true">assignment_turned_in</mat-icon>Report-card reviews</h2>
           <a routerLink="/dashboard/report-card-approvals">Open queue</a>
         </div>
         <dl class="pd-pipeline">
@@ -191,8 +191,7 @@
           <div><dt>Ready for Admin</dt><dd>{{ o.readyForPublication }}</dd></div>
           <div><dt>Returned</dt><dd>{{ o.returnedForCorrection }}</dd></div>
         </dl>
-        <p class="pd-note">Saved review states. The queue shows reviews that need a fresh signature after changes.
-          <a routerLink="/dashboard/my-signature">My signature</a></p>
+        <p class="pd-note">Track approvals and pending signatures. <a routerLink="/dashboard/my-signature">My signature</a></p>
       </section>
     </aside>
   </div>
