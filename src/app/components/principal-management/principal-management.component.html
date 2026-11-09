@@ -1,0 +1,309 @@
+<main class="pm-page">
+  <!-- ── Loading ─────────────────────────────────────────────────── -->
+  <section *ngIf="loading" class="pm-skeleton" role="status" aria-label="Loading Principal details">
+    <div class="sk-hero"><span class="sk-avatar"></span><span class="sk-lines"><i></i><i></i><i></i></span></div>
+    <div class="sk-grid"><span></span><span></span><span></span><span></span></div>
+  </section>
+
+  <!-- ── Load failure ────────────────────────────────────────────── -->
+  <section *ngIf="!loading && loadFailed" class="pm-state pm-state-error" role="alert">
+    <div class="pm-state-icon"><mat-icon>cloud_off</mat-icon></div>
+    <h2>Principal details couldn't be loaded</h2>
+    <p>{{ error }}</p>
+    <button type="button" class="pm-btn pm-btn-primary" (click)="load()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>Retry loading
+    </button>
+  </section>
+
+  <!-- ── Empty ───────────────────────────────────────────────────── -->
+  <section *ngIf="!loading && !loadFailed && !profile && !mode" class="pm-state">
+    <div class="pm-state-icon"><mat-icon>workspace_premium</mat-icon></div>
+    <h2>No Principal appointed yet</h2>
+    <p>Appoint your school's Principal. They receive a Principal ID and a one-time link to set their password.</p>
+    <button type="button" class="pm-btn pm-btn-primary" (click)="open('create')"><mat-icon>person_add</mat-icon>Appoint Principal</button>
+  </section>
+
+  <!-- ── Profile hero ────────────────────────────────────────────── -->
+  <section class="pm-hero" *ngIf="!loading && !loadFailed && profile as p">
+    <div class="pm-photo" [class.is-busy]="photoUploading">
+      <img *ngIf="photoUrl(p.photoUrl) as src" [src]="src" [alt]="p.name" />
+      <span *ngIf="!p.photoUrl" class="pm-initials">{{ initials(p.name) }}</span>
+      <label class="pm-photo-edit" *ngIf="!photoUploading" title="Change photo">
+        <mat-icon>photo_camera</mat-icon><span class="sr-only">Change photo</span>
+        <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event, false)" />
+      </label>
+      <span class="pm-photo-busy" *ngIf="photoUploading"><span class="pm-spinner"></span></span>
+    </div>
+
+    <div class="pm-hero-text">
+      <div class="pm-hero-badges">
+        <span class="pm-role">Principal</span>
+        <span class="pm-status" [class.is-inactive]="!p.active"><i></i>{{ p.active ? 'Active' : 'Inactive' }}</span>
+      </div>
+      <h2 class="pm-hero-name">{{ p.name }}</h2>
+      <div class="pm-hero-meta">
+        <button type="button" class="pm-id" (click)="copyLoginId()" title="Copy Principal ID">
+          <mat-icon>badge</mat-icon><span>{{ p.loginId }}</span><mat-icon class="pm-id-copy">content_copy</mat-icon>
+        </button>
+        <span><mat-icon>mail_outline</mat-icon>{{ p.email }}</span>
+        <span *ngIf="p.details?.phoneNumber"><mat-icon>phone</mat-icon>{{ p.details?.phoneNumber }}</span>
+        <span *ngIf="currentAppointment as a"><mat-icon>event</mat-icon>Since {{ (p.details?.joiningDate || a.appointedAt) | date: 'd MMM yyyy' }}</span>
+      </div>
+    </div>
+
+    <div class="pm-hero-actions" *ngIf="!mode">
+      <button type="button" class="pm-btn pm-btn-light" (click)="open('edit')" [disabled]="saving"><mat-icon>edit</mat-icon>Edit profile</button>
+    </div>
+  </section>
+
+  <p *ngIf="error && !loadFailed && !mode" class="pm-alert" role="alert"><mat-icon>error_outline</mat-icon>{{ error }}</p>
+
+  <!-- ── Create / edit / replace / activation form ───────────────── -->
+  <form *ngIf="!loading && !loadFailed && mode" #form="ngForm" (ngSubmit)="submit()" class="pm-form" [class.is-critical]="mode === 'replace' || mode === 'activation'" novalidate>
+    <div class="pm-form-head">
+      <div class="pm-card-icon" [class.is-warning]="mode === 'replace' || mode === 'activation'">
+        <mat-icon>{{ mode === 'create' ? 'person_add' : mode === 'edit' ? 'edit' : mode === 'replace' ? 'swap_horiz' : (profile?.active ? 'person_off' : 'how_to_reg') }}</mat-icon>
+      </div>
+      <div>
+        <h2>{{ mode === 'create' ? 'Appoint a Principal' : mode === 'replace' ? 'Appoint a replacement Principal' : mode === 'edit' ? 'Edit Principal profile' : profile?.active ? 'Deactivate Principal' : 'Reactivate Principal' }}</h2>
+        <p *ngIf="mode === 'create'">A Principal ID is generated automatically and a one-time password setup link is emailed. No password is shared with administrators.</p>
+        <p *ngIf="mode === 'edit'">Changing the official email invalidates earlier recovery links and signs the Principal out everywhere.</p>
+        <p *ngIf="mode === 'replace'">{{ profile?.name }} will be deactivated and signed out everywhere. Earlier approvals, signatures and issued documents keep their original identity. The new Principal gets a new Principal ID and setup link.</p>
+        <p *ngIf="mode === 'activation'">{{ profile?.active ? 'The Principal is signed out everywhere and cannot sign in until reactivated.' : 'The Principal can sign in again with their existing password.' }}</p>
+      </div>
+    </div>
+
+    <ng-container *ngIf="mode !== 'activation'">
+      <fieldset class="pm-fieldset">
+        <legend><mat-icon>person</mat-icon>Personal information</legend>
+        <div class="pm-photo-pick" *ngIf="mode !== 'edit'">
+          <div class="pm-photo pm-photo-sm">
+            <img *ngIf="pendingPhotoPreview" [src]="pendingPhotoPreview" alt="Selected photo" />
+            <span *ngIf="!pendingPhotoPreview" class="pm-initials">{{ initials(name) }}</span>
+          </div>
+          <div>
+            <label class="pm-btn pm-btn-ghost pm-file">
+              <mat-icon>upload</mat-icon>{{ pendingPhoto ? 'Change photo' : 'Add photo' }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPhotoSelected($event, true)" [disabled]="saving" />
+            </label>
+            <button type="button" class="pm-link" *ngIf="pendingPhoto" (click)="clearPendingPhoto()" [disabled]="saving">Remove</button>
+            <small>Optional · JPEG, PNG or WebP up to 5 MB</small>
+          </div>
+        </div>
+        <div class="pm-grid">
+          <label class="pm-field pm-span-2"><span>Full name <b>*</b></span>
+            <input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="name" [disabled]="saving" #nameCtl="ngModel" [class.is-invalid]="nameCtl.invalid && nameCtl.touched" placeholder="e.g. Dr. Meera Sharma" />
+            <em *ngIf="nameCtl.invalid && nameCtl.touched">Full name is required.</em>
+          </label>
+          <label class="pm-field"><span>Gender</span>
+            <select name="gender" [(ngModel)]="details.gender" [disabled]="saving">
+              <option value="">Not specified</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+            </select>
+          </label>
+          <label class="pm-field"><span>Date of birth</span>
+            <input type="date" name="dob" [(ngModel)]="details.dob" [max]="today" [disabled]="saving" />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="pm-fieldset">
+        <legend><mat-icon>contact_mail</mat-icon>Contact information</legend>
+        <div class="pm-grid">
+          <label class="pm-field"><span>Official email <b>*</b></span>
+            <input type="email" name="email" [(ngModel)]="email" email required maxlength="255" autocomplete="email" [disabled]="saving" #emailCtl="ngModel" [class.is-invalid]="emailCtl.invalid && emailCtl.touched" placeholder="principal@school.edu.in" />
+            <em *ngIf="emailCtl.invalid && emailCtl.touched">Enter a valid email address.</em>
+          </label>
+          <label class="pm-field"><span>Mobile number <b>*</b></span>
+            <input type="tel" name="phoneNumber" [(ngModel)]="details.phoneNumber" required pattern="^[0-9]{10}$" maxlength="10" inputmode="numeric" autocomplete="tel" [disabled]="saving" #phoneCtl="ngModel" [class.is-invalid]="phoneCtl.invalid && phoneCtl.touched" placeholder="10-digit number" />
+            <em *ngIf="phoneCtl.invalid && phoneCtl.touched">Enter a 10-digit mobile number.</em>
+          </label>
+          <label class="pm-field"><span>Alternate mobile</span>
+            <input type="tel" name="alternatePhoneNumber" [(ngModel)]="details.alternatePhoneNumber" pattern="^[0-9]{10}$" maxlength="10" inputmode="numeric" [disabled]="saving" #altCtl="ngModel" [class.is-invalid]="altCtl.invalid && altCtl.touched" placeholder="Optional" />
+            <em *ngIf="altCtl.invalid && altCtl.touched">Enter a 10-digit mobile number.</em>
+          </label>
+          <label class="pm-field"><span>PIN code</span>
+            <input name="pinCode" [(ngModel)]="details.pinCode" pattern="^[0-9]{6}$" maxlength="6" inputmode="numeric" [disabled]="saving" #pinCtl="ngModel" [class.is-invalid]="pinCtl.invalid && pinCtl.touched" placeholder="6 digits" />
+            <em *ngIf="pinCtl.invalid && pinCtl.touched">Enter a 6-digit PIN code.</em>
+          </label>
+          <label class="pm-field pm-span-2"><span>Residential address</span>
+            <textarea name="address" [(ngModel)]="details.address" maxlength="500" rows="2" autocomplete="street-address" [disabled]="saving" placeholder="House, street, locality"></textarea>
+          </label>
+          <label class="pm-field"><span>City</span><input name="city" [(ngModel)]="details.city" maxlength="100" autocomplete="address-level2" [disabled]="saving" /></label>
+          <label class="pm-field"><span>State</span><input name="state" [(ngModel)]="details.state" maxlength="100" autocomplete="address-level1" [disabled]="saving" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="pm-fieldset">
+        <legend><mat-icon>workspace_premium</mat-icon>Professional &amp; employment</legend>
+        <div class="pm-grid">
+          <label class="pm-field"><span>Highest qualification</span><input name="qualification" [(ngModel)]="details.qualification" maxlength="150" [disabled]="saving" placeholder="e.g. M.Ed., Ph.D." /></label>
+          <label class="pm-field"><span>Specialization</span><input name="specialization" [(ngModel)]="details.specialization" maxlength="150" [disabled]="saving" placeholder="e.g. Educational Leadership" /></label>
+          <label class="pm-field"><span>Total experience (years)</span>
+            <input type="number" name="experienceYears" [(ngModel)]="details.experienceYears" min="0" max="60" step="1" [disabled]="saving" #expCtl="ngModel" [class.is-invalid]="expCtl.invalid && expCtl.touched" />
+            <em *ngIf="expCtl.invalid && expCtl.touched">Between 0 and 60 years.</em>
+          </label>
+          <label class="pm-field"><span>Previous institution</span><input name="previousInstitution" [(ngModel)]="details.previousInstitution" maxlength="200" [disabled]="saving" /></label>
+          <label class="pm-field"><span>Appointment date</span><input type="date" name="joiningDate" [(ngModel)]="details.joiningDate" [disabled]="saving" /></label>
+          <label class="pm-field"><span>Employment type</span>
+            <select name="employmentType" [(ngModel)]="details.employmentType" [disabled]="saving">
+              <option value="">Not specified</option>
+              <option *ngFor="let t of employmentTypes" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+    </ng-container>
+
+    <fieldset class="pm-fieldset" *ngIf="mode === 'replace' || mode === 'activation'">
+      <legend><mat-icon>notes</mat-icon>Reason</legend>
+      <label class="pm-field"><span>Reason for this change <b>*</b></span>
+        <textarea name="reason" [(ngModel)]="reason" required maxlength="500" rows="3" [disabled]="saving" placeholder="Recorded in the appointment history and audit log"></textarea>
+      </label>
+    </fieldset>
+
+    <p *ngIf="error" class="pm-alert" role="alert"><mat-icon>error_outline</mat-icon>{{ error }}</p>
+
+    <div class="pm-form-actions">
+      <button type="button" class="pm-btn pm-btn-ghost" (click)="cancel()" [disabled]="saving">Cancel</button>
+      <button type="submit" class="pm-btn" [class.pm-btn-primary]="mode === 'create' || mode === 'edit' || (mode === 'activation' && !profile?.active)" [class.pm-btn-danger]="mode === 'replace' || (mode === 'activation' && profile?.active)"
+        [disabled]="saving || form.invalid || (mode !== 'activation' && !name.trim()) || ((mode === 'replace' || mode === 'activation') && !reason.trim())">
+        <span class="pm-spinner pm-spinner-sm" *ngIf="saving"></span>
+        {{ saving ? 'Saving…' : mode === 'create' ? 'Appoint Principal' : mode === 'edit' ? 'Save changes' : mode === 'replace' ? 'Appoint replacement' : profile?.active ? 'Deactivate' : 'Reactivate' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- ── Tabs ────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!loading && !loadFailed && profile && !mode">
+    <nav class="pm-tabs" role="tablist" aria-label="Principal sections">
+      <button type="button" role="tab" [attr.aria-selected]="tab === 'profile'" [class.active]="tab === 'profile'" (click)="tab = 'profile'">
+        <mat-icon>account_circle</mat-icon>Principal Profile
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="tab === 'history'" [class.active]="tab === 'history'" (click)="tab = 'history'">
+        <mat-icon>history</mat-icon>Appointment History<span class="pm-count" *ngIf="history.length">{{ history.length }}</span>
+      </button>
+    </nav>
+
+    <!-- Profile tab -->
+    <div *ngIf="tab === 'profile' && profile as p" class="pm-tab" role="tabpanel">
+      <div class="pm-cards">
+        <article class="pm-card">
+          <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>person</mat-icon></div><div><h3>Personal details</h3><p>Identity on record</p></div></div>
+          <dl class="pm-dl">
+            <div><dt>Full name</dt><dd>{{ p.name }}</dd></div>
+            <div><dt>Gender</dt><dd [class.is-empty]="!p.details?.gender">{{ p.details?.gender || 'Not added' }}</dd></div>
+            <div><dt>Date of birth</dt><dd [class.is-empty]="!p.details?.dob">{{ p.details?.dob ? (p.details?.dob | date: 'd MMMM yyyy') : 'Not added' }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="pm-card">
+          <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>contact_mail</mat-icon></div><div><h3>Contact information</h3><p>How the school reaches the Principal</p></div></div>
+          <dl class="pm-dl">
+            <div><dt>Official email</dt><dd>{{ p.email }}</dd></div>
+            <div><dt>Mobile</dt><dd [class.is-empty]="!p.details?.phoneNumber">{{ p.details?.phoneNumber || 'Not added' }}</dd></div>
+            <div><dt>Alternate mobile</dt><dd [class.is-empty]="!p.details?.alternatePhoneNumber">{{ p.details?.alternatePhoneNumber || 'Not added' }}</dd></div>
+            <div><dt>Address</dt><dd class="pm-pre" [class.is-empty]="!address(p.details)">{{ address(p.details) || 'Not added' }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="pm-card">
+          <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>school</mat-icon></div><div><h3>Professional information</h3><p>Qualifications and experience</p></div></div>
+          <dl class="pm-dl">
+            <div><dt>Highest qualification</dt><dd [class.is-empty]="!p.details?.qualification">{{ p.details?.qualification || 'Not added' }}</dd></div>
+            <div><dt>Specialization</dt><dd [class.is-empty]="!p.details?.specialization">{{ p.details?.specialization || 'Not added' }}</dd></div>
+            <div><dt>Total experience</dt><dd [class.is-empty]="p.details?.experienceYears == null">{{ p.details?.experienceYears != null ? p.details?.experienceYears + (p.details?.experienceYears === 1 ? ' year' : ' years') : 'Not added' }}</dd></div>
+            <div><dt>Previous institution</dt><dd [class.is-empty]="!p.details?.previousInstitution">{{ p.details?.previousInstitution || 'Not added' }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="pm-card">
+          <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>work_outline</mat-icon></div><div><h3>Employment information</h3><p>Current appointment terms</p></div></div>
+          <dl class="pm-dl">
+            <div><dt>Appointment date</dt><dd [class.is-empty]="!p.details?.joiningDate">{{ p.details?.joiningDate ? (p.details?.joiningDate | date: 'd MMMM yyyy') : 'Not added' }}</dd></div>
+            <div><dt>Employment type</dt><dd [class.is-empty]="!employmentLabel(p.details?.employmentType)">{{ employmentLabel(p.details?.employmentType) || 'Not added' }}</dd></div>
+            <div *ngIf="currentAppointment as a"><dt>Account created</dt><dd>{{ a.appointedAt | date: 'd MMMM yyyy' }}</dd></div>
+          </dl>
+        </article>
+      </div>
+
+      <article class="pm-card pm-account">
+        <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>lock_person</mat-icon></div><div><h3>Account &amp; access</h3><p>Sign-in identity and account status</p></div>
+          <span class="pm-status pm-status-chip" [class.is-inactive]="!p.active"><i></i>{{ p.active ? 'Active' : 'Inactive' }}</span>
+        </div>
+        <div class="pm-account-row">
+          <div class="pm-account-id">
+            <span>Principal ID (login ID)</span>
+            <strong>{{ p.loginId }}</strong>
+          </div>
+          <button type="button" class="pm-btn pm-btn-ghost" (click)="resend()" [disabled]="saving || !p.active" [title]="p.active ? 'Email a new password setup link' : 'Reactivate the Principal first'">
+            <mat-icon>forward_to_inbox</mat-icon>Resend setup link
+          </button>
+        </div>
+
+        <div class="pm-danger">
+          <div class="pm-danger-item">
+            <div><strong>{{ p.active ? 'Deactivate account' : 'Reactivate account' }}</strong>
+              <p>{{ p.active ? 'Blocks sign-in and ends every active session. The profile and history are kept.' : 'Restores sign-in with the existing password.' }}</p></div>
+            <button type="button" class="pm-btn" [class.pm-btn-danger-outline]="p.active" [class.pm-btn-ghost]="!p.active" (click)="open('activation')" [disabled]="saving">
+              <mat-icon>{{ p.active ? 'person_off' : 'how_to_reg' }}</mat-icon>{{ p.active ? 'Deactivate' : 'Reactivate' }}
+            </button>
+          </div>
+          <div class="pm-danger-item">
+            <div><strong>Appoint a replacement</strong>
+              <p>Ends the current appointment and appoints a new Principal.</p></div>
+            <button type="button" class="pm-btn pm-btn-danger-outline" (click)="open('replace')" [disabled]="saving"><mat-icon>swap_horiz</mat-icon>Appoint replacement</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- History tab -->
+    <div *ngIf="tab === 'history'" class="pm-tab" role="tabpanel">
+      <div *ngIf="historyLoading" class="pm-skeleton" role="status"><div class="sk-grid sk-grid-1"><span></span><span></span></div></div>
+
+      <section *ngIf="!historyLoading && historyFailed" class="pm-state pm-state-error pm-state-compact" role="alert">
+        <div class="pm-state-icon"><mat-icon>cloud_off</mat-icon></div>
+        <h2>History couldn't be loaded</h2>
+        <button type="button" class="pm-btn pm-btn-primary" (click)="loadHistory()"><mat-icon>refresh</mat-icon>Retry</button>
+      </section>
+
+      <ng-container *ngIf="!historyLoading && !historyFailed">
+        <article class="pm-card pm-current" *ngIf="currentAppointment as a">
+          <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>verified</mat-icon></div><div><h3>Current appointment</h3><p>{{ tenure(a.appointedAt, null) }} in office</p></div>
+            <span class="pm-status pm-status-chip"><i></i>Current</span>
+          </div>
+          <dl class="pm-dl pm-dl-row">
+            <div><dt>Principal</dt><dd>{{ a.name }}</dd></div>
+            <div><dt>Principal ID</dt><dd class="pm-mono">{{ a.loginId || a.userId }}</dd></div>
+            <div><dt>Appointed</dt><dd>{{ a.appointedAt | date: 'd MMM yyyy, h:mm a' }}</dd></div>
+            <div *ngIf="a.appointedBy"><dt>Appointed by</dt><dd class="pm-mono">{{ a.appointedBy }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="pm-card">
+          <div class="pm-card-head"><div class="pm-card-icon"><mat-icon>history</mat-icon></div><div><h3>Previous Principals</h3><p>Ended appointments, newest first</p></div></div>
+          <p class="pm-empty" *ngIf="!previousAppointments.length"><mat-icon>inbox</mat-icon>No previous Principals. Replacements will appear here with their dates and reasons.</p>
+          <ol class="pm-timeline" *ngIf="previousAppointments.length">
+            <li *ngFor="let a of previousAppointments; trackBy: trackById">
+              <span class="pm-dot"></span>
+              <div class="pm-tl-body">
+                <div class="pm-tl-top">
+                  <span class="pm-avatar">{{ initials(a.name) }}</span>
+                  <div><strong>{{ a.name }}</strong><small>{{ a.email }}</small></div>
+                  <span class="pm-tl-id pm-mono">{{ a.loginId || a.userId }}</span>
+                </div>
+                <div class="pm-tl-dates">
+                  <span><mat-icon>login</mat-icon>{{ a.appointedAt | date: 'd MMM yyyy' }}</span>
+                  <span><mat-icon>logout</mat-icon>{{ a.endedAt | date: 'd MMM yyyy' }}</span>
+                  <span><mat-icon>schedule</mat-icon>{{ tenure(a.appointedAt, a.endedAt) }}</span>
+                </div>
+                <p class="pm-tl-reason" *ngIf="a.reason"><mat-icon>format_quote</mat-icon>{{ a.reason }}</p>
+                <small class="pm-tl-by" *ngIf="a.endedBy">Ended by {{ a.endedBy }}</small>
+              </div>
+            </li>
+          </ol>
+        </article>
+      </ng-container>
+    </div>
+  </ng-container>
+</main>
