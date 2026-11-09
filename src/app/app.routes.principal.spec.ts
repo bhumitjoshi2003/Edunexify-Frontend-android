@@ -49,7 +49,7 @@ describe('Principal route access', () => {
 
   it('keeps fees, publication and identity administration closed to the Principal', () => {
     for (const path of ['fees', 'fee-structure', 'payment-history-admin', 'bulk-report-cards', 'register', 'admin-list', 'school-settings',
-        'timetable-bulk-import', 'report-cards-v2/generate', 'school-setup', 'register-admin']) {
+        'timetable-bulk-import', 'report-cards-v2/generate', 'register-admin']) {
       const route = routes.find(r => r.path === 'dashboard')!.children!.find(r => r.path === path);
       if (route) expect(route.data?.['roles'] ?? []).not.toContain('PRINCIPAL');
     }

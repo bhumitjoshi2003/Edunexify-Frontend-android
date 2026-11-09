@@ -527,10 +527,6 @@
            (click)="closeSidebarOnMobile()" title="Fee Assignment">
           <mat-icon>playlist_add_check</mat-icon><span>Fee Assignment</span>
         </a>
-        <a class="nav-item" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/fee-generation-target" routerLinkActive="active"
-           (click)="closeSidebarOnMobile()" title="Generate Fees">
-          <mat-icon>request_quote</mat-icon><span>Generate Fees</span>
-        </a>
         <a class="nav-item" *ngIf="hasFeature('FEE_MANAGEMENT')" routerLink="/dashboard/bus-fees" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Bus Fees">
           <mat-icon>directions_bus</mat-icon><span>Bus Fees</span>

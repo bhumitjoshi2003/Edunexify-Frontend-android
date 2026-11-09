@@ -193,11 +193,6 @@ export const routes: Routes = [
         canActivate: [roleGuard], data: { roles: ['ADMIN'] }
       },
       {
-        path: 'school-setup',
-        loadComponent: () => import('./components/school-setup/school-setup.component').then(m => m.SchoolSetupComponent),
-        canActivate: [roleGuard], data: { roles: ['ADMIN'] }
-      },
-      {
         path: 'knowledge-base',
         loadComponent: () => import('./components/knowledge-base/knowledge-base.component').then(m => m.KnowledgeBaseComponent),
         canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'AI_COPILOT' }
@@ -393,11 +388,6 @@ export const routes: Routes = [
       {
         path: 'fee-assignment',
         loadComponent: () => import('./components/fee-assignment/fee-assignment.component').then(m => m.FeeAssignmentComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'FEE_MANAGEMENT' }
-      },
-      {
-        path: 'fee-generation-target',
-        loadComponent: () => import('./components/fee-generation-target/fee-generation-target.component').then(m => m.FeeGenerationTargetComponent),
         canActivate: [roleGuard, featureGuard], data: { roles: ['ADMIN'], featureKey: 'FEE_MANAGEMENT' }
       },
 

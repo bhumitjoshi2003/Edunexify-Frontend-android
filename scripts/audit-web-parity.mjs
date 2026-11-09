@@ -17,6 +17,10 @@ const navSource = read(join(app, 'components/dashboard/dashboard.component.html'
 const routePaths = (source) => new Set([...source.matchAll(/\bpath:\s*'([^']+)'/g)].map((m) => m[1]));
 const navPaths = (source) => new Set([...source.matchAll(/\brouterLink="(\/dashboard\/[^\"]+)"/g)].map((m) => m[1]));
 const errors = [];
+// Desktop-only operational flows deliberately stay on the website. Do not
+// accidentally reintroduce these routes through automatic parity syncing.
+const webOnlyRoutes = new Set(['school-setup', 'fee-generation-target']);
+const webOnlyNav = new Set(['/dashboard/school-setup', '/dashboard/fee-generation-target']);
 
 function visit(dir) {
   for (const item of readdirSync(dir, { withFileTypes: true })) {
@@ -35,10 +39,16 @@ visit(app);
 
 // Catch regressions even in Android-only CI, where the web checkout is unavailable.
 for (const path of [
-  'privacy-policy', 'account-deletion', 'dashboard', 'school-setup', 'fee-generation-target',
+  'privacy-policy', 'account-deletion', 'dashboard',
   'payment-pricing', 'payment-gateways', 'deletion-requests', 'notification-deliveries',
 ]) {
   if (!routePaths(routeSource).has(path)) errors.push(`Missing required route: ${path}`);
+}
+for (const path of webOnlyRoutes) {
+  if (routePaths(routeSource).has(path)) errors.push(`Website-only route exposed on Android: ${path}`);
+}
+for (const link of webOnlyNav) {
+  if (navPaths(navSource).has(link)) errors.push(`Website-only navigation exposed on Android: ${link}`);
 }
 
 const webArg = process.argv[2];
@@ -48,10 +58,10 @@ if (webArg) {
   else {
     const webRoutes = routePaths(read(join(webApp, 'app.routes.ts')));
     const androidRoutes = routePaths(routeSource);
-    for (const path of webRoutes) if (!androidRoutes.has(path)) errors.push(`Missing web route on Android: ${path}`);
+    for (const path of webRoutes) if (!webOnlyRoutes.has(path) && !androidRoutes.has(path)) errors.push(`Missing web route on Android: ${path}`);
     const webNav = navPaths(read(join(webApp, 'components/dashboard/dashboard.component.html')));
     const androidNav = navPaths(navSource);
-    for (const link of webNav) if (!androidNav.has(link)) errors.push(`Missing web sidebar link on Android: ${link}`);
+    for (const link of webNav) if (!webOnlyNav.has(link) && !androidNav.has(link)) errors.push(`Missing web sidebar link on Android: ${link}`);
     console.log(`Compared ${webRoutes.size} web routes and ${webNav.size} sidebar links.`);
   }
 }
