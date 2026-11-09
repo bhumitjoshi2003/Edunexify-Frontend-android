@@ -49,7 +49,8 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
     students.getLoginStatus.and.returnValue(of(login));
     const auth = jasmine.createSpyObj('AuthService', ['getUserRole', 'changePassword']);
     auth.getUserRole.and.returnValue(role);
-    const school = jasmine.createSpyObj('SchoolService', ['getClasses', 'getManagedClasses']);
+    const school = jasmine.createSpyObj('SchoolService', ['getClasses', 'getManagedClasses', 'getSettings']);
+    school.getSettings.and.returnValue(of({ timezone: 'Asia/Kolkata' }));
     school.getClasses.and.returnValue(of(['9', '10']));
     school.getManagedClasses.and.returnValue(of([{ id: 9, name: '9' }, { id: 10, name: '10' }]));
     const sections = jasmine.createSpyObj('SectionService', ['getSectionsForClass']);
@@ -111,6 +112,18 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
 
     expect(toast.confirm.calls.mostRecent().args[0].message).toContain('stay with the previous class/section');
   }));
+
+  it('B5-2: an edit must keep a section when the class has sections', () => {
+    setup(baseStudent());
+    component.isEditing = true;
+    component.config.sections = [{ id: 101, classId: 9, name: 'A', active: true } as any];
+    component.updatedDetails = { ...component.updatedDetails!, sectionId: null };
+    expect(component.validateFields()).toBeFalse();
+    expect(component.validationErrors['sectionId']).toBeTrue();
+
+    component.updatedDetails = { ...component.updatedDetails!, sectionId: 101 };
+    expect(component.validateFields()).toBeTrue();
+  });
 
   it('shows the enrollment history with each period state', () => {
     setup(baseStudent());
@@ -224,4 +237,20 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
     expect(parents.getGuardians).not.toHaveBeenCalled();
     expect(text()).not.toContain('Guardians');
   });
+  it('accepts a school-today exit and sends the exact date', () => {
+    setup(baseStudent({ joiningDate: '2026-09-01' }));
+    students.exitStudent.and.returnValue(of(baseStudent({ status: 'WITHDRAWN' }) as any));
+    component.exitRequest = { exitType: 'WITHDRAWN', reasonForLeaving: 'Moved', leavingDate: component.todayStr };
+    component.submitExit();
+    expect(students.exitStudent).toHaveBeenCalledWith('stu_1', jasmine.objectContaining({ leavingDate: component.todayStr }));
+  });
+  it('rejects exit before admission and malformed calendar dates without a write', () => {
+    setup(baseStudent({ joiningDate: '2026-09-01' }));
+    component.exitRequest = { exitType: 'WITHDRAWN', reasonForLeaving: 'Moved', leavingDate: '2026-08-31' };
+    component.submitExit();
+    component.exitRequest.leavingDate = '2026-02-30';
+    component.submitExit();
+    expect(students.exitStudent).not.toHaveBeenCalled();
+  });
+
 });
