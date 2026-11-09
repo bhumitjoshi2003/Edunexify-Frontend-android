@@ -45,14 +45,14 @@
         <button type="button" class="pm-id" (click)="copyLoginId()" title="Copy Principal ID">
           <mat-icon>badge</mat-icon><span>{{ p.loginId }}</span><mat-icon class="pm-id-copy">content_copy</mat-icon>
         </button>
-        <span><mat-icon>mail_outline</mat-icon>{{ p.email }}</span>
-        <span *ngIf="p.details?.phoneNumber"><mat-icon>phone</mat-icon>{{ p.details?.phoneNumber }}</span>
-        <span *ngIf="currentAppointment as a"><mat-icon>event</mat-icon>Since {{ (p.details?.joiningDate || a.appointedAt) | date: 'd MMM yyyy' }}</span>
+        <span class="pm-meta-contact"><mat-icon>mail_outline</mat-icon>{{ p.email }}</span>
+        <span class="pm-meta-contact" *ngIf="p.details?.phoneNumber"><mat-icon>phone</mat-icon>{{ p.details?.phoneNumber }}</span>
+        <span class="pm-meta-since" *ngIf="currentAppointment as a"><mat-icon>event</mat-icon>Since {{ (p.details?.joiningDate || a.appointedAt) | date: 'd MMM yyyy' }}</span>
       </div>
     </div>
 
     <div class="pm-hero-actions" *ngIf="!mode">
-      <button type="button" class="pm-btn pm-btn-light" (click)="open('edit')" [disabled]="saving"><mat-icon>edit</mat-icon>Edit profile</button>
+      <button type="button" class="pm-hero-edit" (click)="open('edit')" [disabled]="saving" title="Edit Principal profile" aria-label="Edit Principal profile"><mat-icon>edit</mat-icon></button>
     </div>
   </section>
 
