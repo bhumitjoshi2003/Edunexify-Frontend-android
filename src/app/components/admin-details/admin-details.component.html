@@ -65,21 +65,21 @@
 
       <!-- Hero text -->
       <div class="ad-hero-text">
-        <span class="ad-hero-badge">{{ isNewAdmin ? 'New Admin' : 'Admin Profile' }}</span>
+        <span class="ad-hero-badge"><i></i>{{ isNewAdmin ? 'New admin' : 'Admin profile' }}</span>
         <h1 class="ad-hero-name">{{ isNewAdmin ? 'Create New Admin' : (updatedDetails.name || 'Admin') }}</h1>
-        <p class="ad-hero-sub" *ngIf="!isNewAdmin">{{ updatedDetails.adminId }}<span *ngIf="updatedDetails.gender">&nbsp;·&nbsp;{{ updatedDetails.gender }}</span></p>
+        <div class="ad-hero-meta" *ngIf="!isNewAdmin"><span>▣ {{ updatedDetails.adminId }}</span><span *ngIf="updatedDetails.gender">◉ {{ updatedDetails.gender }}</span></div>
       </div>
 
       <!-- Action buttons -->
       <div class="ad-hero-actions">
-        <button type="button" class="ad-btn ad-btn-edit" *ngIf="!isEditing && canEdit()" (click)="enableEditMode()">Edit Details</button>
+        <button type="button" class="ad-btn ad-btn-edit" *ngIf="!isEditing && canEdit()" (click)="enableEditMode()">✎ Edit</button>
         <ng-container *ngIf="isEditing">
-          <button type="submit" class="ad-btn ad-btn-save">Save</button>
+          <button type="submit" class="ad-btn ad-btn-save">✓ Save changes</button>
           <button type="button" class="ad-btn ad-btn-cancel-edit" (click)="cancelEdit()">Cancel</button>
         </ng-container>
         <button type="button" class="ad-btn ad-btn-pwd" (click)="openPasswordModal()"
           *ngIf="!isNewAdmin && loggedInUserId === adminId">
-          Change Password
+          🔐 <span class="ad-password-label">Change password</span>
         </button>
         <button type="button" class="ad-btn ad-btn-pwd" (click)="sendSetupLink()" *ngIf="canSendSetupLink()"
           [disabled]="sendingSetupLink" title="Email this administrator a one-time link to set their own password">
@@ -95,6 +95,7 @@
 
     <!-- ── Details card ─────────────────────────────────────────────── -->
     <div class="ad-card">
+      <div class="ad-card-heading"><div class="ad-card-icon">👤</div><div><strong>Personal information</strong><p>Contact and identity details</p></div><span class="ad-edit-state" *ngIf="isEditing">Editing</span></div>
       <div class="details-grid">
         <div class="detail-item">
           <span class="label">Admin ID</span>
