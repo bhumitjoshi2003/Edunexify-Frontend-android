@@ -1,29 +1,10 @@
 <div class="sd-page" *ngIf="studentDetails && updatedDetails">
 
-  <!-- ── Profile Hero ─────────────────────────────────────────── -->
+  <!-- ── Hero banner (same layout as the teacher profile) ─────────── -->
   <div class="sd-hero">
-    <div class="sd-blob sd-blob-1"></div>
-    <div class="sd-blob sd-blob-2"></div>
-
-    <div class="sd-hero-bar">
-      <div class="sd-hero-btns">
-        <button *ngIf="getUserRole() === 'ADMIN' && !isEditing" class="sd-pill" (click)="enableEditMode()">✏ Edit</button>
-        <ng-container *ngIf="getUserRole() === 'ADMIN' && isEditing">
-          <button class="sd-pill sd-pill-green" (click)="saveStudentDetails()">✓ Save</button>
-          <button class="sd-pill sd-pill-red" (click)="cancelEditMode()">✕</button>
-        </ng-container>
-        <button *ngIf="getUserRole() === 'ADMIN' || getUserRole() === 'STUDENT'" class="sd-pill-icon" (click)="openPasswordModal()" title="Change Password">🔐</button>
-        <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'ACTIVE' && !isEditing" class="sd-pill sd-pill-exit" (click)="openExitModal()">Mark as Left</button>
-        <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" class="sd-pill sd-pill-green" (click)="openReadmitModal()">Re-admit</button>
-        <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'UPCOMING' && !isEditing" class="sd-pill sd-pill-exit"
-          (click)="cancelAdmission()" [disabled]="lifecycleBusy">Cancel Admission</button>
-        <button *ngIf="canCreateLogin && !isEditing" class="sd-pill" (click)="createMissingLogin()" [disabled]="lifecycleBusy">Create Login</button>
-      </div>
-    </div>
-
-    <div class="sd-hero-center">
+    <div class="sd-photo-section">
       <div class="sd-photo-ring" [class.uploadable]="canUploadPhoto()" (click)="canUploadPhoto() && triggerPhotoUpload()">
-        <img *ngIf="studentDetails.photoUrl && !photoLoadFailed" [src]="getPhotoUrl(studentDetails.photoUrl)" alt=""
+        <img *ngIf="studentDetails.photoUrl && !photoLoadFailed" [src]="getPhotoUrl(studentDetails.photoUrl)" alt="Student photo"
           class="sd-photo" (error)="onPhotoError()">
         <div *ngIf="!studentDetails.photoUrl || photoLoadFailed" class="sd-initials">{{ getInitials() }}</div>
         <div *ngIf="canUploadPhoto() && !photoUploading" class="sd-photo-overlay">
@@ -33,166 +14,247 @@
         <div *ngIf="photoUploading" class="sd-photo-uploading"><span class="sd-spinner"></span></div>
       </div>
       <input type="file" #photoInput accept="image/*" (change)="onPhotoSelected($event)" style="display:none">
-      <div class="sd-hero-identity">
-        <h1 class="sd-hero-name">{{ studentDetails.name }}</h1>
-        <div class="sd-hero-chips">
-          <span class="sd-hero-chip">Class {{ studentDetails.className }}<ng-container *ngIf="studentDetails.sectionName"> - {{ studentDetails.sectionName }}</ng-container></span>
-          <span class="sd-hero-chip">{{ studentDetails.studentId }}</span>
-          <span *ngIf="isExitStatus()" class="sd-hero-chip sd-chip-exit">{{ statusLabel(studentDetails.status) }}</span>
-          <span *ngIf="studentDetails.status === 'UPCOMING'" class="sd-hero-chip">Upcoming</span>
-        </div>
+    </div>
+
+    <div class="sd-hero-text">
+      <span class="sd-hero-badge"><i></i> Student profile</span>
+      <h1 class="sd-hero-name">{{ studentDetails.name }}</h1>
+      <div class="sd-hero-meta">
+        <span><mat-icon aria-hidden="true">badge</mat-icon>{{ studentDetails.studentId }}</span>
+        <span><mat-icon aria-hidden="true">school</mat-icon>Class {{ studentDetails.className }}<ng-container *ngIf="studentDetails.sectionName"> - {{ studentDetails.sectionName }}</ng-container></span>
+        <span *ngIf="isExitStatus()" class="sd-hero-flag is-exit"><mat-icon aria-hidden="true">person_off</mat-icon>{{ statusLabel(studentDetails.status) }}</span>
+        <span *ngIf="studentDetails.status === 'UPCOMING'" class="sd-hero-flag"><mat-icon aria-hidden="true">event_upcoming</mat-icon>Upcoming</span>
       </div>
+    </div>
+
+    <div class="sd-hero-actions">
+      <button *ngIf="getUserRole() === 'ADMIN' && !isEditing" type="button" class="sd-btn sd-btn-edit" (click)="enableEditMode()"><mat-icon aria-hidden="true">edit</mat-icon>Edit</button>
+      <ng-container *ngIf="getUserRole() === 'ADMIN' && isEditing">
+        <button type="button" class="sd-btn sd-btn-save" (click)="saveStudentDetails()"><mat-icon aria-hidden="true">check</mat-icon>Save changes</button>
+        <button type="button" class="sd-btn sd-btn-ghost" (click)="cancelEditMode()"><mat-icon aria-hidden="true">close</mat-icon>Cancel</button>
+      </ng-container>
+      <button *ngIf="getUserRole() === 'ADMIN' || getUserRole() === 'STUDENT'" type="button" class="sd-btn sd-btn-ghost sd-btn-icon" (click)="openPasswordModal()" title="Change password" aria-label="Change password"><span class="sd-password-icon" aria-hidden="true">🔐</span></button>
+      <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'ACTIVE' && !isEditing" type="button" class="sd-btn sd-btn-exit" (click)="openExitModal()">Mark as Left</button>
+      <button *ngIf="getUserRole() === 'ADMIN' && isExitStatus() && !isEditing" type="button" class="sd-btn sd-btn-positive" (click)="openReadmitModal()">Re-admit</button>
+      <button *ngIf="getUserRole() === 'ADMIN' && studentDetails.status === 'UPCOMING' && !isEditing" type="button" class="sd-btn sd-btn-exit"
+        (click)="cancelAdmission()" [disabled]="lifecycleBusy">Cancel Admission</button>
+      <button *ngIf="canCreateLogin && !isEditing" type="button" class="sd-btn sd-btn-positive" (click)="createMissingLogin()" [disabled]="lifecycleBusy">Create Login</button>
     </div>
   </div>
 
-  <!-- ── Personal Info ─────────────────────────────────────────── -->
+  <!-- ── Personal information ──────────────────────────────────────── -->
   <div class="sd-section">
-    <p class="sd-section-title">Personal Information</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon"><mat-icon aria-hidden="true">person</mat-icon></div>
+      <div><span>Personal information</span><p>Contact, identity and class</p></div>
+      <span class="sd-edit-state" *ngIf="isEditing">Editing</span>
+    </div>
     <div class="sd-grid">
       <div class="sd-item">
-        <span class="sd-item-label">Name</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.name }}</span>
-        <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.name"
-          (input)="updateFieldValue('name', $event)" [class.invalid-field]="validationErrors['name']">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">person_outline</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Full name</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.name }}</span>
+          <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.name"
+            (input)="updateFieldValue('name', $event)" [class.invalid-field]="validationErrors['name']">
+        </div>
       </div>
       <div class="sd-item">
-        <span class="sd-item-label">Student ID</span>
-        <span class="sd-item-value">{{ studentDetails.studentId }}</span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">badge</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Student ID</span>
+          <span class="sd-item-value">{{ studentDetails.studentId }}</span>
+        </div>
       </div>
       <div class="sd-item">
-        <span class="sd-item-label">Class</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.className }}</span>
-        <select class="sd-item-input" *ngIf="isEditing && getUserRole() === 'ADMIN' && !isExitStatus()" [(ngModel)]="updatedDetails.className" (ngModelChange)="onClassChangeInEdit($event)" [disabled]="!config.classesReady" data-testid="edit-class-select">
-          <option *ngIf="!config.classesReady" [value]="updatedDetails.className">{{ updatedDetails.className }}</option>
-          <option *ngFor="let className of classList" [value]="className">{{ className }}</option>
-        </select>
-        <span class="sd-config-note" *ngIf="isEditing && config.classesState === 'failed'" data-testid="classes-failed">
-          Classes couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
-        </span>
-        <span class="sd-item-value" *ngIf="isEditing && (getUserRole() !== 'ADMIN' || isExitStatus())">{{ studentDetails.className }}</span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">school</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Class</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.className }}</span>
+          <select class="sd-item-input" *ngIf="isEditing && getUserRole() === 'ADMIN' && !isExitStatus()" [(ngModel)]="updatedDetails.className" (ngModelChange)="onClassChangeInEdit($event)" [disabled]="!config.classesReady" data-testid="edit-class-select">
+            <option *ngIf="!config.classesReady" [value]="updatedDetails.className">{{ updatedDetails.className }}</option>
+            <option *ngFor="let className of classList" [value]="className">{{ className }}</option>
+          </select>
+          <span class="sd-config-note" *ngIf="isEditing && config.classesState === 'failed'" data-testid="classes-failed">
+            Classes couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
+          </span>
+          <span class="sd-item-value" *ngIf="isEditing && (getUserRole() !== 'ADMIN' || isExitStatus())">{{ studentDetails.className }}</span>
+        </div>
       </div>
       <div class="sd-item" *ngIf="isEditing && !isExitStatus() && (config.sectionsPending || config.sectionsState === 'failed')" data-testid="section-status">
-        <span class="sd-item-label">Section</span>
-        <span class="sd-config-note" *ngIf="config.sectionsPending">Loading sections…</span>
-        <span class="sd-config-note" *ngIf="config.sectionsState === 'failed'">
-          Sections couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
-        </span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">groups</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Section</span>
+          <span class="sd-config-note" *ngIf="config.sectionsPending">Loading sections…</span>
+          <span class="sd-config-note" *ngIf="config.sectionsState === 'failed'">
+            Sections couldn't be loaded. <button type="button" class="sd-retry" (click)="config.retry()">Retry</button>
+          </span>
+        </div>
       </div>
       <div class="sd-item" *ngIf="studentDetails.sectionName || (isEditing && sections.length > 0)">
-        <span class="sd-item-label">Section</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.sectionName }}</span>
-        <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.sectionName }}</span>
-        <select class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.sectionId">
-          <option [ngValue]="null" disabled>-- Select section --</option>
-          <option *ngFor="let sec of sections" [ngValue]="sec.id">{{ sec.name }}</option>
-        </select>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">groups</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Section</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.sectionName }}</span>
+          <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.sectionName }}</span>
+          <select class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.sectionId">
+            <option [ngValue]="null" disabled>-- Select section --</option>
+            <option *ngFor="let sec of sections" [ngValue]="sec.id">{{ sec.name }}</option>
+          </select>
+        </div>
       </div>
       <div class="sd-item">
-        <span class="sd-item-label">Phone</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.phoneNumber }}</span>
-        <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.phoneNumber"
-          (input)="updateFieldValue('phoneNumber', $event)" [class.invalid-field]="validationErrors['phoneNumber']">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">phone</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Phone number</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.phoneNumber }}</span>
+          <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.phoneNumber"
+            (input)="updateFieldValue('phoneNumber', $event)" [class.invalid-field]="validationErrors['phoneNumber']">
+        </div>
       </div>
       <div class="sd-item">
-        <span class="sd-item-label">Email</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.email }}</span>
-        <input type="email" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.email"
-          (input)="updateFieldValue('email', $event)" [class.invalid-field]="validationErrors['email']">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">mail_outline</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Email address</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.email }}</span>
+          <input type="email" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.email"
+            (input)="updateFieldValue('email', $event)" [class.invalid-field]="validationErrors['email']">
+        </div>
       </div>
       <div class="sd-item">
-        <span class="sd-item-label">Date of Birth</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.dob | date }}</span>
-        <input type="date" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.dob" (input)="updateFieldValue('dob', $event)">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">cake</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Date of birth</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.dob | date: 'd MMMM yyyy' }}</span>
+          <input type="date" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.dob" (input)="updateFieldValue('dob', $event)">
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── Family ─────────────────────────────────────────────────── -->
   <div class="sd-section" *ngIf="isEditing || hasFamilyInfo()">
-    <p class="sd-section-title">Family</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon"><mat-icon aria-hidden="true">family_restroom</mat-icon></div>
+      <div><span>Family</span><p>Parents on record</p></div>
+    </div>
     <div class="sd-grid">
-      <div class="sd-item sd-item-parent" *ngIf="isEditing || hasValue(studentDetails.fatherName)">
-        <span class="sd-item-label">Father</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.fatherName }}</span>
-        <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.fatherName"
-          (input)="updateFieldValue('fatherName', $event)">
+      <div class="sd-item" *ngIf="isEditing || hasValue(studentDetails.fatherName)">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">man</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Father</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.fatherName }}</span>
+          <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.fatherName"
+            (input)="updateFieldValue('fatherName', $event)">
+        </div>
       </div>
-      <div class="sd-item sd-item-parent" *ngIf="isEditing || hasValue(studentDetails.motherName)">
-        <span class="sd-item-label">Mother</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.motherName }}</span>
-        <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.motherName"
-          (input)="updateFieldValue('motherName', $event)">
+      <div class="sd-item" *ngIf="isEditing || hasValue(studentDetails.motherName)">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">woman</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Mother</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.motherName }}</span>
+          <input type="text" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.motherName"
+            (input)="updateFieldValue('motherName', $event)">
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Admin Details ──────────────────────────────────────────── -->
+  <!-- ── Admin details ──────────────────────────────────────────── -->
   <div class="sd-section" *ngIf="getUserRole() === 'ADMIN'">
-    <p class="sd-section-title">Admin Details</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon"><mat-icon aria-hidden="true">admin_panel_settings</mat-icon></div>
+      <div><span>Admin details</span><p>Transport and admission dates</p></div>
+    </div>
     <div class="sd-grid">
       <div class="sd-item">
-        <span class="sd-item-label">Uses Bus</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.takesBus ? 'Yes' : 'No' }}</span>
-        <div *ngIf="isEditing" class="sd-checkbox-wrap">
-          <input type="checkbox" id="takesBus" [(ngModel)]="updatedDetails.takesBus" (change)="updateFieldValue('takesBus', $event)">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">directions_bus</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Uses bus</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.takesBus ? 'Yes' : 'No' }}</span>
+          <div *ngIf="isEditing" class="sd-checkbox-wrap">
+            <input type="checkbox" id="takesBus" [(ngModel)]="updatedDetails.takesBus" (change)="updateFieldValue('takesBus', $event)">
+          </div>
         </div>
       </div>
       <div class="sd-item" *ngIf="studentDetails.takesBus || (isEditing && updatedDetails.takesBus)">
-        <span class="sd-item-label">Distance (km)</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.distance }}</span>
-        <input type="number" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.distance"
-          (input)="updateFieldValue('distance', $event)" [class.invalid-field]="validationErrors['distance']">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">route</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Distance (km)</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.distance }}</span>
+          <input type="number" class="sd-item-input" *ngIf="isEditing" [(ngModel)]="updatedDetails.distance"
+            (input)="updateFieldValue('distance', $event)" [class.invalid-field]="validationErrors['distance']">
+        </div>
       </div>
       <div class="sd-item">
-        <span class="sd-item-label">Joining Date</span>
-        <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.joiningDate | date }}</span>
-        <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.joiningDate | date }}</span>
-        <input type="date" class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.joiningDate"
-          (input)="updateFieldValue('joiningDate', $event)">
-        <small class="sd-item-hint" *ngIf="isEditing && studentDetails.status === 'ACTIVE'">Can be corrected only before any attendance or marks are recorded.</small>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">event_available</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Joining date</span>
+          <span class="sd-item-value" *ngIf="!isEditing">{{ studentDetails.joiningDate | date: 'd MMMM yyyy' }}</span>
+          <span class="sd-item-value" *ngIf="isEditing && isExitStatus()">{{ studentDetails.joiningDate | date: 'd MMMM yyyy' }}</span>
+          <input type="date" class="sd-item-input" *ngIf="isEditing && !isExitStatus()" [(ngModel)]="updatedDetails.joiningDate"
+            (input)="updateFieldValue('joiningDate', $event)">
+          <small class="sd-item-hint" *ngIf="isEditing && studentDetails.status === 'ACTIVE'">Can be corrected only before any attendance or marks are recorded.</small>
+        </div>
       </div>
       <div class="sd-item" *ngIf="studentDetails.leavingDate">
-        <span class="sd-item-label">Leaving Date</span>
-        <span class="sd-item-value">{{ studentDetails.leavingDate | date }}</span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">event</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Leaving date</span>
+          <span class="sd-item-value">{{ studentDetails.leavingDate | date: 'd MMMM yyyy' }}</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Exit Info (shown when student has exited) ────────────────── -->
+  <!-- ── Exit information (shown when the student has exited) ──────── -->
   <div class="sd-section sd-exit-info" *ngIf="isExitStatus()">
-    <p class="sd-section-title">Exit Details</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon sd-exit-icon"><mat-icon aria-hidden="true">person_off</mat-icon></div>
+      <div><span>Exit details</span><p>This student is no longer enrolled.</p></div>
+      <span class="sd-left-badge sd-exit-badge"
+        [class.sd-badge-graduated]="studentDetails.status === 'GRADUATED'"
+        [class.sd-badge-transferred]="studentDetails.status === 'TRANSFERRED'"
+        [class.sd-badge-withdrawn]="studentDetails.status === 'WITHDRAWN' || studentDetails.status === 'ADMISSION_CANCELLED'">{{ statusLabel(studentDetails.status) }}</span>
+    </div>
     <div class="sd-grid">
-      <div class="sd-item">
-        <span class="sd-item-label">Exit Type</span>
-        <span class="sd-item-value sd-exit-badge"
-          [class.sd-badge-graduated]="studentDetails.status === 'GRADUATED'"
-          [class.sd-badge-transferred]="studentDetails.status === 'TRANSFERRED'"
-          [class.sd-badge-withdrawn]="studentDetails.status === 'WITHDRAWN' || studentDetails.status === 'ADMISSION_CANCELLED'">
-          {{ statusLabel(studentDetails.status) }}
-        </span>
-      </div>
       <div class="sd-item" *ngIf="studentDetails.leavingDate">
-        <span class="sd-item-label">Leaving Date</span>
-        <span class="sd-item-value">{{ studentDetails.leavingDate | date }}</span>
-      </div>
-      <div class="sd-item sd-item-wide" *ngIf="studentDetails.reasonForLeaving">
-        <span class="sd-item-label">Reason</span>
-        <span class="sd-item-value">{{ studentDetails.reasonForLeaving }}</span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">event</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Leaving date</span>
+          <span class="sd-item-value">{{ studentDetails.leavingDate | date: 'd MMMM yyyy' }}</span>
+        </div>
       </div>
       <div class="sd-item" *ngIf="studentDetails.conductAtLeaving">
-        <span class="sd-item-label">Conduct</span>
-        <span class="sd-item-value">{{ studentDetails.conductAtLeaving }}</span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">verified</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Conduct</span>
+          <span class="sd-item-value">{{ studentDetails.conductAtLeaving }}</span>
+        </div>
+      </div>
+      <div class="sd-item sd-item-wide" *ngIf="studentDetails.reasonForLeaving">
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">logout</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Reason</span>
+          <span class="sd-item-value">{{ studentDetails.reasonForLeaving }}</span>
+        </div>
       </div>
       <div class="sd-item sd-item-wide" *ngIf="studentDetails.exitRemarks">
-        <span class="sd-item-label">Remarks</span>
-        <span class="sd-item-value">{{ studentDetails.exitRemarks }}</span>
+        <span class="sd-item-icon"><mat-icon aria-hidden="true">notes</mat-icon></span>
+        <div class="sd-item-body">
+          <span class="sd-item-label">Remarks</span>
+          <span class="sd-item-value">{{ studentDetails.exitRemarks }}</span>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ── Enrollment History (admin, read-only) ─────────────────────── -->
   <div class="sd-section" *ngIf="(getUserRole() === 'ADMIN' || getUserRole() === 'PRINCIPAL') && (enrollmentHistory.length || enrollmentHistoryFailed)">
-    <p class="sd-section-title">Enrollment History</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon"><mat-icon aria-hidden="true">history</mat-icon></div>
+      <div><span>Enrollment History</span><p>Classes and sessions this student has been in</p></div>
+    </div>
     <p class="sd-history-empty" *ngIf="enrollmentHistoryFailed">Enrollment history is unavailable right now.</p>
     <ol class="sd-history" *ngIf="enrollmentHistory.length">
       <li *ngFor="let item of enrollmentHistory" class="sd-history-row" [ngClass]="'is-' + item.state.toLowerCase()">
@@ -210,7 +272,10 @@
 
   <!-- ── Guardians (admin, read-only) ─────────────────────────────── -->
   <div class="sd-section" *ngIf="getUserRole() === 'ADMIN' && guardians">
-    <p class="sd-section-title">Guardians</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon"><mat-icon aria-hidden="true">supervisor_account</mat-icon></div>
+      <div><span>Guardians</span><p>Parent and guardian accounts linked to this student</p></div>
+    </div>
     <p class="sd-history-empty" *ngIf="!guardians.length">No parent or guardian accounts are linked to this student.</p>
     <ul class="sd-guardians" *ngIf="guardians.length">
       <li *ngFor="let g of guardians" class="sd-guardian" [ngClass]="'is-' + g.linkStatus.toLowerCase()">
@@ -237,7 +302,10 @@
 
   <!-- ── Quick Actions ──────────────────────────────────────────── -->
   <div class="sd-section" *ngIf="getUserRole() !== 'STUDENT'">
-    <p class="sd-section-title">Quick Actions</p>
+    <div class="sd-card-heading">
+      <div class="sd-card-icon"><mat-icon aria-hidden="true">bolt</mat-icon></div>
+      <div><span>Quick Actions</span><p>Open this student's records</p></div>
+    </div>
     <div class="sd-actions-grid">
       <button class="sd-action-btn" (click)="viewAttendanceSummary()">
         <span class="sd-action-icon">📊</span>

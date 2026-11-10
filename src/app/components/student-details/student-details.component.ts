@@ -5,6 +5,7 @@ import { AuthStateService } from '../../auth/auth-state.service';
 import { FeatureKey } from '../../auth/feature-keys';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
@@ -46,7 +47,7 @@ interface StudentDetails {
 @Component({
   selector: 'app-student-details',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './student-details.component.html',
   styleUrl: './student-details.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

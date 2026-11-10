@@ -125,6 +125,35 @@ describe('StudentDetailsComponent (admission lifecycle)', () => {
     expect(component.validateFields()).toBeTrue();
   });
 
+  it('uses the teacher-profile layout: hero with badge, name and meta, then icon cards with icon detail rows', () => {
+    setup(baseStudent());
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.sd-hero .sd-hero-badge')?.textContent).toContain('Student profile');
+    expect(root.querySelector('.sd-hero-name')?.textContent?.trim()).toBe('Asha Rao');
+    const meta = root.querySelector('.sd-hero-meta')?.textContent ?? '';
+    expect(meta).toContain('stu_1');
+    expect(meta).toContain('Class 9 - A');
+    expect(root.querySelector('.sd-hero-actions')).toBeTruthy();
+    const heading = root.querySelector('.sd-section .sd-card-heading');
+    expect(heading?.querySelector('.sd-card-icon mat-icon')).toBeTruthy();
+    expect(heading?.textContent).toContain('Personal information');
+    const rows = Array.from(root.querySelector('.sd-section')!.querySelectorAll('.sd-item'));
+    expect(rows.length).toBeGreaterThan(4);
+    for (const row of rows) {
+      expect(row.querySelector('.sd-item-icon mat-icon')).withContext(row.textContent ?? '').toBeTruthy();
+      expect(row.querySelector('.sd-item-label')).toBeTruthy();
+    }
+    expect(text()).toContain('3 February 2012');
+  });
+
+  it('keeps the admin hero actions and offers the password change for the student themself', () => {
+    setup(baseStudent());
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.sd-hero-actions .sd-btn-edit')?.textContent).toContain('Edit');
+    expect(button('Mark as Left')).toBeTruthy();
+    expect(root.querySelector('.sd-hero-actions button[aria-label="Change password"]')).toBeTruthy();
+  });
+
   it('shows the enrollment history with each period state', () => {
     setup(baseStudent());
     expect(text()).toContain('Enrollment History');
