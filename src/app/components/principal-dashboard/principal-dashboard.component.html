@@ -25,7 +25,7 @@
         </small>
       </a>
 
-      <div class="pd-tile pd-tile-staff" [class.pd-tile-muted]="staff.failed && !staff.data">
+      <a class="pd-tile pd-tile-staff" routerLink="/dashboard/staff-attendance" [class.pd-tile-muted]="staff.failed && !staff.data">
         <span class="pd-tile-top"><span class="pd-tile-label">Staff present</span><mat-icon aria-hidden="true">badge</mat-icon></span>
         <ng-container *ngIf="staff.data as s; else staffPending">
           <strong>{{ staffPresent }}<span class="pd-of"> / {{ s.expectedCount ?? o.totalTeachers }}</span></strong>
@@ -38,7 +38,7 @@
           <strong class="pd-tone-none">{{ staff.loading ? '…' : 'Unavailable' }}</strong>
           <small>{{ o.totalTeachers }} active teachers</small>
         </ng-template>
-      </div>
+      </a>
 
       <a class="pd-tile pd-tile-leaves" routerLink="/dashboard/view-leaves">
         <span class="pd-tile-top"><span class="pd-tile-label">Leave requests</span><mat-icon aria-hidden="true">event_note</mat-icon></span>

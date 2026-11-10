@@ -11,6 +11,29 @@ export interface AdminMarkRequest {
   checkOutTime?: string;  // HH:mm
 }
 
+/** A Principal correction: the same fields as an admin mark plus the mandatory reason. */
+export interface AttendanceCorrectionRequest extends AdminMarkRequest {
+  reason: string;
+}
+
+/** One correction in the history: previous value, new value, reason, actor and time. */
+export interface TeacherAttendanceCorrection {
+  id: number;
+  teacherId: string;
+  date: string;
+  previousStatus: string | null;
+  previousCheckIn: string | null;
+  previousCheckOut: string | null;
+  previousMethod: string | null;
+  newStatus: string;
+  newCheckIn: string | null;
+  newCheckOut: string | null;
+  reason: string;
+  correctedBy: string;
+  correctedByRole: string;
+  correctedAt: string;
+}
+
 export interface SchoolTiming {
   startTime: string | null;   // HH:mm
   lateThresholdMinutes: number;

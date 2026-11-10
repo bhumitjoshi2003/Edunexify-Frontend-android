@@ -108,13 +108,14 @@
              [class.sa-card-absent]="record.status === 'ABSENT'"
              [class.sa-card-leave]="record.status === 'ON_LEAVE'"
              [class.sa-card-halfday]="record.status === 'HALF_DAY'"
+             [class.sa-card-readonly]="!canCorrect(record)" [attr.title]="isOwnRecord(record) ? 'Your own attendance cannot be corrected here' : null"
              (click)="openEditDialog(record)">
           <div class="sa-teacher-avatar" *ngIf="!getPhotoUrl(record)">
             {{ getTeacherInitials(record.teacherName) }}
           </div>
           <img *ngIf="getPhotoUrl(record)" [src]="getPhotoUrl(record)" class="sa-teacher-photo" alt="">
           <div class="sa-teacher-info">
-            <span class="sa-teacher-name">{{ record.teacherName }}</span>
+            <span class="sa-teacher-name">{{ record.teacherName }}<span class="sa-self-tag" *ngIf="isOwnRecord(record)">Your record · read-only</span></span>
             <span class="sa-teacher-meta">
               <ng-container *ngIf="record.checkInTime">{{ formatTime(record.checkInTime) }}</ng-container>
               <ng-container *ngIf="record.checkOutTime"> → {{ formatTime(record.checkOutTime) }}</ng-container>
@@ -257,7 +258,7 @@
   <div *ngIf="showMarkDialog" class="sa-dialog-backdrop" (click)="closeMarkDialog()">
     <div class="sa-dialog" (click)="$event.stopPropagation()">
       <div class="sa-dialog-header">
-        <h3>{{ isEditMode ? 'Edit Attendance' : 'Mark Teacher Attendance' }}</h3>
+        <h3>{{ isPrincipal ? (isEditMode ? 'Correct Attendance' : 'Mark Teacher Attendance') : (isEditMode ? 'Edit Attendance' : 'Mark Teacher Attendance') }}</h3>
         <button class="sa-dialog-close" (click)="closeMarkDialog()">&times;</button>
       </div>
       <div class="sa-dialog-body">
@@ -290,11 +291,29 @@
           </select>
           <span class="sa-field-hint">Auto-set from check-in time. Override if needed.</span>
         </div>
+        <div class="sa-dialog-field" *ngIf="isPrincipal">
+          <label for="sa-correction-reason">Reason for correction <span class="sa-required">*</span></label>
+          <textarea id="sa-correction-reason" rows="2" maxlength="500" [(ngModel)]="correctionReason" (input)="formDirty = true"
+            placeholder="e.g. Signed register shows arrival at 08:55"></textarea>
+          <span class="sa-field-hint">Required. Saved with the previous and new values in the correction history.</span>
+        </div>
+        <div class="sa-history" *ngIf="isPrincipal && isEditMode">
+          <p class="sa-history-title">Correction history</p>
+          <p class="sa-field-hint" *ngIf="historyLoading">Loading…</p>
+          <p class="sa-field-hint" *ngIf="!historyLoading && !correctionHistory.length">No corrections for this day yet.</p>
+          <ul class="sa-history-list" *ngIf="correctionHistory.length">
+            <li *ngFor="let h of correctionHistory">
+              <strong>{{ h.previousStatus ? getStatusLabel(h.previousStatus) : 'Not recorded' }} → {{ getStatusLabel(h.newStatus) }}</strong>
+              <span>{{ h.reason }}</span>
+              <small>{{ h.correctedBy }} · {{ h.correctedAt | date:'d MMM y, h:mm a' }}</small>
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="sa-dialog-footer">
         <button class="sa-dialog-cancel" (click)="closeMarkDialog()">Cancel</button>
         <button class="sa-dialog-submit" (click)="submitAdminMark()" [disabled]="isMarking">
-          {{ isMarking ? 'Saving...' : (isEditMode ? 'Update' : 'Mark Attendance') }}
+          {{ isMarking ? 'Saving...' : (isPrincipal ? 'Save correction' : (isEditMode ? 'Update' : 'Mark Attendance')) }}
         </button>
       </div>
     </div>

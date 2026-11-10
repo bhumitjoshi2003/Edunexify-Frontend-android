@@ -209,7 +209,7 @@ export const routes: Routes = [
       {
         path: 'staff-attendance',
         loadComponent: () => import('./components/staff-attendance/staff-attendance.component').then(m => m.StaffAttendanceComponent),
-        canActivate: [roleGuard], data: { roles: ['ADMIN'] }
+        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'TEACHER_ATTENDANCE_CORRECT', roles: ['ADMIN', 'PRINCIPAL'] }
       },
 
       // ── Exams & Assessment ────────────────────────────────────────────
