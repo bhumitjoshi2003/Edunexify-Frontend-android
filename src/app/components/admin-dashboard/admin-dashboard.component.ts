@@ -23,7 +23,7 @@ import { CalendarEvent } from '../../interfaces/event-calendar.component';
 import { pickNearestUpcomingEvent } from '../../utils/upcoming-event.util';
 import { TeacherSubstitutionService } from '../../services/teacher-substitution.service';
 import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
-import { LeaveAttentionSummary, NEEDS_ATTENTION_BADGE, attentionOverdueLabel } from '../../utils/leave-escalation.util';
+import { LeaveAttentionSummary, NEEDS_ATTENTION_BADGE } from '../../utils/leave-escalation.util';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -58,7 +58,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   /** Overdue (day 3+) leave counts; optional — the rows simply stay neutral without it. */
   leaveAttention: LeaveAttentionSummary | null = null;
   readonly overdueBadge = NEEDS_ATTENTION_BADGE;
-  readonly overdueLabel = attentionOverdueLabel;
   upcomingEvent: CalendarEvent | null = null;
   upcomingEventLoading = true;
   upcomingEventFailed = false;

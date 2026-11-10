@@ -129,7 +129,10 @@ describe('PrincipalDashboardComponent', () => {
     const student = items.find(li => li.textContent?.includes('student leave requests'))!;
     const teacher = items.find(li => li.textContent?.includes('teacher leave request'))!;
     expect(student.classList).toContain('is-overdue');
-    expect(student.textContent).toContain('Needs Attention · 2 need attention · oldest on day 5');
+    expect(student.textContent).toContain('Needs Attention');
+    expect(student.textContent).not.toContain('need attention');
+    expect(student.textContent).not.toContain('oldest');
+    expect(student.textContent).not.toContain('·');
     expect(teacher.classList).not.toContain('is-overdue');
     expect(teacher.textContent).not.toContain('Overdue');
     const actions = items.filter(li => li.classList.contains('is-action')).map(li => li.textContent ?? '');
