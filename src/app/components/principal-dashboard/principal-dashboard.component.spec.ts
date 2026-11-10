@@ -8,6 +8,7 @@ import { AuthStateService } from '../../auth/auth-state.service';
 import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
 import { Component } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { LeaveAttentionSummary } from '../../utils/leave-escalation.util';
 
 @Component({ selector: 'app-on-leave-today', standalone: true, template: '' })
 class OnLeaveTodayStubComponent {}
@@ -59,11 +60,14 @@ describe('PrincipalDashboardComponent', () => {
 
   afterEach(() => http.verify());
 
-  function respond(o: PrincipalOverview | 'fail', s: PrincipalStaffToday | 'fail' = staff(), uncovered: { assignment: unknown }[] = []) {
+  function respond(o: PrincipalOverview | 'fail', s: PrincipalStaffToday | 'fail' = staff(), uncovered: { assignment: unknown }[] = [],
+                   leave: LeaveAttentionSummary | 'fail' = { today: '2026-11-16', student: null, teacher: null }) {
     const ov = http.expectOne(`${api}/principal/overview`);
     o === 'fail' ? ov.flush('down', { status: 503, statusText: 'Unavailable' }) : ov.flush(o);
     const st = http.expectOne(`${api}/principal/staff-attendance/today-summary`);
     s === 'fail' ? st.flush('down', { status: 503, statusText: 'Unavailable' }) : st.flush(s);
+    const la = http.expectOne(`${api}/leaves/attention-summary`);
+    leave === 'fail' ? la.flush('down', { status: 503, statusText: 'Unavailable' }) : la.flush(leave);
     const date = o === 'fail' ? null : o.schoolDate;
     const un = http.expectOne(r => r.url === `${api}/substitutions/uncovered` && (!date || r.params.get('date') === date));
     un.flush(uncovered);
@@ -116,5 +120,26 @@ describe('PrincipalDashboardComponent', () => {
     expect(text()).not.toContain('Report-card reviews');
     expect(text()).not.toContain('awaits your approval');
     expect(text()).toContain('Active teachers');
+  });
+
+  it('marks leave rows overdue from day 3 and lists them before other actions', () => {
+    respond(overview({ pendingTeacherLeaves: 1, pendingStudentLeaves: 3, awaitingPrincipalReview: 5 }), staff(), [],
+      { today: '2026-11-16', student: { pending: 3, overdue: 2, oldestDay: 5 }, teacher: { pending: 1, overdue: 0, oldestDay: 2 } });
+    const items = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.pd-attention-list li'));
+    const student = items.find(li => li.textContent?.includes('student leave requests'))!;
+    const teacher = items.find(li => li.textContent?.includes('teacher leave request'))!;
+    expect(student.classList).toContain('is-overdue');
+    expect(student.textContent).toContain('Overdue · Action Required · 2 overdue · oldest on day 5');
+    expect(teacher.classList).not.toContain('is-overdue');
+    expect(teacher.textContent).not.toContain('Overdue');
+    const actions = items.filter(li => li.classList.contains('is-action')).map(li => li.textContent ?? '');
+    expect(actions[0]).toContain('student leave requests');
+  });
+
+  it('keeps leave rows neutral when the overdue summary is unavailable', () => {
+    respond(overview({ pendingStudentLeaves: 2 }), staff(), [], 'fail');
+    const student = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.pd-attention-list li'))
+      .find(li => li.textContent?.includes('student leave requests'))!;
+    expect(student.classList).not.toContain('is-overdue');
   });
 });

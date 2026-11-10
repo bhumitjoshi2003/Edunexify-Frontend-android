@@ -104,11 +104,19 @@
         <a class="is-warning" *ngIf="isAdmin && notYetCheckedIn > 0" routerLink="/dashboard/staff-attendance">
           <mat-icon>schedule</mat-icon><span>Teachers not checked in</span><strong>{{ notYetCheckedIn }}</strong>
         </a>
-        <a class="is-todo" *ngIf="isAdmin && (teacherPendingLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests">
-          <mat-icon>approval</mat-icon><span>Teacher leave requests</span><strong>{{ teacherPendingLeaveCount }}</strong>
+        <a class="is-todo" [class.is-overdue]="(leaveAttention?.teacher?.overdue ?? 0) > 0" *ngIf="isAdmin && (teacherPendingLeaveCount ?? 0) > 0" routerLink="/dashboard/teacher-leave-requests">
+          <mat-icon>approval</mat-icon>
+          <span>Teacher leave requests
+            <small class="ad-overdue" *ngIf="(leaveAttention?.teacher?.overdue ?? 0) > 0">{{ overdueBadge }} · {{ overdueLabel(leaveAttention?.teacher) }}</small>
+          </span>
+          <strong>{{ teacherPendingLeaveCount }}</strong>
         </a>
-        <a class="is-todo" *ngIf="isAdmin && studentPendingLeaves > 0" routerLink="/dashboard/view-leaves">
-          <mat-icon>assignment_late</mat-icon><span>Student leave requests</span><strong>{{ studentPendingLeaves }}</strong>
+        <a class="is-todo" [class.is-overdue]="(leaveAttention?.student?.overdue ?? 0) > 0" *ngIf="isAdmin && studentPendingLeaves > 0" routerLink="/dashboard/view-leaves">
+          <mat-icon>assignment_late</mat-icon>
+          <span>Student leave requests
+            <small class="ad-overdue" *ngIf="(leaveAttention?.student?.overdue ?? 0) > 0">{{ overdueBadge }} · {{ overdueLabel(leaveAttention?.student) }}</small>
+          </span>
+          <strong>{{ studentPendingLeaves }}</strong>
         </a>
         <a class="is-low" *ngIf="isAdmin && staffAdoptionNotStarted > 0" routerLink="/dashboard/staff-adoption">
           <mat-icon>person_off</mat-icon><span>Staff haven't started using the app</span><strong>{{ staffAdoptionNotStarted }}</strong>

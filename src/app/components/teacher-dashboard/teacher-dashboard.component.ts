@@ -16,6 +16,8 @@ import { TeacherService } from '../../services/teacher.service';
 import { StudentService } from '../../services/student.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { LeaveService, LeaveApplication } from '../../services/leave.service';
+import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
+import { LeaveAttentionSummary, OVERDUE_BADGE, attentionOverdueLabel, isLeaveOverdue } from '../../utils/leave-escalation.util';
 import { LoggerService } from '../../services/logger.service';
 import { NotificationStateService } from '../../services/notification-state.service';
 import { TeacherCheckinService } from '../../services/teacher-checkin.service';
@@ -43,7 +45,7 @@ const EMPTY_TODAY_VIEW: TeacherTodayClassesView = { current: null, upcoming: [],
 @Component({
   selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [WisdomCardsComponent, TeacherGettingStartedComponent, CommonModule, RouterLink, MatIconModule],
+  imports: [WisdomCardsComponent, TeacherGettingStartedComponent, CommonModule, RouterLink, MatIconModule, LeaveEscalationBadgeComponent],
   templateUrl: './teacher-dashboard.component.html',
   styleUrl: './teacher-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +67,11 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   pendingLeavesCount = 0;
   monthlyAttendanceRate = 0;
   recentLeaves: LeaveApplication[] = [];
+  /** Overdue (day 3+) student leave in this teacher's own class/section; optional. */
+  leaveAttention: LeaveAttentionSummary | null = null;
+  readonly overdueBadge = OVERDUE_BADGE;
+  readonly overdueLabel = attentionOverdueLabel;
+  readonly isOverdue = isLeaveOverdue;
   /** true only when the combined class-data request failed — "Class {{ className }} today"
    *  and "Pending approvals" must show a neutral unavailable state instead of the fabricated
    *  "0 active students" / "No pending requests" a blank default would otherwise imply. */
@@ -131,6 +138,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
           this.isClassTeacher = !!teacher.classTeacher;
           if (this.isClassTeacher) {
             this.loadClassData();
+            this.loadLeaveAttention();
           } else {
             this.isLoading = false;
             this.cdr.markForCheck();
@@ -428,7 +436,10 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
 
         const pending = leavesPage.content.filter(l => l.status === 'PENDING');
         this.pendingLeavesCount = pending.length;
-        this.recentLeaves = pending.slice(0, 5);
+        // Overdue requests first (oldest day first); the rest keep the server's order.
+        this.recentLeaves = [...pending]
+          .sort((a, b) => (isLeaveOverdue(b) ? b.escalation!.day : 0) - (isLeaveOverdue(a) ? a.escalation!.day : 0))
+          .slice(0, 5);
 
         // Class rate = all present days / all submitted days (the same formula as each student's %).
         const workingDays = summary.reduce((sum, r) => sum + r.totalWorkingDays, 0);
@@ -447,6 +458,20 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Not part of the class-data request: a failure only leaves the rows without overdue styling. */
+  loadLeaveAttention(): void {
+    this.leaveService.getAttentionSummary()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: summary => { this.leaveAttention = summary; this.cdr.markForCheck(); },
+        error: err => this.logger.error('Failed to load leave attention summary', err),
+      });
+  }
+
+  get overdueLeaveCount(): number {
+    return this.leaveAttention?.student?.overdue ?? 0;
+  }
+
   approveLeave(leaveId: number): void {
     this.leaveService.updateLeaveStatus(leaveId, 'APPROVED')
       .pipe(takeUntil(this.destroy$))
@@ -455,6 +480,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
           this.recentLeaves = this.recentLeaves.filter(l => l.id !== leaveId);
           this.pendingLeavesCount = Math.max(0, this.pendingLeavesCount - 1);
           this.cdr.markForCheck();
+          this.loadLeaveAttention();
         },
         error: e => {
           this.logger.error('Approve leave error:', e);
@@ -471,6 +497,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
           this.recentLeaves = this.recentLeaves.filter(l => l.id !== leaveId);
           this.pendingLeavesCount = Math.max(0, this.pendingLeavesCount - 1);
           this.cdr.markForCheck();
+          this.loadLeaveAttention();
         },
         error: e => {
           this.logger.error('Reject leave error:', e);
@@ -535,7 +562,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   }
 
   get hasTeacherAttention(): boolean {
-    return this.checkInNeedsAttention || this.coverClassCount > 0 || this.unreadCount > 0 || !!this.recentLeaveDecision;
+    return this.checkInNeedsAttention || this.coverClassCount > 0 || this.unreadCount > 0 || !!this.recentLeaveDecision
+      || this.overdueLeaveCount > 0;
   }
 
   get personalAttendancePercent(): number {

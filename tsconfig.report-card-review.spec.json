@@ -11,6 +11,7 @@
     "src/app/components/principal-management/*.spec.ts",
     "src/app/components/signature-settings/*.spec.ts",
     "src/app/components/view-leaves/*.spec.ts",
+    "src/app/components/leave-escalation-badge/*.spec.ts",
     "src/app/components/notice/notice.component.principal.spec.ts",
     "src/app/components/fees/*.spec.ts",
     "src/app/components/payment/*.spec.ts",

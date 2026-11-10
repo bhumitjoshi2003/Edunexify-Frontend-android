@@ -102,6 +102,7 @@
           </span>
           <span class="al-leave-note" *ngIf="leave.status === 'REJECTED' && leave.decisionReason">Reason: {{ leave.decisionReason }}</span>
           <span class="al-leave-note" *ngIf="leave.status === 'CANCELLED' && leave.cancellationReason">Cancelled: {{ leave.cancellationReason }}</span>
+          <span class="al-leave-note al-leave-note--auto" *ngIf="isAutoApproved(leave)">Automatically approved · {{ autoApprovedNote }}</span>
         </div>
 
         <!-- Status + cancel -->

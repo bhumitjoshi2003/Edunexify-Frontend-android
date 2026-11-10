@@ -9,6 +9,7 @@ import { ToastService } from '../../services/toast.service';
 import { TeacherLeave } from '../../interfaces/teacher-leave';
 import { PaginatedResponse } from '../../services/payment-history.service';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { AUTO_APPROVED_NOTE, isLeaveAutoApproved } from '../../utils/leave-escalation.util';
 
 @Component({
   selector: 'app-apply-teacher-leave',
@@ -18,6 +19,8 @@ import { Subject, takeUntil, forkJoin } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
+  readonly isAutoApproved = isLeaveAutoApproved;
+  readonly autoApprovedNote = AUTO_APPROVED_NOTE;
   private destroy$ = new Subject<void>();
   leaveForm: FormGroup;
   errorMessage: string = '';

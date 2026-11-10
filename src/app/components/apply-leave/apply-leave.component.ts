@@ -14,6 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ParentPortalService } from '../../services/parent-portal.service';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { ChildAccess } from '../../interfaces/parent-portal';
+import { AUTO_APPROVED_NOTE, isLeaveAutoApproved } from '../../utils/leave-escalation.util';
 
 
 @Component({
@@ -24,6 +25,8 @@ import { ChildAccess } from '../../interfaces/parent-portal';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApplyLeaveComponent implements OnInit, OnDestroy {
+  readonly isAutoApproved = isLeaveAutoApproved;
+  readonly autoApprovedNote = AUTO_APPROVED_NOTE;
   private destroy$ = new Subject<void>();
   private readonly leavesRequest$ = new Subject<void>();
   /** A deep-linked child this parent can no longer access: nothing is loaded or submitted for it. */

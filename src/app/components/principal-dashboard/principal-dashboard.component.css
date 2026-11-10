@@ -167,6 +167,10 @@ a.pd-tile:focus-visible { outline: 2px solid var(--edu-teal-dark, #0f766e); outl
 .pd-attention-list .is-action > * { border-left-color: #2563eb; }
 .pd-attention-list .is-action mat-icon:first-child { color: #1d4ed8; }
 .pd-attention-list .is-info > * { border-left-color: #94a3b8; }
+/* Leave pending from day 3: a quiet red edge and a small label, no animation. */
+.pd-attention-list .is-overdue > * { border-color: #fecdca; border-left-color: #d92d20; background: #fffbfa; }
+.pd-attention-list .is-overdue mat-icon:first-child { color: #d92d20; }
+.pd-overdue { display: block; margin-top: 2px; font-size: 0.72rem; font-weight: 600; line-height: 1.3; color: #b42318; }
 
 .pd-attention-ok { display: flex; align-items: center; gap: 7px; margin: 10px 0 0; color: #047857; font-size: 0.84rem; }
 .pd-attention-ok mat-icon { width: 18px; height: 18px; font-size: 18px; }
