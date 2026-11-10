@@ -70,7 +70,7 @@ describe('DashboardComponent — Help & Support nav entries', () => {
 
   afterEach(() => fixture.destroy());
 
-  for (const role of ['STUDENT', 'TEACHER', 'PARENT', 'ADMIN', 'SUB_ADMIN']) {
+  for (const role of ['STUDENT', 'TEACHER', 'PARENT', 'ADMIN', 'SUB_ADMIN', 'PRINCIPAL']) {
     it(`shows "Report a Problem" and "My Support Requests" for ${role}`, () => {
       build(role);
       const report = fixture.nativeElement.querySelector('a[routerLink="/dashboard/report-problem"]');
@@ -93,7 +93,7 @@ describe('DashboardComponent — Help & Support nav entries', () => {
     expect(link!.textContent).toContain('Support Tickets');
   });
 
-  for (const role of ['ADMIN', 'SUB_ADMIN', 'TEACHER', 'STUDENT', 'PARENT']) {
+  for (const role of ['ADMIN', 'SUB_ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'PRINCIPAL']) {
     it(`never shows the global Support Tickets queue link for ${role}`, () => {
       build(role);
       const link = fixture.nativeElement.querySelector('a[routerLink="/dashboard/support-queue"]');
