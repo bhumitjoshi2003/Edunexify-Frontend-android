@@ -173,6 +173,25 @@
         <p class="pd-muted" *ngIf="!events.data && events.failed">Events could not be loaded.</p>
       </section>
 
+      <!-- ── Academic setup shortcuts ───────────────────────────────── -->
+      <section class="pd-panel" aria-labelledby="pd-setup-title">
+        <div class="pd-section-head">
+          <h2 id="pd-setup-title"><mat-icon aria-hidden="true">tune</mat-icon>Academic setup</h2>
+        </div>
+        <ul class="pd-setup-links">
+          <li><a routerLink="/dashboard/class-management"><mat-icon aria-hidden="true">class</mat-icon>Classes &amp; sections</a></li>
+          <li><a routerLink="/dashboard/subject-config"><mat-icon aria-hidden="true">menu_book</mat-icon>Subjects</a></li>
+          <ng-container *ngIf="examsEnabled">
+            <li><a routerLink="/dashboard/exam-config"><mat-icon aria-hidden="true">quiz</mat-icon>Exams</a></li>
+            <li><a routerLink="/dashboard/assessment-groups"><mat-icon aria-hidden="true">workspaces</mat-icon>Assessment groups</a></li>
+            <li><a routerLink="/dashboard/student-stream"><mat-icon aria-hidden="true">fork_right</mat-icon>Streams</a></li>
+            <li><a routerLink="/dashboard/elective-assignment"><mat-icon aria-hidden="true">swap_horiz</mat-icon>Electives</a></li>
+          </ng-container>
+          <li><a routerLink="/dashboard/timetable"><mat-icon aria-hidden="true">schedule</mat-icon>Timetable</a></li>
+          <li *ngIf="classroomEnabled"><a routerLink="/dashboard/manage-assessments"><mat-icon aria-hidden="true">event_note</mat-icon>Assessments</a></li>
+        </ul>
+      </section>
+
       <!-- ── Report-card workflow ───────────────────────────────────── -->
       <section class="pd-panel" *ngIf="reportCardsEnabled && overview.data as o" aria-labelledby="pd-rc-title">
         <div class="pd-section-head">

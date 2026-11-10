@@ -488,7 +488,7 @@ export const routes: Routes = [
       {
         path: 'manage-assessments',
         loadComponent: () => import('./components/assessment-manage/assessment-manage.component').then(m => m.AssessmentManageComponent),
-        canActivate: [roleGuard], data: { roles: ['TEACHER', 'ADMIN'] }
+        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'ASSESSMENT_CALENDAR_EDIT', roles: ['TEACHER', 'ADMIN', 'PRINCIPAL'] }
       },
       {
         path: 'assessments',

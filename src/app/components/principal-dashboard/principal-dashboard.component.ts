@@ -172,6 +172,8 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
   get reportCardsEnabled(): boolean { return this.auth.hasFeature('REPORT_CARDS'); }
 
   get eventsEnabled(): boolean { return this.auth.hasFeature('SCHOOL_COMMUNICATION'); }
+  get examsEnabled(): boolean { return this.auth.hasFeature('EXAMS_RESULTS'); }
+  get classroomEnabled(): boolean { return this.auth.hasFeature('CLASSROOM'); }
 
   /** A school holiday or closed day: the staff summary expects nobody. Unknown counts as a school day. */
   get closedToday(): boolean { return this.staff.data?.expectedCount === 0; }

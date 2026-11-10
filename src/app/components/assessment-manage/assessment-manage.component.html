@@ -118,7 +118,7 @@
 
         <footer class="asm-card-foot">
           <span class="asm-by" [class.is-mine]="item.createdByCurrentUser">
-            <mat-icon>{{ item.createdByCurrentUser ? 'verified_user' : (item.createdByRole === 'ADMIN' ? 'admin_panel_settings' : 'person') }}</mat-icon>{{ sourceLabel(item) }}
+            <mat-icon>{{ item.createdByCurrentUser ? 'verified_user' : (item.createdByRole === 'ADMIN' || item.createdByRole === 'PRINCIPAL' ? 'admin_panel_settings' : 'person') }}</mat-icon>{{ sourceLabel(item) }}
           </span>
           <div class="asm-foot-actions" *ngIf="item.canEdit || item.canDelete; else viewOnly">
             <button type="button" class="asm-icon-btn" *ngIf="item.canEdit" (click)="openEdit(item)" aria-label="Edit assessment"><mat-icon>edit</mat-icon>Edit</button>

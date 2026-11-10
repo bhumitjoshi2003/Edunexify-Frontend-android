@@ -51,6 +51,7 @@
           <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/class-results" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Academic results"><mat-icon>assessment</mat-icon><span>Academic results</span></a>
           <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/mark-entry" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Mark corrections"><mat-icon>edit_note</mat-icon><span>Mark corrections</span></a>
           <a class="nav-item" routerLink="/dashboard/timetable" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Timetable"><mat-icon>schedule</mat-icon><span>Timetable</span></a>
+          <a class="nav-item" *ngIf="hasFeature('CLASSROOM')" routerLink="/dashboard/manage-assessments" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Assessments"><mat-icon>event_note</mat-icon><span>Assessments</span></a>
           <a class="nav-item" routerLink="/dashboard/teacher-substitutions" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Substitutions"><mat-icon>swap_horiz</mat-icon><span>Substitutions</span></a>
         </app-nav-group>
         <app-nav-group>

@@ -142,4 +142,18 @@ describe('PrincipalDashboardComponent', () => {
       .find(li => li.textContent?.includes('student leave requests'))!;
     expect(student.classList).not.toContain('is-overdue');
   });
+
+  it('offers academic setup shortcuts, showing exam and classroom entries only when those features are on', () => {
+    respond(overview());
+    const links = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.pd-setup-links a'))
+      .map(a => a.getAttribute('href'));
+    expect(links()).toEqual(['/dashboard/class-management', '/dashboard/subject-config', '/dashboard/timetable']);
+
+    features = ['EXAMS_RESULTS', 'CLASSROOM'];
+    (fixture.componentInstance as any).cdr.markForCheck(); // OnPush: the feature set is read from the auth service
+    fixture.detectChanges();
+    expect(links()).toEqual(['/dashboard/class-management', '/dashboard/subject-config', '/dashboard/exam-config',
+      '/dashboard/assessment-groups', '/dashboard/student-stream', '/dashboard/elective-assignment', '/dashboard/timetable',
+      '/dashboard/manage-assessments']);
+  });
 });

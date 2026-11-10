@@ -49,7 +49,7 @@ export interface Assessment {
   attachment: AssessmentAttachment | null;
   createdByUserId: string;
   createdByName: string | null;
-  createdByRole: 'TEACHER' | 'ADMIN';
+  createdByRole: 'TEACHER' | 'ADMIN' | 'PRINCIPAL';
   createdAt: string;
   updatedAt: string;
   /** Effective permissions computed by the server — never inferred on the client. */
