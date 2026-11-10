@@ -60,6 +60,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   unreadNotificationCount: number = 0;
   showMoreMenu: boolean = false;
   showUpdateBanner = false;
+  /**
+   * The update card slides up from the bottom only while the user scrolls down the page, and hides
+   * again at the top or when scrolling up — so it never covers the AI Copilot button on arrival.
+   */
+  updateBannerRevealed = false;
+  private lastScrollTop = 0;
+  private static readonly UPDATE_REVEAL_AFTER_PX = 80;
+  private static readonly UPDATE_HIDE_AT_TOP_PX = 24;
+  private static readonly SCROLL_DIRECTION_DELTA_PX = 8;
   latestAppVersion = '';
   sidebarCollapsed = false;
   mobileSidebarOpen = false;
@@ -101,6 +110,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       takeUntil(this.ngUnsubscribe)
     ).subscribe((event) => {
       this.fetchUnreadCount();
+      this.resetUpdateBannerReveal(); // a new page starts at the top
       const nav = event as NavigationEnd;
       const path = nav.urlAfterRedirects.split('?')[0];
       if (path === '/dashboard' || path === '/dashboard/') {
@@ -311,6 +321,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     } catch { /* plugin not available or check failed */ }
+  }
+
+  /** Scroll handler of the page content: reveal on a downward scroll, hide at the top or on an upward scroll. */
+  onContentScroll(event: Event): void {
+    if (!this.showUpdateBanner) return;
+    const top = Math.max(0, (event.target as HTMLElement).scrollTop);
+    const delta = top - this.lastScrollTop;
+    let reveal = this.updateBannerRevealed;
+    if (top <= DashboardComponent.UPDATE_HIDE_AT_TOP_PX) {
+      reveal = false;
+    } else if (Math.abs(delta) >= DashboardComponent.SCROLL_DIRECTION_DELTA_PX) {
+      // Small movements keep the previous anchor so a slow scroll still registers its direction.
+      reveal = delta > 0 && top >= DashboardComponent.UPDATE_REVEAL_AFTER_PX ? true : delta < 0 ? false : reveal;
+    } else {
+      return;
+    }
+    this.lastScrollTop = top;
+    if (reveal !== this.updateBannerRevealed) {
+      this.updateBannerRevealed = reveal;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private resetUpdateBannerReveal(): void {
+    this.lastScrollTop = 0;
+    if (this.updateBannerRevealed) {
+      this.updateBannerRevealed = false;
+      this.cdr.markForCheck();
+    }
   }
 
   openPlayStore(): void {

@@ -811,6 +811,19 @@
   background: #155e75;
   color: #fff;
   box-shadow: 0 8px 24px rgba(15, 23, 42, .22);
+  /* Hidden below the screen until the user scrolls down; not focusable or announced while hidden. */
+  transform: translateY(calc(100% + 24px + env(safe-area-inset-bottom, 0px)));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform .28s ease, opacity .2s ease, visibility 0s linear .28s;
+}
+.app-update-banner.is-revealed {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform .28s ease, opacity .2s ease, visibility 0s;
 }
 .app-update-left {
   display: flex;
@@ -914,5 +927,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .app-update-btn { transition: none; }
+  .app-update-banner, .app-update-banner.is-revealed { transition: none; }
 }
 
