@@ -33,7 +33,7 @@ describe('TeacherSubstitutionComponent', () => {
       ['getUncovered', 'getOverview', 'getFreeTeachers', 'assign', 'change', 'cancel', 'getMine', 'suggestFill', 'assignMany']);
     substitutions.getOverview.and.returnValue(of(day([period()])));
 
-    authState = jasmine.createSpyObj('AuthStateService', ['getUser', 'hasPermission']);
+    authState = jasmine.createSpyObj('AuthStateService', ['isCoordinator', 'getUser', 'hasPermission']);
     authState.getUser.and.returnValue({ role } as any);
     authState.hasPermission.and.returnValue(!!opts.hasTimetableEdit);
 

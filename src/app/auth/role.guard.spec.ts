@@ -11,7 +11,7 @@ describe('roleGuard', () => {
   let router: Router;
 
   beforeEach(() => {
-    authState = jasmine.createSpyObj('AuthStateService', ['isLoggedIn', 'isChecking', 'mustChangePassword', 'getUserRole']);
+    authState = jasmine.createSpyObj('AuthStateService', ['isLoggedIn', 'isChecking', 'mustChangePassword', 'getUserRole', 'isCoordinator']);
     authState.isChecking.and.returnValue(false);
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
@@ -48,6 +48,20 @@ describe('roleGuard', () => {
     authState.getUserRole.and.returnValue('ADMIN');
 
     expect(run(['ADMIN'])).toBeTrue();
+  });
+
+  it('opens COORDINATOR routes only to a teacher holding an active Coordinator appointment', () => {
+    authState.isLoggedIn.and.returnValue(true);
+    authState.mustChangePassword.and.returnValue(false);
+    authState.getUserRole.and.returnValue('TEACHER');
+
+    authState.isCoordinator.and.returnValue(true);
+    expect(run(['COORDINATOR'])).toBeTrue();
+    expect(run(['ADMIN', 'PRINCIPAL'])).toBeFalse();
+
+    authState.isCoordinator.and.returnValue(false);
+    expect(run(['COORDINATOR'])).toBeFalse();
+    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
   });
 
   it('redirects to /dashboard when the role does not match', () => {

@@ -74,7 +74,9 @@ export class TeacherSubstitutionComponent implements OnInit, OnDestroy {
    *  hasPermission() and ai-copilot.component.ts's isAdmin getter. */
   get canManage(): boolean {
     const role = this.authState.getUser()?.role;
-    return role === 'ADMIN' || role === 'PRINCIPAL' || this.authState.hasPermission('TIMETABLE_EDIT');
+    // A Coordinator manages cover for the periods of their scope (the server filters and re-checks).
+    return role === 'ADMIN' || role === 'PRINCIPAL' || this.authState.isCoordinator()
+      || this.authState.hasPermission('TIMETABLE_EDIT');
   }
 
   /** Past dates are read-only (the backend rejects assign/change for them too). */

@@ -22,16 +22,24 @@ export class TeacherCheckinService {
   private baseUrl = `${environment.apiUrl}/teacher-checkin`;
   /** The Principal reads and corrects staff attendance through its own audited endpoints. */
   private principalUrl = `${environment.apiUrl}/principal/staff-attendance`;
+  /** A Coordinator uses the same paths, limited by the server to teachers in their scope. */
+  private coordinatorUrl = `${environment.apiUrl}/coordinator/staff-attendance`;
 
   constructor(private http: HttpClient, private authState: AuthStateService) {}
 
   private get staffUrl(): string {
+    if (this.authState.isCoordinator()) return this.coordinatorUrl;
     return this.authState.getUserRole() === 'PRINCIPAL' ? this.principalUrl : this.baseUrl;
+  }
+
+  /** Where corrections, their history and the caller's own record live (Principal or Coordinator). */
+  private get correctionUrl(): string {
+    return this.authState.isCoordinator() ? this.coordinatorUrl : this.principalUrl;
   }
 
   /** Principal correction (reason required); the server refuses the Principal's own record. */
   principalCorrect(req: AttendanceCorrectionRequest): Observable<TeacherAttendanceRecord> {
-    return this.http.post<TeacherAttendanceRecord>(`${this.principalUrl}/corrections`, req);
+    return this.http.post<TeacherAttendanceRecord>(`${this.correctionUrl}/corrections`, req);
   }
 
   /** Correction history in the caller's school, newest first. */
@@ -39,12 +47,12 @@ export class TeacherCheckinService {
     let params = new HttpParams();
     if (teacherId) params = params.set('teacherId', teacherId);
     if (date) params = params.set('date', date);
-    return this.http.get<TeacherAttendanceCorrection[]>(`${this.principalUrl}/corrections`, { params });
+    return this.http.get<TeacherAttendanceCorrection[]>(`${this.correctionUrl}/corrections`, { params });
   }
 
   /** The Principal's own teacher record(s), shown read-only. */
   getOwnTeacherIds(): Observable<{ teacherIds: string[] }> {
-    return this.http.get<{ teacherIds: string[] }>(`${this.principalUrl}/self`);
+    return this.http.get<{ teacherIds: string[] }>(`${this.correctionUrl}/self`);
   }
 
   checkIn(req: TeacherCheckinRequest): Observable<TeacherAttendanceRecord> {

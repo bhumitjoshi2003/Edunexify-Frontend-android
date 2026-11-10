@@ -1,9 +1,9 @@
 import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit
-} from '@angular/core';
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { optionalCoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, switchMap, catchError, EMPTY } from 'rxjs';
+import { Subject, takeUntil, switchMap, catchError, EMPTY, forkJoin } from 'rxjs';
 import { TimetableService, TimetableTimingConfig, TimetableTimingPeriod, TimetableTimingProfile } from '../../services/timetable.service';
 import { TeacherService } from '../../services/teacher.service';
 import { AuthStateService } from '../../auth/auth-state.service';
@@ -35,6 +35,8 @@ import { subjectIcon, subjectAccentClass } from '../../utils/subject-visual.util
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimetableComponent implements OnInit, OnDestroy {
+  private coordinators = optionalCoordinatorService();
+
   private destroy$ = new Subject<void>();
 
   canEditEntry(entry: TimetableEntry): boolean {
@@ -78,9 +80,14 @@ export class TimetableComponent implements OnInit, OnDestroy {
   private destroyed = false;
   get initialSessionId(): number | null { return Number(this.route.snapshot.queryParamMap.get('academicSessionId')) || null; }
   canManage(): boolean { return this.role === 'ADMIN'; }
-  canSelectSession(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
-  /** Period entries: Admin, and the Principal (TIMETABLE_EDIT). Bulk import and session copy stay Admin-only. */
-  canEditPeriods(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
+  /**
+   * The coordinator-timetable route: a Coordinator manages the periods of the sections they cover
+   * (the server re-checks every write). Their own /timetable stays teacher self-service.
+   */
+  coordinatorMode = false;
+  canSelectSession(): boolean { return this.canManage() || this.role === 'PRINCIPAL' || this.coordinatorMode; }
+  /** Period entries: Admin, the Principal (TIMETABLE_EDIT) and a Coordinator in scope. Bulk import and session copy stay Admin-only. */
+  canEditPeriods(): boolean { return this.canManage() || this.role === 'PRINCIPAL' || this.coordinatorMode; }
   canWrite(): boolean { return this.canEditPeriods() && writableSession(this.selectedSession); }
   canAdd(): boolean { return this.canWrite() && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
   /** Timings, class-teacher configuration and access grants; period editing stays canWrite(). */
@@ -164,6 +171,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const user = this.authStateService.getUser();
     this.role = user?.role ?? '';
+    this.coordinatorMode = this.route.snapshot.data?.['coordinatorMode'] === true && this.authStateService.isCoordinator() && !!this.coordinators;
     this.userId = user?.userId ?? '';
     this.userClassName = user?.className ?? '';
     this.userName = user?.name ?? '';
@@ -188,7 +196,9 @@ export class TimetableComponent implements OnInit, OnDestroy {
       error: (err) => this.logger.error('Failed to load school settings', err)
     });
 
-    if (this.isAdmin()) {
+    if (this.coordinatorMode) {
+      this.loadCoordinatorClasses();
+    } else if (this.isAdmin()) {
       this.schoolService.getManagedClasses().pipe(takeUntil(this.destroy$)).subscribe({
         next: managed => {
           this.managedClasses = managed;
@@ -264,9 +274,33 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
   isStudent(): boolean { return this.role === 'STUDENT'; }
   isParent(): boolean { return this.role === 'PARENT'; }
-  isTeacher(): boolean { return this.role === 'TEACHER'; }
+  isTeacher(): boolean { return this.role === 'TEACHER' && !this.coordinatorMode; }
   isAdmin(): boolean {
-    return this.role === 'ADMIN' || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'PRINCIPAL';
+    return this.role === 'ADMIN' || this.role === 'SUB_ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'PRINCIPAL'
+      || this.coordinatorMode;
+  }
+
+  /** Coordinator scope: the classes and sections they cover, and the teachers they may timetable. */
+  private coordinatorUnits: { classId: number; sectionId: number | null }[] = [];
+
+  private loadCoordinatorClasses(): void {
+    forkJoin({ units: this.coordinators!.units(), classes: this.schoolService.getManagedClasses() })
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: ({ units, classes }) => {
+          this.coordinatorUnits = units;
+          this.managedClasses = classes.filter(c => units.some(u => u.classId === c.id));
+          if (this.managedClasses.length && !this.selectedClassId) {
+            this.selectedClassId = this.managedClasses[0].id;
+            this.onClassChange();
+          }
+          this.cdr.markForCheck();
+        },
+        error: err => { this.error = apiMessage(err); this.cdr.markForCheck(); }
+      });
+    this.coordinators!.assignableTeachers().pipe(takeUntil(this.destroy$)).subscribe({
+      next: list => { this.teachers = list as unknown as Teacher[]; this.cdr.markForCheck(); },
+      error: err => this.logger.error('Failed to load teachers:', err)
+    });
   }
 
   onDaySelect(day: string): void {
@@ -295,7 +329,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.sectionService.getSectionsForClass(cls.id)
       .pipe(takeUntil(this.selectionChanged$), takeUntil(this.destroy$)).subscribe({
         next: (secs) => {
-          this.sections = secs.filter(s => s.active);
+          this.sections = secs.filter(s => s.active && (!this.coordinatorMode
+            || this.coordinatorUnits.some(u => u.classId === cls.id && (u.sectionId == null || u.sectionId === s.id))));
           this.sectionsLoaded = true;
           this.cdr.markForCheck();
           then?.();

@@ -5,7 +5,7 @@
     "src/app/auth/auth.service.ts": "0f790679e878948a2cdd32f5536bf5ae7e7de111f2794745c640db3e12245dfe",
     "src/app/auth/auth.interceptor.ts": "99f58a4ea005c7484771b2e5d85531c1ffcf96a48beca3b23cb81b4b601d45d8",
     "src/app/auth/auth.guard.ts": "65ff4cc8047700f2e7c3a024cd1d22f0ff62fbfa292e084eb27da76a057d11a8",
-    "src/app/auth/role.guard.ts": "c65994474895049f440ed8bd88e9512f5257a059846092d9fb09ad4d24f8447b",
+    "src/app/auth/role.guard.ts": "51ad146b36fc62a7a9b458d3c345bc7d05bd4c0f8c27eb84fd71ea578f8057f0",
     "src/app/auth/feature.guard.ts": "098daa0c7c45c0284b1ddc093f61e253aed63e47915bb2bcea32d57af98d2158",
     "src/app/auth/feature-keys.ts": "146ac4bcdacbe1f578d63b1c8766a1e44a49904a082b338cbab737d2fdc6ccbb",
     "src/app/auth/password-change.guard.ts": "896d3f157f849d8987111422b731e3513721f885f70b81274d681b5e94279800",
@@ -129,7 +129,17 @@
     "src/app/components/report-card-v2/published/rc2-published.component.css": "38db2e21954b7bb5e64165ba16e98cd258179286413d9112cfd2210ea7079235",
     "src/app/components/principal-my-profile/principal-my-profile.component.ts": "5942a51a24a476f04c80db13d32ff68803f5b2c53dfa03b1df7e0c08b7d1a36d",
     "src/app/utils/leave-escalation.util.ts": "57bdd606c6059bd635dd3d06eeaca0ce8fed74b994241de07137380440da4242",
-    "src/app/components/leave-escalation-badge/leave-escalation-badge.component.ts": "3da9b9bd43f9d1c151ca49685072938b96edf77f3812dcba869eeaf1f0a5ac64"
+    "src/app/components/leave-escalation-badge/leave-escalation-badge.component.ts": "3da9b9bd43f9d1c151ca49685072938b96edf77f3812dcba869eeaf1f0a5ac64",
+    "src/app/interfaces/coordinator.ts": "a697a5925845e2c9008292cf2e0f46afa9b9760c8a00d1358ca6bc3dca4f76de",
+    "src/app/services/coordinator.service.ts": "7fe1bf771edea3bacadf602263259acd61b97e590a2f3a820ef202e0ab6a5268",
+    "src/app/services/coordinator.service.spec.ts": "810c18129b0c7da766920768c7cee49193ab16a92ffa32f71b23312eec3e725a",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "18fe3fa7c6d584d9aaa752181e75055b9a58e456a18991de88d458f9b8a6a8d6",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "fe425a4a0d14c747fe282b29b59620a0e7c18d34195af9281b20dde02965960f",
+    "src/app/components/coordinator-management/coordinator-management.component.ts": "547adc70ebd6250a5f27e48a5f4a0c2603df47c44c9098d30724c59b2bf1a9cf",
+    "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "3466d6e6c3999c9c6db8e365f0c52a490dbf14051742c82a0cce21013001a1bc",
+    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "ec4c1a0edf2a3a34bf158f070a643129bd5c176bed349b44be5f501caa5c86b6",
+    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.spec.ts": "fdc743b0564c01b2526178ad389e34aa096ae4bd17d4625780fbc01c935a7ce4",
+    "src/app/components/coordinator-people/coordinator-people.component.ts": "420592a5e5f12a419db0f2e2e3c02b7dead3ef64df385e9e0999ec913760611a"
   },
   "platformSpecific": [
     {

@@ -432,3 +432,6 @@
   .ta-action-btns .ta-btn { flex: 1; }
   .ta-date-control { max-width: none; }
 }
+
+.ta-correction { display: flex; flex-direction: column; gap: 4px; flex: 1 1 260px; font-size: 0.8rem; font-weight: 650; color: #475569; }
+.ta-correction textarea { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; font-weight: 500; }

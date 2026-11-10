@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { coordinatorClassNames, optionalCoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { Subject, forkJoin, takeUntil, switchMap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { SubjectConfigService, ClassSubject } from '../../services/subject-config.service';
 import { StudentElectiveEnrollmentService, ElectiveEnrollment } from '../../services/student-elective-enrollment.service';
@@ -35,6 +36,9 @@ interface ElectiveGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ElectiveAssignmentComponent implements OnInit, OnDestroy {
+  /** Coordinators see only classes they cover in full; everyone else is unaffected. */
+  private coordinators = optionalCoordinatorService();
+
   private destroy$ = new Subject<void>();
 
   classOptions: string[] = [];
@@ -66,7 +70,7 @@ export class ElectiveAssignmentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     forkJoin([
-      this.schoolService.getClasses(),
+      this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c))),
       this.schoolService.getManagedClasses(),
     ]).pipe(takeUntil(this.destroy$)).subscribe({
       next: ([classes, managed]) => {

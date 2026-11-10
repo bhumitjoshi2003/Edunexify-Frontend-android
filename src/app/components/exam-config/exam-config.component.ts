@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { coordinatorClassNames, optionalCoordinatorService } from '../../services/coordinator.service';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, switchMap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { ExamConfigService, ExamConfig, ExamSubjectEntry } from '../../services/exam-config.service';
 import { SubjectConfigService, ClassSubject } from '../../services/subject-config.service';
@@ -30,6 +31,9 @@ interface SubjectRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamConfigComponent implements OnInit, OnDestroy {
+  /** Coordinators see only classes they cover in full; everyone else is unaffected. */
+  private coordinators = optionalCoordinatorService();
+
   private destroy$ = new Subject<void>();
 
   classOptions: string[] = [];
@@ -73,7 +77,7 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
       },
       error: (e) => this.logger.error('Failed to load sessions', e)
     });
-    this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
+    this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c)), takeUntil(this.destroy$)).subscribe({
       next: classes => {
         this.classOptions = classes;
         if (!this.selectedClass && classes.length > 0) {

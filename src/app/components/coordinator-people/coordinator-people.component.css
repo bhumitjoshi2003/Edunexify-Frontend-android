@@ -1,0 +1,20 @@
+:host { display: block; }
+.cp-page { max-width: 1100px; margin: 0 auto; padding: 18px; color: var(--edu-text, #1e293b); }
+.cp-page h1 { margin: 0 0 4px; font-size: 1.45rem; }
+.cp-sub { margin: 0 0 14px; color: #64748b; font-size: 0.88rem; }
+.cp-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 12px; background: #f1f5f9; }
+.cp-tabs button { min-height: 36px; padding: 6px 16px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 650; cursor: pointer; color: #475569; }
+.cp-tabs button.on { background: #fff; color: #3730a3; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08); }
+.cp-filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.cp-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 650; color: #475569; }
+.cp-filters select, .cp-filters input { min-height: 40px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 10px; font: inherit; }
+.cp-search { flex: 1; min-width: 200px; }
+.cp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.cp-item { display: flex; flex-direction: column; gap: 3px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; color: inherit; text-decoration: none; min-width: 0; }
+a.cp-item:hover { border-color: #c7d2fe; }
+.cp-item small { color: #64748b; font-size: 0.78rem; overflow-wrap: anywhere; }
+.cp-you { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 0.7rem; }
+.cp-muted { color: #64748b; font-size: 0.88rem; }
+.cp-error { color: #b42318; font-size: 0.88rem; }
+.cp-link { border: 0; background: none; color: #4f46e5; font: inherit; font-weight: 700; cursor: pointer; }
+@media (max-width: 560px) { .cp-page { padding: 12px; } }

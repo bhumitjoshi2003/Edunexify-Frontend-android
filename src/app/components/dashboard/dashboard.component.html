@@ -39,6 +39,7 @@
           <a class="nav-item" routerLink="/dashboard/student-list" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Students"><mat-icon>groups</mat-icon><span>Students</span></a>
           <a class="nav-item" routerLink="/dashboard/student-search" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Find a student"><mat-icon>search</mat-icon><span>Find a student</span></a>
           <a class="nav-item" routerLink="/dashboard/teacher-list" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Teachers"><mat-icon>person</mat-icon><span>Teachers</span></a>
+          <a class="nav-item" routerLink="/dashboard/coordinator-management" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Coordinators"><mat-icon>hub</mat-icon><span>Coordinators</span></a>
         </app-nav-group>
         <app-nav-group>
           <div class="nav-section-label">Attendance &amp; Leave</div>
@@ -269,6 +270,28 @@
         </app-nav-group>
       </ng-container>
 
+      <!-- ── COORDINATOR (a teacher with an active appointment; teaching links follow below) ── -->
+      <ng-container *ngIf="isCoordinator()">
+        <app-nav-group>
+          <div class="nav-section-label">Coordination</div>
+          <a class="nav-item" routerLink="/dashboard/coordinator-dashboard" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Coordinator dashboard"><mat-icon>hub</mat-icon><span>Coordinator dashboard</span></a>
+          <a class="nav-item" routerLink="/dashboard/coordinator-people" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Students &amp; teachers"><mat-icon>diversity_3</mat-icon><span>Students &amp; teachers</span></a>
+          <a class="nav-item" routerLink="/dashboard/coordinator-attendance" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Student attendance"><mat-icon>how_to_reg</mat-icon><span>Student attendance</span></a>
+          <a class="nav-item" routerLink="/dashboard/staff-attendance" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Staff attendance"><mat-icon>badge</mat-icon><span>Staff attendance</span></a>
+          <a class="nav-item" routerLink="/dashboard/coordinator-timetable" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Class timetables"><mat-icon>calendar_view_week</mat-icon><span>Class timetables</span></a>
+          <a class="nav-item" routerLink="/dashboard/teacher-substitutions" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Substitutions"><mat-icon>swap_horiz</mat-icon><span>Substitutions</span></a>
+          <a class="nav-item" *ngIf="hasFeature('REPORT_CARDS')" routerLink="/dashboard/coordinator-report-cards" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report card oversight"><mat-icon>fact_check</mat-icon><span>Report card oversight</span></a>
+        </app-nav-group>
+        <app-nav-group>
+          <div class="nav-section-label">Academic setup</div>
+          <a class="nav-item" routerLink="/dashboard/subject-config" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Subjects"><mat-icon>menu_book</mat-icon><span>Subjects</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/exam-config" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Exams"><mat-icon>quiz</mat-icon><span>Exams</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/assessment-groups" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Assessment groups"><mat-icon>account_tree</mat-icon><span>Assessment groups</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/student-stream" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Streams"><mat-icon>alt_route</mat-icon><span>Streams</span></a>
+          <a class="nav-item" *ngIf="hasFeature('EXAMS_RESULTS')" routerLink="/dashboard/elective-assignment" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Electives"><mat-icon>playlist_add_check</mat-icon><span>Electives</span></a>
+        </app-nav-group>
+      </ng-container>
+
       <!-- ── TEACHER ── -->
       <ng-container *ngIf="isTeacher()">
         <app-nav-group>
@@ -418,6 +441,10 @@
         <a class="nav-item" routerLink="/dashboard/admin-list" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Admins">
           <mat-icon>manage_accounts</mat-icon><span>Admins</span>
+        </a>
+        <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/coordinator-management" routerLinkActive="active"
+           (click)="closeSidebarOnMobile()" title="Coordinators">
+          <mat-icon>hub</mat-icon><span>Coordinators</span>
         </a>
         <a class="nav-item" *ngIf="Role === 'ADMIN'" routerLink="/dashboard/principal-management" routerLinkActive="active"
            (click)="closeSidebarOnMobile()" title="Principal">

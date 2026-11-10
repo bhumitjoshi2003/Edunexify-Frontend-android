@@ -31,7 +31,7 @@ describe('DashboardComponent — tab-resume / online session restoration', () =>
   let authState: jasmine.SpyObj<AuthStateService>;
 
   beforeEach(async () => {
-    authState = jasmine.createSpyObj('AuthStateService', [
+    authState = jasmine.createSpyObj('AuthStateService', ['isCoordinator', 
       'getUser', 'isLoggedIn', 'isUnauthenticated', 'loadCurrentUser', 'mustChangePassword',
       'getSubscriptionStatus', 'hasFeature', 'isSubscriptionWarning',
     ]);

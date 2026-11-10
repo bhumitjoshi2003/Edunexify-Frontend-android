@@ -62,11 +62,16 @@
             Last saved {{ lastSavedAt | date: 'd MMM, h:mm a' }}<span *ngIf="sheet?.markedBy"> by {{ sheet!.markedBy }}</span>
           </span>
         </div>
+        <label class="ta-correction" *ngIf="coordinatorMode && sheet">
+          <span>Reason for this correction (required)</span>
+          <textarea [(ngModel)]="correctionReason" name="correctionReason" rows="2" maxlength="500"
+            placeholder="e.g. Class teacher absent; register checked with the subject teacher"></textarea>
+        </label>
         <div class="ta-action-btns">
           <button type="button" class="ta-btn ta-btn-save" [disabled]="!canEdit || rows.length === 0" (click)="saveAttendance()">
             {{ isSaving ? 'Saving…' : (sheet?.submitted ? '✓ Update' : '✓ Submit') }}
           </button>
-          <button type="button" class="ta-btn ta-btn-delete" *ngIf="sheet?.submitted" [disabled]="!canEdit"
+          <button type="button" class="ta-btn ta-btn-delete" *ngIf="sheet?.submitted && !coordinatorMode" [disabled]="!canEdit"
             (click)="deleteAttendance()">{{ isDeleting ? 'Deleting…' : '✕ Delete' }}</button>
         </div>
       </div>

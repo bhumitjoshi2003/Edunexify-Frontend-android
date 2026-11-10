@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { optionalCoordinatorService } from '../../services/coordinator.service';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, formatDate } from '@angular/common';
 import { Router } from '@angular/router';
@@ -42,10 +44,19 @@ const TEACHER_EDIT_WINDOW_DAYS = 3;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherAttendanceComponent implements OnInit, OnDestroy {
+  private coordinators = optionalCoordinatorService();
+  /** Read only for the coordinator-attendance route; absent when the screen is built outside a router. */
+  private route: ActivatedRoute | null = (() => {
+    try { return inject(ActivatedRoute, { optional: true }); } catch { return null; }
+  })();
+
   private destroy$ = new Subject<void>();
   private reload$ = new Subject<void>();
 
   isAdmin = false;
+  coordinatorMode = false;
+  correctionReason = '';
+  private coordinatorUnits: { classId: number; sectionId: number | null }[] = [];
   attendanceDate: Date = this.getTodayDateWithoutTime();
   private dateChosen = false;
 
@@ -86,7 +97,10 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard']);
       return;
     }
-    this.isAdmin = role === 'ADMIN';
+    // The coordinator-attendance route: a Coordinator picks any section they cover and corrects it
+    // with a reason. Their own class stays on the ordinary teacher route.
+    this.coordinatorMode = this.route?.snapshot?.data?.['coordinatorMode'] === true && this.authStateService.isCoordinator() && !!this.coordinators;
+    this.isAdmin = role === 'ADMIN' || this.coordinatorMode;
     this.schoolSlug = user?.schoolSlug ?? null;
 
     // Latest request wins: switching class/section/date cancels an in-flight roster load.
@@ -120,7 +134,12 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
       error: err => this.logger.error('Error loading school calendar:', err)
     });
 
-    if (this.isAdmin) {
+    if (this.coordinatorMode) {
+      this.coordinators!.units().pipe(takeUntil(this.destroy$)).subscribe({
+        next: units => { this.coordinatorUnits = units; this.loadAdminClasses(); },
+        error: err => { this.loadError = this.errorMessage(err, 'Your coordination scope could not be loaded.'); this.cdr.markForCheck(); }
+      });
+    } else if (this.isAdmin) {
       this.loadAdminClasses();
     } else {
       this.reload();
@@ -132,7 +151,8 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   private loadAdminClasses(): void {
     this.schoolService.getManagedClasses().pipe(takeUntil(this.destroy$)).subscribe({
       next: classes => {
-        this.classes = classes.filter(c => c.active);
+        this.classes = classes.filter(c => c.active
+          && (!this.coordinatorMode || this.coordinatorUnits.some(u => u.classId === c.id)));
         const stored = getStoredSelectedClass(this.schoolSlug, this.classes.map(c => c.name), '');
         const initial = this.classes.find(c => c.name === stored) ?? null;
         this.cdr.markForCheck();
@@ -154,7 +174,8 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: sections => {
         if (this.selectedClassId !== cls.id) return;
-        this.sections = sections.filter(s => s.active && s.id != null);
+        this.sections = sections.filter(s => s.active && s.id != null && (!this.coordinatorMode
+          || this.coordinatorUnits.some(u => u.classId === cls.id && (u.sectionId == null || u.sectionId === s.id))));
         // Attendance is marked per section: start on the first one.
         this.selectedSectionId = this.sections.length > 0 ? this.sections[0].id! : null;
         this.reload();
@@ -241,6 +262,10 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   async saveAttendance(): Promise<void> {
     const sheet = this.sheet;
     if (!sheet || !this.canEdit || this.rows.length === 0) return;
+    if (this.coordinatorMode && !this.correctionReason.trim()) {
+      this.toast.warning('Reason required', 'Give a reason for correcting this class\'s attendance.');
+      return;
+    }
 
     const absent = this.absentCount;
     const confirmed = await this.toast.confirm({
@@ -263,9 +288,11 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
       sectionId: this.isAdmin ? sheet.sectionId : null,
       date: sheet.date,
       students: this.rows.map(r => ({ studentId: r.studentId, status: r.status })),
+      ...(this.coordinatorMode ? { correctionReason: this.correctionReason.trim() } : {}),
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: saved => {
         this.isSaving = false;
+        this.correctionReason = '';
         this.applySheet(saved);
         this.toast.success(sheet.submitted ? 'Attendance Updated' : 'Attendance Submitted',
           `${this.presentCount} present, ${this.absentCount} absent.`);

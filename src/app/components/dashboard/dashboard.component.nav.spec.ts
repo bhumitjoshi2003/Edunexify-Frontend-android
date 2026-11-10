@@ -29,7 +29,7 @@ describe('DashboardComponent — Teacher Substitution nav entry', () => {
   let authState: jasmine.SpyObj<AuthStateService>;
 
   function build(role: string): void {
-    authState = jasmine.createSpyObj('AuthStateService', [
+    authState = jasmine.createSpyObj('AuthStateService', ['isCoordinator', 
       'getUser', 'isLoggedIn', 'isUnauthenticated', 'loadCurrentUser', 'mustChangePassword',
       'getSubscriptionStatus', 'hasFeature', 'isSubscriptionWarning',
     ]);
