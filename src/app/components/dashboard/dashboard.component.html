@@ -782,7 +782,7 @@
     </header>
 
     <!-- Content -->
-    <main class="content-area">
+    <main class="content-area" (scroll)="onContentScroll($event)">
       <app-festival-greeting [userId]="Id" [role]="Role" [schoolSlug]="tenantService.school?.slug || 'platform'"></app-festival-greeting>
 
       <!-- Subscription expiry warning banner -->
@@ -809,8 +809,10 @@
 
       <app-ai-copilot *ngIf="hasFeature('AI_COPILOT')"></app-ai-copilot>
 
-      <!-- Persistent app update card (Capacitor Android only). Intentionally not dismissible. -->
-      <section class="app-update-banner" *ngIf="showUpdateBanner" aria-label="Edunexify update available">
+      <!-- Persistent app update card (Capacitor Android only). Intentionally not dismissible; it slides up
+           from the bottom on a downward scroll and is hidden at the top / on an upward scroll so the
+           AI Copilot button stays reachable. -->
+      <section class="app-update-banner" [class.is-revealed]="updateBannerRevealed" *ngIf="showUpdateBanner" aria-label="Edunexify update available">
         <div class="app-update-left">
           <div class="app-update-icon-wrap" aria-hidden="true">
             <mat-icon>system_update_alt</mat-icon>
