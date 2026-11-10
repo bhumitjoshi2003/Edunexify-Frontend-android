@@ -41,17 +41,6 @@
         <span class="al-field-hint">Cannot apply for past dates or Sundays</span>
       </div>
 
-      <div class="al-field" role="group" aria-label="Leave priority">
-        <label class="al-label">Leave Priority</label>
-        <div class="al-priority-options">
-          <button type="button" class="al-priority-option" [class.al-priority-option--selected]="!urgentSelected"
-            [disabled]="urgentRequired" (click)="setUrgent(false)">Regular Leave</button>
-          <button type="button" class="al-priority-option" [class.al-priority-option--selected]="urgentSelected"
-            (click)="setUrgent(true)">Urgent Leave</button>
-        </div>
-        <span class="al-field-hint" *ngIf="urgentRequired">Same-day and next-day student leave is automatically urgent.</span>
-      </div>
-
       <!-- Reason dropdown -->
       <div class="al-field">
         <label class="al-label">Reason</label>

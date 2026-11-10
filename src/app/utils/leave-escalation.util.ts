@@ -61,7 +61,11 @@ export function isLeaveAutoApproved(leave: EscalatableLeave | null | undefined):
 export function overdueDetail(leave: EscalatableLeave | null | undefined): string {
   const escalation = leave?.escalation;
   if (!escalation) return '';
-  const parts = [`Day ${escalation.day} since leave started`];
+  const day = escalation.day;
+  const timing = day < 0 ? `Leave starts in ${1 - day} days`
+    : day === 0 ? 'Leave starts tomorrow'
+    : day === 1 ? 'Leave starts today' : `Day ${day} since leave started`;
+  const parts = [timing];
   if (escalation.autoApprovalDate) parts.push(`Auto-approves ${formatShortDate(escalation.autoApprovalDate)}`);
   return parts.join(' · ');
 }

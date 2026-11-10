@@ -73,7 +73,6 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       leaveDate: ['', Validators.required],
       reason: ['', Validators.required],
       otherReason: ['', Validators.maxLength(200)],
-      urgent: [false],
     });
   }
 
@@ -97,13 +96,8 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
   }
 
   get urgentSelected(): boolean {
-    return this.urgentRequired || this.leaveForm.get('urgent')?.value === true;
-  }
-
-  setUrgent(value: boolean): void {
-    if (!value && this.urgentRequired) return;
-    this.leaveForm.get('urgent')?.setValue(value);
-    this.cdr.markForCheck();
+    // Priority is derived from the start date, never manually chosen.
+    return this.urgentRequired;
   }
 
   get reasonControl() {
@@ -364,7 +358,6 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       const leaveRequest: LeaveRequest = {
         leaveDate: formattedLeaveDate,
         reason: finalReason,
-        urgent: this.urgentSelected,
       };
       if (this.authStateService.getUserRole() === 'PARENT' && this.childUnavailable) {
         this.toast.error('Student unavailable', 'You no longer have access to this student.');
