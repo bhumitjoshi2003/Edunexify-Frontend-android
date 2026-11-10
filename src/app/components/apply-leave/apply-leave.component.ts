@@ -36,7 +36,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
   studentId: string = '';
   studentName: string = '';
   className = '';
-  leaves: { id: number; originalLeaveDate: string; leaveDate: string; reason: string; status: string;
+  leaves: { id: number; originalLeaveDate: string; leaveDate: string; reason: string; status: string; urgent?: boolean;
              decisionReason?: string | null; cancellationReason?: string | null }[] = [];
   isLoading: boolean = true;
 
@@ -73,6 +73,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       leaveDate: ['', Validators.required],
       reason: ['', Validators.required],
       otherReason: ['', Validators.maxLength(200)],
+      urgent: [false],
     });
   }
 
@@ -85,6 +86,24 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
     const today = new Date();
     this.today = formatDate(today, 'yyyy-MM-dd', 'en');
     this.getStudentId();
+  }
+
+  get urgentRequired(): boolean {
+    const date = this.leaveForm.get('leaveDate')?.value;
+    if (!date) return false;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return date <= formatDate(tomorrow, 'yyyy-MM-dd', 'en');
+  }
+
+  get urgentSelected(): boolean {
+    return this.urgentRequired || this.leaveForm.get('urgent')?.value === true;
+  }
+
+  setUrgent(value: boolean): void {
+    if (!value && this.urgentRequired) return;
+    this.leaveForm.get('urgent')?.setValue(value);
+    this.cdr.markForCheck();
   }
 
   get reasonControl() {
@@ -181,6 +200,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
             leaveDate: leave.leaveDate,
             reason: leave.reason,
             status: leave.status ?? 'PENDING',
+            urgent: leave.urgent === true,
             decisionReason: leave.decisionReason ?? null,
             cancellationReason: leave.cancellationReason ?? null,
           }));
@@ -306,7 +326,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (leaveDate.toDateString() === today.toDateString() && now >= sixAMToday) {
+      if (!this.urgentSelected && leaveDate.toDateString() === today.toDateString() && now >= sixAMToday) {
         this.errorMessage = 'Leave for today must be applied before 6:00 AM!';
         return;
       }
@@ -344,6 +364,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
       const leaveRequest: LeaveRequest = {
         leaveDate: formattedLeaveDate,
         reason: finalReason,
+        urgent: this.urgentSelected,
       };
       if (this.authStateService.getUserRole() === 'PARENT' && this.childUnavailable) {
         this.toast.error('Student unavailable', 'You no longer have access to this student.');

@@ -66,7 +66,7 @@ describe('ViewLeavesComponent', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.vl-btn-delete-all')).not.toBeNull();
   });
 
-  it('marks a pending request red from day 3 only, and keeps its actions', () => {
+  it('marks a pending request red from day 1, and keeps its actions', () => {
     // Explicit status: other specs approve the shared `pending` fixture in place.
     const overdue = { ...pending, id: 8, status: 'PENDING', escalation: { day: 4, overdue: true, autoApprovalDate: '2026-11-16', automatic: true } } as LeaveApplication;
     const early = { ...pending, id: 9, status: 'PENDING', escalation: { day: 2, overdue: false, autoApprovalDate: '2026-11-18', automatic: true } } as LeaveApplication;
@@ -77,7 +77,7 @@ describe('ViewLeavesComponent', () => {
     expect(cards[0].textContent).toContain('Day 4 since leave started · Auto-approves 16 Nov');
     expect(cards[0].querySelector('.vl-btn-approve')).not.toBeNull();
     expect(cards[0].querySelector('.vl-btn-reject')).not.toBeNull();
-    expect(cards[1].classList).not.toContain('is-overdue');
+    expect(cards[1].classList).toContain('is-overdue');
     expect(cards[1].textContent).not.toContain('Overdue');
   });
 

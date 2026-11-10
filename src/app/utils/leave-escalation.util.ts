@@ -16,6 +16,8 @@ export interface LeaveEscalation {
 export interface LeaveAttentionBucket {
   pending: number;
   overdue: number;
+  attention?: number;
+  urgent?: number;
   oldestDay: number | null;
 }
 
@@ -28,11 +30,13 @@ export interface LeaveAttentionSummary {
 
 export interface EscalatableLeave {
   status?: string | null;
+  urgent?: boolean;
   escalation?: LeaveEscalation | null;
   decisionSource?: string | null;
 }
 
 export const AUTO_APPROVAL_SOURCE = 'SYSTEM_AUTO_APPROVAL';
+export const NEEDS_ATTENTION_BADGE = 'Needs Attention';
 export const OVERDUE_BADGE = 'Overdue · Action Required';
 export const AUTO_APPROVED_LABEL = 'Automatically Approved';
 export const AUTO_APPROVED_NOTE = 'No action was taken within the seven-day review period.';
@@ -42,6 +46,11 @@ const SHORT_DATE = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'sh
 /** Red styling only for a request that is still pending and has reached day 3. */
 export function isLeaveOverdue(leave: EscalatableLeave | null | undefined): boolean {
   return !!leave && leave.status === 'PENDING' && !!leave.escalation?.overdue;
+}
+
+/** Urgent requests demand immediate attention; normal ones from their first leave day. */
+export function isLeaveNeedsAttention(leave: EscalatableLeave | null | undefined): boolean {
+  return !!leave && leave.status === 'PENDING' && (leave.urgent === true || (leave.escalation?.day ?? 0) >= 1);
 }
 
 export function isLeaveAutoApproved(leave: EscalatableLeave | null | undefined): boolean {
@@ -59,8 +68,9 @@ export function overdueDetail(leave: EscalatableLeave | null | undefined): strin
 
 /** "2 overdue · oldest on day 5", or '' when nothing is overdue. */
 export function attentionOverdueLabel(bucket: LeaveAttentionBucket | null | undefined): string {
-  if (!bucket || bucket.overdue <= 0) return '';
-  return `${bucket.overdue} overdue` + (bucket.oldestDay ? ` · oldest on day ${bucket.oldestDay}` : '');
+  const count = bucket?.attention ?? bucket?.overdue ?? 0;
+  if (count <= 0) return '';
+  return `${count} need attention` + (bucket?.oldestDay ? ` · oldest on day ${bucket.oldestDay}` : '');
 }
 
 export function formatShortDate(isoDate: string): string {

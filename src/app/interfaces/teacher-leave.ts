@@ -7,6 +7,7 @@ export interface TeacherLeave {
   startDate: string;
   endDate: string;
   reason: string;
+  urgent?: boolean;
   status: string;
   appliedDate: string;
   days: number;
@@ -26,4 +27,5 @@ export interface TeacherLeaveApplyRequest {
   startDate: string;
   endDate: string;
   reason: string;
+  urgent?: boolean;
 }

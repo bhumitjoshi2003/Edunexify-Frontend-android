@@ -53,6 +53,7 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
       reason: ['', [Validators.required, Validators.maxLength(200)]],
+      urgent: [false],
     });
   }
 
@@ -122,6 +123,24 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
     }
   }
 
+  get urgentRequired(): boolean {
+    const start = this.leaveForm.get('startDate')?.value;
+    if (!start) return false;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return start <= formatDate(tomorrow, 'yyyy-MM-dd', 'en');
+  }
+
+  get urgentSelected(): boolean {
+    return this.urgentRequired || this.leaveForm.get('urgent')?.value === true;
+  }
+
+  setUrgent(value: boolean): void {
+    if (!value && this.urgentRequired) return;
+    this.leaveForm.get('urgent')?.setValue(value);
+    this.cdr.markForCheck();
+  }
+
   onFieldChange(): void {
     if (!this.formSubmitted) return;
     this.check();
@@ -164,7 +183,7 @@ export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.isSubmitting = true;
 
-    this.teacherLeaveService.applyLeave({ startDate, endDate, reason }).pipe(takeUntil(this.destroy$)).subscribe({
+    this.teacherLeaveService.applyLeave({ startDate, endDate, reason, urgent: this.urgentSelected }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.leaveForm.reset();

@@ -439,3 +439,13 @@
 .al-empty span {
   font-size: 0.75rem;
 }
+
+/* Leave priority — compact, touch-friendly and consistent across website and Android. */
+.al-priority-options { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 7px; }
+.al-priority-option {
+  border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; background: #fff;
+  color: #334155; font: inherit; font-weight: 650; cursor: pointer; min-height: 42px;
+}
+.al-priority-option--selected { border-color: #0d9488; background: #ecfdf5; color: #0f766e; }
+.al-priority-option--selected:last-child { border-color: #dc2626; background: #fef2f2; color: #b91c1c; }
+.al-priority-option:disabled { cursor: not-allowed; opacity: .55; }

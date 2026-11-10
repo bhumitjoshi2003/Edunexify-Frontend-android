@@ -3,4 +3,5 @@
 export interface LeaveRequest {
   leaveDate: string;
   reason: string;
+  urgent?: boolean;
 }

@@ -27,8 +27,8 @@ describe('LeaveEscalationBadgeComponent', () => {
     expect(text).toBe('Overdue · Action Required | Day 40 since leave started');
   });
 
-  it('renders nothing before day 3', () => {
-    expect(render({ status: 'PENDING', escalation: { day: 2, overdue: false, autoApprovalDate: '2026-11-20', automatic: true } })).toBe('');
+  it('shows needs attention once the leave has started', () => {
+    expect(render({ status: 'PENDING', escalation: { day: 2, overdue: false, autoApprovalDate: '2026-11-20', automatic: true } })).toBe('Needs Attention');
   });
 
   it('renders nothing once a person approved, rejected or cancelled the request', () => {
@@ -46,7 +46,7 @@ describe('LeaveEscalationBadgeComponent', () => {
   });
 
   it('formats dashboard labels and dates', () => {
-    expect(attentionOverdueLabel({ pending: 4, overdue: 2, oldestDay: 6 })).toBe('2 overdue · oldest on day 6');
+    expect(attentionOverdueLabel({ pending: 4, overdue: 2, oldestDay: 6 })).toBe('2 need attention · oldest on day 6');
     expect(attentionOverdueLabel({ pending: 4, overdue: 0, oldestDay: 2 })).toBe('');
     expect(attentionOverdueLabel(null)).toBe('');
     expect(formatShortDate('2026-01-04')).toBe('4 Jan');

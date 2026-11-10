@@ -17,7 +17,7 @@ import { StudentService } from '../../services/student.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { LeaveService, LeaveApplication } from '../../services/leave.service';
 import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
-import { LeaveAttentionSummary, OVERDUE_BADGE, attentionOverdueLabel, isLeaveOverdue } from '../../utils/leave-escalation.util';
+import { LeaveAttentionSummary, NEEDS_ATTENTION_BADGE, attentionOverdueLabel, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
 import { LoggerService } from '../../services/logger.service';
 import { NotificationStateService } from '../../services/notification-state.service';
 import { TeacherCheckinService } from '../../services/teacher-checkin.service';
@@ -69,9 +69,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   recentLeaves: LeaveApplication[] = [];
   /** Overdue (day 3+) student leave in this teacher's own class/section; optional. */
   leaveAttention: LeaveAttentionSummary | null = null;
-  readonly overdueBadge = OVERDUE_BADGE;
+  readonly overdueBadge = NEEDS_ATTENTION_BADGE;
   readonly overdueLabel = attentionOverdueLabel;
-  readonly isOverdue = isLeaveOverdue;
+  readonly isOverdue = isLeaveNeedsAttention;
   /** true only when the combined class-data request failed — "Class {{ className }} today"
    *  and "Pending approvals" must show a neutral unavailable state instead of the fabricated
    *  "0 active students" / "No pending requests" a blank default would otherwise imply. */
@@ -438,7 +438,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         this.pendingLeavesCount = pending.length;
         // Overdue requests first (oldest day first); the rest keep the server's order.
         this.recentLeaves = [...pending]
-          .sort((a, b) => (isLeaveOverdue(b) ? b.escalation!.day : 0) - (isLeaveOverdue(a) ? a.escalation!.day : 0))
+          .sort((a, b) => (isLeaveNeedsAttention(b) ? b.escalation!.day : 0) - (isLeaveNeedsAttention(a) ? a.escalation!.day : 0))
           .slice(0, 5);
 
         // Class rate = all present days / all submitted days (the same formula as each student's %).
@@ -469,7 +469,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   }
 
   get overdueLeaveCount(): number {
-    return this.leaveAttention?.student?.overdue ?? 0;
+    return this.leaveAttention?.student?.attention ?? this.leaveAttention?.student?.overdue ?? 0;
   }
 
   approveLeave(leaveId: number): void {

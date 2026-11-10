@@ -8,7 +8,7 @@ import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
-import { LeaveAttentionBucket, LeaveAttentionSummary, OVERDUE_BADGE, attentionOverdueLabel } from '../../utils/leave-escalation.util';
+import { LeaveAttentionBucket, LeaveAttentionSummary, NEEDS_ATTENTION_BADGE, attentionOverdueLabel } from '../../utils/leave-escalation.util';
 
 /** One class's attendance; recordedToday is absent from servers older than this screen. */
 export interface PrincipalClassAttendance {
@@ -242,8 +242,8 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
   }
 
   private overdue(bucket: LeaveAttentionBucket | null | undefined): Pick<AttentionItem, 'overdue' | 'detail'> {
-    return bucket && bucket.overdue > 0
-      ? { overdue: true, detail: `${OVERDUE_BADGE} · ${attentionOverdueLabel(bucket)}` }
+    return bucket && (bucket.attention ?? bucket.overdue) > 0
+      ? { overdue: true, detail: `${NEEDS_ATTENTION_BADGE} · ${attentionOverdueLabel(bucket)}` }
       : {};
   }
 
