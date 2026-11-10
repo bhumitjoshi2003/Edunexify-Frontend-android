@@ -79,7 +79,9 @@ export class TimetableComponent implements OnInit, OnDestroy {
   get initialSessionId(): number | null { return Number(this.route.snapshot.queryParamMap.get('academicSessionId')) || null; }
   canManage(): boolean { return this.role === 'ADMIN'; }
   canSelectSession(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
-  canWrite(): boolean { return this.canManage() && writableSession(this.selectedSession); }
+  /** Period entries: Admin, and the Principal (TIMETABLE_EDIT). Bulk import and session copy stay Admin-only. */
+  canEditPeriods(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
+  canWrite(): boolean { return this.canEditPeriods() && writableSession(this.selectedSession); }
   canAdd(): boolean { return this.canWrite() && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
   /** Timings, class-teacher configuration and access grants; period editing stays canWrite(). */
   canManageSetup(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
@@ -831,10 +833,10 @@ export class TimetableComponent implements OnInit, OnDestroy {
     } else if (!this.canWrite() || this.modalForm.classId == null) {
       this.modalError = 'Select a writable session and a valid class.'; return;
     }
-    if (this.canManage() && this.modalForm.academicSessionId !== this.selectedSession?.id) {
+    if (this.canEditPeriods() && this.modalForm.academicSessionId !== this.selectedSession?.id) {
       this.modalError = 'Session changed. Reopen this period.'; return;
     }
-    if (this.canManage() && (!this.sectionsLoaded || (this.sections.length ? !this.sections.some(s => s.id === this.modalForm.sectionId) : this.modalForm.sectionId != null))) {
+    if (this.canEditPeriods() && (!this.sectionsLoaded || (this.sections.length ? !this.sections.some(s => s.id === this.modalForm.sectionId) : this.modalForm.sectionId != null))) {
       this.modalError = 'Select a valid section for this class.'; return;
     }
     if (!this.modalForm.subjectName?.trim()) {
@@ -864,7 +866,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
     const form = this.modalForm;
     const body: TimetableEntryRequest = {
-      ...(this.canManage() ? { academicSessionId: this.selectedSession!.id } : this.isEditMode ? { academicSessionId: form.academicSessionId } : {}),
+      ...(this.canEditPeriods() ? { academicSessionId: this.selectedSession!.id } : this.isEditMode ? { academicSessionId: form.academicSessionId } : {}),
       classId: form.classId!, sectionId: form.sectionId ?? null, day: form.day,
       periodNumber: form.periodNumber, startTime: form.startTime, endTime: form.endTime,
       subjectName: form.subjectName, teacherId: this.isTeacher() ? this.userId : form.teacherId
@@ -941,7 +943,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
       dismissOnBackdrop: true,
       danger: true
     }).then(confirmed => {
-      if (!confirmed || this.destroyed || !this.canEditEntry(this.modalForm) || this.modalForm.id !== id || (this.canManage() && this.selectedSession?.id !== sessionId)) return;
+      if (!confirmed || this.destroyed || !this.canEditEntry(this.modalForm) || this.modalForm.id !== id || (this.canEditPeriods() && this.selectedSession?.id !== sessionId)) return;
       this.modalSaving = true;
       this.cdr.markForCheck();
       this.timetableService.deleteEntry(id, sessionId)

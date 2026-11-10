@@ -27,6 +27,15 @@ describe('G1 timetable screen', () => {
     expect(api.createEntry).not.toHaveBeenCalled();
   });
   it('does not expose ADMIN writes to SUB_ADMIN', () => { c.role = 'SUB_ADMIN'; expect(c.canWrite()).toBeFalse(); c.saveEntry(); expect(api.createEntry).not.toHaveBeenCalled(); });
+  it('lets the Principal edit periods in a writable session, but keeps Admin-only bulk import and session copy off', () => {
+    c.role = 'PRINCIPAL';
+    expect(c.canWrite()).toBeTrue();
+    expect(c.canManage()).toBeFalse(); // bulk import and teaching-configuration administration follow canManage()
+    c.saveEntry();
+    expect(api.createEntry.calls.mostRecent().args[0].academicSessionId).toBe(1); // explicit session, like an Admin
+    c.selectedSession = historical;
+    expect(c.canWrite()).toBeFalse();
+  });
   it('creates with canonical IDs and strips display names', () => {
     c.saveEntry();
     const body = api.createEntry.calls.mostRecent().args[0];

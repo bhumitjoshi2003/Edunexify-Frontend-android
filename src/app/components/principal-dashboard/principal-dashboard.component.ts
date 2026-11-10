@@ -8,7 +8,7 @@ import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
-import { LeaveAttentionBucket, LeaveAttentionSummary, NEEDS_ATTENTION_BADGE, attentionOverdueLabel } from '../../utils/leave-escalation.util';
+import { LeaveAttentionBucket, LeaveAttentionSummary, NEEDS_ATTENTION_BADGE } from '../../utils/leave-escalation.util';
 
 /** One class's attendance; recordedToday is absent from servers older than this screen. */
 export interface PrincipalClassAttendance {
@@ -172,6 +172,8 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
   get reportCardsEnabled(): boolean { return this.auth.hasFeature('REPORT_CARDS'); }
 
   get eventsEnabled(): boolean { return this.auth.hasFeature('SCHOOL_COMMUNICATION'); }
+  get examsEnabled(): boolean { return this.auth.hasFeature('EXAMS_RESULTS'); }
+  get classroomEnabled(): boolean { return this.auth.hasFeature('CLASSROOM'); }
 
   /** A school holiday or closed day: the staff summary expects nobody. Unknown counts as a school day. */
   get closedToday(): boolean { return this.staff.data?.expectedCount === 0; }
@@ -243,7 +245,7 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
 
   private overdue(bucket: LeaveAttentionBucket | null | undefined): Pick<AttentionItem, 'overdue' | 'detail'> {
     return bucket && (bucket.attention ?? bucket.overdue) > 0
-      ? { overdue: true, detail: `${NEEDS_ATTENTION_BADGE} · ${attentionOverdueLabel(bucket)}` }
+      ? { overdue: true, detail: NEEDS_ATTENTION_BADGE }
       : {};
   }
 

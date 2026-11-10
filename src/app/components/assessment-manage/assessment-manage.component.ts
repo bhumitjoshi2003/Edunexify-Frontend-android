@@ -119,7 +119,9 @@ export class AssessmentManageComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {
-    this.isAdmin = authState.getUser()?.role === 'ADMIN';
+    const role = authState.getUser()?.role;
+    // The Principal schedules for the whole school, exactly like an Admin.
+    this.isAdmin = role === 'ADMIN' || role === 'PRINCIPAL';
   }
 
   ngOnInit(): void {
@@ -189,6 +191,7 @@ export class AssessmentManageComponent implements OnInit, OnDestroy {
   sourceLabel(item: Assessment): string {
     if (item.createdByCurrentUser) return 'Created by you';
     if (item.createdByRole === 'ADMIN') return 'Created by Admin';
+    if (item.createdByRole === 'PRINCIPAL') return 'Created by Principal';
     return `Created by ${item.createdByName || 'another teacher'}`;
   }
 

@@ -412,3 +412,13 @@ a.pd-tile { transition: transform .2s, border-color .2s, box-shadow .2s; }
   a.pd-tile, .pd-attention-list li > a { transition: none; }
   a.pd-tile:hover, .pd-attention-list li > a:hover { transform: none; }
 }
+
+/* Academic setup shortcuts: a compact link grid that stays two-up on phones. */
+.pd-setup-links { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pd-setup-links a {
+  display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px;
+  background: #fff; color: #1e293b; font-size: 0.84rem; font-weight: 600; text-decoration: none; line-height: 1.2;
+}
+.pd-setup-links a:hover { background: #f8fafc; }
+.pd-setup-links a:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.pd-setup-links mat-icon { flex: none; width: 18px; height: 18px; font-size: 18px; color: #4f46e5; }

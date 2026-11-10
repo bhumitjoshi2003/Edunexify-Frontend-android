@@ -245,7 +245,7 @@
       </div>
 
       <!-- Add period (admin only) -->
-      <button class="tt-add-btn no-print" *ngIf="canManage()" [disabled]="!canAdd()" (click)="openAddPeriod()">
+      <button class="tt-add-btn no-print" *ngIf="canEditPeriods()" [disabled]="!canAdd()" (click)="openAddPeriod()">
         ＋ Add Period for {{ dayLabels[selectedDay] }}
       </button>
 
