@@ -12,6 +12,8 @@
     "src/app/components/signature-settings/*.spec.ts",
     "src/app/components/view-leaves/*.spec.ts",
     "src/app/components/leave-escalation-badge/*.spec.ts",
+    "src/app/components/staff-attendance/staff-attendance.principal.spec.ts",
+    "src/app/services/teacher-checkin.principal.spec.ts",
     "src/app/utils/leave-escalation-priority.spec.ts",
     "src/app/components/apply-leave/*.priority-hint.spec.ts",
     "src/app/components/apply-teacher-leave/*.priority-hint.spec.ts",

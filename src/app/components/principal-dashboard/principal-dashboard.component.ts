@@ -216,7 +216,7 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
       const notIn = s?.notCheckedInCount ?? 0;
       add({ key: 'not-checked-in', severity: 'warning', icon: 'schedule', count: notIn,
         label: this.plural(notIn, 'teacher has', 'teachers have') + ' not checked in',
-        route: null });
+        route: '/dashboard/staff-attendance' });
     }
     if (this.reportCardsEnabled) {
       const awaiting = o?.awaitingPrincipalReview ?? 0;

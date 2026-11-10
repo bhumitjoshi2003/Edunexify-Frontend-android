@@ -528,3 +528,24 @@
   padding: 1px 7px;
   border-radius: 10px;
 }
+
+/* ── Principal corrections ── */
+.sa-card-readonly { cursor: default; opacity: 0.85; }
+.sa-card-readonly:hover { transform: none; box-shadow: none; }
+.sa-self-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: #eef2f7; color: #475569; font-size: 0.66rem; font-weight: 700; vertical-align: middle;
+}
+.sa-required { color: #dc2626; }
+.sa-dialog-field textarea {
+  width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1.5px solid #d8e1ea; border-radius: 9px;
+  font: inherit; font-size: 0.85rem; resize: vertical; min-height: 56px;
+}
+.sa-dialog-field textarea:focus { outline: none; border-color: #20a89d; box-shadow: 0 0 0 3px rgba(32, 168, 157, 0.12); }
+.sa-history { margin-top: 4px; padding-top: 12px; border-top: 1px solid #edf1f5; }
+.sa-history-title { margin: 0 0 6px; color: #334155; font-size: 0.78rem; font-weight: 800; }
+.sa-history-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 180px; overflow-y: auto; }
+.sa-history-list li { display: grid; gap: 2px; padding: 8px 10px; border: 1px solid #e8edf3; border-radius: 10px; background: #fbfcfd; }
+.sa-history-list strong { font-size: 0.78rem; color: #1e293b; }
+.sa-history-list span { font-size: 0.76rem; color: #334155; overflow-wrap: anywhere; }
+.sa-history-list small { font-size: 0.68rem; color: #64748b; }

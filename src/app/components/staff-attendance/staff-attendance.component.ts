@@ -10,6 +10,8 @@ import { TenantService } from '../../services/tenant.service';
 import { LoggerService } from '../../services/logger.service';
 import { ToastService } from '../../services/toast.service';
 import { AcademicSessionService } from '../../services/academic-session.service';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { TeacherAttendanceCorrection } from '../../interfaces/teacher-checkin';
 
 @Component({
   selector: 'app-staff-attendance',
@@ -75,7 +77,8 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private toast: ToastService,
     private academicSessionService: AcademicSessionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authState: AuthStateService
   ) {
     const now = new Date();
     this.selectedDate = now.toISOString().slice(0, 10);
@@ -85,7 +88,16 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
     this.individualYear = now.getFullYear();
   }
 
+  /** The Principal corrects with a reason, sees the history, and never edits their own record. */
+  isPrincipal = false;
+  ownTeacherIds = new Set<string>();
+  correctionReason = '';
+  correctionHistory: TeacherAttendanceCorrection[] = [];
+  historyLoading = false;
+
   ngOnInit(): void {
+    this.isPrincipal = this.authState.getUserRole() === 'PRINCIPAL';
+    if (this.isPrincipal) this.loadOwnTeacherIds();
     this.loadDailyRecords();
     this.loadTeachers();
     this.loadSchoolTiming();
@@ -281,6 +293,8 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   }
 
   openMarkDialog(): void {
+    this.correctionReason = '';
+    this.correctionHistory = [];
     this.isEditMode = false;
     this.editingRecordId = null;
     this.formDirty = false;
@@ -289,6 +303,9 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   }
 
   openEditDialog(record: TeacherAttendanceRecord): void {
+    if (!this.canCorrect(record)) return;
+    this.correctionReason = '';
+    this.loadCorrectionHistory(record.teacherId, record.date);
     this.isEditMode = true;
     this.editingRecordId = record.id;
     this.formDirty = false;
@@ -338,6 +355,14 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   }
 
   async submitAdminMark(): Promise<void> {
+    if (this.isPrincipal && this.ownTeacherIds.has(this.markForm.teacherId)) {
+      this.toast.warning('Not allowed', 'You cannot correct your own attendance.');
+      return;
+    }
+    if (this.isPrincipal && !this.correctionReason.trim()) {
+      this.toast.warning('Reason required', 'Give a reason for this correction.');
+      return;
+    }
     if (!this.markForm.teacherId || !this.markForm.date || !this.markForm.status) {
       this.toast.warning('Validation', 'Please fill all required fields.');
       return;
@@ -372,7 +397,10 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
     if (this.markForm.checkInTime) req.checkInTime = this.markForm.checkInTime;
     if (this.markForm.checkOutTime) req.checkOutTime = this.markForm.checkOutTime;
 
-    this.checkinService.adminMark(req)
+    const save$ = this.isPrincipal
+      ? this.checkinService.principalCorrect({ ...req, reason: this.correctionReason.trim() })
+      : this.checkinService.adminMark(req);
+    save$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -391,6 +419,38 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
           this.toast.error('Error', msg);
           this.cdr.markForCheck();
         }
+      });
+  }
+
+  // ── Principal corrections ──
+
+  /** The Principal may correct any teacher of the school except their own teacher record. */
+  canCorrect(record: TeacherAttendanceRecord): boolean {
+    return !this.isPrincipal || !this.ownTeacherIds.has(record.teacherId);
+  }
+
+  isOwnRecord(record: TeacherAttendanceRecord): boolean {
+    return this.isPrincipal && this.ownTeacherIds.has(record.teacherId);
+  }
+
+  private loadOwnTeacherIds(): void {
+    this.checkinService.getOwnTeacherIds()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (self) => { this.ownTeacherIds = new Set(self?.teacherIds ?? []); this.cdr.markForCheck(); },
+        error: (err) => this.logger.error('Failed to load own teacher record', err)
+      });
+  }
+
+  private loadCorrectionHistory(teacherId: string, date: string): void {
+    this.correctionHistory = [];
+    if (!this.isPrincipal) return;
+    this.historyLoading = true;
+    this.checkinService.getCorrectionHistory(teacherId, date)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (history) => { this.correctionHistory = history; this.historyLoading = false; this.cdr.markForCheck(); },
+        error: (err) => { this.logger.error('Failed to load correction history', err); this.historyLoading = false; this.cdr.markForCheck(); }
       });
   }
 
