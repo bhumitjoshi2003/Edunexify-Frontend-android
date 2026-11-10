@@ -44,6 +44,11 @@ export const roleGuard: CanActivateFn = (route, state) => {
       return true;
     }
 
+    // COORDINATOR is not an account role: a teacher with an active appointment may open these routes.
+    if (allowedRoles.includes('COORDINATOR') && authState.isCoordinator()) {
+      return true;
+    }
+
     router.navigate(['/dashboard']);
     return false;
   };

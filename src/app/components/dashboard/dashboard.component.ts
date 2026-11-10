@@ -258,7 +258,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.Role === 'STUDENT') {
       this.router.navigate(['/dashboard/student-dashboard']);
     } else if (this.Role === 'TEACHER') {
-      this.router.navigate(['/dashboard/teacher-dashboard']);
+      // One login: a coordinating teacher lands on the Coordinator dashboard; teaching stays one click away.
+      this.router.navigate([this.isCoordinator() ? '/dashboard/coordinator-dashboard' : '/dashboard/teacher-dashboard']);
     } else if (this.Role === 'PRINCIPAL') {
       this.router.navigate(['/dashboard/principal-dashboard']);
     } else if (this.Role === 'ADMIN' || this.Role === 'SUB_ADMIN') {
@@ -276,6 +277,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   isTeacher(): boolean {
     return this.Role === 'TEACHER';
+  }
+
+  /** A TEACHER account with an active Academic Coordinator appointment. */
+  isCoordinator(): boolean {
+    return this.Role === 'TEACHER' && this.authStateService.isCoordinator();
   }
 
   isPrincipal(): boolean {
@@ -389,12 +395,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       'STUDENT': 'Student',
       'TEACHER': 'Teacher',
       'PRINCIPAL': 'Principal',
+      'COORDINATOR': 'Coordinator',
       'ADMIN': 'Admin',
       'SUB_ADMIN': 'Sub Admin',
       'SUPER_ADMIN': 'Super Admin',
       'PARENT': 'Parent',
     };
-    return labels[this.Role] ?? this.Role;
+    const role = this.isCoordinator() ? 'COORDINATOR' : this.Role;
+    return labels[role] ?? role;
   }
 
   getProfileInitials(): string {
@@ -410,12 +418,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const classes: Record<string, string> = {
       'STUDENT': 'chip-student',
       'TEACHER': 'chip-teacher',
+      'COORDINATOR': 'chip-admin',
       'ADMIN': 'chip-admin',
       'SUB_ADMIN': 'chip-subadmin',
       'SUPER_ADMIN': 'chip-superadmin',
       'PARENT': 'chip-parent',
     };
-    return classes[this.Role] ?? 'chip-student';
+    return classes[this.isCoordinator() ? 'COORDINATOR' : this.Role] ?? 'chip-student';
   }
 
   private get isMobile(): boolean {

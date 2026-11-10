@@ -34,6 +34,10 @@ export interface UserInfo {
   // other route — set on newly-created STUDENT/TEACHER accounts and on admin
   // password resets. Absent/false for every existing normal session.
   mustChangePassword?: boolean;
+  /** A TEACHER account holding an active Academic Coordinator appointment (one account, one login). */
+  coordinator?: boolean;
+  /** The role shown after login: COORDINATOR for a coordinating teacher, otherwise `role`. */
+  primaryRole?: string | null;
 }
 
 @Injectable({
@@ -113,6 +117,19 @@ export class AuthStateService {
 
   getUserRole(): string {
     return this.user?.role ?? '';
+  }
+
+  /**
+   * UX-only: the signed-in teacher holds an active Coordinator appointment. `role` stays TEACHER so
+   * every teaching screen is unchanged; the server re-checks the appointment and scope on each call.
+   */
+  isCoordinator(): boolean {
+    return this.user?.role === 'TEACHER' && this.user?.coordinator === true;
+  }
+
+  /** The role to display: COORDINATOR for a coordinating teacher, otherwise the account role. */
+  getPrimaryRole(): string {
+    return this.isCoordinator() ? 'COORDINATOR' : this.getUserRole();
   }
 
   getUserId(): string {

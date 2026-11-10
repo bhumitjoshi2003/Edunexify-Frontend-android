@@ -49,7 +49,7 @@ describe('StaffAttendanceComponent — Principal corrections', () => {
     await TestBed.configureTestingModule({
       imports: [StaffAttendanceComponent],
       providers: [
-        { provide: AuthStateService, useValue: { getUserRole: () => role } },
+        { provide: AuthStateService, useValue: { isCoordinator: () => false, getUserRole: () => role } },
         { provide: TeacherCheckinService, useValue: checkin },
         { provide: TeacherService, useValue: teachers },
         { provide: TenantService, useValue: jasmine.createSpyObj('TenantService', ['getLogoUrl']) },
@@ -126,7 +126,7 @@ describe('StaffAttendanceComponent — Principal corrections', () => {
     const { roleGuard } = await import('../../auth/role.guard');
     const { principalCapabilityGuard } = await import('../../auth/principal-capability.guard');
     const route = routes.find(r => r.path === 'dashboard')!.children!.find(r => r.path === 'staff-attendance')!;
-    expect(route.data?.['roles']).toEqual(['ADMIN', 'PRINCIPAL']);
+    expect(route.data?.['roles']).toEqual(['ADMIN', 'PRINCIPAL', 'COORDINATOR']);
     expect(route.data?.['principalOperation']).toBe('TEACHER_ATTENDANCE_CORRECT');
     expect(route.canActivate!.indexOf(roleGuard)).toBeLessThan(route.canActivate!.indexOf(principalCapabilityGuard));
   });

@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { coordinatorFullClasses, optionalCoordinatorService } from '../../services/coordinator.service';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { Subject, forkJoin, takeUntil, switchMap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { StudentStreamService, StudentStreamOverview } from '../../services/student-stream.service';
 import { SubjectConfigService, AcademicStream, OptionalSubjectGroup } from '../../services/subject-config.service';
@@ -19,6 +20,9 @@ import { LoggerService } from '../../services/logger.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentStreamComponent implements OnInit, OnDestroy {
+  /** Coordinators see only classes they cover in full; everyone else is unaffected. */
+  private coordinators = optionalCoordinatorService();
+
   private destroy$ = new Subject<void>();
 
   eligibleClasses: SchoolClass[] = [];
@@ -57,7 +61,7 @@ export class StudentStreamComponent implements OnInit, OnDestroy {
     forkJoin([
       this.subjectService.getStreams(),
       this.subjectService.getOptionalGroups(),
-      this.schoolService.getManagedClasses(),
+      this.schoolService.getManagedClasses().pipe(switchMap(c => coordinatorFullClasses(this.coordinators, c))),
     ]).pipe(takeUntil(this.destroy$)).subscribe({
       next: ([streams, groups, classes]) => {
         this.streams = streams;

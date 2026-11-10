@@ -49,6 +49,37 @@ export const routes: Routes = [
         loadComponent: () => import('./components/signature-settings/signature-settings.component').then(m => m.SignatureSettingsComponent),
         canActivate: [roleGuard], data: { roles: ['TEACHER', 'PRINCIPAL'] }
       },
+      // ── Academic Coordinator (a TEACHER account with an active appointment) ──
+      {
+        path: 'coordinator-dashboard',
+        loadComponent: () => import('./components/coordinator-dashboard/coordinator-dashboard.component').then(m => m.CoordinatorDashboardComponent),
+        canActivate: [roleGuard], data: { roles: ['COORDINATOR'] }
+      },
+      {
+        path: 'coordinator-people',
+        loadComponent: () => import('./components/coordinator-people/coordinator-people.component').then(m => m.CoordinatorPeopleComponent),
+        canActivate: [roleGuard], data: { roles: ['COORDINATOR'] }
+      },
+      {
+        path: 'coordinator-report-cards',
+        loadComponent: () => import('./components/coordinator-report-cards/coordinator-report-cards.component').then(m => m.CoordinatorReportCardsComponent),
+        canActivate: [roleGuard, featureGuard], data: { roles: ['COORDINATOR'], featureKey: 'REPORT_CARDS' }
+      },
+      {
+        path: 'coordinator-timetable',
+        loadComponent: () => import('./components/timetable/timetable.component').then(m => m.TimetableComponent),
+        canActivate: [roleGuard], data: { roles: ['COORDINATOR'], coordinatorMode: true }
+      },
+      {
+        path: 'coordinator-attendance',
+        loadComponent: () => import('./components/teacher-attendance/teacher-attendance.component').then(m => m.TeacherAttendanceComponent),
+        canActivate: [roleGuard], data: { roles: ['COORDINATOR'], coordinatorMode: true }
+      },
+      {
+        path: 'coordinator-management',
+        loadComponent: () => import('./components/coordinator-management/coordinator-management.component').then(m => m.CoordinatorManagementComponent),
+        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'COORDINATOR_MANAGE', roles: ['ADMIN', 'PRINCIPAL'] }
+      },
       {
         path: 'principal-dashboard',
         loadComponent: () => import('./components/principal-dashboard/principal-dashboard.component').then(m => m.PrincipalDashboardComponent),
@@ -209,14 +240,14 @@ export const routes: Routes = [
       {
         path: 'staff-attendance',
         loadComponent: () => import('./components/staff-attendance/staff-attendance.component').then(m => m.StaffAttendanceComponent),
-        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'TEACHER_ATTENDANCE_CORRECT', roles: ['ADMIN', 'PRINCIPAL'] }
+        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'TEACHER_ATTENDANCE_CORRECT', roles: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'] }
       },
 
       // ── Exams & Assessment ────────────────────────────────────────────
       {
         path: 'assessment-groups',
         loadComponent: () => import('./components/assessment-group-config/assessment-group-config.component').then(m => m.AssessmentGroupConfigComponent),
-        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL'], featureKey: 'EXAMS_RESULTS' }
+        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], featureKey: 'EXAMS_RESULTS' }
       },
       // Published Report Cards: the Report Card V2 frozen documents (the Phase 0 bulk page is no longer routed).
       {
@@ -391,22 +422,22 @@ export const routes: Routes = [
       {
         path: 'subject-config',
         loadComponent: () => import('./components/subject-config/subject-config.component').then(m => m.SubjectConfigComponent),
-        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL'], featureKey: 'SCHOOL_ADMINISTRATION' }
+        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], featureKey: 'SCHOOL_ADMINISTRATION' }
       },
       {
         path: 'exam-config',
         loadComponent: () => import('./components/exam-config/exam-config.component').then(m => m.ExamConfigComponent),
-        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL'], featureKey: 'EXAMS_RESULTS' }
+        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'ACADEMIC_CONFIGURATION_EDIT', roles: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], featureKey: 'EXAMS_RESULTS' }
       },
       {
         path: 'student-stream',
         loadComponent: () => import('./components/student-stream/student-stream.component').then(m => m.StudentStreamComponent),
-        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'STUDENT_ACADEMIC_EDIT', roles: ['ADMIN', 'PRINCIPAL'], featureKey: 'EXAMS_RESULTS' }
+        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'STUDENT_ACADEMIC_EDIT', roles: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], featureKey: 'EXAMS_RESULTS' }
       },
       {
         path: 'elective-assignment',
         loadComponent: () => import('./components/elective-assignment/elective-assignment.component').then(m => m.ElectiveAssignmentComponent),
-        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'STUDENT_ACADEMIC_EDIT', roles: ['ADMIN', 'PRINCIPAL'], featureKey: 'EXAMS_RESULTS' }
+        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'STUDENT_ACADEMIC_EDIT', roles: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], featureKey: 'EXAMS_RESULTS' }
       },
       {
         path: 'mark-entry',
@@ -519,7 +550,7 @@ export const routes: Routes = [
       {
         path: 'teacher-substitutions',
         loadComponent: () => import('./components/teacher-substitution/teacher-substitution.component').then(m => m.TeacherSubstitutionComponent),
-        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'TIMETABLE_READ', roles: ['ADMIN', 'SUB_ADMIN', 'PRINCIPAL'] }
+        canActivate: [roleGuard, principalCapabilityGuard], data: { principalOperation: 'TIMETABLE_READ', roles: ['ADMIN', 'SUB_ADMIN', 'PRINCIPAL', 'COORDINATOR'] }
       },
       {
         path: 'timetable',

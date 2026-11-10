@@ -33,7 +33,7 @@ describe('DashboardComponent — empty navigation groups', () => {
     canViewResults: true, canManageLeave: true } as any;
 
   function build(role: string, enabled: string[], selectedChild: any = null): void {
-    authState = jasmine.createSpyObj('AuthStateService', [
+    authState = jasmine.createSpyObj('AuthStateService', ['isCoordinator', 
       'getUser', 'isLoggedIn', 'isUnauthenticated', 'loadCurrentUser', 'mustChangePassword',
       'getSubscriptionStatus', 'hasFeature', 'isSubscriptionWarning',
     ]);

@@ -14,7 +14,7 @@ describe('TeacherCheckinService — Principal staff attendance endpoints', () =>
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AuthStateService, useValue: { getUserRole: () => role } }],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AuthStateService, useValue: { isCoordinator: () => false, getUserRole: () => role } }],
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(TeacherCheckinService);

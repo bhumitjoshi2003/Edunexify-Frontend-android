@@ -32,4 +32,6 @@ export interface AttendanceSubmission {
   sectionId: number | null;
   date: string;
   students: { studentId: string; status: AttendanceStatus }[];
+  /** Required when a Principal or Coordinator corrects a class that is not their own. */
+  correctionReason?: string | null;
 }

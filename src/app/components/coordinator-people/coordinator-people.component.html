@@ -1,0 +1,43 @@
+<main class="cp-page">
+  <h1>Students &amp; teachers</h1>
+  <p class="cp-sub">Everyone in the classes and sections you coordinate.</p>
+  <div class="cp-tabs" role="tablist">
+    <button type="button" role="tab" [attr.aria-selected]="tab === 'students'" [class.on]="tab === 'students'" (click)="setTab('students')">Students</button>
+    <button type="button" role="tab" [attr.aria-selected]="tab === 'teachers'" [class.on]="tab === 'teachers'" (click)="setTab('teachers')">Teachers</button>
+  </div>
+  <div class="cp-filters">
+    <label *ngIf="tab === 'students'">
+      <span>Section</span>
+      <select [(ngModel)]="unitKey" name="unit" (ngModelChange)="load()">
+        <option value="">All my sections</option>
+        <option *ngFor="let u of units" [value]="key(u)">{{ unitLabel(u) }}</option>
+      </select>
+    </label>
+    <label class="cp-search">
+      <span>Search</span>
+      <input type="search" [(ngModel)]="search" name="search" placeholder="Name or ID">
+    </label>
+  </div>
+
+  <p class="cp-muted" *ngIf="loading" role="status">Loading…</p>
+  <p class="cp-error" role="alert" *ngIf="error">{{ error }} <button type="button" class="cp-link" (click)="load()">Try again</button></p>
+
+  <ng-container *ngIf="!loading && !error">
+    <div class="cp-list" *ngIf="tab === 'students'">
+      <a class="cp-item" *ngFor="let s of visibleStudents" [routerLink]="['/dashboard/student-details', s.studentId]">
+        <strong>{{ s.name }}</strong>
+        <small>{{ s.studentId }} · Class {{ s.className }}{{ s.sectionName ? '-' + s.sectionName : '' }}{{ s.streamName ? ' · ' + s.streamName : '' }}</small>
+      </a>
+      <p class="cp-muted" *ngIf="!visibleStudents.length">No students found.</p>
+    </div>
+    <div class="cp-list" *ngIf="tab === 'teachers'">
+      <div class="cp-item" *ngFor="let t of visibleTeachers">
+        <strong>{{ t.name }} <span class="cp-you" *ngIf="t.self">You</span></strong>
+        <small>{{ t.teacherId }}{{ t.classTeacher ? ' · class teacher of ' + t.classTeacher + (t.classTeacherSection ? '-' + t.classTeacherSection : '') : '' }}</small>
+        <small *ngIf="t.subjects.length">{{ t.subjects.join(', ') }}</small>
+        <small *ngIf="t.email || t.phoneNumber">{{ t.email }}{{ t.email && t.phoneNumber ? ' · ' : '' }}{{ t.phoneNumber }}</small>
+      </div>
+      <p class="cp-muted" *ngIf="!visibleTeachers.length">No teachers found.</p>
+    </div>
+  </ng-container>
+</main>

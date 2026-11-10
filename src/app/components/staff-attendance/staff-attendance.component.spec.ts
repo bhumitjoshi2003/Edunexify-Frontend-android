@@ -46,7 +46,7 @@ describe('StaffAttendanceComponent — academic session sourcing', () => {
     await TestBed.configureTestingModule({
       imports: [StaffAttendanceComponent],
       providers: [
-        { provide: AuthStateService, useValue: { getUserRole: () => 'ADMIN' } },
+        { provide: AuthStateService, useValue: { isCoordinator: () => false, getUserRole: () => 'ADMIN' } },
         { provide: TeacherCheckinService, useValue: checkinServiceSpy },
         { provide: TeacherService, useValue: teacherServiceSpy },
         { provide: TenantService, useValue: jasmine.createSpyObj('TenantService', ['getLogoUrl']) },
