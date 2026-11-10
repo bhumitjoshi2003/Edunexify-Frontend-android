@@ -19,9 +19,9 @@ describe('ViewLeavesComponent', () => {
   let toast: jasmine.SpyObj<ToastService>;
   const pending = { id: 7, studentId: 'S1', studentName: 'Asha', className: '8', leaveDate: '2026-11-09', status: 'PENDING' } as unknown as LeaveApplication;
 
-  function create(role: string): void {
+  function create(role: string, content: LeaveApplication[] = [pending]): void {
     leaves = jasmine.createSpyObj<LeaveService>('LeaveService', ['getLeavesPaginated', 'updateLeaveStatus']);
-    leaves.getLeavesPaginated.and.returnValue(of({ content: [pending], totalElements: 1, totalPages: 1, number: 0 } as any));
+    leaves.getLeavesPaginated.and.returnValue(of({ content, totalElements: content.length, totalPages: 1, number: 0 } as any));
     leaves.updateLeaveStatus.and.returnValue(of({ ...pending, status: 'APPROVED' } as LeaveApplication));
     toast = jasmine.createSpyObj<ToastService>('ToastService', ['confirmWithReason', 'confirm', 'success', 'info', 'error']);
     toast.confirmWithReason.and.resolveTo('Checked with the class teacher');
@@ -64,5 +64,34 @@ describe('ViewLeavesComponent', () => {
     await fixture.whenStable();
     expect(toast.confirmWithReason.calls.mostRecent().args[0].reasonInput.required).toBeFalse();
     expect((fixture.nativeElement as HTMLElement).querySelector('.vl-btn-delete-all')).not.toBeNull();
+  });
+
+  it('marks a pending request red from day 1, and keeps its actions', () => {
+    // Explicit status: other specs approve the shared `pending` fixture in place.
+    const overdue = { ...pending, id: 8, status: 'PENDING', escalation: { day: 4, overdue: true, autoApprovalDate: '2026-11-16', automatic: true } } as LeaveApplication;
+    const early = { ...pending, id: 9, status: 'PENDING', escalation: { day: 2, overdue: false, autoApprovalDate: '2026-11-18', automatic: true } } as LeaveApplication;
+    create('ADMIN', [overdue, early]);
+    const cards = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.vl-card'));
+    expect(cards[0].classList).toContain('is-overdue');
+    expect(cards[0].textContent).toContain('Overdue · Action Required');
+    expect(cards[0].textContent).toContain('Day 4 since leave started · Auto-approves 16 Nov');
+    expect(cards[0].querySelector('.vl-btn-approve')).not.toBeNull();
+    expect(cards[0].querySelector('.vl-btn-reject')).not.toBeNull();
+    expect(cards[1].classList).toContain('is-overdue');
+    expect(cards[1].textContent).not.toContain('Overdue');
+  });
+
+  it('shows an automatic approval as such, without naming an administrator', () => {
+    const auto = { ...pending, status: 'APPROVED', decidedBy: 'SYSTEM', decisionSource: 'SYSTEM_AUTO_APPROVAL',
+      escalation: null } as LeaveApplication;
+    const manual = { ...pending, id: 10, status: 'APPROVED', decidedBy: 'admin1', decisionSource: null } as LeaveApplication;
+    create('ADMIN', [auto, manual]);
+    const cards = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.vl-card'));
+    expect(cards[0].textContent).toContain('Automatically Approved');
+    expect(cards[0].textContent).toContain('No action was taken within the seven-day review period.');
+    expect(cards[0].textContent).not.toContain('by SYSTEM');
+    expect(cards[0].classList).not.toContain('is-overdue');
+    expect(cards[1].textContent).toContain('Approved by admin1');
+    expect(cards[1].textContent).not.toContain('Automatically Approved');
   });
 });

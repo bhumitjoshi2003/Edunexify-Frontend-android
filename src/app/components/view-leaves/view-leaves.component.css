@@ -278,6 +278,8 @@
   transition: box-shadow 0.15s ease;
 }
 .vl-card:hover { box-shadow: 0 4px 14px rgba(15, 118, 110, 0.1); }
+/* Pending from day 3 of leave: a quiet red edge, no animation. */
+.vl-card.is-overdue { border-color: #fecdca; border-left-color: #d92d20; }
 
 .vl-date-badge {
   flex-shrink: 0;

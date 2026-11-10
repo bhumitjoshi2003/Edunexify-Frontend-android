@@ -41,6 +41,7 @@
     <section class="td-attention">
       <div class="td-attention-head"><div><mat-icon>priority_high</mat-icon><h2>Needs Attention</h2></div><span *ngIf="teacherAttentionLoading">Checking…</span></div>
       <div class="td-attention-list" *ngIf="!teacherAttentionLoading && hasTeacherAttention">
+        <a class="is-overdue" *ngIf="overdueLeaveCount > 0" routerLink="/dashboard/view-leaves"><mat-icon>assignment_late</mat-icon><span>Student leave awaiting you<small class="td-overdue">{{ overdueBadge }} · {{ overdueLabel(leaveAttention?.student) }}</small></span><strong>{{ overdueLeaveCount }}</strong></a>
         <a class="is-checkin" *ngIf="checkInNeedsAttention" routerLink="/dashboard/teacher-checkin"><mat-icon>location_on</mat-icon><span>Check-in pending</span><strong>Now</strong></a>
         <button class="is-cover" type="button" *ngIf="coverClassCount > 0" (click)="scrollToCoverClasses()"><mat-icon>swap_horiz</mat-icon><span>Cover class{{ coverClassCount === 1 ? '' : 'es' }} assigned today</span><strong>{{ coverClassCount }}</strong></button>
         <a class="is-update" *ngIf="unreadCount > 0" routerLink="/dashboard/notice"><mat-icon>notifications</mat-icon><span>Unread updates</span><strong>{{ unreadCount }}</strong></a>
@@ -99,6 +100,7 @@
           routerLink="/dashboard/view-leaves"
           class="td-priority"
           [class.is-alert]="pendingLeavesCount > 0"
+          [class.is-overdue]="overdueLeaveCount > 0"
           ><span class="td-priority-icon"><mat-icon>approval</mat-icon></span
           ><span class="td-priority-copy"
             ><small>Approvals</small
@@ -107,9 +109,11 @@
                 pendingLeavesCount === 1 ? "" : "s"
               }}</strong
             ><em>{{
-              pendingLeavesCount
-                ? "Waiting for your review"
-                : "Nothing pending today"
+              overdueLeaveCount
+                ? overdueBadge
+                : pendingLeavesCount
+                  ? "Waiting for your review"
+                  : "Nothing pending today"
             }}</em></span
           ><mat-icon class="td-arrow">arrow_forward</mat-icon></a
         >
@@ -459,7 +463,7 @@
           >
         </div>
         <div class="td-student-leaves" *ngIf="!classDataFailed && recentLeaves.length">
-          <div *ngFor="let leave of recentLeaves | slice : 0 : 3">
+          <div [class.is-overdue]="isOverdue(leave)" *ngFor="let leave of recentLeaves | slice : 0 : 3">
             <span class="td-avatar">{{
               leave.studentName.charAt(0).toUpperCase()
             }}</span
@@ -468,7 +472,8 @@
               ><small
                 >{{ leave.leaveDate | date : "d MMM yyyy" }} ·
                 {{ leave.reason || "Leave request" }}</small
-              ></span
+              ><app-leave-escalation-badge [leave]="leave"></app-leave-escalation-badge
+            ></span
             ><span class="td-inline-actions"
               ><button title="Approve" (click)="approveLeave(leave.id)">
                 <mat-icon>check</mat-icon></button

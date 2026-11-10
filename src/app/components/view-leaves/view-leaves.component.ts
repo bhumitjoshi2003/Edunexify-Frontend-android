@@ -12,6 +12,8 @@ import { from, concatMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { LeaveApplication, LeaveService, PaginatedResponse } from '../../services/leave.service';
 import { getStoredSelectedClass, setStoredSelectedClass, clearStoredSelectedClass } from '../../utils/class-selection-storage.util';
+import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
+import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
 
 @Component({
   selector: 'app-view-leaves',
@@ -21,7 +23,8 @@ import { getStoredSelectedClass, setStoredSelectedClass, clearStoredSelectedClas
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    LeaveEscalationBadgeComponent
   ],
 })
 export class ViewLeavesComponent implements OnInit, OnDestroy {
@@ -412,6 +415,8 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
 
 
   trackByLeaveId(index: number, leave: LeaveApplication): number { return leave.id; }
+  readonly isOverdue = isLeaveNeedsAttention;
+  readonly isAutoApproved = isLeaveAutoApproved;
   trackByClass(index: number, className: string): string { return className; }
   trackByIndex(index: number): number { return index; }
 

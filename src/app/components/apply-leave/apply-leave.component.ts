@@ -14,6 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ParentPortalService } from '../../services/parent-portal.service';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { ChildAccess } from '../../interfaces/parent-portal';
+import { AUTO_APPROVED_NOTE, isLeaveAutoApproved } from '../../utils/leave-escalation.util';
 
 
 @Component({
@@ -24,6 +25,8 @@ import { ChildAccess } from '../../interfaces/parent-portal';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApplyLeaveComponent implements OnInit, OnDestroy {
+  readonly isAutoApproved = isLeaveAutoApproved;
+  readonly autoApprovedNote = AUTO_APPROVED_NOTE;
   private destroy$ = new Subject<void>();
   private readonly leavesRequest$ = new Subject<void>();
   /** A deep-linked child this parent can no longer access: nothing is loaded or submitted for it. */
@@ -33,7 +36,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
   studentId: string = '';
   studentName: string = '';
   className = '';
-  leaves: { id: number; originalLeaveDate: string; leaveDate: string; reason: string; status: string;
+  leaves: { id: number; originalLeaveDate: string; leaveDate: string; reason: string; status: string; urgent?: boolean;
              decisionReason?: string | null; cancellationReason?: string | null }[] = [];
   isLoading: boolean = true;
 
@@ -82,6 +85,19 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
     const today = new Date();
     this.today = formatDate(today, 'yyyy-MM-dd', 'en');
     this.getStudentId();
+  }
+
+  get urgentRequired(): boolean {
+    const date = this.leaveForm.get('leaveDate')?.value;
+    if (!date) return false;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return date <= formatDate(tomorrow, 'yyyy-MM-dd', 'en');
+  }
+
+  get urgentSelected(): boolean {
+    // Priority is derived from the start date, never manually chosen.
+    return this.urgentRequired;
   }
 
   get reasonControl() {
@@ -178,6 +194,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
             leaveDate: leave.leaveDate,
             reason: leave.reason,
             status: leave.status ?? 'PENDING',
+            urgent: leave.urgent === true,
             decisionReason: leave.decisionReason ?? null,
             cancellationReason: leave.cancellationReason ?? null,
           }));
@@ -303,7 +320,7 @@ export class ApplyLeaveComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (leaveDate.toDateString() === today.toDateString() && now >= sixAMToday) {
+      if (!this.urgentSelected && leaveDate.toDateString() === today.toDateString() && now >= sixAMToday) {
         this.errorMessage = 'Leave for today must be applied before 6:00 AM!';
         return;
       }

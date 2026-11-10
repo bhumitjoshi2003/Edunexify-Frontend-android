@@ -8,6 +8,7 @@ import { catchError, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
+import { LeaveAttentionBucket, LeaveAttentionSummary, NEEDS_ATTENTION_BADGE, attentionOverdueLabel } from '../../utils/leave-escalation.util';
 
 /** One class's attendance; recordedToday is absent from servers older than this screen. */
 export interface PrincipalClassAttendance {
@@ -70,6 +71,9 @@ export interface AttentionItem {
   count: number;
   /** null: no Principal screen lists these details yet; the row informs without navigating. */
   route: string | null;
+  /** Leave pending from day 3: red edge, listed before other actions, with a short detail line. */
+  overdue?: boolean;
+  detail?: string;
 }
 
 interface Widget<T> { data: T | null; loading: boolean; failed: boolean; }
@@ -99,6 +103,8 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
   staff: Widget<PrincipalStaffToday> = { data: null, loading: true, failed: false };
   uncovered: Widget<number> = { data: null, loading: true, failed: false };
   events: Widget<PrincipalUpcomingEvent[]> = { data: null, loading: true, failed: false };
+  /** Overdue leave counts; optional — without them the leave rows simply aren't marked overdue. */
+  leaveAttention: Widget<LeaveAttentionSummary> = { data: null, loading: true, failed: false };
   updatedAt: Date | null = null;
 
   constructor(private http: HttpClient, private auth: AuthStateService, private cdr: ChangeDetectorRef) {}
@@ -122,6 +128,13 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
         catchError(() => of(null)))),
       takeUntil(this.destroy$),
     ).subscribe(data => this.finish(this.staff, data));
+
+    this.refresh$.pipe(
+      tap(() => this.start(this.leaveAttention)),
+      switchMap(() => this.http.get<LeaveAttentionSummary>(`${this.api}/leaves/attention-summary`).pipe(
+        catchError(() => of(null)))),
+      takeUntil(this.destroy$),
+    ).subscribe(data => this.finish(this.leaveAttention, data));
 
     this.schoolDate$.pipe(
       tap(() => this.start(this.uncovered)),
@@ -209,21 +222,29 @@ export class PrincipalDashboardComponent implements OnInit, OnDestroy {
         label: this.plural(awaiting, 'report-card review awaits', 'report-card reviews await') + ' your approval',
         route: '/dashboard/report-card-approvals' });
     }
+    const leave = this.leaveAttention.data;
     const teacherLeave = o?.pendingTeacherLeaves ?? 0;
     add({ key: 'teacher-leave', severity: 'action', icon: 'work_off', count: teacherLeave,
       label: this.plural(teacherLeave, 'teacher leave request', 'teacher leave requests') + ' to decide',
-      route: '/dashboard/teacher-leave-requests' });
+      route: '/dashboard/teacher-leave-requests', ...this.overdue(leave?.teacher) });
     const studentLeave = o?.pendingStudentLeaves ?? 0;
     add({ key: 'student-leave', severity: 'action', icon: 'event_note', count: studentLeave,
       label: this.plural(studentLeave, 'student leave request', 'student leave requests') + ' to decide',
-      route: '/dashboard/view-leaves' });
+      route: '/dashboard/view-leaves', ...this.overdue(leave?.student) });
     if (this.reportCardsEnabled) {
       const returned = o?.returnedForCorrection ?? 0;
       add({ key: 'returned', severity: 'info', icon: 'undo', count: returned,
         label: this.plural(returned, 'report-card review is', 'report-card reviews are') + ' back with teachers',
         route: '/dashboard/report-card-approvals' });
     }
-    return items.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.count - a.count);
+    const rank = (item: AttentionItem) => SEVERITY_ORDER[item.severity] - (item.overdue ? 0.5 : 0);
+    return items.sort((a, b) => rank(a) - rank(b) || b.count - a.count);
+  }
+
+  private overdue(bucket: LeaveAttentionBucket | null | undefined): Pick<AttentionItem, 'overdue' | 'detail'> {
+    return bucket && (bucket.attention ?? bucket.overdue) > 0
+      ? { overdue: true, detail: `${NEEDS_ATTENTION_BADGE} · ${attentionOverdueLabel(bucket)}` }
+      : {};
   }
 
   /** "All clear" is only claimed when every source the list depends on actually answered. */

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LeaveRequest } from '../interfaces/leave-request';
 import { environment } from '../../environments/environment';
+import { LeaveAttentionSummary, LeaveEscalation } from '../utils/leave-escalation.util';
 
 export interface LeaveApplication {
   id: number;
@@ -19,6 +20,10 @@ export interface LeaveApplication {
   cancelledBy?: string | null;
   cancelledAt?: string | null;
   cancellationReason?: string | null;
+  /** SYSTEM_AUTO_APPROVAL when the seven-day deadline approved it; null for a person's decision. */
+  decisionSource?: string | null;
+  /** Review-calendar state while PENDING (server-computed, school time zone). */
+  escalation?: LeaveEscalation | null;
 }
 
 export interface OnLeaveToday {
@@ -120,6 +125,11 @@ export class LeaveService {
   /** Explicit change of a decision (APPROVED ↔ REJECTED); a reason is required. */
   reverseLeaveDecision(leaveId: number, reason: string): Observable<LeaveApplication> {
     return this.http.post<LeaveApplication>(`${this.apiUrl}/${leaveId}/reverse`, { reason }, { withCredentials: true });
+  }
+
+  /** Needs Attention: pending and overdue (day 3+) leave in the caller's own scope. */
+  getAttentionSummary(): Observable<LeaveAttentionSummary> {
+    return this.http.get<LeaveAttentionSummary>(`${this.apiUrl}/attention-summary`, { withCredentials: true });
   }
 
   getOnLeaveToday(): Observable<OnLeaveToday> {

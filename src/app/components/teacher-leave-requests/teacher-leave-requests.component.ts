@@ -8,6 +8,8 @@ import { TeacherLeaveService } from '../../services/teacher-leave.service';
 import { TeacherLeave } from '../../interfaces/teacher-leave';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { PaginatedResponse } from '../../services/payment-history.service';
+import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
+import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
 
 @Component({
   selector: 'app-teacher-leave-requests',
@@ -15,7 +17,7 @@ import { PaginatedResponse } from '../../services/payment-history.service';
   styleUrls: ['./teacher-leave-requests.component.css'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LeaveEscalationBadgeComponent],
 })
 export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
   leaves: TeacherLeave[] = [];
@@ -236,4 +238,6 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
   prevPage(): void { this.goToPage(this.currentPage - 1); }
 
   trackByLeaveId(index: number, leave: TeacherLeave): number { return leave.id; }
+  readonly isOverdue = isLeaveNeedsAttention;
+  readonly isAutoApproved = isLeaveAutoApproved;
 }

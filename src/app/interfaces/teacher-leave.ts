@@ -1,3 +1,5 @@
+import { LeaveEscalation } from '../utils/leave-escalation.util';
+
 export interface TeacherLeave {
   id: number;
   teacherId: string;
@@ -5,6 +7,7 @@ export interface TeacherLeave {
   startDate: string;
   endDate: string;
   reason: string;
+  urgent?: boolean;
   status: string;
   appliedDate: string;
   days: number;
@@ -14,10 +17,15 @@ export interface TeacherLeave {
   cancelledBy?: string | null;
   cancelledAt?: string | null;
   cancellationReason?: string | null;
+  /** SYSTEM_AUTO_APPROVAL when the seven-day deadline approved it; null for a person's decision. */
+  decisionSource?: string | null;
+  /** Review-calendar state while PENDING (server-computed, school time zone). */
+  escalation?: LeaveEscalation | null;
 }
 
 export interface TeacherLeaveApplyRequest {
   startDate: string;
   endDate: string;
   reason: string;
+  urgent?: boolean;
 }
