@@ -1,101 +1,143 @@
 <main class="cm-page">
-  <header class="cm-head">
-    <div>
-      <h1>Academic Coordinators</h1>
-      <p>Appoint a teacher as Academic Coordinator for chosen classes, sections or streams. They keep one login and all their teaching work, and cannot approve leave, approve, sign or publish report cards, or reach finance and administration.</p>
+  <header class="cm-hero">
+    <div class="cm-hero-copy">
+      <h1>Coordinators</h1>
+      <span class="cm-count" *ngIf="!loading && !loadError">{{ active.length }} active</span>
     </div>
-    <button type="button" class="cm-btn cm-primary" (click)="startNew()" [disabled]="editingId !== null || loading">
-      <mat-icon aria-hidden="true">person_add</mat-icon>Appoint coordinator
+    <button type="button" class="cm-appoint" (click)="startNew()" [disabled]="editingId === 0 || loading || !!loadError">
+      <mat-icon aria-hidden="true">person_add</mat-icon>Appoint Coordinator
     </button>
   </header>
 
-  <p class="cm-error" role="alert" *ngIf="loadError">{{ loadError }}</p>
-  <div class="cm-stats" *ngIf="!loading && !loadError" aria-label="Appointment summary">
-    <span><strong>{{ active.length }}</strong> active {{ active.length === 1 ? 'appointment' : 'appointments' }}</span>
+  <div class="cm-alert" role="alert" *ngIf="loadError">
+    <mat-icon aria-hidden="true">cloud_off</mat-icon><span>{{ loadError }}</span>
+    <button type="button" (click)="loadAppointments()">Try again</button>
   </div>
 
-  <!-- Editor -->
-  <section class="cm-card cm-editor" *ngIf="editingId !== null" aria-label="Coordinator appointment">
-    <h2>{{ editingId === 0 ? 'Appoint a coordinator' : 'Change scope — ' + teacherName(teacherId) }}</h2>
+  <!-- Appoint / change scope -->
+  <section class="cm-editor" *ngIf="editingId !== null" aria-labelledby="cm-editor-title">
+    <div class="cm-editor-head">
+      <h2 id="cm-editor-title">{{ editingId === 0 ? 'Appoint Coordinator' : 'Change scope' }}</h2>
+      <button type="button" class="cm-icon-btn" (click)="cancelEdit()" [disabled]="saving" aria-label="Close"><mat-icon aria-hidden="true">close</mat-icon></button>
+    </div>
+
     <label class="cm-field" *ngIf="editingId === 0">
       <span>Teacher</span>
       <select [(ngModel)]="teacherId" name="teacher">
-        <option value="" disabled>Choose an active teacher</option>
-        <option *ngFor="let t of availableTeachers" [value]="t.teacherId">{{ t.name }} ({{ t.teacherId }}){{ t.classTeacher ? ' · class teacher of ' + t.classTeacher : '' }}</option>
+        <option value="" disabled>Select a teacher</option>
+        <option *ngFor="let t of availableTeachers" [value]="t.teacherId">{{ t.name }} ({{ t.teacherId }})</option>
       </select>
     </label>
-
-    <p class="cm-hint">Leave the section empty to cover every section of the class. A stream limits the row to that stream's students (student-level work only).</p>
-    <div class="cm-scope-row" *ngFor="let row of draft; let i = index">
-      <label class="cm-field">
-        <span>Class</span>
-        <select [(ngModel)]="row.classId" [name]="'class' + i" (ngModelChange)="onClassChange(row)">
-          <option [ngValue]="null" disabled>Class</option>
-          <option *ngFor="let c of classes" [ngValue]="c.id">Class {{ c.name }}</option>
-        </select>
-      </label>
-      <label class="cm-field">
-        <span>Section</span>
-        <select [(ngModel)]="row.sectionId" [name]="'section' + i" [disabled]="row.classId == null || !sectionsByClass[row.classId!]?.length">
-          <option [ngValue]="null">All sections</option>
-          <option *ngFor="let s of sectionsByClass[row.classId!] ?? []" [ngValue]="s.id">{{ s.name }}</option>
-        </select>
-      </label>
-      <label class="cm-field" *ngIf="isStreamClass(row.classId)">
-        <span>Stream</span>
-        <select [(ngModel)]="row.streamId" [name]="'stream' + i">
-          <option [ngValue]="null">All streams</option>
-          <option *ngFor="let st of streams" [ngValue]="st.id">{{ st.streamName }}</option>
-        </select>
-      </label>
-      <button type="button" class="cm-icon" (click)="removeRow(i)" [disabled]="draft.length === 1" aria-label="Remove this class">
-        <mat-icon aria-hidden="true">delete</mat-icon>
-      </button>
+    <div class="cm-who" *ngIf="editingId !== 0">
+      <span class="cm-avatar" aria-hidden="true">{{ initials(teacherName(teacherId), teacherId) }}</span>
+      <strong>{{ teacherName(teacherId) }}</strong>
     </div>
-    <button type="button" class="cm-btn" (click)="addRow()"><mat-icon aria-hidden="true">add</mat-icon>Add class</button>
 
+    <fieldset class="cm-classes">
+      <legend>Select the classes this Coordinator will manage.</legend>
+      <div class="cm-class-bar">
+        <span class="cm-selected-count">{{ picks.length }} selected</span>
+        <button type="button" class="cm-link" (click)="toggleAllClasses()">{{ allPicked ? 'Clear all' : 'Select all' }}</button>
+      </div>
+      <div class="cm-class-grid" role="group" aria-label="Classes">
+        <button type="button" class="cm-class" *ngFor="let c of classes" [class.is-on]="isPicked(c.id)"
+                [attr.aria-pressed]="isPicked(c.id)" (click)="toggleClass(c)">
+          <mat-icon *ngIf="isPicked(c.id)" aria-hidden="true">check</mat-icon>{{ c.name }}
+        </button>
+        <p class="cm-muted" *ngIf="!classes.length">No active classes.</p>
+      </div>
+
+      <ul class="cm-picks" *ngIf="picks.length" aria-label="Selected classes">
+        <li *ngFor="let p of picks" class="cm-pick">
+          <div class="cm-pick-head">
+            <strong>Class {{ className(p.classId) }}</strong>
+            <span class="cm-pick-sum">{{ pickSummary(p) }}</span>
+            <button type="button" class="cm-icon-btn cm-remove-pick" (click)="removePick(p)" [attr.aria-label]="'Remove Class ' + className(p.classId)">
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          </div>
+          <ng-container *ngIf="!p.custom">
+            <div class="cm-chips" role="group" [attr.aria-label]="'Sections of Class ' + className(p.classId)" *ngIf="sectionsOf(p.classId).length">
+              <button type="button" class="cm-chip" [class.is-on]="!p.sections.length" (click)="toggleSection(p, null)">All sections</button>
+              <button type="button" class="cm-chip" *ngFor="let s of sectionsOf(p.classId)" [class.is-on]="p.sections.includes(s.id)"
+                      [attr.aria-pressed]="p.sections.includes(s.id)" (click)="toggleSection(p, s.id)">{{ s.name }}</button>
+            </div>
+            <div class="cm-chips" role="group" [attr.aria-label]="'Streams of Class ' + className(p.classId)" *ngIf="isStreamClass(p.classId)">
+              <button type="button" class="cm-chip" [class.is-on]="!p.streams.length" (click)="toggleStream(p, null)">All streams</button>
+              <button type="button" class="cm-chip" *ngFor="let st of streams" [class.is-on]="p.streams.includes(st.id)"
+                      [attr.aria-pressed]="p.streams.includes(st.id)" (click)="toggleStream(p, st.id)">{{ st.streamName }}</button>
+            </div>
+          </ng-container>
+        </li>
+      </ul>
+    </fieldset>
+
+    <p class="cm-muted" *ngIf="saveHint">{{ saveHint }}</p>
     <div class="cm-actions">
       <button type="button" class="cm-btn" (click)="cancelEdit()" [disabled]="saving">Cancel</button>
-      <button type="button" class="cm-btn cm-primary" (click)="save()" [disabled]="!canSave">{{ saving ? 'Saving…' : 'Save' }}</button>
+      <button type="button" class="cm-btn cm-primary" (click)="save()" [disabled]="!canSave">{{ saving ? 'Saving…' : (editingId === 0 ? 'Appoint' : 'Save') }}</button>
     </div>
   </section>
 
-  <!-- Active -->
-  <section class="cm-card" aria-label="Active coordinators">
-    <p class="cm-muted" *ngIf="loading">Loading coordinators…</p>
-    <p class="cm-empty" *ngIf="!loading && !active.length && !loadError">No coordinators yet. Appoint a teacher to share academic oversight of some classes.</p>
-    <article class="cm-item" *ngFor="let a of active">
-      <div class="cm-item-main">
-        <strong>{{ a.teacherName ?? a.teacherId }}</strong>
-        <small>{{ a.teacherId }}{{ a.classTeacher ? ' · class teacher of ' + a.classTeacher : '' }} · since {{ a.appointedAt | date:'d MMM yyyy' }}</small>
-        <div class="cm-chips"><span class="cm-chip" *ngFor="let s of a.scope">{{ scopeLabel(s) }}</span></div>
-      </div>
-      <div class="cm-item-actions">
-        <button type="button" class="cm-btn" (click)="startEdit(a)" [disabled]="editingId !== null">Change scope</button>
-        <button type="button" class="cm-btn cm-danger" (click)="startRemove(a)" [disabled]="editingId !== null">End appointment</button>
-      </div>
-      <div class="cm-remove" *ngIf="removing?.id === a.id">
-        <label class="cm-field cm-wide">
-          <span>Reason (required)</span>
-          <textarea [(ngModel)]="removalReason" name="removalReason" maxlength="500" rows="2"></textarea>
-        </label>
-        <div class="cm-actions">
-          <button type="button" class="cm-btn" (click)="removing = null" [disabled]="saving">Keep</button>
-          <button type="button" class="cm-btn cm-danger" (click)="confirmRemove()" [disabled]="saving || !removalReason.trim()">End appointment</button>
+  <!-- Active coordinators -->
+  <section aria-label="Coordinators">
+    <div class="cm-grid" *ngIf="loading" aria-hidden="true">
+      <div class="cm-card cm-sk" *ngFor="let x of skeletons"><span class="cm-sk-avatar"></span><span class="cm-sk-lines"><i></i><i></i></span></div>
+    </div>
+    <span class="cm-sr" role="status" *ngIf="loading">Loading coordinators</span>
+
+    <div class="cm-empty" *ngIf="!loading && !active.length && !loadError">
+      <mat-icon aria-hidden="true">hub</mat-icon>
+      <h2>No Coordinators yet</h2>
+      <button type="button" class="cm-btn cm-primary" (click)="startNew()"><mat-icon aria-hidden="true">person_add</mat-icon>Appoint Coordinator</button>
+    </div>
+
+    <div class="cm-grid" *ngIf="!loading && active.length">
+      <article class="cm-card" *ngFor="let a of active" [class.is-busy]="editingId === a.id">
+        <div class="cm-card-top">
+          <span class="cm-avatar" aria-hidden="true">{{ initials(a.teacherName, a.teacherId) }}</span>
+          <div class="cm-card-id">
+            <strong>{{ a.teacherName ?? a.teacherId }}</strong>
+            <small>{{ a.teacherId }} · since {{ a.appointedAt | date:'d MMM yyyy' }}</small>
+          </div>
         </div>
-      </div>
-    </article>
+        <div class="cm-chips cm-scope" *ngIf="scopeChips(a) as sc">
+          <span class="cm-tag" *ngFor="let label of sc.shown">{{ label }}</span>
+          <span class="cm-tag cm-tag-more" *ngIf="sc.more" [attr.title]="'and ' + sc.more + ' more'">+{{ sc.more }}</span>
+        </div>
+        <div class="cm-card-actions">
+          <button type="button" class="cm-btn" (click)="startEdit(a)" [disabled]="saving"><mat-icon aria-hidden="true">tune</mat-icon>Change scope</button>
+          <button type="button" class="cm-btn cm-danger" (click)="startRemove(a)" [disabled]="saving" aria-label="End appointment" title="End appointment">
+            <mat-icon aria-hidden="true">person_remove</mat-icon><span class="cm-btn-text">End</span>
+          </button>
+        </div>
+        <div class="cm-remove" *ngIf="removing?.id === a.id">
+          <label class="cm-field">
+            <span>Reason for ending</span>
+            <textarea [(ngModel)]="removalReason" name="removalReason" maxlength="500" rows="2"></textarea>
+          </label>
+          <div class="cm-actions">
+            <button type="button" class="cm-btn" (click)="removing = null" [disabled]="saving">Keep</button>
+            <button type="button" class="cm-btn cm-danger-solid" (click)="confirmRemove()" [disabled]="saving || !removalReason.trim()">End appointment</button>
+          </div>
+        </div>
+      </article>
+    </div>
   </section>
 
-  <button type="button" class="cm-link" (click)="toggleHistory()">{{ showHistory ? 'Hide' : 'Show' }} past appointments</button>
-  <section class="cm-card" *ngIf="showHistory" aria-label="Past appointments">
-    <p class="cm-empty" *ngIf="!history.length">No past appointments.</p>
-    <article class="cm-item cm-past" *ngFor="let a of history">
-      <div class="cm-item-main">
+  <!-- History -->
+  <section class="cm-history" *ngIf="!loading && history.length">
+    <button type="button" class="cm-history-toggle" (click)="toggleHistory()" [attr.aria-expanded]="showHistory">
+      <mat-icon aria-hidden="true">history</mat-icon>Past appointments ({{ history.length }})
+      <mat-icon class="cm-chev" aria-hidden="true">{{ showHistory ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+    <ul class="cm-history-list" *ngIf="showHistory">
+      <li *ngFor="let a of history">
         <strong>{{ a.teacherName ?? a.teacherId }}</strong>
-        <small>{{ a.appointedAt | date:'d MMM yyyy' }} – {{ a.removedAt | date:'d MMM yyyy' }} · ended by {{ a.removedBy }}</small>
-        <small>Reason: {{ a.removalReason }}</small>
-      </div>
-    </article>
+        <span>{{ a.appointedAt | date:'d MMM yyyy' }} – {{ a.removedAt | date:'d MMM yyyy' }}<ng-container *ngIf="a.removedBy"> · ended by {{ a.removedBy }}</ng-container></span>
+        <small *ngIf="a.removalReason">{{ a.removalReason }}</small>
+        <div class="cm-chips"><span class="cm-tag cm-tag-quiet" *ngFor="let s of a.scope">{{ scopeLabel(s) }}</span></div>
+      </li>
+    </ul>
   </section>
 </main>

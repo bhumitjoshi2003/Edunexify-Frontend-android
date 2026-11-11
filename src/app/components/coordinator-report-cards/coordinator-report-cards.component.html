@@ -1,55 +1,114 @@
 <main class="cr-page">
-  <header class="cr-head">
-    <div>
-      <h1>Report card review</h1>
-      <p>Completion, marks and remarks for every section in your scope. Preview cards and ask the class teacher for corrections. Review is separate from approval, signatures and publication.</p>
+  <header class="cr-hero">
+    <div class="cr-hero-copy">
+      <h1>Report Card Review</h1>
+      <span class="cr-hero-chip" *ngIf="!loading && !loadError"><mat-icon aria-hidden="true">fact_check</mat-icon>{{ progress.length }} {{ progress.length === 1 ? 'section' : 'sections' }}</span>
     </div>
+    <button type="button" class="cr-hero-action" *ngIf="selected" (click)="close()"><mat-icon aria-hidden="true">arrow_back</mat-icon>All sections</button>
   </header>
 
   <ng-container *ngIf="!selected; else detail">
-    <div class="cr-filters" role="group" aria-label="Filter">
-      <button type="button" [class.on]="filter === 'all'" (click)="filter = 'all'">All ({{ progress.length }})</button>
-      <button type="button" [class.on]="filter === 'pending'" (click)="filter = 'pending'">Needs work ({{ progress.length - completeCount }})</button>
-      <button type="button" [class.on]="filter === 'complete'" (click)="filter = 'complete'">Complete ({{ completeCount }})</button>
-    </div>
-    <p class="cr-muted" *ngIf="loading" role="status">Loading report cards…</p>
-    <p class="cr-error" role="alert" *ngIf="loadError">{{ loadError }} <button type="button" class="cr-link" (click)="load()">Try again</button></p>
-    <p class="cr-muted" *ngIf="!loading && !loadError && !progress.length">No report cards are set up for this session yet.</p>
+    <!-- Summary -->
+    <section class="cr-tiles" aria-label="Summary" *ngIf="!loading && !loadError && progress.length">
+      <div class="cr-tile"><span>Sections</span><strong>{{ totals.sections }}</strong></div>
+      <div class="cr-tile cr-tile-ok"><span>Complete</span><strong>{{ totals.complete }}</strong></div>
+      <div class="cr-tile cr-tile-warn"><span>Needs work</span><strong>{{ totals.pending }}</strong></div>
+      <div class="cr-tile"><span>Students ready</span><strong>{{ totals.ready }}<small> / {{ totals.students }}</small></strong></div>
+    </section>
 
-    <div class="cr-list">
-      <button type="button" class="cr-card" *ngFor="let r of visible" (click)="open(r)">
+    <!-- Filters -->
+    <section class="cr-filters" aria-label="Filters" *ngIf="!loading && !loadError && progress.length">
+      <label class="cr-select" *ngIf="setups.length > 1">
+        <span>Examination</span>
+        <select [(ngModel)]="setupFilter" name="setup" (ngModelChange)="classFilter = ''; sectionFilter = 0">
+          <option [ngValue]="0">All</option>
+          <option *ngFor="let s of setups" [ngValue]="s.id">{{ s.name }}</option>
+        </select>
+      </label>
+      <label class="cr-select">
+        <span>Class</span>
+        <select [(ngModel)]="classFilter" name="class" (ngModelChange)="onClassChange()">
+          <option value="">All</option>
+          <option *ngFor="let c of classNames" [value]="c">Class {{ c }}</option>
+        </select>
+      </label>
+      <label class="cr-select" *ngIf="sectionOptions.length > 1">
+        <span>Section</span>
+        <select [(ngModel)]="sectionFilter" name="section">
+          <option [ngValue]="0">All</option>
+          <option *ngFor="let s of sectionOptions" [ngValue]="s.id">{{ s.name }}</option>
+        </select>
+      </label>
+      <div class="cr-seg" role="group" aria-label="Status">
+        <button type="button" [class.on]="filter === 'all'" [attr.aria-pressed]="filter === 'all'" (click)="filter = 'all'">All</button>
+        <button type="button" [class.on]="filter === 'pending'" [attr.aria-pressed]="filter === 'pending'" (click)="filter = 'pending'">Needs work</button>
+        <button type="button" [class.on]="filter === 'complete'" [attr.aria-pressed]="filter === 'complete'" (click)="filter = 'complete'">Complete</button>
+      </div>
+      <button type="button" class="cr-link" *ngIf="filtersActive" (click)="clearFilters()">Clear</button>
+    </section>
+
+    <!-- Loading / error / empty -->
+    <div class="cr-list" *ngIf="loading" aria-hidden="true">
+      <div class="cr-card cr-sk" *ngFor="let x of skeletons"><i></i><i></i><i class="bar"></i></div>
+    </div>
+    <span class="cr-sr" role="status" *ngIf="loading">Loading report cards</span>
+    <div class="cr-state cr-state-error" role="alert" *ngIf="loadError">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon><span>{{ loadError }}</span>
+      <button type="button" class="cr-btn" (click)="load()">Try again</button>
+    </div>
+    <div class="cr-state" *ngIf="!loading && !loadError && !progress.length">
+      <mat-icon aria-hidden="true">fact_check</mat-icon><span>No report cards are set up yet.</span>
+    </div>
+    <div class="cr-state" *ngIf="!loading && !loadError && progress.length && !visible.length">
+      <mat-icon aria-hidden="true">filter_alt_off</mat-icon><span>No sections match these filters.</span>
+      <button type="button" class="cr-btn" (click)="clearFilters()">Clear filters</button>
+    </div>
+
+    <!-- Sections -->
+    <div class="cr-list" *ngIf="!loading && visible.length">
+      <button type="button" class="cr-card" *ngFor="let r of visible" (click)="open(r)" [attr.aria-label]="'Review ' + r.setupName + ' ' + unitLabel(r)">
         <span class="cr-card-top">
-          <strong>{{ r.setupName }}</strong>
-          <span class="cr-badge" [class.done]="isComplete(r)">{{ isComplete(r) ? 'Complete' : 'Pending' }}</span>
+          <span class="cr-card-title"><strong>{{ unitLabel(r) }}</strong><small>{{ r.setupName }}</small></span>
+          <span class="cr-badge" [class.done]="isComplete(r)">{{ isComplete(r) ? 'Complete' : 'Needs work' }}</span>
         </span>
-        <span class="cr-sub">{{ unitLabel(r) }} · {{ approvalLabel(r.approvalStatus) }}</span>
-        <span class="cr-bar"><span [style.width.%]="percent(r)"></span></span>
-        <span class="cr-stats">
-          <span>{{ r.complete }}/{{ r.students }} complete</span>
-          <span *ngIf="r.incomplete">{{ r.incomplete }} incomplete</span>
-          <span *ngIf="r.noResult">{{ r.noResult }} no result</span>
-          <span *ngIf="r.missingTeacherRemarks">{{ r.missingTeacherRemarks }} without remarks</span>
-          <span *ngIf="r.correctionRequests">{{ r.correctionRequests }} request{{ r.correctionRequests === 1 ? '' : 's' }} sent</span>
+        <span class="cr-progress">
+          <span class="cr-bar" role="progressbar" [attr.aria-valuenow]="percent(r)" aria-valuemin="0" aria-valuemax="100"><span [style.width.%]="percent(r)"></span></span>
+          <span class="cr-pct">{{ percent(r) }}%</span>
         </span>
+        <span class="cr-count">{{ r.complete }} of {{ r.students }} students ready</span>
+        <span class="cr-flags" *ngIf="r.incomplete || r.noResult || r.missingTeacherRemarks || r.correctionRequests">
+          <span class="cr-flag" *ngIf="r.incomplete"><mat-icon aria-hidden="true">edit_off</mat-icon>{{ r.incomplete }} marks incomplete</span>
+          <span class="cr-flag" *ngIf="r.noResult"><mat-icon aria-hidden="true">help_outline</mat-icon>{{ r.noResult }} no result</span>
+          <span class="cr-flag" *ngIf="r.missingTeacherRemarks"><mat-icon aria-hidden="true">rate_review</mat-icon>{{ r.missingTeacherRemarks }} no remark</span>
+          <span class="cr-flag cr-flag-info" *ngIf="r.correctionRequests"><mat-icon aria-hidden="true">feedback</mat-icon>{{ r.correctionRequests }} requested</span>
+        </span>
+        <span class="cr-approval">{{ approvalLabel(r.approvalStatus) }}</span>
       </button>
     </div>
   </ng-container>
 
+  <!-- One section -->
   <ng-template #detail>
     <section class="cr-detail" *ngIf="selected as r">
-      <button type="button" class="cr-back" (click)="close()"><mat-icon aria-hidden="true">arrow_back</mat-icon>All report cards</button>
       <div class="cr-detail-head">
         <div>
-          <h2>{{ r.setupName }} · {{ unitLabel(r) }}</h2>
-          <small>{{ r.complete }}/{{ r.students }} complete · {{ approvalLabel(r.approvalStatus) }}</small>
+          <h2>{{ unitLabel(r) }} · {{ r.setupName }}</h2>
+          <span class="cr-approval">{{ approvalLabel(r.approvalStatus) }}</span>
         </div>
         <button type="button" class="cr-btn" (click)="ask(null, null)"><mat-icon aria-hidden="true">feedback</mat-icon>Request correction</button>
       </div>
 
+      <div class="cr-tiles cr-tiles-sm" *ngIf="detailTotals as d" aria-label="Section summary">
+        <div class="cr-tile cr-tile-ok"><span>Ready</span><strong>{{ r.complete }}<small> / {{ r.students }}</small></strong></div>
+        <div class="cr-tile" [class.cr-tile-warn]="d.missingMarks"><span>Marks missing</span><strong>{{ d.missingMarks }}</strong></div>
+        <div class="cr-tile" [class.cr-tile-warn]="d.noRemark"><span>No remark</span><strong>{{ d.noRemark }}</strong></div>
+        <div class="cr-tile" [class.cr-tile-warn]="d.noResult"><span>No result</span><strong>{{ d.noResult }}</strong></div>
+      </div>
+
       <div class="cr-request" *ngIf="requestFor">
         <label>
-          <span>Ask the class teacher to correct {{ requestFor.studentName ? requestFor.studentName + "'s card" : 'this section' }} — reason (required)</span>
-          <textarea [(ngModel)]="reason" name="reason" rows="3" maxlength="500" placeholder="e.g. Maths marks missing for Term 1"></textarea>
+          <span>Correction for {{ requestFor.studentName ? requestFor.studentName : 'this section' }}</span>
+          <textarea [(ngModel)]="reason" name="reason" rows="3" maxlength="500" placeholder="What needs to be corrected?"></textarea>
         </label>
         <div class="cr-actions">
           <button type="button" class="cr-btn" (click)="requestFor = null" [disabled]="sending">Cancel</button>
@@ -57,38 +116,49 @@
         </div>
       </div>
 
-      <p class="cr-muted" *ngIf="summaryLoading" role="status">Loading students…</p>
-      <p class="cr-error" role="alert" *ngIf="summaryError">{{ summaryError }}</p>
+      <div *ngIf="summaryLoading" aria-hidden="true"><div class="cr-sk-row" *ngFor="let x of [1, 2, 3, 4]"><i></i></div></div>
+      <span class="cr-sr" role="status" *ngIf="summaryLoading">Loading students</span>
+      <div class="cr-state cr-state-error" role="alert" *ngIf="summaryError">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon><span>{{ summaryError }}</span>
+        <button type="button" class="cr-btn" (click)="open(r)">Try again</button>
+      </div>
+
       <ng-container *ngIf="summary as s">
-        <p class="cr-warn" *ngIf="s.readiness.draftExams.length">Results not yet released: {{ s.readiness.draftExams.join(', ') }}</p>
-        <div class="cr-table" role="table" aria-label="Students">
-          <div class="cr-row cr-row-head" role="row">
-            <span role="columnheader">Student</span><span role="columnheader">Result</span>
-            <span role="columnheader">Missing</span><span role="columnheader" class="cr-right">Actions</span>
-          </div>
-          <div class="cr-row" role="row" *ngFor="let st of s.students">
-            <span role="cell"><strong>{{ st.studentName }}</strong><small>{{ st.studentId }}</small></span>
-            <span role="cell">{{ st.percentage != null ? (st.percentage | number:'1.0-1') + '%' : '—' }} <small>{{ st.status }}</small></span>
-            <span role="cell" class="cr-missing">
-              <ng-container *ngIf="problems(st) as p">{{ p.length ? p.join(' · ') : 'Nothing missing' }}</ng-container>
-            </span>
-            <span role="cell" class="cr-right cr-row-actions">
+        <p class="cr-warn" *ngIf="s.readiness.draftExams.length"><mat-icon aria-hidden="true">info</mat-icon>Results not yet released: {{ s.readiness.draftExams.join(', ') }}</p>
+        <ul class="cr-students" aria-label="Students">
+          <li class="cr-student" *ngFor="let st of s.students" [class.has-issue]="problems(st).length">
+            <span class="cr-avatar" aria-hidden="true">{{ initials(st.studentName) }}</span>
+            <div class="cr-student-main">
+              <strong>{{ st.studentName }}</strong>
+              <small>{{ st.studentId }}</small>
+              <div class="cr-chips">
+                <span class="cr-chip cr-chip-warn" *ngFor="let p of problems(st)">{{ p }}</span>
+                <span class="cr-chip cr-chip-ok" *ngIf="!problems(st).length">Ready</span>
+              </div>
+            </div>
+            <div class="cr-result">
+              <strong>{{ st.percentage != null ? (st.percentage | number:'1.0-1') + '%' : '—' }}</strong>
+              <small>{{ st.grade || (st.status === 'NO_RESULT' ? 'No result' : '') }}</small>
+            </div>
+            <div class="cr-row-actions">
               <button type="button" class="cr-btn" (click)="preview(st)" [disabled]="previewing === st.studentId">
                 <mat-icon aria-hidden="true">visibility</mat-icon>{{ previewing === st.studentId ? 'Opening…' : 'Preview' }}</button>
-              <button type="button" class="cr-btn" (click)="ask(st.studentId, st.studentName)" aria-label="Request a correction for this student">
+              <button type="button" class="cr-btn cr-btn-icon" (click)="ask(st.studentId, st.studentName)" [attr.aria-label]="'Request a correction for ' + st.studentName" title="Request correction">
                 <mat-icon aria-hidden="true">feedback</mat-icon></button>
-            </span>
-          </div>
-          <p class="cr-muted" *ngIf="!s.students.length">No students in this section.</p>
-        </div>
+            </div>
+          </li>
+        </ul>
+        <div class="cr-state" *ngIf="!s.students.length"><mat-icon aria-hidden="true">groups</mat-icon><span>No students in this section.</span></div>
       </ng-container>
 
-      <h3>Correction requests</h3>
-      <p class="cr-muted" *ngIf="!requests.length">None sent yet.</p>
-      <div class="cr-history" *ngFor="let q of requests">
-        <strong>{{ q.studentName ?? 'Whole section' }}</strong> → {{ q.teacherName ?? q.teacherId }}
-        <small>{{ q.createdAt | date:'d MMM, h:mm a' }} · {{ q.reason }}</small>
-      </div>
+      <h3 *ngIf="requests.length">Correction requests</h3>
+      <ul class="cr-requests" *ngIf="requests.length">
+        <li *ngFor="let q of requests">
+          <strong>{{ q.studentName ?? 'Whole section' }}</strong>
+          <span>to {{ q.teacherName ?? q.teacherId }} · {{ q.createdAt | date:'d MMM, h:mm a' }}</span>
+          <small>{{ q.reason }}</small>
+        </li>
+      </ul>
     </section>
   </ng-template>
 </main>

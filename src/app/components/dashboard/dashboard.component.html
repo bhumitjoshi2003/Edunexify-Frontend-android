@@ -271,7 +271,7 @@
         </app-nav-group>
       </ng-container>
 
-      <!-- ── ACADEMIC COORDINATOR: one navigation (a coordinating teacher's teaching work is part of it) ── -->
+      <!-- ── ACADEMIC COORDINATOR workspace: Principal-style academic oversight only (teaching lives in the Teacher workspace) ── -->
       <ng-container *ngIf="isCoordinator()">
         <app-nav-group>
           <div class="nav-section-label">Overview</div>
@@ -302,26 +302,12 @@
         <app-nav-group *ngIf="hasFeature('REPORT_CARDS')">
           <div class="nav-section-label">Report Cards</div>
           <a class="nav-item" routerLink="/dashboard/report-card-review" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Report card review"><mat-icon>fact_check</mat-icon><span>Report Card Review</span></a>
-          <a class="nav-item" *ngIf="ClassTeacher" routerLink="/dashboard/report-card-approvals" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My class approvals"><mat-icon>task_alt</mat-icon><span>My Class Approvals</span></a>
-          <a class="nav-item" *ngIf="ClassTeacher" routerLink="/dashboard/report-cards-v2/remarks" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Remarks"><mat-icon>rate_review</mat-icon><span>Remarks</span></a>
         </app-nav-group>
         <app-nav-group>
           <div class="nav-section-label">Communication</div>
           <a class="nav-item" routerLink="/dashboard/notice" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Notice board"><mat-icon>campaign</mat-icon><span>Notice board</span></a>
           <a class="nav-item" *ngIf="hasFeature('SCHOOL_COMMUNICATION')" routerLink="/dashboard/event-calendar" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Event calendar"><mat-icon>calendar_month</mat-icon><span>Event calendar</span></a>
           <a class="nav-item" routerLink="/dashboard/holiday-calendar" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Holidays"><mat-icon>beach_access</mat-icon><span>Holidays</span></a>
-        </app-nav-group>
-        <app-nav-group>
-          <div class="nav-section-label">My Teaching</div>
-          <a class="nav-item" routerLink="/dashboard/teacher-checkin" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My check-in"><mat-icon>fingerprint</mat-icon><span>My Check-in</span></a>
-          <a class="nav-item" routerLink="/dashboard/apply-teacher-leave" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My leave"><mat-icon>event_busy</mat-icon><span>My Leave</span></a>
-          <a class="nav-item" routerLink="/dashboard/timetable" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My timetable"><mat-icon>schedule</mat-icon><span>My Timetable</span></a>
-          <a class="nav-item" *ngIf="ClassTeacher" routerLink="/dashboard/teacher-attendance" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Mark attendance"><mat-icon>how_to_reg</mat-icon><span>Mark Attendance</span></a>
-          <a class="nav-item" *ngIf="ClassTeacher" routerLink="/dashboard/view-leaves" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Student leave requests"><mat-icon>event_available</mat-icon><span>Student Leave</span></a>
-          <a class="nav-item" *ngIf="ClassTeacher" routerLink="/dashboard/attendance-summary" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Attendance summary"><mat-icon>bar_chart</mat-icon><span>Attendance Summary</span></a>
-          <a class="nav-item" *ngIf="hasFeature('CLASSROOM')" routerLink="/dashboard/homework-classwork" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Homework &amp; classwork"><mat-icon>menu_book</mat-icon><span>Homework &amp; Classwork</span></a>
-          <a class="nav-item" *ngIf="hasFeature('CLASSROOM')" routerLink="/dashboard/teacher-class-updates" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="Class updates"><mat-icon>campaign</mat-icon><span>Class Updates</span></a>
-          <a class="nav-item" *ngIf="ClassTeacher" routerLink="/dashboard/my-signature" routerLinkActive="active" (click)="closeSidebarOnMobile()" title="My signature"><mat-icon>draw</mat-icon><span>My Signature</span></a>
         </app-nav-group>
       </ng-container>
 
@@ -815,6 +801,21 @@
         </div>
 
         <div class="pm-actions">
+          <div class="pm-workspace" *ngIf="hasWorkspaceChoice()" role="group" aria-label="Switch workspace" data-testid="workspace-switcher">
+            <div class="pm-workspace-label">Switch workspace</div>
+            <button mat-menu-item class="pm-action pm-workspace-option" [class.is-active]="!isCoordinator()"
+                    [attr.aria-current]="!isCoordinator() ? 'true' : null" data-testid="workspace-teacher"
+                    (click)="switchWorkspace('TEACHER')">
+              <mat-icon>co_present</mat-icon><span>Teacher</span>
+              <mat-icon class="pm-check" *ngIf="!isCoordinator()">check_circle</mat-icon>
+            </button>
+            <button mat-menu-item class="pm-action pm-workspace-option" [class.is-active]="isCoordinator()"
+                    [attr.aria-current]="isCoordinator() ? 'true' : null" data-testid="workspace-coordinator"
+                    (click)="switchWorkspace('COORDINATOR')">
+              <mat-icon>hub</mat-icon><span>Coordinator</span>
+              <mat-icon class="pm-check" *ngIf="isCoordinator()">check_circle</mat-icon>
+            </button>
+          </div>
           <button mat-menu-item class="pm-action"
           *ngIf="isStudent() || isTeacher() || isAdmin() || isPrincipal()"
           (click)="navigateToMyProfile()">

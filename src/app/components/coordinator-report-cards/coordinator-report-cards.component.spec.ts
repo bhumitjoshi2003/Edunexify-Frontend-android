@@ -50,6 +50,38 @@ describe('CoordinatorReportCardsComponent', () => {
     expect(component.visible.map(r => r.setupId)).toEqual([8]);
   });
 
+  it('filters by examination, class and section, and summarises what is shown', () => {
+    coordinators.reportCards.and.returnValue(of([
+      row,
+      { ...row, setupId: 8, setupName: 'Term 2' },
+      { ...row, classId: 9, className: '9', sectionId: 91, sectionName: 'B' },
+    ]));
+    component.load();
+    fixture.detectChanges();
+    expect(component.setups.map(x => x.name)).toEqual(['Term 1', 'Term 2']);
+    expect(component.totals.sections).toBe(3);
+    component.setupFilter = 7;
+    expect(component.visible.length).toBe(2);
+    expect(component.classNames).toEqual(['8', '9']);
+    component.classFilter = '9';
+    component.onClassChange();
+    expect(component.visible.map(r => r.sectionId)).toEqual([91]);
+    expect(component.totals.pending).toBe(1);
+    expect(component.filtersActive).toBeTrue();
+    component.clearFilters();
+    expect(component.visible.length).toBe(3);
+  });
+
+  it('highlights incomplete students and keeps Preview and Request correction on each', () => {
+    component.open(row);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.cr-student.has-issue')).not.toBeNull();
+    expect(el.textContent).toContain('Preview');
+    expect(el.querySelector('[aria-label="Request a correction for Ravi"]')).not.toBeNull();
+    expect(component.detailTotals).toEqual({ missingMarks: 1, noRemark: 1, noResult: 0 });
+  });
+
   it('lists what is missing per student and offers no approval or publication action', () => {
     component.open(row);
     fixture.detectChanges();
