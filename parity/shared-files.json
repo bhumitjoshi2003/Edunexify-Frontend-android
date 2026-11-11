@@ -3,7 +3,6 @@
   "shared": {
     "src/app/auth/auth-state.service.ts": "a673062d8ff93d03b89dcda4ea73912d2680da92eb1705ba97178409ac65a375",
     "src/app/auth/auth.service.ts": "0f790679e878948a2cdd32f5536bf5ae7e7de111f2794745c640db3e12245dfe",
-    "src/app/auth/auth.interceptor.ts": "99f58a4ea005c7484771b2e5d85531c1ffcf96a48beca3b23cb81b4b601d45d8",
     "src/app/auth/auth.guard.ts": "65ff4cc8047700f2e7c3a024cd1d22f0ff62fbfa292e084eb27da76a057d11a8",
     "src/app/auth/role.guard.ts": "51ad146b36fc62a7a9b458d3c345bc7d05bd4c0f8c27eb84fd71ea578f8057f0",
     "src/app/auth/feature.guard.ts": "098daa0c7c45c0284b1ddc093f61e253aed63e47915bb2bcea32d57af98d2158",
@@ -198,6 +197,10 @@
     {
       "path": "**/*.html, **/*.css",
       "reason": "Templates and styles are per platform unless a component says otherwise."
+    },
+    {
+      "path": "src/app/auth/auth.interceptor.ts",
+      "reason": "Web and Android session interceptors differ: Android handles native session refresh and platform headers; both enforce identical tenant-mismatch logout rules."
     }
   ],
   "principalShared": [
