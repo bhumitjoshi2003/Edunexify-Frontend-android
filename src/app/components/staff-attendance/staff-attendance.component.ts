@@ -367,7 +367,7 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
     if (this.isPrincipal && this.protectedIds.has(this.markForm.teacherId)) {
       this.toast.warning('Not allowed', this.ownTeacherIds.has(this.markForm.teacherId)
         ? 'You cannot correct your own attendance.'
-        : 'The attendance of the Principal or another Academic Coordinator cannot be corrected here.');
+        : 'The attendance of the Principal or another Coordinator cannot be corrected here.');
       return;
     }
     if (this.isPrincipal && !this.correctionReason.trim()) {

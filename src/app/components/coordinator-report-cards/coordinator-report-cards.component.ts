@@ -30,6 +30,10 @@ export class CoordinatorReportCardsComponent implements OnInit, OnDestroy {
   loading = true;
   loadError: string | null = null;
   filter: 'all' | 'pending' | 'complete' = 'all';
+  setupFilter = 0;          // setup id; 0 = every examination / term
+  classFilter = '';         // class name; '' = every class
+  sectionFilter = 0;        // section id; 0 = every section
+  readonly skeletons = [1, 2, 3, 4, 5, 6];
 
   selected: CoordinatorReportCardProgress | null = null;
   summary: Summary | null = null;
@@ -82,7 +86,63 @@ export class CoordinatorReportCardsComponent implements OnInit, OnDestroy {
   }
 
   get visible(): CoordinatorReportCardProgress[] {
-    return this.progress.filter(r => this.filter === 'all' || (this.filter === 'complete') === this.isComplete(r));
+    return this.progress.filter(r =>
+      (this.filter === 'all' || (this.filter === 'complete') === this.isComplete(r))
+      && (!this.setupFilter || r.setupId === this.setupFilter)
+      && (!this.classFilter || r.className === this.classFilter)
+      && (!this.sectionFilter || r.sectionId === this.sectionFilter));
+  }
+
+  /** Filter choices come from what the reviewer can actually see. */
+  get setups(): { id: number; name: string }[] {
+    const seen = new Map<number, string>();
+    this.progress.forEach(r => seen.set(r.setupId, r.setupName));
+    return [...seen].map(([id, name]) => ({ id, name }));
+  }
+
+  get classNames(): string[] {
+    return [...new Set(this.progress.filter(r => !this.setupFilter || r.setupId === this.setupFilter).map(r => r.className))];
+  }
+
+  get sectionOptions(): { id: number; name: string }[] {
+    const seen = new Map<number, string>();
+    this.progress.filter(r => (!this.classFilter || r.className === this.classFilter) && r.sectionId != null)
+      .forEach(r => seen.set(r.sectionId!, r.sectionName ?? ''));
+    return [...seen].map(([id, name]) => ({ id, name }));
+  }
+
+  onClassChange(): void { this.sectionFilter = 0; }
+
+  get filtersActive(): boolean { return !!(this.setupFilter || this.classFilter || this.sectionFilter || this.filter !== 'all'); }
+
+  clearFilters(): void { this.setupFilter = 0; this.classFilter = ''; this.sectionFilter = 0; this.filter = 'all'; }
+
+  /** Totals across the filtered sections, for the summary tiles. */
+  get totals(): { sections: number; complete: number; pending: number; students: number; ready: number; corrections: number } {
+    const rows = this.visible;
+    return {
+      sections: rows.length,
+      complete: rows.filter(r => this.isComplete(r)).length,
+      pending: rows.filter(r => !this.isComplete(r)).length,
+      students: rows.reduce((n, r) => n + r.students, 0),
+      ready: rows.reduce((n, r) => n + r.complete, 0),
+      corrections: rows.reduce((n, r) => n + r.correctionRequests, 0),
+    };
+  }
+
+  get detailTotals(): { missingMarks: number; noRemark: number; noResult: number } | null {
+    const rows = this.summary?.students;
+    if (!rows) return null;
+    return {
+      missingMarks: rows.filter(s => s.marksMissing > 0).length,
+      noRemark: rows.filter(s => !s.hasTeacherRemark).length,
+      noResult: rows.filter(s => s.status === 'NO_RESULT').length,
+    };
+  }
+
+  initials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
   }
 
   get completeCount(): number { return this.progress.filter(r => this.isComplete(r)).length; }

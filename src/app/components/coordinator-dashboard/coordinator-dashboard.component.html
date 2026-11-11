@@ -4,28 +4,14 @@
       <p>{{ greeting }},</p>
       <h1>{{ name || 'Coordinator' }} <span aria-hidden="true">👋</span></h1>
       <div class="pd-hero-meta">
-        <span><mat-icon aria-hidden="true">hub</mat-icon>Academic Coordinator</span>
+        <span><mat-icon aria-hidden="true">hub</mat-icon>Coordinator</span>
+        <span *ngIf="appointment.data as a"><mat-icon aria-hidden="true">class</mat-icon>{{ classCount(a) }} {{ classCount(a) === 1 ? 'class' : 'classes' }}</span>
         <span *ngIf="overview.data as o"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ o.today | date:'EEEE, d MMMM' }}</span>
       </div>
     </div>
-    <div class="pd-hero-side">
-      <button type="button" class="pd-hero-action" (click)="load()" [disabled]="overview.loading" aria-label="Refresh dashboard">
-        <mat-icon aria-hidden="true">refresh</mat-icon>Refresh
-      </button>
-    </div>
   </header>
 
-  <!-- Scope -->
-  <section class="cd-scope" aria-label="Your coordination scope">
-    <ng-container *ngIf="appointment.data as a; else scopePending">
-      <span class="cd-scope-title">You coordinate</span>
-      <span class="cd-chip" *ngFor="let s of a.scope">{{ scopeLabel(s) }}</span>
-    </ng-container>
-    <ng-template #scopePending>
-      <span class="pd-muted" *ngIf="appointment.loading">Loading your scope…</span>
-      <span class="cd-error" *ngIf="!appointment.loading && appointment.failed">Your Coordinator appointment could not be loaded. If it was just changed, sign in again.</span>
-    </ng-template>
-  </section>
+  <p class="cd-error" role="alert" *ngIf="!appointment.loading && appointment.failed">Your Coordinator appointment could not be loaded. If it was just changed, sign in again.</p>
 
   <!-- Today in your classes -->
   <section class="pd-today" aria-label="Today in your classes">
@@ -103,7 +89,6 @@
           <h2 id="cd-att-title"><mat-icon aria-hidden="true">assessment</mat-icon>Attendance today</h2>
           <a routerLink="/dashboard/coordinator-attendance">Student attendance</a>
         </div>
-        <p class="pd-sub">Submission and presence for each section you coordinate</p>
         <ng-container *ngIf="overview.data as o; else attPending">
           <p class="pd-empty" *ngIf="!o.attendance.length">No sections in your scope yet.</p>
           <div class="pd-table-wrap" *ngIf="o.attendance.length">
@@ -130,12 +115,12 @@
       <section class="pd-panel" *ngIf="reportCardsEnabled" aria-labelledby="cd-rc-title">
         <div class="pd-section-head">
           <h2 id="cd-rc-title"><mat-icon aria-hidden="true">fact_check</mat-icon>Report card completion</h2>
-          <a routerLink="/dashboard/report-card-review">Open review</a>
+          <a routerLink="/dashboard/report-card-review">View all</a>
         </div>
         <div *ngIf="reportCards.loading" aria-hidden="true"><div class="pd-sk-row" *ngFor="let x of [1, 2, 3]"><span class="pd-sk-line"></span></div></div>
         <p class="pd-muted" *ngIf="reportCards.failed">Report-card progress is unavailable. <button type="button" class="cd-link" (click)="load()">Try again</button></p>
         <ng-container *ngIf="reportCards.data as rows">
-          <div class="cd-progress" *ngFor="let r of rows.slice(0, 6)">
+          <div class="cd-progress" *ngFor="let r of rows.slice(0, 4)">
             <div class="cd-progress-head"><span>{{ r.setupName }} · {{ unitLabel(r) }}</span>
               <small>{{ r.complete }}/{{ r.students }} · {{ approvalLabel(r.approvalStatus) }}</small></div>
             <div class="cd-bar" role="progressbar" [attr.aria-valuenow]="completion(r.complete, r.students)" aria-valuemin="0" aria-valuemax="100">
@@ -149,7 +134,7 @@
       <section class="pd-panel" *ngIf="examsEnabled" aria-labelledby="cd-marks-title">
         <div class="pd-section-head">
           <h2 id="cd-marks-title"><mat-icon aria-hidden="true">edit_note</mat-icon>Marks still to enter</h2>
-          <a routerLink="/dashboard/class-results">Class results</a>
+          <a routerLink="/dashboard/class-results">View all</a>
         </div>
         <div *ngIf="marks.loading" aria-hidden="true"><div class="pd-sk-row" *ngFor="let x of [1, 2]"><span class="pd-sk-line"></span></div></div>
         <p class="pd-muted" *ngIf="marks.failed">Marks progress is unavailable.</p>
@@ -170,20 +155,16 @@
       <section class="pd-panel" aria-labelledby="cd-upcoming-title">
         <div class="pd-section-head">
           <h2 id="cd-upcoming-title"><mat-icon aria-hidden="true">event</mat-icon>Coming up</h2>
-          <a routerLink="/dashboard/manage-assessments" *ngIf="classroomEnabled">Assessments</a>
+          <a routerLink="/dashboard/manage-assessments" *ngIf="classroomEnabled">View all</a>
         </div>
         <ng-container *ngIf="overview.data as o; else upcomingPending">
-          <ul class="pd-events" *ngIf="o.assessments.length || o.exams.length">
-            <li *ngFor="let a of o.assessments">
-              <span class="pd-date"><b>{{ a.date | date:'d' }}</b>{{ a.date | date:'MMM' }}</span>
-              <span class="pd-event-copy"><strong>{{ a.title }}</strong><small>{{ a.subjectName }} · Class {{ a.className }}{{ a.sectionName ? '-' + a.sectionName : '' }}</small></span>
-            </li>
-            <li *ngFor="let e of o.exams">
-              <span class="pd-date"><b>{{ e.date | date:'d' }}</b>{{ e.date | date:'MMM' }}</span>
-              <span class="pd-event-copy"><strong>{{ e.examName }} · {{ e.subjectName }}</strong><small>Class {{ e.className }}</small></span>
+          <ul class="pd-events" *ngIf="upcoming.length">
+            <li *ngFor="let u of upcoming">
+              <span class="pd-date"><b>{{ u.date | date:'d' }}</b>{{ u.date | date:'MMM' }}</span>
+              <span class="pd-event-copy"><strong>{{ u.title }}</strong><small>{{ u.detail }}</small></span>
             </li>
           </ul>
-          <p class="pd-empty" *ngIf="!o.assessments.length && !o.exams.length">Nothing scheduled in the next weeks.</p>
+          <p class="pd-empty" *ngIf="!upcoming.length">Nothing scheduled in the next weeks.</p>
         </ng-container>
         <ng-template #upcomingPending><p class="pd-muted">{{ overview.loading ? 'Loading…' : 'Upcoming work is unavailable.' }}</p></ng-template>
       </section>

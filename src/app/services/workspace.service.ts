@@ -21,10 +21,33 @@ export class WorkspaceService {
   /** Emits after an explicit {@link select}. */
   readonly changed$ = this.changed$$.asObservable();
   private memory = new Map<string, Workspace>();
+  private hadChoice = false;
+  private readonly revoked$$ = new Subject<void>();
+  /** Emits when a successful session verification shows the Coordinator appointment has ended. */
+  readonly revoked$ = this.revoked$$.asObservable();
+
+  constructor() {
+    // Optional so that minimal AuthStateService stubs keep working.
+    this.auth.verified$?.subscribe(() => this.reconcile());
+  }
 
   /** True while the signed-in teacher holds an active Coordinator appointment (the switcher shows). */
   hasChoice(): boolean {
-    return this.auth.isCoordinator();
+    const has = this.auth.isCoordinator();
+    if (has) this.hadChoice = true;
+    return has;
+  }
+
+  /** Called after each verified session: an ended appointment drops the preference and notifies the shell. */
+  reconcile(): void {
+    const has = this.auth.isCoordinator();
+    if (this.hadChoice && !has) {
+      this.forget();
+      this.hadChoice = false;
+      this.revoked$$.next();
+    } else if (has) {
+      this.hadChoice = true;
+    }
   }
 
   /** The workspace to show now; always TEACHER without an active appointment. */
@@ -57,13 +80,20 @@ export class WorkspaceService {
     return workspace === 'COORDINATOR' ? '/dashboard/coordinator-dashboard' : '/dashboard/teacher-dashboard';
   }
 
+  /** Personal teaching pages (a notification or link to one opens the Teacher workspace). */
+  private static readonly TEACHER_PAGES = [
+    'teacher-dashboard', 'teacher-checkin', 'apply-teacher-leave', 'teacher-attendance', 'view-leaves',
+    'my-signature', 'homework-classwork', 'teacher-class-updates', 'report-card-approvals', 'report-cards-v2',
+    'timetable', 'attendance-summary', 'student-list',
+  ];
+  /** Coordinator oversight pages (they open the Coordinator workspace). */
+  private static readonly COORDINATOR_PAGES = ['report-card-review', 'staff-attendance', 'teacher-substitutions'];
+
   /** The workspace a URL belongs to, when that is unambiguous (shared pages return null). */
   static workspaceOf(url: string): Workspace | null {
     const segment = url.split('?')[0].split('#')[0].replace(/^\/dashboard\//, '').split('/')[0];
-    if (segment === 'teacher-dashboard') return 'TEACHER';
-    if (segment.startsWith('coordinator-') || ['report-card-review', 'staff-attendance', 'teacher-substitutions'].includes(segment)) {
-      return 'COORDINATOR';
-    }
+    if (WorkspaceService.TEACHER_PAGES.includes(segment)) return 'TEACHER';
+    if (segment.startsWith('coordinator-') || WorkspaceService.COORDINATOR_PAGES.includes(segment)) return 'COORDINATOR';
     return null;
   }
 

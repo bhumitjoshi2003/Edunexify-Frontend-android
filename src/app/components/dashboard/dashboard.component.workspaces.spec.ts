@@ -98,7 +98,7 @@ describe('DashboardComponent — Teacher / Coordinator workspaces', () => {
     for (const p of coordinating) expect(link(p)).withContext(p).toBeTruthy();
     for (const p of [...teaching, 'view-leaves', 'my-signature']) expect(link(p)).withContext(p).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('My Teaching');
-    expect(fixture.componentInstance.getRoleLabel()).toBe('Academic Coordinator');
+    expect(fixture.componentInstance.getRoleLabel()).toBe('Coordinator');
   });
 
   it('switches to the original Teacher sidebar and back without a reload, remembering the choice', () => {

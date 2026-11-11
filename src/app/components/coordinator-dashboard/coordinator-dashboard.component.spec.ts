@@ -53,9 +53,10 @@ describe('CoordinatorDashboardComponent', () => {
     const el = create();
     const text = el.textContent ?? '';
     expect(el.querySelector('.pd-hero')).not.toBeNull();
-    expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('Academic Coordinator');
+    expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('Coordinator');
     expect(text).not.toContain('Class teacher');
-    expect(text).toContain('Class 8-A');                    // scope chip and attendance table
+    expect(text).toContain('Class 8-A');                    // attendance table
+    expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('1 class');
     expect(el.querySelectorAll('.pd-today .pd-tile').length).toBe(4);
     expect(text).toContain('0 / 1');
     expect(text).toContain('Needs your attention');

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Subject } from 'rxjs';
 import { WorkspaceService } from './workspace.service';
 import { AuthStateService } from '../auth/auth-state.service';
 
@@ -97,7 +98,31 @@ describe('WorkspaceService', () => {
     expect(WorkspaceService.workspaceOf('/dashboard/report-card-review')).toBe('COORDINATOR');
     expect(WorkspaceService.workspaceOf('/dashboard/staff-attendance')).toBe('COORDINATOR');
     expect(WorkspaceService.workspaceOf('/dashboard/mark-entry')).toBeNull();
-    expect(WorkspaceService.workspaceOf('/dashboard/view-leaves')).toBeNull();
+    expect(WorkspaceService.workspaceOf('/dashboard/notice')).toBeNull();
+    for (const teaching of ['view-leaves', 'teacher-checkin', 'apply-teacher-leave', 'report-card-approvals', 'homework-classwork', 'timetable']) {
+      expect(WorkspaceService.workspaceOf(`/dashboard/${teaching}`)).withContext(teaching).toBe('TEACHER');
+    }
+  });
+
+  it('drops the Coordinator workspace when a verified session shows the appointment ended', () => {
+    const verified = new Subject<void>();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: AuthStateService, useValue: { ...auth, verified$: verified.asObservable() } }] });
+    const svc = TestBed.inject(WorkspaceService);
+    as('T1', 'a', true);
+    svc.select('COORDINATOR');
+    expect(svc.hasChoice()).toBeTrue();
+    let revoked = 0;
+    svc.revoked$.subscribe(() => revoked++);
+    verified.next();                       // still appointed: nothing happens
+    expect(revoked).toBe(0);
+    as('T1', 'a', false);                  // next successful verification: appointment gone
+    verified.next();
+    expect(revoked).toBe(1);
+    expect(svc.active()).toBe('TEACHER');
+    expect(localStorage.length).toBe(0);
+    verified.next();                       // not repeated
+    expect(revoked).toBe(1);
   });
 
   it('survives unavailable storage', () => {

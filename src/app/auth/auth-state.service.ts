@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { classifyAuthFailure } from './auth-failure-classifier';
 
@@ -46,6 +46,9 @@ export interface UserInfo {
 export class AuthStateService {
   private user: UserInfo | null = null;
   private status: AuthStatus = 'CHECKING';
+  private readonly verified$$ = new Subject<void>();
+  /** Emits each time the server confirms the session and the user info (role, appointment) was refreshed. */
+  readonly verified$: Observable<void> = this.verified$$.asObservable();
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   constructor(private http: HttpClient) {}
@@ -69,6 +72,7 @@ export class AuthStateService {
       );
       this.user = userInfo;
       this.status = 'AUTHENTICATED';
+      this.verified$$.next();
     } catch (err) {
       if (classifyAuthFailure(err) === 'AUTHORITATIVE') {
         console.warn('[AuthStateService] Session rejected by server — treating as logged out:', err);
@@ -86,6 +90,7 @@ export class AuthStateService {
   setUser(userInfo: UserInfo): void {
     this.user = userInfo;
     this.status = 'AUTHENTICATED';
+    this.verified$$.next();
   }
 
   getUser(): UserInfo | null {

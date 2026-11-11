@@ -112,7 +112,21 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
   /** Marks still missing, worst first (published exams are settled and left out). */
   get openMarks(): CoordinatorMarksCompletion[] {
     return (this.marks.data ?? []).filter(m => !m.published && m.missing > 0)
-      .sort((a, b) => b.missing - a.missing).slice(0, 6);
+      .sort((a, b) => b.missing - a.missing).slice(0, 4);
+  }
+
+  /** Distinct classes in the Coordinator's scope. */
+  classCount(a: MyCoordinatorAppointment): number { return new Set(a.scope.map(s => s.classId)).size; }
+
+  /** Assessments and exams merged, soonest first; the full lists live on their own pages. */
+  get upcoming(): { date: string; title: string; detail: string }[] {
+    const o = this.overview.data;
+    if (!o) return [];
+    const items = [
+      ...o.assessments.map(a => ({ date: a.date, title: a.title, detail: `${a.subjectName} · Class ${a.className}${a.sectionName ? '-' + a.sectionName : ''}` })),
+      ...o.exams.map(e => ({ date: e.date, title: `${e.examName} · ${e.subjectName}`, detail: `Class ${e.className}` })),
+    ];
+    return items.sort((x, y) => x.date.localeCompare(y.date)).slice(0, 4);
   }
 
   approvalLabel(status: string): string {
