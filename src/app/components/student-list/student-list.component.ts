@@ -40,6 +40,8 @@ export class StudentListComponent implements OnInit, OnDestroy {
   alumniStudents: Student[] = [];
   leftStudents: Student[] = [];
   isLoading: boolean = true;
+  /** Teacher without a class-teacher assignment: there is no class roster to show. */
+  noOwnClass = false;
   teacherId: string = '';
   loggedInUserRole: string = '';
   selectedClass: string = '';
@@ -155,6 +157,13 @@ export class StudentListComponent implements OnInit, OnDestroy {
     this.teacherService.getTeacher(this.teacherId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (teacher: Teacher) => {
         this.selectedClass = teacher.classTeacher ?? '';
+        // A subject teacher with no class of their own has no roster here: say so, without a failing request.
+        if (!this.selectedClass) {
+          this.noOwnClass = true;
+          this.isLoading = false;
+          this.cdr.markForCheck();
+          return;
+        }
         this.loadStudents();
       },
       error: (error: unknown) => {

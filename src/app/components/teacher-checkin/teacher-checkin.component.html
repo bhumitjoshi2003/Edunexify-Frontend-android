@@ -67,7 +67,7 @@
         <div class="tc-status-details">
           <div class="tc-status-detail">
             <span class="tc-detail-label">Method</span>
-            <span class="tc-detail-value">{{ getAttendanceMethodLabel(todayRecord!.method) }}</span>
+            <span class="tc-detail-value">{{ manualLabel(todayRecord) || getAttendanceMethodLabel(todayRecord!.method) }}</span>
           </div>
         </div>
       </div>

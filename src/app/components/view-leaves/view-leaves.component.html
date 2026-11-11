@@ -104,7 +104,7 @@
           <span class="vl-card-reason" *ngIf="leave.reason">“{{ leave.reason }}”</span>
           <app-leave-escalation-badge [leave]="leave"></app-leave-escalation-badge>
           <span class="vl-card-meta" *ngIf="leave.decidedBy && !isAutoApproved(leave) && (leave.status === 'APPROVED' || leave.status === 'REJECTED')">
-            {{ leave.status === 'APPROVED' ? 'Approved' : 'Rejected' }} by {{ leave.decidedBy }}<ng-container *ngIf="leave.decidedAt"> · {{ leave.decidedAt | date:'d MMM, h:mm a' }}</ng-container><ng-container *ngIf="leave.decisionReason"> · {{ leave.decisionReason }}</ng-container>
+            {{ leave.status === 'APPROVED' ? 'Approved' : 'Rejected' }} by {{ deciderLabel(leave) }}<ng-container *ngIf="leave.decidedAt"> · {{ leave.decidedAt | date:'d MMM, h:mm a' }}</ng-container><ng-container *ngIf="leave.decisionReason"> · {{ leave.decisionReason }}</ng-container>
           </span>
           <span class="vl-card-meta" *ngIf="leave.status === 'CANCELLED'">
             Cancelled<ng-container *ngIf="leave.cancelledBy"> by {{ leave.cancelledBy }}</ng-container><ng-container *ngIf="leave.cancellationReason"> · {{ leave.cancellationReason }}</ng-container>

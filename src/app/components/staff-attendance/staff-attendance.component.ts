@@ -1,3 +1,4 @@
+import { correctorLabel, manualAttendanceLabel } from '../../utils/attribution.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { optionalCoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
@@ -23,6 +24,10 @@ import { TeacherAttendanceCorrection } from '../../interfaces/teacher-checkin';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StaffAttendanceComponent implements OnInit, OnDestroy {
+  /** "Corrected by Sunita Rao (Coordinator)" — the authority recorded by the server, never assumed. */
+  readonly manualLabel = manualAttendanceLabel;
+  readonly correctorLabel = correctorLabel;
+
   private coordinators = optionalCoordinatorService();
 
   private destroy$ = new Subject<void>();

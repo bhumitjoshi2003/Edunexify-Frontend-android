@@ -282,6 +282,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
 
   /** Coordinator scope: the classes and sections they cover, and the teachers they may timetable. */
   private coordinatorUnits: { classId: number; sectionId: number | null }[] = [];
+  /** The Coordinator covers only some sections of the selected class ("All Sections" is not theirs). */
+  partialSectionScope = false;
 
   private loadCoordinatorClasses(): void {
     forkJoin({ units: this.coordinators!.units(), classes: this.schoolService.getManagedClasses() })
@@ -331,6 +333,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
         next: (secs) => {
           this.sections = secs.filter(s => s.active && (!this.coordinatorMode
             || this.coordinatorUnits.some(u => u.classId === cls.id && (u.sectionId == null || u.sectionId === s.id))));
+          // A Coordinator covering only some sections cannot read the whole class: open their first section.
+          const allActive = secs.filter(s => s.active);
+          this.partialSectionScope = this.coordinatorMode && this.sections.length < allActive.length;
+          if (this.partialSectionScope && this.selectedSectionId == null && this.sections.length) {
+            this.selectedSectionId = this.sections[0].id ?? null;
+          }
           this.sectionsLoaded = true;
           this.cdr.markForCheck();
           then?.();

@@ -120,7 +120,7 @@
               <ng-container *ngIf="record.checkInTime">{{ formatTime(record.checkInTime) }}</ng-container>
               <ng-container *ngIf="record.checkOutTime"> → {{ formatTime(record.checkOutTime) }}</ng-container>
               <ng-container *ngIf="record.distanceFromSchool != null"> · {{ formatDistance(record.distanceFromSchool) }}</ng-container>
-              <ng-container *ngIf="record.markedByAdmin"> · Admin</ng-container>
+              <ng-container *ngIf="record.markedByAdmin"> · {{ manualLabel(record) }}</ng-container>
             </span>
           </div>
           <span class="sa-badge" [ngClass]="getStatusClass(record.status)">
@@ -213,7 +213,7 @@
                 <span class="sa-teacher-meta">
                   <ng-container *ngIf="record.checkInTime">{{ formatTime(record.checkInTime) }}</ng-container>
                   <ng-container *ngIf="record.checkOutTime"> → {{ formatTime(record.checkOutTime) }}</ng-container>
-                  <ng-container *ngIf="record.markedByAdmin"> · Admin</ng-container>
+                  <ng-container *ngIf="record.markedByAdmin"> · {{ manualLabel(record) }}</ng-container>
                 </span>
               </div>
               <span class="sa-badge" [ngClass]="getStatusClass(record.status)">
@@ -305,7 +305,7 @@
             <li *ngFor="let h of correctionHistory">
               <strong>{{ h.previousStatus ? getStatusLabel(h.previousStatus) : 'Not recorded' }} → {{ getStatusLabel(h.newStatus) }}</strong>
               <span>{{ h.reason }}</span>
-              <small>{{ h.correctedBy }} · {{ h.correctedAt | date:'d MMM y, h:mm a' }}</small>
+              <small>Corrected by {{ correctorLabel(h) }} · {{ h.correctedAt | date:'d MMM y, h:mm a' }}</small>
             </li>
           </ul>
         </div>

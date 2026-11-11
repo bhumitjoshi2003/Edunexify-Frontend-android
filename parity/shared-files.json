@@ -113,7 +113,7 @@
     "src/app/components/principal-dashboard/principal-dashboard.component.spec.ts": "c8b44425d2f1b58094c641b71056fe975febf863519997f217a654b069b4d4e9",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.ts": "a644226294168aa4a783115faf251830c55eb50e074120c6af76ce3f95bfe1a3",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.html": "acd8ce62b1ad7b8166521c4f95847136f71a43d2781249a5e2c79dcb342406d0",
-    "src/app/components/view-leaves/view-leaves.component.html": "cfc0cf20ccf3de4c3e78f39d5d63133479d657ffaf520e2cd27769e8d93dddb1",
+    "src/app/components/view-leaves/view-leaves.component.html": "ff3795f018c7571385a553a6d832a8679dbe6674d0a8f528f9e10a18d9093f62",
     "src/app/components/view-leaves/view-leaves.component.spec.ts": "8ddf0ac4fe6e5abeb34fdd7b73e64f4c544ee1337e25f065cb25c9e8599b109b",
     "src/app/app.routes.principal.spec.ts": "a8a032069188598c0d134d66cda7dfaf438092448de906abd16330d766e14b6c",
     "src/app/components/notice/notice.component.principal.spec.ts": "5f7c8a283e21fa409c6427cecce475a904ebaefb2340ef262480e2a1708b577d",
@@ -139,7 +139,9 @@
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "0fee414b4ffebcf7e17464a23d16028def4eda5edacb64a17181618f18353d60",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.spec.ts": "73bab416fef22d57f96c6a0cefa8ebaeabbce81ecff3f8262b43c61260de0f50",
     "src/app/services/workspace.service.ts": "e86af8daa57b8744360979b7a26065b5eece80ad8f1a3e990e4f7d407e6afb3b",
-    "src/app/services/workspace.service.spec.ts": "e74630bfe6925662cf35d337d9892865d06acbf7eab2cedf169b429ef718f1e9"
+    "src/app/services/workspace.service.spec.ts": "e74630bfe6925662cf35d337d9892865d06acbf7eab2cedf169b429ef718f1e9",
+    "src/app/utils/attribution.util.ts": "1e63b3598790d2e996ab395571b438320a8b2f0f92b66032be92b6be9e8df4d8",
+    "src/app/utils/attribution.util.spec.ts": "2850f3ee948f34024149de8bb28e127f68439dd954adddc94b78ea1cdc48d59b"
   },
   "platformSpecific": [
     {
