@@ -20,8 +20,9 @@ describe('CoordinatorService', () => {
   };
 
   beforeEach(() => {
-    authState = jasmine.createSpyObj('AuthStateService', ['isCoordinator', 'getUserId']);
+    authState = jasmine.createSpyObj('AuthStateService', ['isCoordinator', 'getUserId', 'getUserRole']);
     authState.getUserId.and.returnValue('T1');
+    authState.getUserRole.and.returnValue('TEACHER');
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [{ provide: AuthStateService, useValue: authState }],
@@ -70,5 +71,17 @@ describe('CoordinatorService', () => {
     const req = http.expectOne(`${environment.apiUrl}/coordinator/report-cards/7/correction-requests`);
     expect(req.request.body).toEqual({ sectionId: 81, reason: 'Remarks missing', studentId: null });
     req.flush({});
+  });
+
+  it('routes report-card review to the Principal API for a Principal and the Coordinator API otherwise', () => {
+    authState.getUserRole.and.returnValue('PRINCIPAL');
+    service.reportCards().subscribe();
+    http.expectOne(`${environment.apiUrl}/principal/report-cards`).flush([]);
+    service.requestCorrection(7, 81, 'Remarks missing', null).subscribe();
+    http.expectOne(`${environment.apiUrl}/principal/report-cards/7/correction-requests`).flush({});
+
+    authState.getUserRole.and.returnValue('TEACHER');
+    service.reportCards().subscribe();
+    http.expectOne(`${environment.apiUrl}/coordinator/report-cards`).flush([]);
   });
 });

@@ -1,8 +1,8 @@
 <main class="cr-page">
   <header class="cr-head">
     <div>
-      <h1>Report card oversight</h1>
-      <p>Completion for the sections you coordinate. You can preview cards and ask the class teacher for corrections; approval, signatures and publication stay with the Principal and school admins.</p>
+      <h1>Report card review</h1>
+      <p>Completion, marks and remarks for every section in your scope. Preview cards and ask the class teacher for corrections. Review is separate from approval, signatures and publication.</p>
     </div>
   </header>
 
@@ -14,7 +14,7 @@
     </div>
     <p class="cr-muted" *ngIf="loading" role="status">Loading report cards…</p>
     <p class="cr-error" role="alert" *ngIf="loadError">{{ loadError }} <button type="button" class="cr-link" (click)="load()">Try again</button></p>
-    <p class="cr-muted" *ngIf="!loading && !loadError && !progress.length">No report cards are set up for your classes this session.</p>
+    <p class="cr-muted" *ngIf="!loading && !loadError && !progress.length">No report cards are set up for this session yet.</p>
 
     <div class="cr-list">
       <button type="button" class="cr-card" *ngFor="let r of visible" (click)="open(r)">

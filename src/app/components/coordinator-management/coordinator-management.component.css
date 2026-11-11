@@ -43,3 +43,6 @@
 @media (max-width: 420px) {
   .cm-scope-row { grid-template-columns: 1fr; }
 }
+.cm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.cm-stats span { padding: 4px 12px; border-radius: 999px; background: #eef2f7; color: #475569; font-size: 0.78rem; }
+.cm-stats strong { color: #0f766e; }

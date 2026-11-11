@@ -1,4 +1,5 @@
 import { principalCapabilityGuard } from './auth/principal-capability.guard';
+import { coordinatorHomeGuard } from './auth/coordinator-home.guard';
 import { provideRouter, Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
 import { roleGuard } from './auth/role.guard';
@@ -61,10 +62,13 @@ export const routes: Routes = [
         canActivate: [roleGuard], data: { roles: ['COORDINATOR'] }
       },
       {
-        path: 'coordinator-report-cards',
+        // Report card review: one feature for the Principal (school-wide) and an Academic Coordinator
+        // (their scope). It is oversight only and independent of the approval workflow.
+        path: 'report-card-review',
         loadComponent: () => import('./components/coordinator-report-cards/coordinator-report-cards.component').then(m => m.CoordinatorReportCardsComponent),
-        canActivate: [roleGuard, featureGuard], data: { roles: ['COORDINATOR'], featureKey: 'REPORT_CARDS' }
+        canActivate: [roleGuard, principalCapabilityGuard, featureGuard], data: { principalOperation: 'REPORT_CARD_REVIEW', roles: ['PRINCIPAL', 'COORDINATOR'], featureKey: 'REPORT_CARDS' }
       },
+      { path: 'coordinator-report-cards', redirectTo: 'report-card-review', pathMatch: 'full' },
       {
         path: 'coordinator-timetable',
         loadComponent: () => import('./components/timetable/timetable.component').then(m => m.TimetableComponent),
@@ -488,7 +492,7 @@ export const routes: Routes = [
       {
         path: 'teacher-dashboard',
         loadComponent: () => import('./components/teacher-dashboard/teacher-dashboard.component').then(m => m.TeacherDashboardComponent),
-        canActivate: [roleGuard], data: { roles: ['TEACHER'] }
+        canActivate: [roleGuard, coordinatorHomeGuard], data: { roles: ['TEACHER'] }
       },
 
       // ── Homework & Classwork ──────────────────────────────────────────

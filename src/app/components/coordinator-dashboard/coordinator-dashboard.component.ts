@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { CoordinatorMyTeachingComponent } from '../coordinator-my-teaching/coordinator-my-teaching.component';
 import { CoordinatorService } from '../../services/coordinator.service';
 import {
   CoordinatorMarksCompletion, CoordinatorOverview, CoordinatorReportCardProgress, MyCoordinatorAppointment,
@@ -14,16 +15,18 @@ import {
 interface Panel<T> { data: T | null; loading: boolean; failed: boolean; }
 
 /**
- * Academic Coordinator home: the classes/sections in scope, today's attendance, cover needs,
- * upcoming assessments, marks and report-card completion, and — when the Coordinator also teaches —
- * a way back to their own teaching work. Every figure is computed by the server within scope.
+ * Academic Coordinator home — the one dashboard of a coordinating teacher, laid out like the Principal's:
+ * today's tiles, what needs attention, attendance by section, report-card and marks completion and
+ * upcoming work, with a "My teaching" panel for their own classes, check-in and leave. Every figure
+ * is computed by the server within the Coordinator's scope.
  */
 @Component({
   selector: 'app-coordinator-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatIconModule, CoordinatorMyTeachingComponent],
   templateUrl: './coordinator-dashboard.component.html',
-  styleUrl: './coordinator-dashboard.component.css',
+  // Same visual language as the Principal dashboard; the local sheet only adds what is Coordinator-specific.
+  styleUrls: ['../principal-dashboard/principal-dashboard.component.css', './coordinator-dashboard.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
@@ -82,6 +85,10 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  get classroomEnabled(): boolean { return this.authState.hasFeature('CLASSROOM'); }
+  get examsEnabled(): boolean { return this.authState.hasFeature('EXAMS_RESULTS'); }
+  get reportCardsEnabled(): boolean { return this.authState.hasFeature('REPORT_CARDS'); }
+
   get submittedSections(): number {
     return this.overview.data?.attendance.filter(a => a.submitted).length ?? 0;
   }
@@ -120,6 +127,28 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
       default: return status;
     }
   }
+
+  /** One list for "Needs your attention": the server's items first, then report cards and marks that still need work. */
+  get attentionItems(): { severity: string; title: string; detail: string; route: string | null; icon: string }[] {
+    const items = (this.overview.data?.attention ?? []).map(a => ({
+      severity: a.severity === 'danger' ? 'urgent' : a.severity === 'warning' ? 'warning' : 'action',
+      title: a.title, detail: a.detail, route: a.route,
+      icon: a.severity === 'danger' ? 'event_busy' : a.severity === 'warning' ? 'schedule' : 'info'
+    }));
+    if (this.reportCardsEnabled) {
+      for (const r of this.reportCardsNeedingWork.slice(0, 3)) {
+        items.push({ severity: 'warning', title: `${r.setupName} · ${this.unitLabel(r)}`,
+          detail: `${r.incomplete} incomplete · ${r.missingTeacherRemarks} without teacher remarks`,
+          route: '/dashboard/report-card-review', icon: 'fact_check' });
+      }
+    }
+    return items;
+  }
+
+  get attentionLoading(): boolean { return this.overview.loading || this.reportCards.loading; }
+  get attentionIncomplete(): boolean { return !this.attentionLoading && (this.overview.failed || (this.reportCardsEnabled && this.reportCards.failed)); }
+
+  trackByIndex(i: number): number { return i; }
 
   gapSummary(m: CoordinatorMarksCompletion): string {
     return m.gaps.slice(0, 3).map(g => `${g.subjectName} (${g.missing})`).join(', ');

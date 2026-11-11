@@ -94,6 +94,8 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   /** The Principal corrects with a reason, sees the history, and never edits their own record. */
   isPrincipal = false;
   ownTeacherIds = new Set<string>();
+  /** The caller's own record plus, for a Coordinator, the Principal's and other Coordinators' (server-resolved). */
+  protectedIds = new Set<string>();
   correctionReason = '';
   correctionHistory: TeacherAttendanceCorrection[] = [];
   historyLoading = false;
@@ -362,8 +364,10 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   }
 
   async submitAdminMark(): Promise<void> {
-    if (this.isPrincipal && this.ownTeacherIds.has(this.markForm.teacherId)) {
-      this.toast.warning('Not allowed', 'You cannot correct your own attendance.');
+    if (this.isPrincipal && this.protectedIds.has(this.markForm.teacherId)) {
+      this.toast.warning('Not allowed', this.ownTeacherIds.has(this.markForm.teacherId)
+        ? 'You cannot correct your own attendance.'
+        : 'The attendance of the Principal or another Academic Coordinator cannot be corrected here.');
       return;
     }
     if (this.isPrincipal && !this.correctionReason.trim()) {
@@ -433,18 +437,27 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
 
   /** The Principal may correct any teacher of the school except their own teacher record. */
   canCorrect(record: TeacherAttendanceRecord): boolean {
-    return !this.isPrincipal || !this.ownTeacherIds.has(record.teacherId);
+    return !this.isPrincipal || !this.protectedIds.has(record.teacherId);
   }
 
   isOwnRecord(record: TeacherAttendanceRecord): boolean {
     return this.isPrincipal && this.ownTeacherIds.has(record.teacherId);
   }
 
+  /** Protected from correction by someone else's authority: the Principal or another Coordinator. */
+  isProtectedRecord(record: TeacherAttendanceRecord): boolean {
+    return this.isPrincipal && this.protectedIds.has(record.teacherId) && !this.ownTeacherIds.has(record.teacherId);
+  }
+
   private loadOwnTeacherIds(): void {
     this.checkinService.getOwnTeacherIds()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (self) => { this.ownTeacherIds = new Set(self?.teacherIds ?? []); this.cdr.markForCheck(); },
+        next: (self) => {
+          this.ownTeacherIds = new Set(self?.teacherIds ?? []);
+          this.protectedIds = new Set(self?.protectedTeacherIds ?? self?.teacherIds ?? []);
+          this.cdr.markForCheck();
+        },
         error: (err) => this.logger.error('Failed to load own teacher record', err)
       });
   }

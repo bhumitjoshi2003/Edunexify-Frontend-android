@@ -51,8 +51,8 @@ export class TeacherCheckinService {
   }
 
   /** The Principal's own teacher record(s), shown read-only. */
-  getOwnTeacherIds(): Observable<{ teacherIds: string[] }> {
-    return this.http.get<{ teacherIds: string[] }>(`${this.correctionUrl}/self`);
+  getOwnTeacherIds(): Observable<{ teacherIds: string[]; protectedTeacherIds?: string[] }> {
+    return this.http.get<{ teacherIds: string[]; protectedTeacherIds?: string[] }>(`${this.correctionUrl}/self`);
   }
 
   checkIn(req: TeacherCheckinRequest): Observable<TeacherAttendanceRecord> {
