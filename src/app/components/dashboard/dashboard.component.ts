@@ -18,6 +18,7 @@ import { SchoolService } from '../../services/school.service';
 import { TenantService } from '../../services/tenant.service';
 import { Subject, takeUntil, interval, Subscription } from 'rxjs';
 import { NavigationEnd } from '@angular/router';
+import { Workspace, WorkspaceService } from '../../services/workspace.service';
 import { filter } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
 import { AppUpdate, AppUpdateAvailability } from '@capawesome/capacitor-app-update';
@@ -91,7 +92,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private notificationState: NotificationStateService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
-    private adoptionMetadata: AdoptionMetadataService
+    private adoptionMetadata: AdoptionMetadataService,
+    private workspace: WorkspaceService,
   ) { }
 
   ngOnInit() {
@@ -116,6 +118,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (path === '/dashboard' || path === '/dashboard/') {
         this.handleInitialNavigation();
       }
+      this.followUrlWorkspace(nav.urlAfterRedirects);
     });
     // Also poll every 60 seconds as a background fallback
     this.pollingIntervalSubscription = interval(60000)
@@ -258,8 +261,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.Role === 'STUDENT') {
       this.router.navigate(['/dashboard/student-dashboard']);
     } else if (this.Role === 'TEACHER') {
-      // One login: a coordinating teacher lands on the Coordinator dashboard; teaching stays one click away.
-      this.router.navigate([this.isCoordinator() ? '/dashboard/coordinator-dashboard' : '/dashboard/teacher-dashboard']);
+      // One account, two workspaces: a coordinating teacher opens the workspace they last used
+      // (Coordinator until they choose otherwise); everyone else opens the Teacher dashboard.
+      this.router.navigate([this.workspace.homeRoute()]);
     } else if (this.Role === 'PRINCIPAL') {
       this.router.navigate(['/dashboard/principal-dashboard']);
     } else if (this.Role === 'ADMIN' || this.Role === 'SUB_ADMIN') {
@@ -279,9 +283,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.Role === 'TEACHER';
   }
 
-  /** A TEACHER account with an active Academic Coordinator appointment. */
+  /** The Coordinator workspace is showing: a TEACHER account with an active appointment that chose it. */
   isCoordinator(): boolean {
-    return this.Role === 'TEACHER' && this.authStateService.isCoordinator();
+    return this.Role === 'TEACHER' && this.workspace.isCoordinatorWorkspace();
+  }
+
+  /** The switcher is offered only to a teacher with an active Coordinator appointment. */
+  hasWorkspaceChoice(): boolean {
+    return this.Role === 'TEACHER' && this.workspace.hasChoice();
+  }
+
+  /** Switches the shell's navigation and opens that workspace's dashboard; no reload, no re-login. */
+  switchWorkspace(target: Workspace): void {
+    if (!this.hasWorkspaceChoice() || this.workspace.active() === target) return;
+    this.workspace.select(target);
+    this.cdr.markForCheck();
+    void this.router.navigateByUrl(this.workspace.homeRoute(target));
+  }
+
+  /** Browser/Android Back, deep links and notifications land on a page of one workspace: show that
+   *  workspace's navigation. Shared pages leave the current workspace alone. */
+  private followUrlWorkspace(url: string): void {
+    if (!this.hasWorkspaceChoice()) return;
+    const target = WorkspaceService.workspaceOf(url);
+    if (target && target !== this.workspace.active()) {
+      this.workspace.select(target);
+    }
+    this.cdr.markForCheck();
   }
 
   isPrincipal(): boolean {

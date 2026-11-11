@@ -1,22 +1,14 @@
-import { Component, Input } from '@angular/core';
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CoordinatorDashboardComponent } from './coordinator-dashboard.component';
-import { CoordinatorMyTeachingComponent } from '../coordinator-my-teaching/coordinator-my-teaching.component';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { CoordinatorOverview } from '../../interfaces/coordinator';
 
-@Component({ selector: 'app-coordinator-my-teaching', standalone: true, template: '<div class="my-teaching-stub">My teaching</div>' })
-class MyTeachingStubComponent {
-  @Input() classTeacherOf: string | null = null;
-  @Input() classroomEnabled = false;
-  @Input() marksEnabled = false;
-}
-
 /** Shared by the web and Android clients — keep the two copies identical.
- * One Coordinator dashboard, laid out like the Principal's, with the teaching work inside it. */
+ * The Coordinator workspace's dashboard, laid out like the Principal's; personal teaching is not part of it. */
 describe('CoordinatorDashboardComponent', () => {
   let fixture: ComponentFixture<CoordinatorDashboardComponent>;
   let coordinators: jasmine.SpyObj<CoordinatorService>;
@@ -39,8 +31,6 @@ describe('CoordinatorDashboardComponent', () => {
         { provide: CoordinatorService, useValue: coordinators },
         { provide: AuthStateService, useValue: { getUser: () => ({ name: 'Asha Rao' }), hasFeature: (k: string) => features.includes(k) } },
       ],
-    }).overrideComponent(CoordinatorDashboardComponent, {
-      remove: { imports: [CoordinatorMyTeachingComponent] }, add: { imports: [MyTeachingStubComponent] },
     });
     fixture = TestBed.createComponent(CoordinatorDashboardComponent);
     fixture.detectChanges();
@@ -59,12 +49,12 @@ describe('CoordinatorDashboardComponent', () => {
     coordinators.marksCompletion.and.returnValue(of([]));
   });
 
-  it('is the Principal-style dashboard: hero, today tiles, needs-attention and a My teaching panel', () => {
+  it('is the Principal-style dashboard: hero, today tiles, needs-attention and no teaching panel', () => {
     const el = create();
     const text = el.textContent ?? '';
     expect(el.querySelector('.pd-hero')).not.toBeNull();
     expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('Academic Coordinator');
-    expect(text).toContain('Class teacher · Class 9');
+    expect(text).not.toContain('Class teacher');
     expect(text).toContain('Class 8-A');                    // scope chip and attendance table
     expect(el.querySelectorAll('.pd-today .pd-tile').length).toBe(4);
     expect(text).toContain('0 / 1');
@@ -72,12 +62,13 @@ describe('CoordinatorDashboardComponent', () => {
     expect(el.querySelector('.pd-attention-list li.is-urgent')?.textContent).toContain('2 periods need a substitute today');
     expect(text).toContain('Term 1 · Class 8-A');            // report card completion
     expect(text).toContain('Awaiting class teacher');
-    expect(el.querySelector('.my-teaching-stub')).not.toBeNull();
+    expect(text).not.toContain('My teaching');
   });
 
-  it('has no separate Teacher dashboard: nothing links to it, and "Open my teaching" is gone', () => {
+  it('keeps teaching out: no link to the Teacher dashboard or personal teaching pages', () => {
     const el = create();
     expect(el.querySelector('a[href="/dashboard/teacher-dashboard"]')).toBeNull();
+    expect(el.querySelector('a[href="/dashboard/teacher-checkin"]')).toBeNull();
     expect(el.textContent).not.toContain('Open my teaching');
   });
 

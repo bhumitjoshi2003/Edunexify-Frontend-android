@@ -133,13 +133,15 @@
     "src/app/interfaces/coordinator.ts": "a697a5925845e2c9008292cf2e0f46afa9b9760c8a00d1358ca6bc3dca4f76de",
     "src/app/services/coordinator.service.ts": "a2bbe3a9616a8c13a4c3ab42d83fb5eddc521069a3eee9a5e0a8674a23e76e83",
     "src/app/services/coordinator.service.spec.ts": "8af1b2746703834bebfec5992927aeba8058c3ab0167f3c9f56c4839d7758ee6",
-    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "02bed1619b027fee4f4e3a051bb7893df04c8c62fe3869b6af789774c0a60808",
-    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "f15c2edec33826b96c73bcce5d8b3669e8b2c2d710da012464e74326329e97e1",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "b0c7b6a188b931996c9a68e7038b32f61d3bf2e178b6541ef91892192097e403",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8cc4af0337bb274ed7ed4e294d305b8f963d3bc1b1f30d8ba7d7247dd33ec9ac",
     "src/app/components/coordinator-management/coordinator-management.component.ts": "547adc70ebd6250a5f27e48a5f4a0c2603df47c44c9098d30724c59b2bf1a9cf",
     "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "3466d6e6c3999c9c6db8e365f0c52a490dbf14051742c82a0cce21013001a1bc",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "520ccfff1f394025668d7b66c9db21bed249859ee379d9bf0ef612b09b200612",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.spec.ts": "fdc743b0564c01b2526178ad389e34aa096ae4bd17d4625780fbc01c935a7ce4",
-    "src/app/components/coordinator-people/coordinator-people.component.ts": "420592a5e5f12a419db0f2e2e3c02b7dead3ef64df385e9e0999ec913760611a"
+    "src/app/components/coordinator-people/coordinator-people.component.ts": "420592a5e5f12a419db0f2e2e3c02b7dead3ef64df385e9e0999ec913760611a",
+    "src/app/services/workspace.service.ts": "1cc530d7f56ea4f5335f18a9cedc0385dbdc2f70419093a3c984a5ca495278a4",
+    "src/app/services/workspace.service.spec.ts": "2d2c75c29b03169ffae347777230abb81224034a799e7cc5b05977c570711396"
   },
   "platformSpecific": [
     {

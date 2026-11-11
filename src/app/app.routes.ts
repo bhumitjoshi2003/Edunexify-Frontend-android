@@ -1,5 +1,4 @@
 import { principalCapabilityGuard } from './auth/principal-capability.guard';
-import { coordinatorHomeGuard } from './auth/coordinator-home.guard';
 import { provideRouter, Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
 import { roleGuard } from './auth/role.guard';
@@ -492,7 +491,7 @@ export const routes: Routes = [
       {
         path: 'teacher-dashboard',
         loadComponent: () => import('./components/teacher-dashboard/teacher-dashboard.component').then(m => m.TeacherDashboardComponent),
-        canActivate: [roleGuard, coordinatorHomeGuard], data: { roles: ['TEACHER'] }
+        canActivate: [roleGuard], data: { roles: ['TEACHER'] }
       },
 
       // ── Homework & Classwork ──────────────────────────────────────────

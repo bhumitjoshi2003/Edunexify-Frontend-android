@@ -6,7 +6,6 @@
       <div class="pd-hero-meta">
         <span><mat-icon aria-hidden="true">hub</mat-icon>Academic Coordinator</span>
         <span *ngIf="overview.data as o"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ o.today | date:'EEEE, d MMMM' }}</span>
-        <span *ngIf="overview.data?.classTeacherOf as ct"><mat-icon aria-hidden="true">school</mat-icon>Class teacher · {{ ct }}</span>
       </div>
     </div>
     <div class="pd-hero-side">
@@ -166,8 +165,6 @@
     </div>
 
     <aside class="pd-side">
-      <app-coordinator-my-teaching [classTeacherOf]="overview.data?.classTeacherOf ?? null"
-        [classroomEnabled]="classroomEnabled" [marksEnabled]="examsEnabled"></app-coordinator-my-teaching>
 
       <!-- Coming up -->
       <section class="pd-panel" aria-labelledby="cd-upcoming-title">
