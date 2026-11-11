@@ -140,7 +140,6 @@ export class AuthInterceptor implements HttpInterceptor {
         if (error.status === 403) {
           const body = error.error;
           const toast = this.injector.get(ToastService);
-          const msg = typeof body === 'string' ? body : body?.message;
           // Only the tenant-validation filter can identify a wrong school. Ordinary
           // permission-denied 403s must never clear an otherwise valid session.
           if (body?.code === 'UNKNOWN_SCHOOL' || body?.code === 'TENANT_MISMATCH') {
