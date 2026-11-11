@@ -1,0 +1,37 @@
+/* Uses the Principal dashboard vocabulary (pd-*) shared through the parent's stylesheet; only the
+   teaching-specific parts are defined here. */
+:host { display: block; }
+.mt-panel { display: grid; gap: 10px; }
+.mt-row {
+  display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  min-height: 52px; padding: 10px 12px; border: 1px solid #e2e8f0; border-left: 3px solid #94a3b8; border-radius: 12px;
+  background: #fff; color: #1e293b; font-size: 0.85rem; font-weight: 650; text-decoration: none;
+}
+.mt-row.is-ok { border-left-color: #059669; }
+.mt-row:hover { box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); }
+.mt-row:focus-visible, .mt-tools a:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.mt-row mat-icon { width: 18px; height: 18px; font-size: 18px; color: #64748b; }
+.mt-row.is-ok > mat-icon:first-child { color: #059669; }
+.mt-row small { display: block; margin-top: 2px; color: #64748b; font-size: 0.72rem; font-weight: 500; }
+.mt-row .pd-chevron { color: #94a3b8; }
+.mt-label { margin: 6px 0 0; color: #64748b; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; }
+.mt-classes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mt-classes li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 10px 12px; border: 1px solid #e8edf3; border-radius: 12px; background: #fbfcfd;
+}
+.mt-classes li.is-now { border-color: #99f6e4; background: #f0fdfa; }
+.mt-badge { padding: 2px 8px; border-radius: 999px; background: #eef2f7; color: #475569; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; }
+.mt-badge.now { background: #ccfbf1; color: #0f766e; }
+.mt-copy { display: grid; gap: 2px; min-width: 0; }
+.mt-copy strong { font-size: 0.84rem; color: #0f172a; }
+.mt-copy small { color: #64748b; font-size: 0.72rem; }
+.mt-copy em { font-style: normal; color: #b45309; }
+.mt-time { color: #475569; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.mt-link { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: #0f766e; text-decoration: underline; cursor: pointer; }
+.mt-tools { margin-top: 2px; }
+@media (max-width: 420px) {
+  .mt-classes li { grid-template-columns: auto minmax(0, 1fr); }
+  .mt-time { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) { .mt-row { transition: none; } }

@@ -395,7 +395,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       'STUDENT': 'Student',
       'TEACHER': 'Teacher',
       'PRINCIPAL': 'Principal',
-      'COORDINATOR': 'Coordinator',
+      'COORDINATOR': 'Academic Coordinator',
       'ADMIN': 'Admin',
       'SUB_ADMIN': 'Sub Admin',
       'SUPER_ADMIN': 'Super Admin',

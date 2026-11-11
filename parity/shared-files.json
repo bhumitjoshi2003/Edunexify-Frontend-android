@@ -1,7 +1,7 @@
 {
   "description": "Business files intentionally identical in EduPay-Leave-frontend (web) and EduPay-Leave-android. See parity/README.md.",
   "shared": {
-    "src/app/auth/auth-state.service.ts": "4a488bf84a84fe3dbb00978fcd914be37d2648930f12a73f4908843c15f7cffe",
+    "src/app/auth/auth-state.service.ts": "cc4027e42a1c7ac2cdd3f9846dffe347b6a58ed8231725222a9f62029c6b4922",
     "src/app/auth/auth.service.ts": "0f790679e878948a2cdd32f5536bf5ae7e7de111f2794745c640db3e12245dfe",
     "src/app/auth/auth.interceptor.ts": "99f58a4ea005c7484771b2e5d85531c1ffcf96a48beca3b23cb81b4b601d45d8",
     "src/app/auth/auth.guard.ts": "65ff4cc8047700f2e7c3a024cd1d22f0ff62fbfa292e084eb27da76a057d11a8",
@@ -131,13 +131,13 @@
     "src/app/utils/leave-escalation.util.ts": "57bdd606c6059bd635dd3d06eeaca0ce8fed74b994241de07137380440da4242",
     "src/app/components/leave-escalation-badge/leave-escalation-badge.component.ts": "3da9b9bd43f9d1c151ca49685072938b96edf77f3812dcba869eeaf1f0a5ac64",
     "src/app/interfaces/coordinator.ts": "a697a5925845e2c9008292cf2e0f46afa9b9760c8a00d1358ca6bc3dca4f76de",
-    "src/app/services/coordinator.service.ts": "7fe1bf771edea3bacadf602263259acd61b97e590a2f3a820ef202e0ab6a5268",
-    "src/app/services/coordinator.service.spec.ts": "810c18129b0c7da766920768c7cee49193ab16a92ffa32f71b23312eec3e725a",
-    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "18fe3fa7c6d584d9aaa752181e75055b9a58e456a18991de88d458f9b8a6a8d6",
-    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "fe425a4a0d14c747fe282b29b59620a0e7c18d34195af9281b20dde02965960f",
+    "src/app/services/coordinator.service.ts": "a2bbe3a9616a8c13a4c3ab42d83fb5eddc521069a3eee9a5e0a8674a23e76e83",
+    "src/app/services/coordinator.service.spec.ts": "8af1b2746703834bebfec5992927aeba8058c3ab0167f3c9f56c4839d7758ee6",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "02bed1619b027fee4f4e3a051bb7893df04c8c62fe3869b6af789774c0a60808",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "f15c2edec33826b96c73bcce5d8b3669e8b2c2d710da012464e74326329e97e1",
     "src/app/components/coordinator-management/coordinator-management.component.ts": "547adc70ebd6250a5f27e48a5f4a0c2603df47c44c9098d30724c59b2bf1a9cf",
     "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "3466d6e6c3999c9c6db8e365f0c52a490dbf14051742c82a0cce21013001a1bc",
-    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "ec4c1a0edf2a3a34bf158f070a643129bd5c176bed349b44be5f501caa5c86b6",
+    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "520ccfff1f394025668d7b66c9db21bed249859ee379d9bf0ef612b09b200612",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.spec.ts": "fdc743b0564c01b2526178ad389e34aa096ae4bd17d4625780fbc01c935a7ce4",
     "src/app/components/coordinator-people/coordinator-people.component.ts": "420592a5e5f12a419db0f2e2e3c02b7dead3ef64df385e9e0999ec913760611a"
   },

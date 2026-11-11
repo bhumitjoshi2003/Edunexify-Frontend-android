@@ -1,16 +1,19 @@
-<main class="cd-page">
-  <header class="cd-hero">
-    <div class="cd-hero-copy">
+<main class="pd-page">
+  <header class="pd-hero">
+    <div class="pd-hero-copy">
       <p>{{ greeting }},</p>
-      <h1>{{ name || 'Coordinator' }}</h1>
-      <div class="cd-hero-meta">
+      <h1>{{ name || 'Coordinator' }} <span aria-hidden="true">👋</span></h1>
+      <div class="pd-hero-meta">
         <span><mat-icon aria-hidden="true">hub</mat-icon>Academic Coordinator</span>
         <span *ngIf="overview.data as o"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ o.today | date:'EEEE, d MMMM' }}</span>
+        <span *ngIf="overview.data?.classTeacherOf as ct"><mat-icon aria-hidden="true">school</mat-icon>Class teacher · {{ ct }}</span>
       </div>
     </div>
-    <button type="button" class="cd-hero-action" (click)="load()" [disabled]="overview.loading" aria-label="Refresh dashboard">
-      <mat-icon aria-hidden="true" [class.cd-spin]="overview.loading">refresh</mat-icon>Refresh
-    </button>
+    <div class="pd-hero-side">
+      <button type="button" class="pd-hero-action" (click)="load()" [disabled]="overview.loading" aria-label="Refresh dashboard">
+        <mat-icon aria-hidden="true">refresh</mat-icon>Refresh
+      </button>
+    </div>
   </header>
 
   <!-- Scope -->
@@ -20,137 +23,189 @@
       <span class="cd-chip" *ngFor="let s of a.scope">{{ scopeLabel(s) }}</span>
     </ng-container>
     <ng-template #scopePending>
-      <span class="cd-muted" *ngIf="appointment.loading">Loading your scope…</span>
+      <span class="pd-muted" *ngIf="appointment.loading">Loading your scope…</span>
       <span class="cd-error" *ngIf="!appointment.loading && appointment.failed">Your Coordinator appointment could not be loaded. If it was just changed, sign in again.</span>
     </ng-template>
   </section>
 
-  <!-- Today -->
-  <section class="cd-today" aria-label="Today in your classes">
+  <!-- Today in your classes -->
+  <section class="pd-today" aria-label="Today in your classes">
     <ng-container *ngIf="overview.data as o; else todayPending">
-      <a class="cd-tile" routerLink="/dashboard/coordinator-people">
-        <span class="cd-tile-top"><span>Students</span><mat-icon aria-hidden="true">groups</mat-icon></span>
+      <a class="pd-tile pd-tile-students" routerLink="/dashboard/coordinator-people">
+        <span class="pd-tile-top"><span class="pd-tile-label">Students</span><mat-icon aria-hidden="true">groups</mat-icon></span>
         <strong>{{ o.students }}</strong>
         <small>in {{ o.units.length }} section{{ o.units.length === 1 ? '' : 's' }}</small>
       </a>
-      <a class="cd-tile" routerLink="/dashboard/coordinator-people" [queryParams]="{ tab: 'teachers' }">
-        <span class="cd-tile-top"><span>Teachers</span><mat-icon aria-hidden="true">school</mat-icon></span>
+      <a class="pd-tile pd-tile-staff" routerLink="/dashboard/coordinator-people" [queryParams]="{ tab: 'teachers' }">
+        <span class="pd-tile-top"><span class="pd-tile-label">Teachers</span><mat-icon aria-hidden="true">school</mat-icon></span>
         <strong>{{ o.teachers }}</strong>
         <small>teaching in your scope</small>
       </a>
-      <a class="cd-tile" routerLink="/dashboard/coordinator-attendance">
-        <span class="cd-tile-top"><span>Attendance today</span><mat-icon aria-hidden="true">how_to_reg</mat-icon></span>
-        <strong>{{ submittedSections }}<span class="cd-of"> / {{ o.attendance.length }}</span></strong>
+      <a class="pd-tile pd-tile-leaves" routerLink="/dashboard/coordinator-attendance">
+        <span class="pd-tile-top"><span class="pd-tile-label">Attendance today</span><mat-icon aria-hidden="true">how_to_reg</mat-icon></span>
+        <strong>{{ submittedSections }}<span class="pd-of"> / {{ o.attendance.length }}</span></strong>
         <small>{{ markedToday ? presentToday + ' of ' + markedToday + ' present' : 'sections submitted' }}</small>
       </a>
-      <a class="cd-tile" routerLink="/dashboard/teacher-substitutions" [class.cd-tile-alert]="o.substitutionsNeeded > 0">
-        <span class="cd-tile-top"><span>Cover needed</span><mat-icon aria-hidden="true">swap_horiz</mat-icon></span>
-        <strong>{{ o.substitutionsNeeded }}</strong>
+      <a class="pd-tile pd-tile-reviews" routerLink="/dashboard/teacher-substitutions">
+        <span class="pd-tile-top"><span class="pd-tile-label">Cover needed</span><mat-icon aria-hidden="true">swap_horiz</mat-icon></span>
+        <strong [class.pd-tone-low]="o.substitutionsNeeded > 0">{{ o.substitutionsNeeded }}</strong>
         <small>{{ o.substitutionsCovered }} period{{ o.substitutionsCovered === 1 ? '' : 's' }} covered today</small>
       </a>
     </ng-container>
     <ng-template #todayPending>
       <ng-container *ngIf="overview.loading; else todayFailed">
-        <div class="cd-tile cd-sk" *ngFor="let x of [1, 2, 3, 4]" aria-hidden="true"></div>
-        <span class="cd-visually-hidden" role="status">Loading today's overview</span>
+        <div class="pd-tile pd-sk" *ngFor="let x of [1, 2, 3, 4]" aria-hidden="true">
+          <span class="pd-sk-line short"></span><span class="pd-sk-line tall"></span><span class="pd-sk-line"></span>
+        </div>
+        <span class="pd-visually-hidden" role="status">Loading today's overview</span>
       </ng-container>
       <ng-template #todayFailed>
-        <p class="cd-error cd-wide" role="alert">Today's overview could not be loaded. <button type="button" class="cd-link" (click)="load()">Try again</button></p>
+        <div class="pd-failed" role="alert">
+          <mat-icon aria-hidden="true">cloud_off</mat-icon>
+          <span>Today's overview could not be loaded.</span>
+          <button type="button" (click)="load()">Try again</button>
+        </div>
       </ng-template>
     </ng-template>
   </section>
 
-  <div class="cd-grid">
-    <!-- Needs attention -->
-    <section class="cd-panel" aria-labelledby="cd-attention">
-      <h2 id="cd-attention"><mat-icon aria-hidden="true">priority_high</mat-icon>Needs attention</h2>
-      <ng-container *ngIf="overview.data as o">
-        <a class="cd-row" *ngFor="let item of o.attention" [routerLink]="item.route" [class]="'cd-row cd-' + item.severity">
-          <strong>{{ item.title }}</strong><small>{{ item.detail }}</small>
-        </a>
-        <a class="cd-row cd-warning" *ngFor="let r of reportCardsNeedingWork.slice(0, 3)" routerLink="/dashboard/coordinator-report-cards">
-          <strong>{{ r.setupName }} · {{ unitLabel(r) }}</strong>
-          <small>{{ r.incomplete }} incomplete · {{ r.missingTeacherRemarks }} without teacher remarks</small>
-        </a>
-        <p class="cd-empty" *ngIf="!o.attention.length && !reportCardsNeedingWork.length">Nothing needs your attention right now.</p>
-      </ng-container>
-      <p class="cd-muted" *ngIf="overview.loading">Loading…</p>
-    </section>
-
-    <!-- Report cards -->
-    <section class="cd-panel" aria-labelledby="cd-rc">
-      <h2 id="cd-rc"><mat-icon aria-hidden="true">fact_check</mat-icon>Report card completion
-        <a class="cd-more" routerLink="/dashboard/coordinator-report-cards">Review</a></h2>
-      <p class="cd-muted" *ngIf="reportCards.loading">Loading…</p>
-      <p class="cd-error" *ngIf="reportCards.failed">Report-card progress is unavailable.</p>
-      <ng-container *ngIf="reportCards.data as rows">
-        <div class="cd-progress" *ngFor="let r of rows.slice(0, 6)">
-          <div class="cd-progress-head"><span>{{ r.setupName }} · {{ unitLabel(r) }}</span>
-            <small>{{ r.complete }}/{{ r.students }} · {{ approvalLabel(r.approvalStatus) }}</small></div>
-          <div class="cd-bar" role="progressbar" [attr.aria-valuenow]="completion(r.complete, r.students)" aria-valuemin="0" aria-valuemax="100">
-            <span [style.width.%]="completion(r.complete, r.students)"></span></div>
-        </div>
-        <p class="cd-empty" *ngIf="!rows.length">No report cards are set up for your classes this session.</p>
-      </ng-container>
-    </section>
-
-    <!-- Marks -->
-    <section class="cd-panel" aria-labelledby="cd-marks">
-      <h2 id="cd-marks"><mat-icon aria-hidden="true">edit_note</mat-icon>Marks still to enter</h2>
-      <p class="cd-muted" *ngIf="marks.loading">Loading…</p>
-      <p class="cd-error" *ngIf="marks.failed">Marks progress is unavailable.</p>
-      <ng-container *ngIf="marks.data">
-        <div class="cd-progress" *ngFor="let m of openMarks">
-          <div class="cd-progress-head"><span>{{ m.examName }} · {{ unitLabel(m) }}</span>
-            <small>{{ m.entered }}/{{ m.expected }} entered</small></div>
-          <div class="cd-bar"><span [style.width.%]="completion(m.entered, m.expected)"></span></div>
-          <small class="cd-gaps" *ngIf="m.gaps.length">Missing: {{ gapSummary(m) }}</small>
-        </div>
-        <p class="cd-empty" *ngIf="!openMarks.length">All marks are entered for open exams.</p>
-      </ng-container>
-    </section>
-
-    <!-- Upcoming -->
-    <section class="cd-panel" aria-labelledby="cd-upcoming">
-      <h2 id="cd-upcoming"><mat-icon aria-hidden="true">event</mat-icon>Upcoming assessments and exams</h2>
-      <ng-container *ngIf="overview.data as o">
-        <a class="cd-row" *ngFor="let a of o.assessments" routerLink="/dashboard/manage-assessments">
-          <strong>{{ a.title }}</strong><small>{{ a.date | date:'EEE d MMM' }} · {{ a.subjectName }} · Class {{ a.className }}{{ a.sectionName ? '-' + a.sectionName : '' }}</small>
-        </a>
-        <div class="cd-row" *ngFor="let e of o.exams">
-          <strong>{{ e.examName }} · {{ e.subjectName }}</strong><small>{{ e.date | date:'EEE d MMM' }} · Class {{ e.className }}</small>
-        </div>
-        <p class="cd-empty" *ngIf="!o.assessments.length && !o.exams.length">Nothing scheduled in the next weeks.</p>
-      </ng-container>
-    </section>
-  </div>
-
-  <!-- Teaching and tools -->
-  <section class="cd-panel cd-tools" aria-labelledby="cd-tools">
-    <h2 id="cd-tools"><mat-icon aria-hidden="true">apps</mat-icon>Coordination tools</h2>
-    <div class="cd-tool-grid">
-      <a routerLink="/dashboard/coordinator-timetable"><mat-icon aria-hidden="true">calendar_view_week</mat-icon>Timetable</a>
-      <a routerLink="/dashboard/teacher-substitutions"><mat-icon aria-hidden="true">swap_horiz</mat-icon>Substitutions</a>
-      <a routerLink="/dashboard/manage-assessments"><mat-icon aria-hidden="true">assignment</mat-icon>Assessments</a>
-      <a routerLink="/dashboard/coordinator-attendance"><mat-icon aria-hidden="true">how_to_reg</mat-icon>Student attendance</a>
-      <a routerLink="/dashboard/staff-attendance"><mat-icon aria-hidden="true">badge</mat-icon>Staff attendance</a>
-      <a routerLink="/dashboard/subject-config"><mat-icon aria-hidden="true">menu_book</mat-icon>Subjects</a>
-      <a routerLink="/dashboard/exam-config"><mat-icon aria-hidden="true">quiz</mat-icon>Exams</a>
-      <a routerLink="/dashboard/assessment-groups"><mat-icon aria-hidden="true">account_tree</mat-icon>Assessment groups</a>
-      <a routerLink="/dashboard/student-stream"><mat-icon aria-hidden="true">alt_route</mat-icon>Streams</a>
-      <a routerLink="/dashboard/elective-assignment"><mat-icon aria-hidden="true">playlist_add_check</mat-icon>Electives</a>
-      <a routerLink="/dashboard/coordinator-report-cards"><mat-icon aria-hidden="true">fact_check</mat-icon>Report cards</a>
-      <a routerLink="/dashboard/coordinator-people"><mat-icon aria-hidden="true">diversity_3</mat-icon>Students &amp; teachers</a>
+  <!-- Needs your attention -->
+  <section class="pd-attention" aria-labelledby="cd-attention-title">
+    <div class="pd-section-head">
+      <h2 id="cd-attention-title"><mat-icon aria-hidden="true">priority_high</mat-icon>Needs your attention</h2>
+      <span *ngIf="attentionItems.length">{{ attentionItems.length }} {{ attentionItems.length === 1 ? 'item' : 'items' }}</span>
     </div>
-    <div class="cd-teaching" *ngIf="overview.data?.classTeacher">
-      <mat-icon aria-hidden="true">co_present</mat-icon>
-      <span>You are also class teacher of <strong>{{ overview.data?.classTeacherOf }}</strong>. Your teaching work is unchanged.</span>
-      <a routerLink="/dashboard/teacher-dashboard">Open my teaching</a>
-    </div>
-    <div class="cd-teaching" *ngIf="overview.data && !overview.data.classTeacher">
-      <mat-icon aria-hidden="true">co_present</mat-icon>
-      <span>Your timetable, marks entry, homework and leave stay in your teaching space.</span>
-      <a routerLink="/dashboard/teacher-dashboard">Open my teaching</a>
-    </div>
+    <ul class="pd-attention-list" *ngIf="attentionItems.length">
+      <li *ngFor="let item of attentionItems; trackBy: trackByIndex" [class]="'is-' + item.severity">
+        <a *ngIf="item.route; else plainRow" [routerLink]="item.route">
+          <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <span>{{ item.title }}<small class="pd-overdue" *ngIf="item.detail">{{ item.detail }}</small></span>
+          <mat-icon class="pd-chevron" aria-hidden="true">chevron_right</mat-icon>
+        </a>
+        <ng-template #plainRow>
+          <div><mat-icon aria-hidden="true">{{ item.icon }}</mat-icon><span>{{ item.title }}<small class="pd-overdue" *ngIf="item.detail">{{ item.detail }}</small></span></div>
+        </ng-template>
+      </li>
+    </ul>
+    <p class="pd-attention-ok" *ngIf="!attentionItems.length && !attentionLoading && !attentionIncomplete">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>Nothing needs your attention right now.
+    </p>
+    <p class="pd-muted" *ngIf="!attentionItems.length && attentionLoading">Checking today's work…</p>
+    <p class="pd-partial" *ngIf="attentionIncomplete">
+      Some information is unavailable, so this list may be incomplete. <button type="button" (click)="load()">Refresh</button>
+    </p>
   </section>
+
+  <div class="pd-grid">
+    <div class="cd-main">
+      <!-- Attendance by section -->
+      <section class="pd-panel" aria-labelledby="cd-att-title">
+        <div class="pd-section-head">
+          <h2 id="cd-att-title"><mat-icon aria-hidden="true">assessment</mat-icon>Attendance today</h2>
+          <a routerLink="/dashboard/coordinator-attendance">Student attendance</a>
+        </div>
+        <p class="pd-sub">Submission and presence for each section you coordinate</p>
+        <ng-container *ngIf="overview.data as o; else attPending">
+          <p class="pd-empty" *ngIf="!o.attendance.length">No sections in your scope yet.</p>
+          <div class="pd-table-wrap" *ngIf="o.attendance.length">
+            <table>
+              <thead><tr><th scope="col">Section</th><th scope="col">Today</th><th scope="col">Present</th><th scope="col">Absent</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let a of o.attendance">
+                  <th scope="row">{{ unitLabel(a) }}</th>
+                  <td><span class="pd-chip" [class.is-done]="a.submitted" [class.is-pending]="!a.submitted">{{ a.submitted ? 'Marked' : 'Not marked' }}</span></td>
+                  <td>{{ a.submitted ? a.present : '—' }}</td>
+                  <td>{{ a.submitted ? a.absent : '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #attPending>
+          <div *ngIf="overview.loading" aria-hidden="true"><div class="pd-sk-row" *ngFor="let x of [1, 2, 3]"><span class="pd-sk-line"></span></div></div>
+          <p class="pd-muted" *ngIf="!overview.loading">Attendance is unavailable.</p>
+        </ng-template>
+      </section>
+
+      <!-- Report card completion -->
+      <section class="pd-panel" *ngIf="reportCardsEnabled" aria-labelledby="cd-rc-title">
+        <div class="pd-section-head">
+          <h2 id="cd-rc-title"><mat-icon aria-hidden="true">fact_check</mat-icon>Report card completion</h2>
+          <a routerLink="/dashboard/report-card-review">Open review</a>
+        </div>
+        <div *ngIf="reportCards.loading" aria-hidden="true"><div class="pd-sk-row" *ngFor="let x of [1, 2, 3]"><span class="pd-sk-line"></span></div></div>
+        <p class="pd-muted" *ngIf="reportCards.failed">Report-card progress is unavailable. <button type="button" class="cd-link" (click)="load()">Try again</button></p>
+        <ng-container *ngIf="reportCards.data as rows">
+          <div class="cd-progress" *ngFor="let r of rows.slice(0, 6)">
+            <div class="cd-progress-head"><span>{{ r.setupName }} · {{ unitLabel(r) }}</span>
+              <small>{{ r.complete }}/{{ r.students }} · {{ approvalLabel(r.approvalStatus) }}</small></div>
+            <div class="cd-bar" role="progressbar" [attr.aria-valuenow]="completion(r.complete, r.students)" aria-valuemin="0" aria-valuemax="100">
+              <span [style.width.%]="completion(r.complete, r.students)"></span></div>
+          </div>
+          <p class="pd-empty" *ngIf="!rows.length">No report cards are set up for your classes this session.</p>
+        </ng-container>
+      </section>
+
+      <!-- Marks still to enter -->
+      <section class="pd-panel" *ngIf="examsEnabled" aria-labelledby="cd-marks-title">
+        <div class="pd-section-head">
+          <h2 id="cd-marks-title"><mat-icon aria-hidden="true">edit_note</mat-icon>Marks still to enter</h2>
+          <a routerLink="/dashboard/class-results">Class results</a>
+        </div>
+        <div *ngIf="marks.loading" aria-hidden="true"><div class="pd-sk-row" *ngFor="let x of [1, 2]"><span class="pd-sk-line"></span></div></div>
+        <p class="pd-muted" *ngIf="marks.failed">Marks progress is unavailable.</p>
+        <ng-container *ngIf="marks.data">
+          <div class="cd-progress" *ngFor="let m of openMarks">
+            <div class="cd-progress-head"><span>{{ m.examName }} · {{ unitLabel(m) }}</span><small>{{ m.entered }}/{{ m.expected }} entered</small></div>
+            <div class="cd-bar"><span [style.width.%]="completion(m.entered, m.expected)"></span></div>
+            <small class="cd-gaps" *ngIf="m.gaps.length">Missing: {{ gapSummary(m) }}</small>
+          </div>
+          <p class="pd-empty" *ngIf="!openMarks.length">All marks are entered for open exams.</p>
+        </ng-container>
+      </section>
+    </div>
+
+    <aside class="pd-side">
+      <app-coordinator-my-teaching [classTeacherOf]="overview.data?.classTeacherOf ?? null"
+        [classroomEnabled]="classroomEnabled" [marksEnabled]="examsEnabled"></app-coordinator-my-teaching>
+
+      <!-- Coming up -->
+      <section class="pd-panel" aria-labelledby="cd-upcoming-title">
+        <div class="pd-section-head">
+          <h2 id="cd-upcoming-title"><mat-icon aria-hidden="true">event</mat-icon>Coming up</h2>
+          <a routerLink="/dashboard/manage-assessments" *ngIf="classroomEnabled">Assessments</a>
+        </div>
+        <ng-container *ngIf="overview.data as o; else upcomingPending">
+          <ul class="pd-events" *ngIf="o.assessments.length || o.exams.length">
+            <li *ngFor="let a of o.assessments">
+              <span class="pd-date"><b>{{ a.date | date:'d' }}</b>{{ a.date | date:'MMM' }}</span>
+              <span class="pd-event-copy"><strong>{{ a.title }}</strong><small>{{ a.subjectName }} · Class {{ a.className }}{{ a.sectionName ? '-' + a.sectionName : '' }}</small></span>
+            </li>
+            <li *ngFor="let e of o.exams">
+              <span class="pd-date"><b>{{ e.date | date:'d' }}</b>{{ e.date | date:'MMM' }}</span>
+              <span class="pd-event-copy"><strong>{{ e.examName }} · {{ e.subjectName }}</strong><small>Class {{ e.className }}</small></span>
+            </li>
+          </ul>
+          <p class="pd-empty" *ngIf="!o.assessments.length && !o.exams.length">Nothing scheduled in the next weeks.</p>
+        </ng-container>
+        <ng-template #upcomingPending><p class="pd-muted">{{ overview.loading ? 'Loading…' : 'Upcoming work is unavailable.' }}</p></ng-template>
+      </section>
+
+      <!-- Academic setup shortcuts (the same ones the Principal sees, limited by scope on the server) -->
+      <section class="pd-panel" aria-labelledby="cd-setup-title">
+        <div class="pd-section-head"><h2 id="cd-setup-title"><mat-icon aria-hidden="true">tune</mat-icon>Academic setup</h2></div>
+        <ul class="pd-setup-links">
+          <li><a routerLink="/dashboard/subject-config"><mat-icon aria-hidden="true">menu_book</mat-icon>Subjects</a></li>
+          <ng-container *ngIf="examsEnabled">
+            <li><a routerLink="/dashboard/exam-config"><mat-icon aria-hidden="true">quiz</mat-icon>Exams</a></li>
+            <li><a routerLink="/dashboard/assessment-groups"><mat-icon aria-hidden="true">workspaces</mat-icon>Assessment groups</a></li>
+            <li><a routerLink="/dashboard/student-stream"><mat-icon aria-hidden="true">fork_right</mat-icon>Streams</a></li>
+            <li><a routerLink="/dashboard/elective-assignment"><mat-icon aria-hidden="true">swap_horiz</mat-icon>Electives</a></li>
+          </ng-container>
+          <li><a routerLink="/dashboard/coordinator-timetable"><mat-icon aria-hidden="true">calendar_view_week</mat-icon>Class timetables</a></li>
+          <li><a routerLink="/dashboard/staff-attendance"><mat-icon aria-hidden="true">badge</mat-icon>Staff attendance</a></li>
+        </ul>
+      </section>
+    </aside>
+  </div>
 </main>

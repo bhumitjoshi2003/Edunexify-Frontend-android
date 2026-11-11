@@ -108,14 +108,14 @@
              [class.sa-card-absent]="record.status === 'ABSENT'"
              [class.sa-card-leave]="record.status === 'ON_LEAVE'"
              [class.sa-card-halfday]="record.status === 'HALF_DAY'"
-             [class.sa-card-readonly]="!canCorrect(record)" [attr.title]="isOwnRecord(record) ? 'Your own attendance cannot be corrected here' : null"
+             [class.sa-card-readonly]="!canCorrect(record)" [attr.title]="isOwnRecord(record) ? 'Your own attendance cannot be corrected here' : isProtectedRecord(record) ? 'The Principal and other Coordinators cannot be corrected here' : null"
              (click)="openEditDialog(record)">
           <div class="sa-teacher-avatar" *ngIf="!getPhotoUrl(record)">
             {{ getTeacherInitials(record.teacherName) }}
           </div>
           <img *ngIf="getPhotoUrl(record)" [src]="getPhotoUrl(record)" class="sa-teacher-photo" alt="">
           <div class="sa-teacher-info">
-            <span class="sa-teacher-name">{{ record.teacherName }}<span class="sa-self-tag" *ngIf="isOwnRecord(record)">Your record · read-only</span></span>
+            <span class="sa-teacher-name">{{ record.teacherName }}<span class="sa-self-tag" *ngIf="isOwnRecord(record)">Your record · read-only</span><span class="sa-self-tag" *ngIf="isProtectedRecord(record)">Protected · read-only</span></span>
             <span class="sa-teacher-meta">
               <ng-container *ngIf="record.checkInTime">{{ formatTime(record.checkInTime) }}</ng-container>
               <ng-container *ngIf="record.checkOutTime"> → {{ formatTime(record.checkOutTime) }}</ng-container>

@@ -1,0 +1,52 @@
+<section class="pd-panel mt-panel" aria-labelledby="mt-title">
+  <div class="pd-section-head">
+    <h2 id="mt-title"><mat-icon aria-hidden="true">co_present</mat-icon>My teaching</h2>
+    <a routerLink="/dashboard/timetable">My timetable</a>
+  </div>
+
+  <!-- Check-in -->
+  <a class="mt-row" routerLink="/dashboard/teacher-checkin" [class.is-ok]="checkedIn">
+    <mat-icon aria-hidden="true">{{ checkedIn ? 'check_circle' : 'fingerprint' }}</mat-icon>
+    <span *ngIf="!checkin.loading && !checkin.failed">{{ checkinLabel }}<small *ngIf="checkin.record?.checkInTime">{{ checkin.record?.checkInTime | date:'h:mm a' }}</small></span>
+    <span *ngIf="checkin.loading" class="pd-muted">Checking today's attendance…</span>
+    <span *ngIf="checkin.failed" class="pd-muted">Check-in status unavailable</span>
+    <mat-icon class="pd-chevron" aria-hidden="true">chevron_right</mat-icon>
+  </a>
+
+  <!-- Today's classes -->
+  <p class="mt-label">Today's classes</p>
+  <div *ngIf="classes.loading" aria-hidden="true"><div class="pd-sk-row" *ngFor="let x of [1, 2]"><span class="pd-sk-line"></span></div></div>
+  <p class="pd-muted" *ngIf="classes.failed">Today's classes could not be loaded. <button type="button" class="mt-link" (click)="load()">Try again</button></p>
+  <ul class="mt-classes" *ngIf="!classes.loading && !classes.failed && (classes.current || classes.upcoming.length)">
+    <li *ngIf="classes.current as c" class="is-now">
+      <span class="mt-badge now">Now</span>
+      <span class="mt-copy"><strong>{{ classLabel(c) }}</strong><small>{{ c.subjectName }} · P{{ c.periodNumber }}<em *ngIf="c.isSubstitution"> · cover</em></small></span>
+      <span class="mt-time" *ngIf="c.startTime && c.endTime">{{ c.startTime }}–{{ c.endTime }}</span>
+    </li>
+    <li *ngFor="let c of classes.upcoming; trackBy: trackByKey">
+      <span class="mt-badge">Next</span>
+      <span class="mt-copy"><strong>{{ classLabel(c) }}</strong><small>{{ c.subjectName }} · P{{ c.periodNumber }}<em *ngIf="c.isSubstitution"> · cover</em></small></span>
+      <span class="mt-time" *ngIf="c.startTime && c.endTime">{{ c.startTime }}–{{ c.endTime }}</span>
+    </li>
+  </ul>
+  <p class="pd-empty" *ngIf="!classes.loading && !classes.failed && !classes.current && !classes.upcoming.length">
+    {{ classes.done ? 'All of today\'s classes are done.' : classes.any ? 'Nothing more scheduled today.' : 'No classes of yours are scheduled today.' }}
+  </p>
+
+  <!-- Personal leave -->
+  <a class="mt-row" routerLink="/dashboard/apply-teacher-leave">
+    <mat-icon aria-hidden="true">event_note</mat-icon>
+    <span *ngIf="!leave.loading && !leave.failed">My leave<small>{{ leave.pending ? leave.pending + ' request' + (leave.pending === 1 ? '' : 's') + ' awaiting a decision' : 'No pending requests' }}</small></span>
+    <span *ngIf="leave.loading" class="pd-muted">Loading leave…</span>
+    <span *ngIf="leave.failed">My leave</span>
+    <mat-icon class="pd-chevron" aria-hidden="true">chevron_right</mat-icon>
+  </a>
+
+  <!-- Teaching tools (no duplicates of the coordination links) -->
+  <ul class="pd-setup-links mt-tools">
+    <li *ngIf="classTeacherOf"><a routerLink="/dashboard/teacher-attendance"><mat-icon aria-hidden="true">how_to_reg</mat-icon>Mark attendance</a></li>
+    <li *ngIf="marksEnabled"><a routerLink="/dashboard/mark-entry"><mat-icon aria-hidden="true">edit_note</mat-icon>Mark entry</a></li>
+    <li *ngIf="classroomEnabled"><a routerLink="/dashboard/homework-classwork"><mat-icon aria-hidden="true">menu_book</mat-icon>Homework</a></li>
+    <li *ngIf="classroomEnabled"><a routerLink="/dashboard/teacher-class-updates"><mat-icon aria-hidden="true">campaign</mat-icon>Class updates</a></li>
+  </ul>
+</section>

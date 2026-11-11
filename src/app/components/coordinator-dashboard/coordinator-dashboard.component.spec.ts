@@ -1,15 +1,26 @@
+import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CoordinatorDashboardComponent } from './coordinator-dashboard.component';
+import { CoordinatorMyTeachingComponent } from '../coordinator-my-teaching/coordinator-my-teaching.component';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { CoordinatorOverview } from '../../interfaces/coordinator';
 
-/** Shared by the web and Android clients — keep the two copies identical. */
+@Component({ selector: 'app-coordinator-my-teaching', standalone: true, template: '<div class="my-teaching-stub">My teaching</div>' })
+class MyTeachingStubComponent {
+  @Input() classTeacherOf: string | null = null;
+  @Input() classroomEnabled = false;
+  @Input() marksEnabled = false;
+}
+
+/** Shared by the web and Android clients — keep the two copies identical.
+ * One Coordinator dashboard, laid out like the Principal's, with the teaching work inside it. */
 describe('CoordinatorDashboardComponent', () => {
   let fixture: ComponentFixture<CoordinatorDashboardComponent>;
   let coordinators: jasmine.SpyObj<CoordinatorService>;
+  let features: string[];
 
   const overview: CoordinatorOverview = {
     today: '2026-11-10', units: [{ classId: 8, className: '8', sectionId: 81, sectionName: 'A' }],
@@ -26,8 +37,10 @@ describe('CoordinatorDashboardComponent', () => {
       providers: [
         provideRouter([]),
         { provide: CoordinatorService, useValue: coordinators },
-        { provide: AuthStateService, useValue: { getUser: () => ({ name: 'Asha Rao' }) } },
+        { provide: AuthStateService, useValue: { getUser: () => ({ name: 'Asha Rao' }), hasFeature: (k: string) => features.includes(k) } },
       ],
+    }).overrideComponent(CoordinatorDashboardComponent, {
+      remove: { imports: [CoordinatorMyTeachingComponent] }, add: { imports: [MyTeachingStubComponent] },
     });
     fixture = TestBed.createComponent(CoordinatorDashboardComponent);
     fixture.detectChanges();
@@ -35,6 +48,7 @@ describe('CoordinatorDashboardComponent', () => {
   }
 
   beforeEach(() => {
+    features = ['REPORT_CARDS', 'EXAMS_RESULTS', 'CLASSROOM'];
     coordinators = jasmine.createSpyObj('CoordinatorService', ['mine', 'overview', 'reportCards', 'marksCompletion']);
     coordinators.mine.and.returnValue(of({ id: 1, appointedAt: '', operations: [], fullClassIds: [],
       scope: [{ classId: 8, className: '8', sectionId: 81, sectionName: 'A', streamId: null, streamName: null }] }));
@@ -45,18 +59,33 @@ describe('CoordinatorDashboardComponent', () => {
     coordinators.marksCompletion.and.returnValue(of([]));
   });
 
-  it('shows the scope, today in scope, attention items, report-card progress and the way back to teaching', () => {
+  it('is the Principal-style dashboard: hero, today tiles, needs-attention and a My teaching panel', () => {
     const el = create();
     const text = el.textContent ?? '';
-    expect(text).toContain('Academic Coordinator');
-    expect(text).toContain('Class 8-A');
-    expect(text).toContain('32');
+    expect(el.querySelector('.pd-hero')).not.toBeNull();
+    expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('Academic Coordinator');
+    expect(text).toContain('Class teacher · Class 9');
+    expect(text).toContain('Class 8-A');                    // scope chip and attendance table
+    expect(el.querySelectorAll('.pd-today .pd-tile').length).toBe(4);
     expect(text).toContain('0 / 1');
-    expect(text).toContain('2 periods need a substitute today');
-    expect(text).toContain('Term 1 · Class 8-A');
+    expect(text).toContain('Needs your attention');
+    expect(el.querySelector('.pd-attention-list li.is-urgent')?.textContent).toContain('2 periods need a substitute today');
+    expect(text).toContain('Term 1 · Class 8-A');            // report card completion
     expect(text).toContain('Awaiting class teacher');
-    expect(text).toContain('class teacher of Class 9');
-    expect(el.querySelector('a[href="/dashboard/teacher-dashboard"]')).not.toBeNull();
+    expect(el.querySelector('.my-teaching-stub')).not.toBeNull();
+  });
+
+  it('has no separate Teacher dashboard: nothing links to it, and "Open my teaching" is gone', () => {
+    const el = create();
+    expect(el.querySelector('a[href="/dashboard/teacher-dashboard"]')).toBeNull();
+    expect(el.textContent).not.toContain('Open my teaching');
+  });
+
+  it('surfaces report cards that still need work in Needs your attention, linking to the review', () => {
+    const el = create();
+    const rows = Array.from(el.querySelectorAll('.pd-attention-list li a')).map(a => a.getAttribute('href'));
+    expect(rows).toContain('/dashboard/report-card-review');
+    expect(el.querySelector('.pd-attention-list')?.textContent).toContain('10 incomplete · 4 without teacher remarks');
   });
 
   it('keeps other panels working when one source fails', () => {
@@ -64,6 +93,15 @@ describe('CoordinatorDashboardComponent', () => {
     const el = create();
     expect(el.textContent).toContain('Report-card progress is unavailable.');
     expect(el.textContent).toContain('32');
+    expect(el.textContent).toContain('Some information is unavailable');
+  });
+
+  it('hides the report-card and marks panels when those features are off for the school', () => {
+    features = [];
+    const el = create();
+    expect(el.textContent).not.toContain('Report card completion');
+    expect(el.textContent).not.toContain('Marks still to enter');
+    expect(el.querySelector('a[href="/dashboard/report-card-review"]')).toBeNull();
   });
 
   it('explains a missing appointment instead of showing an empty scope', () => {

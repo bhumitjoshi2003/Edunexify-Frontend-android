@@ -2,7 +2,7 @@
   <header class="cm-head">
     <div>
       <h1>Academic Coordinators</h1>
-      <p>Appoint teachers to coordinate classes, sections or streams. They keep one login and all their teaching work. Coordinators cannot approve leave, approve or publish report cards, or reach finance and school administration.</p>
+      <p>Appoint a teacher as Academic Coordinator for chosen classes, sections or streams. They keep one login and all their teaching work, and cannot approve leave, approve, sign or publish report cards, or reach finance and administration.</p>
     </div>
     <button type="button" class="cm-btn cm-primary" (click)="startNew()" [disabled]="editingId !== null || loading">
       <mat-icon aria-hidden="true">person_add</mat-icon>Appoint coordinator
@@ -10,6 +10,9 @@
   </header>
 
   <p class="cm-error" role="alert" *ngIf="loadError">{{ loadError }}</p>
+  <div class="cm-stats" *ngIf="!loading && !loadError" aria-label="Appointment summary">
+    <span><strong>{{ active.length }}</strong> active {{ active.length === 1 ? 'appointment' : 'appointments' }}</span>
+  </div>
 
   <!-- Editor -->
   <section class="cm-card cm-editor" *ngIf="editingId !== null" aria-label="Coordinator appointment">

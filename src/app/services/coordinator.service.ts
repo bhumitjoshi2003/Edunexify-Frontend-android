@@ -17,6 +17,7 @@ import {
 export class CoordinatorService {
   private readonly api = `${environment.apiUrl}/coordinator`;
   private readonly appointmentsApi = `${environment.apiUrl}/coordinators`;
+  private readonly principalReviewApi = `${environment.apiUrl}/principal/report-cards`;
   private mine$: Observable<MyCoordinatorAppointment | null> | null = null;
   private mineFor: string | null = null;
 
@@ -111,18 +112,26 @@ export class CoordinatorService {
     return this.http.get<CoordinatorMarksCompletion[]>(`${this.api}/marks-completion`);
   }
 
+  /**
+   * Report Card Review is one feature for the Principal (the whole school) and a Coordinator (their
+   * scope): the same screens, a different server-side scope. It is oversight only — it has no approval.
+   */
+  private get reviewApi(): string {
+    return this.authState.getUserRole() === 'PRINCIPAL' ? this.principalReviewApi : `${this.api}/report-cards`;
+  }
+
   reportCards(): Observable<CoordinatorReportCardProgress[]> {
-    return this.http.get<CoordinatorReportCardProgress[]>(`${this.api}/report-cards`);
+    return this.http.get<CoordinatorReportCardProgress[]>(this.reviewApi);
   }
 
   corrections(setupId: number, sectionId: number | null): Observable<ReportCardCorrectionRequest[]> {
     const params = sectionId != null ? new HttpParams().set('sectionId', sectionId) : undefined;
-    return this.http.get<ReportCardCorrectionRequest[]>(`${this.api}/report-cards/${setupId}/correction-requests`, { params });
+    return this.http.get<ReportCardCorrectionRequest[]>(`${this.reviewApi}/${setupId}/correction-requests`, { params });
   }
 
   requestCorrection(setupId: number, sectionId: number | null, reason: string, studentId?: string | null):
       Observable<ReportCardCorrectionRequest> {
-    return this.http.post<ReportCardCorrectionRequest>(`${this.api}/report-cards/${setupId}/correction-requests`,
+    return this.http.post<ReportCardCorrectionRequest>(`${this.reviewApi}/${setupId}/correction-requests`,
       { sectionId, reason, studentId: studentId || null });
   }
 

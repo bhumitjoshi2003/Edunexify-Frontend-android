@@ -11,7 +11,7 @@ import { CoordinatorReportCardProgress, ReportCardCorrectionRequest, coordinator
 import { apiMessage } from '../academic-session-selector/academic-session-selector.component';
 
 /**
- * Report-card oversight for a Coordinator: completion per class section, each student's marks,
+ * Report card review for the Principal (whole school) and an Academic Coordinator (their scope): completion per class section, each student's marks,
  * attendance-ready status and remarks, live previews, and correction requests to the responsible
  * class teacher. A request is not an approval: approval and publication stay with their owners.
  */
@@ -71,7 +71,7 @@ export class CoordinatorReportCardsComponent implements OnInit, OnDestroy {
       },
       error: err => {
         this.loading = false;
-        this.loadError = err?.status === 403 ? 'Your Coordinator appointment does not include report cards.' : apiMessage(err);
+        this.loadError = err?.status === 403 ? 'Report card review is not available for your account.' : apiMessage(err);
         this.cdr.markForCheck();
       }
     });
