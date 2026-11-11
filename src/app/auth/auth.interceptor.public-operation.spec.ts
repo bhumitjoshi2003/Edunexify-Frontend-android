@@ -89,6 +89,26 @@ describe('AuthInterceptor — public operations', () => {
     http.expectOne(`${base}/auth/refresh-token`).flush('x', { status: 401, statusText: 'Unauthorized' });
   });
 
+  it('a generic permission-denied 403 does not sign the user out', () => {
+    client.get(`${base}/coordinator/overview`).subscribe({ error: () => {} });
+    http.expectOne(`${base}/coordinator/overview`)
+      .flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(authState.clearUser).not.toHaveBeenCalled();
+    expect(authService.logout).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('a coded tenant mismatch still signs out the stale school session', () => {
+    client.get(`${base}/students`).subscribe({ error: () => {} });
+    http.expectOne(`${base}/students`)
+      .flush({ code: 'TENANT_MISMATCH', message: 'Forbidden' },
+        { status: 403, statusText: 'Forbidden' });
+    http.expectOne(`${base}/auth/logout`).flush('Logged out');
+    expect(authState.clearUser).toHaveBeenCalled();
+    expect(authService.logout).toHaveBeenCalled();
+  });
+
   it('other API calls still send credentials', () => {
     client.get(`${base}/students`).subscribe();
     const req = http.expectOne(`${base}/students`);

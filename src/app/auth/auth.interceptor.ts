@@ -140,8 +140,9 @@ export class AuthInterceptor implements HttpInterceptor {
         if (error.status === 403) {
           const body = error.error;
           const toast = this.injector.get(ToastService);
-          const msg = typeof body === 'string' ? body : body?.message;
-          if (msg === 'Unknown school' || msg === 'Forbidden') {
+          // Only the tenant-validation filter can identify a wrong school. Ordinary
+          // permission-denied 403s must never clear an otherwise valid session.
+          if (body?.code === 'UNKNOWN_SCHOOL' || body?.code === 'TENANT_MISMATCH') {
             // Tenant validation failed — stale cookie from a different school session.
             // Call logout to clear the HttpOnly cookies via Set-Cookie: Max-Age=0 response,
             // then redirect to login so the user can start a fresh session.
