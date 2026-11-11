@@ -3,6 +3,7 @@ import { StudentService } from '../../services/student.service';
 import { TeacherService } from '../../services/teacher.service';
 import { Teacher } from '../../interfaces/teacher';
 import { Router } from '@angular/router';
+import { WorkspaceService } from '../../services/workspace.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, switchMap, forkJoin, of, EMPTY } from 'rxjs';
@@ -111,7 +112,8 @@ export class StudentListComponent implements OnInit, OnDestroy {
   getUserRoleAndLoadData(): void {
     const user = this.authStateService.getUser();
     if (user) {
-      this.loggedInUserRole = user.role;
+      // A Coordinator in the Coordinator workspace reads the school like the Principal (read-only screens).
+      this.loggedInUserRole = WorkspaceService.leadershipView(this.authStateService) ? 'PRINCIPAL' : user.role;
       this.teacherId = user.userId;
       this.schoolSlug = user.schoolSlug;
 

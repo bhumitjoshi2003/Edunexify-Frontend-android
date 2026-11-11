@@ -39,7 +39,7 @@ describe('CoordinatorDashboardComponent', () => {
 
   beforeEach(() => {
     features = ['REPORT_CARDS', 'EXAMS_RESULTS', 'CLASSROOM'];
-    coordinators = jasmine.createSpyObj('CoordinatorService', ['mine', 'overview', 'reportCards', 'marksCompletion']);
+    coordinators = jasmine.createSpyObj('CoordinatorService', ['mine', 'overview', 'reportCards', 'marksCompletion', 'staffToday', 'leaveSummary']);
     coordinators.mine.and.returnValue(of({ id: 1, appointedAt: '', operations: [], fullClassIds: [],
       scope: [{ classId: 8, className: '8', sectionId: 81, sectionName: 'A', streamId: null, streamName: null }] }));
     coordinators.overview.and.returnValue(of(overview));
@@ -47,6 +47,10 @@ describe('CoordinatorDashboardComponent', () => {
       sectionName: 'A', students: 30, complete: 20, incomplete: 10, noResult: 0, missingTeacherRemarks: 4,
       approvalStatus: 'PENDING_TEACHER', correctionRequests: 0 }]));
     coordinators.marksCompletion.and.returnValue(of([]));
+    coordinators.staffToday.and.returnValue(of({ date: '2026-11-10', presentCount: 20, lateCount: 2, absentCount: 3, halfDayCount: 1,
+      onLeaveCount: 2, expectedCount: 28, notCheckedInCount: 0 }));
+    coordinators.leaveSummary.and.returnValue(of({ today: '2026-11-10', teacher: null,
+      student: { pending: 5, overdue: 2, attention: 2, urgent: 0, oldestDay: 4 } }));
   });
 
   it('is the Principal-style dashboard: hero, today tiles, needs-attention and no teaching panel', () => {
@@ -58,7 +62,21 @@ describe('CoordinatorDashboardComponent', () => {
     expect(text).toContain('Class 8-A');                    // attendance table
     expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('1 class');
     expect(el.querySelectorAll('.pd-today .pd-tile').length).toBe(4);
-    expect(text).toContain('0 / 1');
+    const tiles = Array.from(el.querySelectorAll('.pd-today .pd-tile')).map(t => t.textContent ?? '');
+    expect(tiles[0]).toContain('Students present');
+    expect(tiles[0]).toContain('Not marked yet');          // nothing marked yet: unmarked is never shown as absent
+    expect(tiles[0]).toContain('0/1 sections');
+    expect(tiles[1]).toContain('Staff present');
+    expect(tiles[1]).toContain('23');                      // present + late + half-day, school-wide
+    expect(tiles[1]).toContain('28');
+    expect(tiles[2]).toContain('Leave requests');
+    expect(tiles[2]).toContain('5');
+    expect(tiles[2]).toContain('2 overdue');
+    expect(tiles[3]).toContain('Report cards');
+    expect(tiles[3]).toContain('1');
+    expect(el.querySelector('.pd-today a[href="/dashboard/view-leaves"]')).not.toBeNull();
+    expect(el.querySelector('.pd-today a[href="/dashboard/report-card-review"]')).not.toBeNull();
+    expect(el.querySelector('a[href="/dashboard/coordinator-people"]')).toBeNull();
     expect(text).toContain('Needs your attention');
     expect(el.querySelector('.pd-attention-list li.is-urgent')?.textContent).toContain('2 periods need a substitute today');
     expect(text).toContain('Term 1 · Class 8-A');            // report card completion
@@ -71,6 +89,37 @@ describe('CoordinatorDashboardComponent', () => {
     expect(el.querySelector('a[href="/dashboard/teacher-dashboard"]')).toBeNull();
     expect(el.querySelector('a[href="/dashboard/teacher-checkin"]')).toBeNull();
     expect(el.textContent).not.toContain('Open my teaching');
+  });
+
+  it('counts attendance from marked sections only and shows the rate with its tone', () => {
+    coordinators.overview.and.returnValue(of({ ...overview, attendance: [
+      { classId: 8, className: '8', sectionId: 81, sectionName: 'A', submitted: true, present: 27, absent: 3, markedBy: 'T1' },
+      { classId: 8, className: '8', sectionId: 82, sectionName: 'B', submitted: false, present: 0, absent: 0, markedBy: null }] }));
+    const tile = create().querySelector('.pd-today .pd-tile') as HTMLElement;
+    expect(tile.textContent).toContain('90%');
+    expect(tile.textContent).toContain('27 of 30 marked');
+    expect(tile.textContent).toContain('1/2 sections');
+    expect(tile.querySelector('strong')?.className).toContain('pd-tone-good');
+  });
+
+  it('shows skeleton tiles while loading and a calm unavailable state when staff or leave fail', () => {
+    coordinators.staffToday.and.returnValue(throwError(() => ({ status: 500 })));
+    coordinators.leaveSummary.and.returnValue(throwError(() => ({ status: 500 })));
+    const el = create();
+    const tiles = Array.from(el.querySelectorAll('.pd-today .pd-tile')).map(t => t.textContent ?? '');
+    expect(tiles[1]).toContain('Unavailable');
+    expect(tiles[2]).toContain('Unavailable');
+    expect(tiles[0]).toContain('Students present');      // the other cards keep working
+  });
+
+  it('adds overdue student leave (day 3 and later only) to Needs your attention', () => {
+    const el = create();
+    const rows = Array.from(el.querySelectorAll('.pd-attention-list li')).map(li => li.textContent ?? '');
+    expect(rows.some(r => r.includes('2 student leave requests overdue'))).toBeTrue();
+    coordinators.leaveSummary.and.returnValue(of({ today: '2026-11-10', teacher: null,
+      student: { pending: 4, overdue: 0, attention: 0, urgent: 0, oldestDay: 2 } }));
+    TestBed.resetTestingModule();
+    expect(Array.from(create().querySelectorAll('.pd-attention-list li')).map(li => li.textContent ?? '').join(' ')).not.toContain('leave request');
   });
 
   it('surfaces report cards that still need work in Needs your attention, linking to the review', () => {

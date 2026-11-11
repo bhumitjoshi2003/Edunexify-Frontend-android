@@ -6,7 +6,8 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { CoordinatorService } from '../../services/coordinator.service';
 import {
-  CoordinatorMarksCompletion, CoordinatorOverview, CoordinatorReportCardProgress, MyCoordinatorAppointment,
+  CoordinatorLeaveSummary, CoordinatorMarksCompletion, CoordinatorOverview, CoordinatorReportCardProgress, CoordinatorStaffToday,
+  MyCoordinatorAppointment,
   coordinatorScopeLabel, coordinatorUnitLabel
 } from '../../interfaces/coordinator';
 
@@ -37,6 +38,8 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
   overview: Panel<CoordinatorOverview> = { data: null, loading: true, failed: false };
   reportCards: Panel<CoordinatorReportCardProgress[]> = { data: null, loading: true, failed: false };
   marks: Panel<CoordinatorMarksCompletion[]> = { data: null, loading: true, failed: false };
+  staff: Panel<CoordinatorStaffToday> = { data: null, loading: true, failed: false };
+  leave: Panel<CoordinatorLeaveSummary> = { data: null, loading: true, failed: false };
 
   readonly scopeLabel = coordinatorScopeLabel;
   readonly unitLabel = coordinatorUnitLabel;
@@ -64,6 +67,8 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
     this.fill(this.overview, this.coordinators.overview());
     this.fill(this.reportCards, this.coordinators.reportCards());
     this.fill(this.marks, this.coordinators.marksCompletion());
+    this.fill(this.staff, this.coordinators.staffToday());
+    this.fill(this.leave, this.coordinators.leaveSummary());
   }
 
   private fill<T>(panel: Panel<T>, source: Observable<T | null>, valid: (v: T | null) => boolean = v => v !== null): void {
@@ -87,6 +92,28 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
   get classroomEnabled(): boolean { return this.authState.hasFeature('CLASSROOM'); }
   get examsEnabled(): boolean { return this.authState.hasFeature('EXAMS_RESULTS'); }
   get reportCardsEnabled(): boolean { return this.authState.hasFeature('REPORT_CARDS'); }
+
+  /** Present / marked students today in the Coordinator's sections; sections not yet marked are never counted as absent. */
+  get attendanceRate(): number | null {
+    return this.markedToday > 0 ? (this.presentToday / this.markedToday) * 100 : null;
+  }
+
+  rateTone(rate: number | null): 'good' | 'fair' | 'low' | 'none' {
+    if (rate === null) return 'none';
+    return rate >= 90 ? 'good' : rate >= 75 ? 'fair' : 'low';
+  }
+
+  /** A school holiday or closed day: the staff summary expects nobody. */
+  get closedToday(): boolean { return this.staff.data?.expectedCount === 0; }
+
+  get staffPresent(): number {
+    const s = this.staff.data;
+    return s ? s.presentCount + s.lateCount + s.halfDayCount : 0;
+  }
+
+  /** Pending student leave in scope. */
+  get pendingLeaves(): number { return this.leave.data?.student?.pending ?? 0; }
+  get overdueLeaves(): number { return this.leave.data?.student?.overdue ?? 0; }
 
   get submittedSections(): number {
     return this.overview.data?.attendance.filter(a => a.submitted).length ?? 0;
@@ -148,6 +175,10 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
       title: a.title, detail: a.detail, route: a.route,
       icon: a.severity === 'danger' ? 'event_busy' : a.severity === 'warning' ? 'schedule' : 'info'
     }));
+    if (this.overdueLeaves > 0) {
+      items.push({ severity: 'warning', title: `${this.overdueLeaves} student leave request${this.overdueLeaves === 1 ? '' : 's'} overdue`,
+        detail: 'Pending for 3 days or more', route: '/dashboard/view-leaves', icon: 'event_busy' });
+    }
     if (this.reportCardsEnabled) {
       for (const r of this.reportCardsNeedingWork.slice(0, 3)) {
         items.push({ severity: 'warning', title: `${r.setupName} · ${this.unitLabel(r)}`,
@@ -158,8 +189,8 @@ export class CoordinatorDashboardComponent implements OnInit, OnDestroy {
     return items;
   }
 
-  get attentionLoading(): boolean { return this.overview.loading || this.reportCards.loading; }
-  get attentionIncomplete(): boolean { return !this.attentionLoading && (this.overview.failed || (this.reportCardsEnabled && this.reportCards.failed)); }
+  get attentionLoading(): boolean { return this.overview.loading || this.reportCards.loading || this.leave.loading; }
+  get attentionIncomplete(): boolean { return !this.attentionLoading && (this.overview.failed || this.leave.failed || (this.reportCardsEnabled && this.reportCards.failed)); }
 
   trackByIndex(i: number): number { return i; }
 

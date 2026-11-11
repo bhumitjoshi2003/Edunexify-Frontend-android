@@ -16,26 +16,53 @@
   <!-- Today in your classes -->
   <section class="pd-today" aria-label="Today in your classes">
     <ng-container *ngIf="overview.data as o; else todayPending">
-      <a class="pd-tile pd-tile-students" routerLink="/dashboard/coordinator-people">
-        <span class="pd-tile-top"><span class="pd-tile-label">Students</span><mat-icon aria-hidden="true">groups</mat-icon></span>
-        <strong>{{ o.students }}</strong>
-        <small>in {{ o.units.length }} section{{ o.units.length === 1 ? '' : 's' }}</small>
+      <a class="pd-tile pd-tile-students" routerLink="/dashboard/coordinator-attendance">
+        <span class="pd-tile-top"><span class="pd-tile-label">Students present</span><mat-icon aria-hidden="true">groups</mat-icon></span>
+        <strong *ngIf="attendanceRate !== null; else notMarked" [class]="'pd-tone-' + rateTone(attendanceRate)">{{ attendanceRate | number:'1.0-1' }}%</strong>
+        <ng-template #notMarked><strong class="pd-tone-none">Not marked yet</strong></ng-template>
+        <small>
+          <ng-container *ngIf="markedToday > 0">{{ presentToday }} of {{ markedToday }} marked</ng-container>
+          <ng-container *ngIf="markedToday === 0">{{ o.students }} enrolled</ng-container>
+          · {{ submittedSections }}/{{ o.attendance.length }} sections
+        </small>
       </a>
-      <a class="pd-tile pd-tile-staff" routerLink="/dashboard/coordinator-people" [queryParams]="{ tab: 'teachers' }">
-        <span class="pd-tile-top"><span class="pd-tile-label">Teachers</span><mat-icon aria-hidden="true">school</mat-icon></span>
-        <strong>{{ o.teachers }}</strong>
-        <small>teaching in your scope</small>
+
+      <a class="pd-tile pd-tile-staff" routerLink="/dashboard/staff-attendance" [class.pd-tile-muted]="staff.failed && !staff.data">
+        <span class="pd-tile-top"><span class="pd-tile-label">Staff present</span><mat-icon aria-hidden="true">badge</mat-icon></span>
+        <ng-container *ngIf="staff.data as st; else staffPending">
+          <strong *ngIf="!closedToday; else closedTile">{{ staffPresent }}<span class="pd-of"> / {{ st.expectedCount ?? (staffPresent + st.absentCount + st.onLeaveCount) }}</span></strong>
+          <ng-template #closedTile><strong class="pd-tone-none">No school today</strong></ng-template>
+          <small>
+            <ng-container *ngIf="st.notCheckedInCount">{{ st.notCheckedInCount }} not checked in · </ng-container>
+            <ng-container *ngIf="st.lateCount">{{ st.lateCount }} late · </ng-container>{{ st.onLeaveCount }} on leave
+          </small>
+        </ng-container>
+        <ng-template #staffPending>
+          <strong class="pd-tone-none">{{ staff.loading ? '…' : 'Unavailable' }}</strong>
+          <small>School-wide</small>
+        </ng-template>
       </a>
-      <a class="pd-tile pd-tile-leaves" routerLink="/dashboard/coordinator-attendance">
-        <span class="pd-tile-top"><span class="pd-tile-label">Attendance today</span><mat-icon aria-hidden="true">how_to_reg</mat-icon></span>
-        <strong>{{ submittedSections }}<span class="pd-of"> / {{ o.attendance.length }}</span></strong>
-        <small>{{ markedToday ? presentToday + ' of ' + markedToday + ' present' : 'sections submitted' }}</small>
+
+      <a class="pd-tile pd-tile-leaves" routerLink="/dashboard/view-leaves" [class.pd-tile-muted]="leave.failed && !leave.data">
+        <span class="pd-tile-top"><span class="pd-tile-label">Leave requests</span><mat-icon aria-hidden="true">event_note</mat-icon></span>
+        <strong *ngIf="leave.data; else leavePending" [class.pd-tone-low]="overdueLeaves > 0">{{ pendingLeaves }}</strong>
+        <ng-template #leavePending><strong class="pd-tone-none">{{ leave.loading ? '…' : 'Unavailable' }}</strong></ng-template>
+        <small *ngIf="leave.data">{{ overdueLeaves ? overdueLeaves + ' overdue' : 'Pending in your classes' }}</small>
       </a>
-      <a class="pd-tile pd-tile-reviews" routerLink="/dashboard/teacher-substitutions">
-        <span class="pd-tile-top"><span class="pd-tile-label">Cover needed</span><mat-icon aria-hidden="true">swap_horiz</mat-icon></span>
-        <strong [class.pd-tone-low]="o.substitutionsNeeded > 0">{{ o.substitutionsNeeded }}</strong>
-        <small>{{ o.substitutionsCovered }} period{{ o.substitutionsCovered === 1 ? '' : 's' }} covered today</small>
+
+      <a class="pd-tile pd-tile-reviews" *ngIf="reportCardsEnabled; else coverTile" routerLink="/dashboard/report-card-review" [class.pd-tile-muted]="reportCards.failed && !reportCards.data">
+        <span class="pd-tile-top"><span class="pd-tile-label">Report cards</span><mat-icon aria-hidden="true">fact_check</mat-icon></span>
+        <strong *ngIf="reportCards.data as rc; else rcPending" [class.pd-tone-low]="reportCardsNeedingWork.length > 0">{{ reportCardsNeedingWork.length }}</strong>
+        <ng-template #rcPending><strong class="pd-tone-none">{{ reportCards.loading ? '…' : 'Unavailable' }}</strong></ng-template>
+        <small *ngIf="reportCards.data as rc">to review · {{ rc.length }} section{{ rc.length === 1 ? '' : 's' }}</small>
       </a>
+      <ng-template #coverTile>
+        <a class="pd-tile pd-tile-reviews" routerLink="/dashboard/teacher-substitutions">
+          <span class="pd-tile-top"><span class="pd-tile-label">Cover needed</span><mat-icon aria-hidden="true">swap_horiz</mat-icon></span>
+          <strong [class.pd-tone-low]="o.substitutionsNeeded > 0">{{ o.substitutionsNeeded }}</strong>
+          <small>{{ o.substitutionsCovered }} period{{ o.substitutionsCovered === 1 ? '' : 's' }} covered today</small>
+        </a>
+      </ng-template>
     </ng-container>
     <ng-template #todayPending>
       <ng-container *ngIf="overview.loading; else todayFailed">

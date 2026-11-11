@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, Injector } from '@angular/core';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { WorkspaceService } from '../../services/workspace.service';
+import { CoordinatorService } from '../../services/coordinator.service';
 import { LoggerService } from '../../services/logger.service';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, FormArray } from '@angular/forms';
 import { EventService } from '../../services/event.service';
@@ -7,7 +10,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, of, switchMap } from 'rxjs';
 import { SchoolService } from '../../services/school.service';
 import { ToastService } from '../../services/toast.service';
 import { schoolDateKey } from '../../utils/school-date.util';
@@ -50,7 +53,13 @@ export class EventFormComponent implements OnInit, OnDestroy {
   isEditMode: boolean = false;
   eventId: number | null = null;
 
-  readonly staticAudiences = ['ALL', 'TEACHERS', 'STUDENTS'];
+  private readonly injector = inject(Injector);
+  /** Resolved only for a Coordinator, so other roles never need the service. */
+  private get coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
+  /** A Coordinator targets their own classes only; school-wide audiences are the Principal's and Admin's. */
+  private readonly auth = inject(AuthStateService);
+  get coordinatorView(): boolean { return this.auth.getUserRole() === 'TEACHER' && WorkspaceService.leadershipView(this.auth); }
+  staticAudiences = ['ALL', 'TEACHERS', 'STUDENTS'];
   categories: string[] = ['Academic', 'Sports', 'Cultural', 'Social', 'Holiday', 'Meeting', 'Other'];
   targetAudiences: string[] = [...this.staticAudiences];
 
@@ -92,7 +101,11 @@ export class EventFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
+    if (this.coordinatorView) this.staticAudiences = [];
+    this.schoolService.getClasses().pipe(
+      switchMap(names => this.coordinatorView ? this.coordinators.restrictClassNames(names) : of(names)),
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: classes => {
         this.targetAudiences = [...this.staticAudiences, ...classes];
         this.cdr.markForCheck();

@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Injector } from '@angular/core';
+import { WorkspaceService } from '../../services/workspace.service';
+import { CoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, of, switchMap } from 'rxjs';
 import { NotificationService } from '../../services/notification.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { Notification } from '../../interfaces/notification';
@@ -58,6 +60,8 @@ export class NoticeComponent implements OnInit, OnDestroy {
   loading = false;
 
   classList: string[] = [];
+  /** Resolved only for a Coordinator, so other roles never need the service. */
+  private get coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
 
   /** IDs of notices/notifications whose message is actually clamp-truncated,
    *  determined by real overflow measurement (TruncationCheckDirective), not
@@ -72,7 +76,8 @@ export class NoticeComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private schoolService: SchoolService,
     private notificationState: NotificationStateService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private injector: Injector
   ) { }
 
   ngOnInit(): void {
@@ -82,7 +87,11 @@ export class NoticeComponent implements OnInit, OnDestroy {
     if (!this.hasBulkCommunications) {
       this.form.deliveryMode = 'IN_APP';
     }
-    this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe(classes => {
+    this.schoolService.getClasses().pipe(
+      // A Coordinator writes to classes they coordinate in full; school-wide audiences stay with Principal/Admin.
+      switchMap(names => this.coordinatorView ? this.coordinators.restrictClassNames(names) : of(names)),
+      takeUntil(this.destroy$)
+    ).subscribe(classes => {
       this.classList = classes;
       this.cdr.markForCheck();
     });
@@ -96,11 +105,17 @@ export class NoticeComponent implements OnInit, OnDestroy {
 
   /** Publishing view: the Admin, and the Principal for school notices. */
   get isAdmin(): boolean {
-    return this.role === 'ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'PRINCIPAL';
+    return this.role === 'ADMIN' || this.role === 'SUPER_ADMIN' || this.role === 'PRINCIPAL' || this.coordinatorView;
+  }
+
+  /** A Coordinator reads school notices and sends them to their own classes only (the server enforces it). */
+  get coordinatorView(): boolean {
+    return this.role === 'TEACHER' && WorkspaceService.leadershipView(this.authStateService);
   }
 
   /** The Principal withdraws only notices they published; the server enforces the same rule. */
   canDeleteNotice(notice: { createdBy?: string }): boolean {
+    if (this.coordinatorView) return false;
     return this.role !== 'PRINCIPAL' || (!!notice.createdBy && notice.createdBy === this.userId);
   }
 

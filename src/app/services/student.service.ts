@@ -1,3 +1,4 @@
+import { WorkspaceService } from './workspace.service';
 import { AuthStateService } from '../auth/auth-state.service';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
@@ -186,7 +187,7 @@ export class StudentService {
   constructor(private http: HttpClient, private authState: AuthStateService) {}
 
   getStudent(studentId: string): Observable<Student> {
-    const base = this.authState.getUserRole() === 'PRINCIPAL' ? `${environment.apiUrl}/principal/students` : this.baseUrl;
+    const base = WorkspaceService.leadershipView(this.authState) ? `${environment.apiUrl}/principal/students` : this.baseUrl;
     return this.http.get<Student>(`${base}/${encodeURIComponent(studentId)}`);
   }
 
@@ -287,7 +288,7 @@ export class StudentService {
 
   searchStudents(query: string): Observable<Student[]> {
     const params = new HttpParams().set('q', query);
-    const url = this.authState.getUserRole() === 'PRINCIPAL' ? `${environment.apiUrl}/principal/students` : `${this.baseUrl}/search`;
+    const url = WorkspaceService.leadershipView(this.authState) ? `${environment.apiUrl}/principal/students` : `${this.baseUrl}/search`;
     return this.http.get<Student[]>(url, { params });
   }
 

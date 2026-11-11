@@ -6,7 +6,8 @@ import { AuthStateService } from '../auth/auth-state.service';
 import {
   CoordinatorAppointment, CoordinatorAttendanceUnit, CoordinatorClassroomPost, CoordinatorMarksCompletion,
   CoordinatorOverview, CoordinatorReportCardProgress, CoordinatorScopeRequest, CoordinatorStudent,
-  CoordinatorTeacher, CoordinatorUnit, MyCoordinatorAppointment, ReportCardCorrectionRequest
+  CoordinatorTeacher, CoordinatorUnit, MyCoordinatorAppointment, ReportCardCorrectionRequest,
+  CoordinatorStaffToday, CoordinatorLeaveSummary
 } from '../interfaces/coordinator';
 
 /**
@@ -70,6 +71,15 @@ export class CoordinatorService {
     }));
   }
 
+  /** Class names with any covered section or stream (leave, attendance reports and communication work per class). */
+  restrictToScopedClassNames(names: string[]): Observable<string[]> {
+    if (!this.authState.isCoordinator()) return of(names);
+    return this.mine().pipe(map(m => {
+      const scoped = new Set((m?.scope ?? []).map(e => e.className));
+      return names.filter(n => scoped.has(n));
+    }));
+  }
+
   /** Same as {@link restrictToFullClasses} for pages that list classes by name. */
   restrictClassNames(names: string[]): Observable<string[]> {
     if (!this.authState.isCoordinator()) return of(names);
@@ -106,6 +116,16 @@ export class CoordinatorService {
   attendance(date?: string | null): Observable<CoordinatorAttendanceUnit[]> {
     const params = date ? new HttpParams().set('date', date) : undefined;
     return this.http.get<CoordinatorAttendanceUnit[]>(`${this.api}/attendance`, { params });
+  }
+
+  /** Staff present today across the school (read-only), the same figures the Principal sees. */
+  staffToday(): Observable<CoordinatorStaffToday> {
+    return this.http.get<CoordinatorStaffToday>(`${this.api}/staff-attendance/today-summary`);
+  }
+
+  /** Pending student leave in scope, and how much of it has reached day 3 (the Coordinator's first reminder). */
+  leaveSummary(): Observable<CoordinatorLeaveSummary> {
+    return this.http.get<CoordinatorLeaveSummary>(`${environment.apiUrl}/leaves/attention-summary`);
   }
 
   marksCompletion(): Observable<CoordinatorMarksCompletion[]> {

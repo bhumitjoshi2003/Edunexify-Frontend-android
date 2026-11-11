@@ -117,7 +117,7 @@
             [class.tl-status-cancelled]="leave.status === 'CANCELLED'">
             {{ leave.status }}
           </span>
-          <div class="tl-actions">
+          <div class="tl-actions" *ngIf="!readOnly">
             <ng-container *ngIf="leave.status === 'PENDING'">
               <button class="tl-btn-approve" [disabled]="updatingIds.has(leave.id)" (click)="updateStatus(leave, 'APPROVED')" title="Approve">✓</button>
               <button class="tl-btn-reject"  [disabled]="updatingIds.has(leave.id)" (click)="updateStatus(leave, 'REJECTED')" title="Reject">✕</button>
