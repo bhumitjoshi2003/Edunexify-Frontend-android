@@ -306,7 +306,10 @@
       <div class="sd-card-icon"><mat-icon aria-hidden="true">bolt</mat-icon></div>
       <div><span>Quick Actions</span><p>Open this student's records</p></div>
     </div>
-    <div class="sd-actions-grid">
+    <p *ngIf="!recordsInScope" class="sd-scope-note" role="note">
+      This student is outside your coordination scope, so their attendance, leave and results are not shown here.
+    </p>
+    <div class="sd-actions-grid" *ngIf="recordsInScope">
       <button class="sd-action-btn" (click)="viewAttendanceSummary()">
         <span class="sd-action-icon">📊</span>
         <span>Attendance</span>

@@ -130,8 +130,8 @@
     "src/app/utils/leave-escalation.util.ts": "57bdd606c6059bd635dd3d06eeaca0ce8fed74b994241de07137380440da4242",
     "src/app/components/leave-escalation-badge/leave-escalation-badge.component.ts": "3da9b9bd43f9d1c151ca49685072938b96edf77f3812dcba869eeaf1f0a5ac64",
     "src/app/interfaces/coordinator.ts": "f7f1a3281dc938b9defc852bce4593bbb9ef876b9bc9e74f2bdd77c177b397f4",
-    "src/app/services/coordinator.service.ts": "3f94a5a82d4cd0a9aa7ff3260c3613f7d97c1f0fcbcf8dce7c922227560b798c",
-    "src/app/services/coordinator.service.spec.ts": "8af1b2746703834bebfec5992927aeba8058c3ab0167f3c9f56c4839d7758ee6",
+    "src/app/services/coordinator.service.ts": "552e12c491c145adcdf4bfc5f877bf1c58ecc6066ee7c8369b2500ea8ea749a0",
+    "src/app/services/coordinator.service.spec.ts": "c546d823f410f0261db57be59dab09d2a8d2e7034223a9862cb353b3b9f26021",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "029075df29ce68952c50d2b3767557d247541bdb10a4d3778a58f4f2bde5be06",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8ce07528a42da52b3222c73114cdb02a78644f1655d4709fe7e8c46fabc74f80",
     "src/app/components/coordinator-management/coordinator-management.component.ts": "6c2e216e1b0a1e257a61ada9f252246c191cd02f6487d2c7039b3c423a77b012",
@@ -141,7 +141,10 @@
     "src/app/services/workspace.service.ts": "e86af8daa57b8744360979b7a26065b5eece80ad8f1a3e990e4f7d407e6afb3b",
     "src/app/services/workspace.service.spec.ts": "e74630bfe6925662cf35d337d9892865d06acbf7eab2cedf169b429ef718f1e9",
     "src/app/utils/attribution.util.ts": "1e63b3598790d2e996ab395571b438320a8b2f0f92b66032be92b6be9e8df4d8",
-    "src/app/utils/attribution.util.spec.ts": "2850f3ee948f34024149de8bb28e127f68439dd954adddc94b78ea1cdc48d59b"
+    "src/app/utils/attribution.util.spec.ts": "2850f3ee948f34024149de8bb28e127f68439dd954adddc94b78ea1cdc48d59b",
+    "src/app/components/student-details/student-details.component.ts": "2703e3f9fd07522c4aec85a61dc3586bd4bd101c89bc649a6782a76da80579d7",
+    "src/app/components/student-details/student-details.coordinator-scope.spec.ts": "d768266fd3188542d855eadae3fd2fe72777fdbb30c172045267c6ff0c8f0306",
+    "src/app/components/teacher-details/teacher-details.account-controls.spec.ts": "7d5ead2b7d3e2806d0a0a93ccc9696f64a689df15e3add6fec635d17306f6a32"
   },
   "platformSpecific": [
     {

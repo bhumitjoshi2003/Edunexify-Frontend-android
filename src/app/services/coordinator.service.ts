@@ -89,6 +89,19 @@ export class CoordinatorService {
     }));
   }
 
+  /**
+   * Whether a student's class records (attendance, leave, results) are inside the Coordinator's
+   * scope. The directory and basic profile are school-wide; these records are not. A stream-limited
+   * entry is left to the server, which knows the student's stream. Anyone else: true (their own
+   * role rules apply on the server).
+   */
+  coversStudentRecords(student: { classId?: number | null; className?: string | null; sectionId?: number | null }): Observable<boolean> {
+    if (!this.authState.isCoordinator()) return of(true);
+    return this.mine().pipe(map(m => (m?.scope ?? []).some(e =>
+      (student.classId != null ? e.classId === student.classId : e.className === student.className)
+      && (e.sectionId == null || e.sectionId === (student.sectionId ?? null)))));
+  }
+
   overview(): Observable<CoordinatorOverview> {
     return this.http.get<CoordinatorOverview>(`${this.api}/overview`);
   }
