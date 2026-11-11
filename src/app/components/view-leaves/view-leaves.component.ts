@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, Injector } from '@angular/core';
+import { WorkspaceService } from '../../services/workspace.service';
+import { CoordinatorService } from '../../services/coordinator.service';
 import { LoggerService } from '../../services/logger.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 import { TeacherService } from '../../services/teacher.service';
 import { Teacher } from '../../interfaces/teacher';
 import { AuthStateService } from '../../auth/auth-state.service';
@@ -28,6 +30,8 @@ import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-es
   ],
 })
 export class ViewLeavesComponent implements OnInit, OnDestroy {
+  /** Resolved only for a Coordinator, so other roles never need the service. */
+  private get coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
   loggedInUserRole: string = '';
   loggedInUserId: string = '';
   loggedInUserClass: string = '';
@@ -59,7 +63,8 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
     private toast: ToastService,
-    private schoolService: SchoolService
+    private schoolService: SchoolService,
+    private injector: Injector
   ) { }
 
   ngOnInit(): void {
@@ -91,7 +96,10 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
       if (this.schoolWide) {
         // Class list must be loaded before a stored selection can be validated against it —
         // otherwise a stale value from another school/session could slip through.
-        this.schoolService.getClasses().pipe(takeUntil(this.ngUnsubscribe)).subscribe({
+        this.schoolService.getClasses().pipe(
+          switchMap(names => this.coordinatorView ? this.coordinators.restrictToScopedClassNames(names) : of(names)),
+          takeUntil(this.ngUnsubscribe)
+        ).subscribe({
           next: classes => {
             this.classList = classes;
             this.selectedClass = getStoredSelectedClass(this.schoolSlug, classes, 'all');
@@ -293,7 +301,12 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
 
   /** Admin and Principal review every class; the Principal's decisions always carry a reason. */
   get schoolWide(): boolean {
-    return this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL';
+    return this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL' || this.coordinatorView;
+  }
+
+  /** A Coordinator reviews the student leave of their classes (the server enforces the scope). */
+  get coordinatorView(): boolean {
+    return this.loggedInUserRole === 'TEACHER' && WorkspaceService.leadershipView(this.authStateService);
   }
 
   get decisionReasonRequired(): boolean {

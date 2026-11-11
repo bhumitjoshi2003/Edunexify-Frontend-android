@@ -1,3 +1,4 @@
+import { WorkspaceService } from './workspace.service';
 import { AuthStateService } from '../auth/auth-state.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -31,12 +32,12 @@ export class TeacherService {
   constructor(private http: HttpClient, private authState: AuthStateService) {}
 
   getTeacher(teacherId: string): Observable<Teacher> {
-    const base = this.authState.getUserRole() === 'PRINCIPAL' ? `${environment.apiUrl}/principal/teachers` : this.baseUrl;
+    const base = WorkspaceService.leadershipView(this.authState) ? `${environment.apiUrl}/principal/teachers` : this.baseUrl;
     return this.http.get<Teacher>(`${base}/${encodeURIComponent(teacherId)}`);
   }
 
   getAllTeachers(): Observable<Teacher[]> {
-    const base = this.authState.getUserRole() === 'PRINCIPAL' ? `${environment.apiUrl}/principal/teachers` : this.baseUrl;
+    const base = WorkspaceService.leadershipView(this.authState) ? `${environment.apiUrl}/principal/teachers` : this.baseUrl;
     return this.http.get<Teacher[]>(base);
   }
 

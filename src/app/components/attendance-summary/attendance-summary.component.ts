@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Injector } from '@angular/core';
+import { WorkspaceService } from '../../services/workspace.service';
+import { CoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, switchMap, forkJoin } from 'rxjs';
+import { Subject, takeUntil, switchMap, forkJoin, of } from 'rxjs';
 import { AttendanceService } from '../../services/attendance.service';
 import { AttendancePdfService } from '../../services/attendance-pdf.service';
 import { SchoolHolidayService } from '../../services/school-holiday.service';
@@ -41,6 +43,9 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
   private loadStudentList$ = new Subject<{ className: string; sectionId: number | undefined }>();
 
   role = '';
+  coordinatorView = false;
+  /** Resolved only for a Coordinator, so other roles never need the service. */
+  private get coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
   userId = '';
   userClassName = '';
 
@@ -105,17 +110,23 @@ export class AttendanceSummaryComponent implements OnInit, OnDestroy {
     private schoolService: SchoolService,
     private academicSessionService: AcademicSessionService,
     private sectionService: SectionService,
-    private holidayService: SchoolHolidayService
+    private holidayService: SchoolHolidayService,
+    private injector: Injector
   ) {}
 
   ngOnInit(): void {
     const user = this.authStateService.getUser();
-    this.role = user?.role ?? '';
+    // A Coordinator in the Coordinator workspace uses the school-wide report view; the server limits each class to their scope.
+    this.coordinatorView = user?.role === 'TEACHER' && WorkspaceService.leadershipView(this.authStateService);
+    this.role = this.coordinatorView ? 'PRINCIPAL' : (user?.role ?? '');
     this.userId = user?.userId ?? '';
     this.userClassName = user?.className ?? '';
 
     if (this.role !== 'PARENT') {
-      this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
+      this.schoolService.getClasses().pipe(
+        switchMap(names => this.coordinatorView ? this.coordinators.restrictToScopedClassNames(names) : of(names)),
+        takeUntil(this.destroy$)
+      ).subscribe({
         next: classes => {
           this.classList = classes;
           // Admin-only convenience: show the first class's current-session insights

@@ -94,12 +94,18 @@ describe('WorkspaceService', () => {
 
   it('maps URLs to the workspace they belong to, leaving shared pages alone', () => {
     expect(WorkspaceService.workspaceOf('/dashboard/teacher-dashboard')).toBe('TEACHER');
-    expect(WorkspaceService.workspaceOf('/dashboard/coordinator-people?x=1')).toBe('COORDINATOR');
+    expect(WorkspaceService.workspaceOf('/dashboard/coordinator-attendance?x=1')).toBe('COORDINATOR');
+    for (const lead of ['student-search', 'teacher-list', 'teacher-leave-requests']) {
+      expect(WorkspaceService.workspaceOf(`/dashboard/${lead}`)).withContext(lead).toBe('COORDINATOR');
+    }
     expect(WorkspaceService.workspaceOf('/dashboard/report-card-review')).toBe('COORDINATOR');
     expect(WorkspaceService.workspaceOf('/dashboard/staff-attendance')).toBe('COORDINATOR');
     expect(WorkspaceService.workspaceOf('/dashboard/mark-entry')).toBeNull();
+    for (const shared of ['view-leaves', 'student-list', 'attendance-summary']) {
+      expect(WorkspaceService.workspaceOf(`/dashboard/${shared}`)).withContext(shared).toBeNull();
+    }
     expect(WorkspaceService.workspaceOf('/dashboard/notice')).toBeNull();
-    for (const teaching of ['view-leaves', 'teacher-checkin', 'apply-teacher-leave', 'report-card-approvals', 'homework-classwork', 'timetable']) {
+    for (const teaching of ['teacher-checkin', 'apply-teacher-leave', 'report-card-approvals', 'homework-classwork', 'timetable']) {
       expect(WorkspaceService.workspaceOf(`/dashboard/${teaching}`)).withContext(teaching).toBe('TEACHER');
     }
   });

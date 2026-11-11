@@ -1,5 +1,8 @@
 import { firstValueFrom } from 'rxjs';
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectorRef, Inject, PLATFORM_ID, inject } from '@angular/core';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { WorkspaceService } from '../../services/workspace.service';
+import { CoordinatorService } from '../../services/coordinator.service';
 import { LoggerService } from '../../services/logger.service';
 import { isPlatformBrowser } from '@angular/common';
 import { Capacitor } from '@capacitor/core';
@@ -58,7 +61,12 @@ export class EventCalendarComponent implements OnInit, OnDestroy {
 
   currentUserRole = '';
   /** Admin and Principal manage events; the backend repeats the check per request. */
-  get canEditEvents(): boolean { return this.currentUserRole === 'ADMIN' || this.currentUserRole === 'PRINCIPAL'; }
+  private readonly authState = inject(AuthStateService);
+  /** A Coordinator manages events of their own classes; the server refuses anything else. */
+  get canEditEvents(): boolean {
+    return this.currentUserRole === 'ADMIN' || this.currentUserRole === 'PRINCIPAL'
+      || (this.currentUserRole === 'TEACHER' && WorkspaceService.leadershipView(this.authState));
+  }
   currentUserClass: string | null = null;
 
   selectedEvent: CalendarEvent | null = null;

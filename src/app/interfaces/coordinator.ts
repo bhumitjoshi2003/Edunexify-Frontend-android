@@ -167,3 +167,20 @@ export function coordinatorScopeLabel(entry: CoordinatorScopeEntry): string {
 export function coordinatorUnitLabel(unit: { className: string; sectionName: string | null }): string {
   return `Class ${unit.className}${unit.sectionName ? '-' + unit.sectionName : ''}`;
 }
+
+/** Today's staff attendance for the whole school — the Principal's calculation (counts only). */
+export interface CoordinatorStaffToday {
+  date: string;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  halfDayCount: number;
+  onLeaveCount: number;
+  /** Teachers expected to attend; 0 on a school holiday. */
+  expectedCount?: number;
+  notCheckedInCount?: number;
+}
+
+/** Pending student leave in the Coordinator's scope (from /leaves/attention-summary). */
+export interface CoordinatorLeaveBucket { pending: number; overdue: number; attention: number; urgent: number; oldestDay: number | null; }
+export interface CoordinatorLeaveSummary { today: string; student: CoordinatorLeaveBucket | null; teacher: CoordinatorLeaveBucket | null; }

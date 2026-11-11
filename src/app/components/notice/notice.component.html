@@ -137,7 +137,7 @@
           <label class="nb-label">Target Audience <span class="nb-required">*</span></label>
           <select class="nb-select" [(ngModel)]="form.targetAudience">
             <option value="" disabled>Select audience</option>
-            <optgroup label="Broad">
+            <optgroup label="Broad" *ngIf="!coordinatorView">
               <option value="All">All Students</option>
               <option value="ALL_TEACHERS">All Teachers</option>
             </optgroup>

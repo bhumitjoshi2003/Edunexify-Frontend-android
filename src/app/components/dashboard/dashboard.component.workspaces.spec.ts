@@ -77,7 +77,8 @@ describe('DashboardComponent — Teacher / Coordinator workspaces', () => {
 
   const link = (path: string) => fixture.nativeElement.querySelector(`a[routerLink="/dashboard/${path}"]`);
   const teaching = ['teacher-dashboard', 'teacher-checkin', 'apply-teacher-leave'];
-  const coordinating = ['coordinator-dashboard', 'coordinator-people', 'report-card-review', 'staff-attendance'];
+  const coordinating = ['coordinator-dashboard', 'student-search', 'teacher-list', 'teacher-leave-requests', 'report-card-review', 'staff-attendance'];
+  const shared = ['student-list', 'view-leaves', 'attendance-summary', 'notice'];
 
   beforeEach(() => localStorage.clear());
   afterEach(() => { fixture.destroy(); localStorage.clear(); });
@@ -96,8 +97,13 @@ describe('DashboardComponent — Teacher / Coordinator workspaces', () => {
     build(true);
     expect(fixture.componentInstance.isCoordinator()).toBeTrue();
     for (const p of coordinating) expect(link(p)).withContext(p).toBeTruthy();
-    for (const p of [...teaching, 'view-leaves', 'my-signature']) expect(link(p)).withContext(p).toBeNull();
+    for (const p of [...teaching, 'my-signature']) expect(link(p)).withContext(p).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('My Teaching');
+    for (const p of shared) expect(link(p)).withContext(p).toBeTruthy();
+    expect(link('coordinator-people')).toBeNull();
+    expect(link('class-management')).toBeNull();            // sensitive setup stays with Principal/Admin
+    expect(link('report-card-approvals')).toBeNull();
+    expect(link('fee-structure')).toBeNull();
     expect(fixture.componentInstance.getRoleLabel()).toBe('Coordinator');
   });
 
@@ -126,7 +132,7 @@ describe('DashboardComponent — Teacher / Coordinator workspaces', () => {
     expect(workspace.active()).toBe('TEACHER');
     cmp.followUrlWorkspace('/dashboard/mark-entry');          // shared page: unchanged
     expect(workspace.active()).toBe('TEACHER');
-    cmp.followUrlWorkspace('/dashboard/coordinator-people');
+    cmp.followUrlWorkspace('/dashboard/student-search');
     expect(workspace.active()).toBe('COORDINATOR');
   });
 

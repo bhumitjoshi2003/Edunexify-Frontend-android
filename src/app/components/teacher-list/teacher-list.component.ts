@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestro
 import { LoggerService } from '../../services/logger.service';
 import { TeacherService } from '../../services/teacher.service';
 import { Router } from '@angular/router';
+import { WorkspaceService } from '../../services/workspace.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -52,7 +53,8 @@ export class TeacherListComponent implements OnInit, OnDestroy {
   getUserRoleAndLoadTeachers(): void {
     const user = this.authStateService.getUser();
     if (user) {
-      this.loggedInUserRole = user.role;
+      // A Coordinator in the Coordinator workspace reads the school like the Principal (read-only screens).
+      this.loggedInUserRole = WorkspaceService.leadershipView(this.authStateService) ? 'PRINCIPAL' : user.role;
 
       if ((this.loggedInUserRole === 'ADMIN' || this.loggedInUserRole === 'PRINCIPAL')) {
         this.loadAllTeachers();

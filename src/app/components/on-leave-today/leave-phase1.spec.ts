@@ -19,7 +19,7 @@ describe('Leave Phase 1', () => {
   }
 
   function viewLeaves(api: any, toast: any): ViewLeavesComponent {
-    return new ViewLeavesComponent({ params: of({}) } as any, api, {} as any, {} as any, logger, noop, toast, {} as any);
+    return new ViewLeavesComponent({ params: of({}) } as any, api, {} as any, {} as any, logger, noop, toast, {} as any, undefined as any);
   }
 
   it('apply sends only the day and the reason', async () => {

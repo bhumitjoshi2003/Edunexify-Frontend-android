@@ -118,6 +118,11 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
     this.fetchLeaves();
   }
 
+  /** A Coordinator sees teacher leave but never decides, reverses or cancels it (the server refuses too). */
+  get readOnly(): boolean {
+    return this.authState.getUserRole() === 'TEACHER';
+  }
+
   /** Cancelling stays an Admin action; the Principal decides, and every decision carries a reason. */
   get isPrincipal(): boolean {
     return this.authState.getUserRole() === 'PRINCIPAL';
