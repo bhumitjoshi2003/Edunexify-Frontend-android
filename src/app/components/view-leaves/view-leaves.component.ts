@@ -1,3 +1,4 @@
+import { decisionActorLabel } from '../../utils/attribution.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy, Injector } from '@angular/core';
 import { WorkspaceService } from '../../services/workspace.service';
 import { CoordinatorService } from '../../services/coordinator.service';
@@ -30,6 +31,9 @@ import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-es
   ],
 })
 export class ViewLeavesComponent implements OnInit, OnDestroy {
+  /** "Sunita Rao (Coordinator)": who decided, under the authority the server recorded. */
+  readonly deciderLabel = decisionActorLabel;
+
   /** Resolved only for a Coordinator, so other roles never need the service. */
   private get coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
   loggedInUserRole: string = '';

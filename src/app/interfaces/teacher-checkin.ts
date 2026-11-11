@@ -32,6 +32,8 @@ export interface TeacherAttendanceCorrection {
   correctedBy: string;
   correctedByRole: string;
   correctedAt: string;
+  /** The corrector's display name, from the profile of the recorded authority. */
+  correctedByName?: string | null;
 }
 
 export interface SchoolTiming {
@@ -52,7 +54,12 @@ export interface TeacherAttendanceRecord {
   longitude: number | null;
   distanceFromSchool: number | null;
   method: string;
+  /** Any manual record (Admin entry or a Principal/Coordinator correction). */
   markedByAdmin: boolean;
+  /** Manual records: who recorded it and the authority the server accepted (ADMIN, PRINCIPAL, COORDINATOR). */
+  markedBy?: string | null;
+  markedByName?: string | null;
+  markedByRole?: string | null;
 }
 
 export interface TeacherAttendanceSummary {

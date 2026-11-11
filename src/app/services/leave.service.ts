@@ -15,6 +15,9 @@ export interface LeaveApplication {
   status: string;
   appliedDate?: string;
   decidedBy?: string | null;
+  /** Display name of the decider and the authority recorded by the server (TEACHER, COORDINATOR, ...). */
+  decidedByName?: string | null;
+  decidedByRole?: string | null;
   decidedAt?: string | null;
   decisionReason?: string | null;
   cancelledBy?: string | null;

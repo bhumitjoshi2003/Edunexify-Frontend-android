@@ -1,3 +1,4 @@
+import { manualAttendanceLabel } from '../../utils/attribution.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -47,6 +48,9 @@ class AttendanceLocationError extends Error {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherCheckinComponent implements OnInit, OnDestroy {
+  /** Manual entries name who recorded them and under which authority. */
+  readonly manualLabel = manualAttendanceLabel;
+
   private destroy$ = new Subject<void>();
   private monthlyRequest$ = new Subject<void>();
   private schoolTimezone = 'Asia/Kolkata';
@@ -531,6 +535,7 @@ export class TeacherCheckinComponent implements OnInit, OnDestroy {
   getAttendanceMethodLabel(method: string | null | undefined): string {
     switch ((method ?? '').toUpperCase()) {
       case 'MANUAL_ADMIN': return 'Marked by Admin';
+      case 'MANUAL_CORRECTION': return 'Corrected manually';
       case 'GPS':
       case 'GEOLOCATION': return 'Location Check-in';
       case 'MANUAL': return 'Marked Manually';

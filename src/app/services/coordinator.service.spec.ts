@@ -84,4 +84,21 @@ describe('CoordinatorService', () => {
     service.reportCards().subscribe();
     http.expectOne(`${environment.apiUrl}/coordinator/report-cards`).flush([]);
   });
+  it('covers student records only inside the scope, while anyone else is left to the server', () => {
+    authState.isCoordinator.and.returnValue(false);
+    let open = false;
+    service.coversStudentRecords({ classId: 2, sectionId: 21 }).subscribe(v => open = v);
+    expect(open).toBeTrue();
+    http.expectNone(`${environment.apiUrl}/coordinator/me`);
+
+    authState.isCoordinator.and.returnValue(true);
+    const seen: Record<string, boolean> = {};
+    service.coversStudentRecords({ classId: 8, sectionId: 81 }).subscribe(v => seen['8A'] = v);
+    http.expectOne(`${environment.apiUrl}/coordinator/me`).flush(mine);
+    service.coversStudentRecords({ classId: 8, sectionId: 82 }).subscribe(v => seen['8B'] = v);
+    service.coversStudentRecords({ classId: 9, sectionId: 91 }).subscribe(v => seen['9'] = v);
+    service.coversStudentRecords({ className: '9' }).subscribe(v => seen['9byName'] = v);
+    service.coversStudentRecords({ classId: 2, sectionId: 21 }).subscribe(v => seen['2'] = v);
+    expect(seen).toEqual({ '8A': true, '8B': false, '9': true, '9byName': true, '2': false });
+  });
 });

@@ -106,7 +106,7 @@
         <button
           type="button"
           class="td-btn td-btn-pwd td-btn-icon"
-          *ngIf="role === 'ADMIN' || role === 'TEACHER'"
+          *ngIf="canChangePassword()"
           (click)="openPasswordModal()"
           title="Change password"
           aria-label="Change password"

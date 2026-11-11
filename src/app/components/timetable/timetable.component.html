@@ -142,7 +142,7 @@
       <label class="tt-clabel" for="tt-section-sel">Section</label>
       <select id="tt-section-sel" [disabled]="modalSaving" class="tt-select" [(ngModel)]="selectedSectionId"
         (ngModelChange)="onSectionChange()">
-        <option [ngValue]="null">All Sections</option>
+        <option [ngValue]="null" *ngIf="!partialSectionScope">All Sections</option>
         <option *ngFor="let s of sections" [ngValue]="s.id">{{ s.name }}</option>
       </select>
     </div>

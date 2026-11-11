@@ -61,8 +61,13 @@
   </div>
 
   <!-- ── Empty ──────────────────────────────────────────────────────── -->
+  <div class="sl-empty" *ngIf="!isLoading && noOwnClass">
+    <div class="sl-empty-icon">🏫</div>
+    <p class="sl-empty-title">No class assigned</p>
+    <p class="sl-empty-sub">You are not a class teacher, so there is no class roster to show.</p>
+  </div>
   <div class="sl-empty"
-    *ngIf="!isLoading && activeStudents.length === 0 && newStudents.length === 0 && alumniStudents.length === 0 && leftStudents.length === 0">
+    *ngIf="!isLoading && !noOwnClass && activeStudents.length === 0 && newStudents.length === 0 && alumniStudents.length === 0 && leftStudents.length === 0">
     <div class="sl-empty-icon">🔍</div>
     <p class="sl-empty-title">No students found</p>
     <p class="sl-empty-sub">No students found for the selected class.</p>

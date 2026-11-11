@@ -1,5 +1,5 @@
 import { schoolDateKey, studentExitDateError } from '../../utils/school-date.util';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, inject, Injector, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { FeatureKey } from '../../auth/feature-keys';
@@ -20,6 +20,8 @@ import { ParentPortalService } from '../../services/parent-portal.service';
 import { StudentExitRequest, PendingDuesInfo, EnrollmentHistoryItem, StudentLoginStatus } from '../../interfaces/student';
 import { ClassSectionConfig } from '../../utils/class-section-config';
 import { passwordPolicyViolation } from '../../utils/password-policy.util';
+import { CoordinatorService } from '../../services/coordinator.service';
+import { WorkspaceService } from '../../services/workspace.service';
 
 interface StudentDetails {
   studentId?: string;
@@ -112,6 +114,13 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
   guardians: GuardianLink[] | null = null;
   private readonly parentPortal = inject(ParentPortalService);
   private readonly authState = inject(AuthStateService);
+  private readonly injector = inject(Injector);
+  /**
+   * False when a Coordinator opens a student outside their coordination scope: the profile is
+   * school-wide, but the student's attendance, leave and results stay with the scope (the server
+   * refuses them), so those shortcuts are replaced by a note instead of leading to an error.
+   */
+  recordsInScope = true;
   enrollmentHistoryFailed = false;
   loginStatus: StudentLoginStatus | null = null;
   lifecycleBusy = false;
@@ -188,12 +197,23 @@ export class StudentDetailsComponent implements OnInit, OnDestroy {
         this.photoLoadFailed = false;
         if (details.className) this.loadSectionsForClass(details.className);
         this.loadAdminExtras();
+        this.checkRecordsScope(details);
         this.cdr.markForCheck();
       },
       error: (error) => {
         this.logger.error('Error fetching details:', error);
         this.toast.error('Error', 'Failed to load details.');
       }
+    });
+  }
+
+  private checkRecordsScope(details: { classId?: number | null; className?: string | null; sectionId?: number | null }): void {
+    this.recordsInScope = true;
+    if (!WorkspaceService.leadershipView(this.authState) || !this.authState.isCoordinator()) return;
+    // Resolved only for a Coordinator: no other role needs the appointment.
+    this.injector.get(CoordinatorService).coversStudentRecords(details).pipe(takeUntil(this.ngUnsubscribe)).subscribe(covered => {
+      this.recordsInScope = covered;
+      this.cdr.markForCheck();
     });
   }
 
