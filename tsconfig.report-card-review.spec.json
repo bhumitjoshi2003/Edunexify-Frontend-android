@@ -14,6 +14,7 @@
     "src/app/components/leave-escalation-badge/*.spec.ts",
     "src/app/components/coordinator-*/*.spec.ts",
     "src/app/services/coordinator.service.spec.ts",
+    "src/app/core/workspace.interceptor.spec.ts",
     "src/app/utils/attribution.util.spec.ts",
     "src/app/services/workspace.service.spec.ts",
     "src/app/components/dashboard/dashboard.component.workspaces.spec.ts",

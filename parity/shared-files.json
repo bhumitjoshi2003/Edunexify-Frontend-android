@@ -134,9 +134,9 @@
     "src/app/services/coordinator.service.spec.ts": "c546d823f410f0261db57be59dab09d2a8d2e7034223a9862cb353b3b9f26021",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "029075df29ce68952c50d2b3767557d247541bdb10a4d3778a58f4f2bde5be06",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8ce07528a42da52b3222c73114cdb02a78644f1655d4709fe7e8c46fabc74f80",
-    "src/app/components/coordinator-management/coordinator-management.component.ts": "6c2e216e1b0a1e257a61ada9f252246c191cd02f6487d2c7039b3c423a77b012",
-    "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "5b9406663656d6a1a634061ac7bd8e965c283d5fbdaf1af130ee2e1f28c464aa",
-    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "0fee414b4ffebcf7e17464a23d16028def4eda5edacb64a17181618f18353d60",
+    "src/app/components/coordinator-management/coordinator-management.component.ts": "f3f85f7ef86125e4bd7567c63b79ca1d41f6d372e74647cf31d1d1c4681bf54e",
+    "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "a4538d04054a8a4b5ec1530b3befdc73e310de2bf53e6a07cfe171fb16ff50dc",
+    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "fcb0bc35956aef3c7f8f4356400f0e30b3e3ce5eb2b40d2e93232f72b0c9663b",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.spec.ts": "73bab416fef22d57f96c6a0cefa8ebaeabbce81ecff3f8262b43c61260de0f50",
     "src/app/services/workspace.service.ts": "e86af8daa57b8744360979b7a26065b5eece80ad8f1a3e990e4f7d407e6afb3b",
     "src/app/services/workspace.service.spec.ts": "e74630bfe6925662cf35d337d9892865d06acbf7eab2cedf169b429ef718f1e9",
@@ -144,7 +144,9 @@
     "src/app/utils/attribution.util.spec.ts": "2850f3ee948f34024149de8bb28e127f68439dd954adddc94b78ea1cdc48d59b",
     "src/app/components/student-details/student-details.component.ts": "2703e3f9fd07522c4aec85a61dc3586bd4bd101c89bc649a6782a76da80579d7",
     "src/app/components/student-details/student-details.coordinator-scope.spec.ts": "d768266fd3188542d855eadae3fd2fe72777fdbb30c172045267c6ff0c8f0306",
-    "src/app/components/teacher-details/teacher-details.account-controls.spec.ts": "7d5ead2b7d3e2806d0a0a93ccc9696f64a689df15e3add6fec635d17306f6a32"
+    "src/app/components/teacher-details/teacher-details.account-controls.spec.ts": "7d5ead2b7d3e2806d0a0a93ccc9696f64a689df15e3add6fec635d17306f6a32",
+    "src/app/core/workspace.interceptor.ts": "80d332396c8afcb828cb88029d58448d85ecbeae514c7be800144ea97c201051",
+    "src/app/core/workspace.interceptor.spec.ts": "de67d304cfe8e8eebf7a1a8753f12a233b069fca2abbd77aff29010ab33fb485"
   },
   "platformSpecific": [
     {
