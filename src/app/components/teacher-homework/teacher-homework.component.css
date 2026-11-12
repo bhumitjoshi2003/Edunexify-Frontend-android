@@ -298,3 +298,11 @@
 @media (prefers-reduced-motion: reduce) {
   .thw-page *, .thw-page *::before, .thw-page *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── Equal cards: every recent post has the same size, the footer sits at the bottom ── */
+.thw-post-grid { align-items: stretch; grid-auto-rows: 1fr; }
+.thw-post-title strong { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.thw-block { flex: 0 0 auto; }
+.thw-block p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.thw-post-foot { margin-top: auto; }
+@media (max-width: 600px) { .thw-post-grid { grid-auto-rows: auto; } }
