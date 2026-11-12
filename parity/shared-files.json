@@ -109,7 +109,7 @@
     "src/app/components/signature-settings/signature-pad-dialog.component.spec.ts": "411fc9d424ab2810bbe69d3b14c7ce34c860ffb8beff68c51cade4f8dbadd2b8",
     "src/app/components/signature-settings/signature-settings.component.spec.ts": "2dc45edde5f0e89d186cab8dc8c038a771094e5d4cad019971dabf3b08f75f87",
     "src/app/components/principal-dashboard/principal-dashboard.component.html": "9e87c43c399c15824ab2f15c01239bcb4cee3df316938e085106ba1f36566bd2",
-    "src/app/components/principal-dashboard/principal-dashboard.component.css": "8e7bdbd37a27767161a2ad4e0280a9f06783c795a5d494be7988f8378a9b5f64",
+    "src/app/components/principal-dashboard/principal-dashboard.component.css": "ae83eeae72f3937b4ae5245fba381e8d30846874a582ad3a111de02e43e45ba8",
     "src/app/components/principal-dashboard/principal-dashboard.component.spec.ts": "c8b44425d2f1b58094c641b71056fe975febf863519997f217a654b069b4d4e9",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.ts": "a644226294168aa4a783115faf251830c55eb50e074120c6af76ce3f95bfe1a3",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.html": "acd8ce62b1ad7b8166521c4f95847136f71a43d2781249a5e2c79dcb342406d0",
