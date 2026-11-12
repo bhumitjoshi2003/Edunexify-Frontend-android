@@ -130,12 +130,6 @@ export class CoordinatorManagementComponent implements OnInit, OnDestroy {
     return (parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] ?? '?').slice(0, 2)).toUpperCase();
   }
 
-  /** A short list of what a Coordinator covers: whole classes first-class, sections as "8-A, 8-B". */
-  scopeChips(a: CoordinatorAppointment, limit = 5): { shown: string[]; more: number } {
-    const labels = a.scope.map(s => this.scopeLabel(s));
-    return { shown: labels.slice(0, limit), more: Math.max(0, labels.length - limit) };
-  }
-
   // ── Editor ────────────────────────────────────────────────────────
 
   startNew(): void {

@@ -1,12 +1,21 @@
 <main class="cm-page">
   <header class="cm-hero">
-    <div class="cm-hero-copy">
-      <h1>Coordinators</h1>
-      <span class="cm-count" *ngIf="!loading && !loadError">{{ active.length }} active</span>
+    <div class="cm-hero-left">
+      <div class="cm-hero-icon" aria-hidden="true"><mat-icon>hub</mat-icon></div>
+      <div class="cm-hero-copy">
+        <div class="cm-hero-title">
+          <h1>Coordinators</h1>
+          <span class="cm-count" *ngIf="!loading && !loadError">{{ active.length }} active</span>
+        </div>
+        <p>Appoint teachers as Coordinators and manage the classes they look after.</p>
+      </div>
     </div>
-    <button type="button" class="cm-appoint" (click)="startNew()" [disabled]="editingId === 0 || loading || !!loadError">
-      <mat-icon aria-hidden="true">person_add</mat-icon>Appoint Coordinator
-    </button>
+    <div class="cm-hero-actions">
+      <button type="button" class="cm-appoint" (click)="startNew()" [disabled]="editingId === 0 || loading || !!loadError"
+              aria-label="Appoint Coordinator" title="Appoint Coordinator">
+        <mat-icon aria-hidden="true">person_add</mat-icon><span class="cm-appoint-text">Appoint Coordinator</span>
+      </button>
+    </div>
   </header>
 
   <div class="cm-alert" role="alert" *ngIf="loadError">
@@ -81,7 +90,7 @@
 
   <!-- Active coordinators -->
   <section aria-label="Coordinators">
-    <div class="cm-grid" *ngIf="loading" aria-hidden="true">
+    <div class="cm-list" *ngIf="loading" aria-hidden="true">
       <div class="cm-card cm-sk" *ngFor="let x of skeletons"><span class="cm-sk-avatar"></span><span class="cm-sk-lines"><i></i><i></i></span></div>
     </div>
     <span class="cm-sr" role="status" *ngIf="loading">Loading coordinators</span>
@@ -92,24 +101,22 @@
       <button type="button" class="cm-btn cm-primary" (click)="startNew()"><mat-icon aria-hidden="true">person_add</mat-icon>Appoint Coordinator</button>
     </div>
 
-    <div class="cm-grid" *ngIf="!loading && active.length">
+    <div class="cm-list" *ngIf="!loading && active.length">
       <article class="cm-card" *ngFor="let a of active" [class.is-busy]="editingId === a.id">
-        <div class="cm-card-top">
-          <span class="cm-avatar" aria-hidden="true">{{ initials(a.teacherName, a.teacherId) }}</span>
-          <div class="cm-card-id">
-            <strong>{{ a.teacherName ?? a.teacherId }}</strong>
-            <small>{{ a.teacherId }} · since {{ a.appointedAt | date:'d MMM yyyy' }}</small>
+        <div class="cm-card-row">
+          <div class="cm-card-top">
+            <span class="cm-avatar" aria-hidden="true">{{ initials(a.teacherName, a.teacherId) }}</span>
+            <div class="cm-card-id">
+              <strong>{{ a.teacherName ?? a.teacherId }}</strong>
+              <small>{{ a.teacherId }} · since {{ a.appointedAt | date:'d MMM yyyy' }}</small>
+            </div>
           </div>
-        </div>
-        <div class="cm-chips cm-scope" *ngIf="scopeChips(a) as sc">
-          <span class="cm-tag" *ngFor="let label of sc.shown">{{ label }}</span>
-          <span class="cm-tag cm-tag-more" *ngIf="sc.more" [attr.title]="'and ' + sc.more + ' more'">+{{ sc.more }}</span>
-        </div>
-        <div class="cm-card-actions">
-          <button type="button" class="cm-btn" (click)="startEdit(a)" [disabled]="saving"><mat-icon aria-hidden="true">tune</mat-icon>Change scope</button>
-          <button type="button" class="cm-btn cm-danger" (click)="startRemove(a)" [disabled]="saving" aria-label="End appointment" title="End appointment">
-            <mat-icon aria-hidden="true">person_remove</mat-icon><span class="cm-btn-text">End</span>
-          </button>
+          <div class="cm-card-actions">
+            <button type="button" class="cm-btn" (click)="startEdit(a)" [disabled]="saving"><mat-icon aria-hidden="true">tune</mat-icon>Change scope</button>
+            <button type="button" class="cm-btn cm-danger" (click)="startRemove(a)" [disabled]="saving" aria-label="End appointment" title="End appointment">
+              <mat-icon aria-hidden="true">person_remove</mat-icon><span class="cm-btn-text">End</span>
+            </button>
+          </div>
         </div>
         <div class="cm-remove" *ngIf="removing?.id === a.id">
           <label class="cm-field">
