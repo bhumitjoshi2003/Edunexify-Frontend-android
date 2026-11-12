@@ -16,6 +16,7 @@
   <!-- ── Class Chips (admin only) ──────────────────────────────────── -->
   <div class="ta-chips-wrap" *ngIf="isAdmin">
     <div class="ta-chips">
+      <span class="section-label">Class</span>
       <button *ngFor="let cls of classes; trackBy: trackByClassId" type="button" class="ta-chip"
         [class.ta-chip-active]="cls.id === selectedClassId"
         (click)="onClassSelect(cls)">{{ cls.name }}</button>

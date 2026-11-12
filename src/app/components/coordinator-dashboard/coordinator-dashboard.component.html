@@ -5,8 +5,7 @@
       <h1>{{ name || 'Coordinator' }} <span aria-hidden="true">👋</span></h1>
       <div class="pd-hero-meta">
         <span><mat-icon aria-hidden="true">hub</mat-icon>Coordinator</span>
-        <span *ngIf="appointment.data as a"><mat-icon aria-hidden="true">class</mat-icon>{{ classCount(a) }} {{ classCount(a) === 1 ? 'class' : 'classes' }}</span>
-        <span *ngIf="overview.data as o"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ o.today | date:'EEEE, d MMMM' }}</span>
+        <span *ngIf="overview.data as o"><mat-icon aria-hidden="true">calendar_today</mat-icon>{{ o.today | date:'EEE, d MMM' }}</span>
       </div>
     </div>
   </header>
