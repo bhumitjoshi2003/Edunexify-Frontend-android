@@ -1,5 +1,5 @@
-import { coordinatorClassNames, optionalCoordinatorService } from '../../services/coordinator.service';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { coordinatorClassNames, optionalCoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, switchMap } from 'rxjs';
@@ -14,6 +14,8 @@ import {
 } from '../../services/subject-config.service';
 import { LoggerService } from '../../services/logger.service';
 import { SchoolService } from '../../services/school.service';
+import { AuthStateService } from '../../auth/auth-state.service';
+import { FEATURES } from '../../auth/feature-keys';
 
 @Component({
   selector: 'app-subject-config',
@@ -33,7 +35,8 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
   classOptions: string[] = [];
 
   // Class subjects tab
-  selectedClass = '1';
+  /** Always one of classOptions (the school's configured classes), or '' before they load. */
+  selectedClass = '';
   classSubjects: ClassSubject[] = [];
   newSubjectName = '';
   newSubjectOptional = false;
@@ -56,18 +59,27 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
     private toast: ToastService,
-    private schoolService: SchoolService
+    private schoolService: SchoolService,
+    private authState: AuthStateService
   ) { }
 
   ngOnInit(): void {
     this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c)), takeUntil(this.destroy$)).subscribe(classes => {
       this.classOptions = classes;
-      if (!this.selectedClass && classes.length > 0) this.selectedClass = classes[0];
+      if (!this.hasConfiguredClass) this.selectedClass = classes[0] ?? '';
       this.cdr.markForCheck();
       this.loadClassSubjects();
     });
-    this.loadStreams();
-    this.loadOptionalGroups();
+    if (this.streamsAvailable) {
+      this.loadStreams();
+      this.loadOptionalGroups();
+    }
+  }
+
+  /** Class subjects are part of every plan (the timetable needs them); streams and optional
+   *  groups belong to Exams & Results. */
+  get streamsAvailable(): boolean {
+    return this.authState.hasFeature(FEATURES.EXAMS_RESULTS);
   }
 
   ngOnDestroy(): void {
@@ -81,7 +93,17 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
 
   // ── Class Subjects ────────────────────────────────────────────────────────
 
+  /** True when the selected class is one of the school's configured classes. */
+  get hasConfiguredClass(): boolean {
+    return !!this.selectedClass && this.classOptions.includes(this.selectedClass);
+  }
+
   loadClassSubjects(): void {
+    if (!this.hasConfiguredClass) {
+      this.classSubjects = [];
+      this.cdr.markForCheck();
+      return;
+    }
     this.service.getClassSubjects(this.selectedClass).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => { this.classSubjects = data; this.cdr.markForCheck(); },
       error: (e) => { this.logger.error('Error loading class subjects:', e); this.toast.error('Error', 'Failed to load subjects.'); },
@@ -97,7 +119,7 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
 
   addClassSubject(): void {
     const name = this.newSubjectName.trim();
-    if (!name) return;
+    if (!name || !this.hasConfiguredClass) return;
     if (this.newSubjectOptional && !this.newSubjectGroup.trim()) {
       this.toast.error('Validation', 'Group name is required for optional subjects.');
       return;

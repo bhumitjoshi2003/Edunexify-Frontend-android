@@ -1,6 +1,6 @@
-<div class="sc-page">
+<div class="sc-container">
 
-  <!-- ── Hero ──────────────────────────────────────────────────────── -->
+  <!-- Hero -->
   <div class="sc-hero">
     <div class="sc-hero-left">
       <div class="sc-hero-icon">📚</div>
@@ -13,14 +13,13 @@
     <div class="sc-blob sc-blob-2"></div>
   </div>
 
+  <!-- Tabs + Content Card -->
   <div class="sc-card">
-  <div class="sc-header">
     <div class="sc-tabs">
       <button class="sc-tab" [class.active]="activeTab === 'class'" (click)="setTab('class')">Class Subjects</button>
-      <button class="sc-tab" [class.active]="activeTab === 'streams'" (click)="setTab('streams')">Stream</button>
-      <button class="sc-tab" [class.active]="activeTab === 'optional'" (click)="setTab('optional')">Optional Groups</button>
+      <button class="sc-tab" *ngIf="streamsAvailable" [class.active]="activeTab === 'streams'" (click)="setTab('streams')">Streams</button>
+      <button class="sc-tab" *ngIf="streamsAvailable" [class.active]="activeTab === 'optional'" (click)="setTab('optional')">Optional Groups</button>
     </div>
-  </div>
 
   <!-- CLASS SUBJECTS TAB -->
   <div *ngIf="activeTab === 'class'" class="sc-body">
@@ -33,7 +32,7 @@
 
     <div class="sc-add-row">
       <input [(ngModel)]="newSubjectName" placeholder="Subject name" (keyup.enter)="addClassSubject()" aria-label="New subject name" />
-      <button class="btn-add" (click)="addClassSubject()">+ Add</button>
+      <button class="btn-add" (click)="addClassSubject()" [disabled]="!hasConfiguredClass">+ Add</button>
     </div>
     <div class="sc-optional-row">
       <label class="sc-optional-label">
@@ -53,7 +52,8 @@
         </span>
         <button class="btn-delete" (click)="deleteClassSubject(s.id)" [attr.aria-label]="'Delete subject ' + s.subjectName">&#x2715;</button>
       </li>
-      <li *ngIf="classSubjects.length === 0" class="sc-empty">No subjects defined for Class {{ selectedClass }}.</li>
+      <li *ngIf="classSubjects.length === 0 && hasConfiguredClass" class="sc-empty">No subjects defined for Class {{ selectedClass }}.</li>
+      <li *ngIf="!hasConfiguredClass" class="sc-empty">Add classes in Class Management to configure subjects.</li>
     </ul>
   </div>
 
@@ -84,7 +84,7 @@
             <span>{{ subj.subjectName }}</span>
             <button class="btn-delete" (click)="deleteCoreSubject(stream.id, subj.id)" [attr.aria-label]="'Delete subject ' + subj.subjectName">&#x2715;</button>
           </li>
-          <li *ngIf="!stream.coreSubjects?.length" class="sc-empty">No core subjects yet.</li>
+          <li *ngIf="stream.coreSubjects.length === 0" class="sc-empty">No core subjects yet.</li>
         </ul>
       </div>
     </div>
@@ -93,7 +93,7 @@
 
   <!-- OPTIONAL GROUPS TAB -->
   <div *ngIf="activeTab === 'optional'" class="sc-body">
-    <p class="sc-hint">Optional groups let students pick one subject from a defined list (e.g. Physical Education, Hindi, or Computer Science).</p>
+    <p class="sc-hint">Optional groups let stream-eligible students pick one subject from a defined list (e.g. Physical Education, Hindi, or Computer Science).</p>
 
     <div class="sc-add-row">
       <input [(ngModel)]="newGroupName" placeholder="Group name (e.g. Elective)" (keyup.enter)="addOptionalGroup()" aria-label="New optional group name" />
@@ -120,11 +120,12 @@
             <span>{{ subj.subjectName }}</span>
             <button class="btn-delete" (click)="deleteOptionalSubject(group.id, subj.id)" [attr.aria-label]="'Delete subject ' + subj.subjectName">&#x2715;</button>
           </li>
-          <li *ngIf="!group.subjects?.length" class="sc-empty">No subjects in this group yet.</li>
+          <li *ngIf="group.subjects.length === 0" class="sc-empty">No subjects in this group yet.</li>
         </ul>
       </div>
     </div>
     <p *ngIf="optionalGroups.length === 0" class="sc-empty">No optional groups defined yet.</p>
   </div>
+
   </div><!-- /.sc-card -->
-</div><!-- /.sc-page -->
+</div>

@@ -1,30 +1,26 @@
 <div class="ag-page">
 
-  <!-- ── Hero ──────────────────────────────────────────────────────── -->
-  <div class="ag-hero">
-    <div class="ag-blob ag-blob-1"></div>
-    <div class="ag-blob ag-blob-2"></div>
+  <!-- ── Hero: the standard page header (as on Parents and Exam Configuration) ── -->
+  <header class="ag-hero">
     <div class="ag-hero-left">
-      <button class="ag-back-btn" (click)="goBack()" title="Back">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-      <div class="ag-hero-icon">
+      <div class="ag-hero-icon" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24"
              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       </div>
-      <div>
+      <div class="ag-hero-copy">
         <h1 class="ag-hero-title">Exam Structure</h1>
-        <p class="ag-hero-sub">Define which exams contribute to the report card and their weight (%)</p>
+        <p class="ag-hero-sub">Choose which exams count towards the report card, and their weight.</p>
       </div>
     </div>
-    <button class="ag-new-btn" (click)="openForm(null)" aria-label="Create new exam structure">+ New Structure</button>
-  </div>
+    <button type="button" class="ag-new-btn" (click)="openForm(null)" aria-label="Create new exam structure" title="New structure">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span class="ag-new-text">New structure</span>
+    </button>
+  </header>
 
   <!-- ── Filters ───────────────────────────────────────────────────── -->
   <div class="ag-card ag-filters-card">
