@@ -195,8 +195,11 @@
               <small>{{ st.grade || (st.status === 'NO_RESULT' ? 'No result' : '') }}</small>
             </div>
             <div class="cr-row-actions">
-              <button type="button" class="cr-btn" (click)="preview(st)" [disabled]="previewing === st.studentId">
-                <mat-icon aria-hidden="true">visibility</mat-icon>{{ previewing === st.studentId ? 'Opening…' : 'Preview' }}</button>
+              <button type="button" class="cr-btn" (click)="preview(st)">
+                <mat-icon aria-hidden="true">visibility</mat-icon>Preview</button>
+              <button type="button" class="cr-btn cr-btn-icon" (click)="download(st)" [disabled]="previewing === st.studentId"
+                      [attr.aria-label]="'Download the report card of ' + st.studentName" title="Download PDF">
+                <mat-icon aria-hidden="true">{{ previewing === st.studentId ? 'hourglass_top' : 'download' }}</mat-icon></button>
               <button type="button" class="cr-btn cr-btn-icon" (click)="ask(st.studentId, st.studentName)" [attr.aria-label]="'Request a correction for ' + st.studentName" title="Request correction">
                 <mat-icon aria-hidden="true">feedback</mat-icon></button>
             </div>

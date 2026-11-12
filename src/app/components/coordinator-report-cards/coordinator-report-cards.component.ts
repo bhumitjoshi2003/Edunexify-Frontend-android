@@ -6,6 +6,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { ReportCardV2Service, Summary, SummaryRow } from '../../services/report-card-v2.service';
 import { ReportCardPdfDeliveryService } from '../../services/report-card-pdf-delivery.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ReportCardPreviewDialogComponent, ReportCardPreviewData } from './report-card-preview-dialog.component';
 import { ToastService } from '../../services/toast.service';
 import { CoordinatorReportCardProgress, ReportCardCorrectionRequest, coordinatorUnitLabel } from '../../interfaces/coordinator';
 import { apiMessage } from '../academic-session-selector/academic-session-selector.component';
@@ -18,7 +20,7 @@ import { apiMessage } from '../academic-session-selector/academic-session-select
 @Component({
   selector: 'app-coordinator-report-cards',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule],
   templateUrl: './coordinator-report-cards.component.html',
   styleUrl: './coordinator-report-cards.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -54,7 +56,8 @@ export class CoordinatorReportCardsComponent implements OnInit, OnDestroy {
     private cards: ReportCardV2Service,
     private pdf: ReportCardPdfDeliveryService,
     private toast: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void { this.load(); }
@@ -217,22 +220,47 @@ export class CoordinatorReportCardsComponent implements OnInit, OnDestroy {
     return out;
   }
 
+  /** Shows the student's live report card inside Edunexify; nothing is downloaded. */
   preview(s: SummaryRow): void {
+    const r = this.selected;
+    if (!r) return;
+    const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 600px)').matches;
+    this.dialog.open<ReportCardPreviewDialogComponent, ReportCardPreviewData>(ReportCardPreviewDialogComponent, {
+      data: { studentName: s.studentName, fileName: this.fileName(s), pdf: this.cards.previewPdf(r.setupId, s.studentId) },
+      width: phone ? '100vw' : '1100px',
+      maxWidth: phone ? '100vw' : '96vw',
+      height: phone ? '100dvh' : undefined,
+      autoFocus: false,
+      restoreFocus: true,
+    });
+  }
+
+  /** Downloads the student's live report card PDF (a separate action from Preview). */
+  download(s: SummaryRow): void {
     const r = this.selected;
     if (!r || this.previewing) return;
     this.previewing = s.studentId;
     this.cards.previewPdf(r.setupId, s.studentId).pipe(takeUntil(this.destroy$)).subscribe({
       next: async blob => {
+        try {
+          await this.pdf.saveToDevice(blob, this.fileName(s));
+          if (this.pdf.native) this.toast.success('Report card downloaded', 'Saved to Downloads/Edunexify.');
+        } catch {
+          this.toast.error('Download failed', 'Please try again.');
+        }
         this.previewing = null;
         this.cdr.markForCheck();
-        await this.pdf.open(blob, `${s.studentName.replace(/[^A-Za-z0-9]+/g, '_')}_Preview.pdf`);
       },
       error: err => {
         this.previewing = null;
-        this.toast.error('Preview unavailable', apiMessage(err));
+        this.toast.error('Download unavailable', apiMessage(err));
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private fileName(s: SummaryRow): string {
+    return `${s.studentName.replace(/[^A-Za-z0-9]+/g, '_')}_Preview.pdf`;
   }
 
   ask(studentId: string | null, studentName: string | null): void {

@@ -316,7 +316,8 @@ export class TeacherClassUpdatesComponent implements OnInit, OnDestroy {
   }
 
   isLong(update: ClassUpdate): boolean {
-    return update.message.length > 220 || update.message.split('\n').length > 4;
+    // Matches the three-line clamp on the cards (cards keep an equal size).
+    return update.message.length > 130 || update.message.split('\n').length > 3;
   }
 
   isExpanded(update: ClassUpdate): boolean {

@@ -99,7 +99,7 @@
           <header class="tcu-card-head">
             <span class="tcu-avatar">{{ initials(item) }}</span>
             <div class="tcu-card-title">
-              <h3>{{ item.title }}</h3>
+              <h3 [title]="item.title">{{ item.title }}</h3>
               <div class="tcu-chips">
                 <span class="tcu-chip is-class"><mat-icon>groups</mat-icon>{{ classLabel(item.className, item.sectionName) }}</span>
                 <span class="tcu-chip is-subject" *ngIf="item.subjectName">{{ item.subjectName }}</span>

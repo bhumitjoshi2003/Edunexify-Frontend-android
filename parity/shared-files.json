@@ -109,7 +109,7 @@
     "src/app/components/signature-settings/signature-pad-dialog.component.spec.ts": "411fc9d424ab2810bbe69d3b14c7ce34c860ffb8beff68c51cade4f8dbadd2b8",
     "src/app/components/signature-settings/signature-settings.component.spec.ts": "2dc45edde5f0e89d186cab8dc8c038a771094e5d4cad019971dabf3b08f75f87",
     "src/app/components/principal-dashboard/principal-dashboard.component.html": "9e87c43c399c15824ab2f15c01239bcb4cee3df316938e085106ba1f36566bd2",
-    "src/app/components/principal-dashboard/principal-dashboard.component.css": "ae83eeae72f3937b4ae5245fba381e8d30846874a582ad3a111de02e43e45ba8",
+    "src/app/components/principal-dashboard/principal-dashboard.component.css": "13f4f0d3e9af8e6f747ed5b124e77f0bcb961397aa0b6a1062d0bde3b88a68cb",
     "src/app/components/principal-dashboard/principal-dashboard.component.spec.ts": "c8b44425d2f1b58094c641b71056fe975febf863519997f217a654b069b4d4e9",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.ts": "a644226294168aa4a783115faf251830c55eb50e074120c6af76ce3f95bfe1a3",
     "src/app/components/teacher-leave-requests/teacher-leave-requests.component.html": "acd8ce62b1ad7b8166521c4f95847136f71a43d2781249a5e2c79dcb342406d0",
@@ -136,7 +136,7 @@
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8c7e06217cb4da73a25ddda34c0ad339bbee5e50305eceb4abcab1b739c983d3",
     "src/app/components/coordinator-management/coordinator-management.component.ts": "f3f85f7ef86125e4bd7567c63b79ca1d41f6d372e74647cf31d1d1c4681bf54e",
     "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "a4538d04054a8a4b5ec1530b3befdc73e310de2bf53e6a07cfe171fb16ff50dc",
-    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "fcb0bc35956aef3c7f8f4356400f0e30b3e3ce5eb2b40d2e93232f72b0c9663b",
+    "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "2616fa6b8f72737bf3a3585bb46a45d48bce9cd9c5a67a99db2a588bbc544b78",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.spec.ts": "73bab416fef22d57f96c6a0cefa8ebaeabbce81ecff3f8262b43c61260de0f50",
     "src/app/services/workspace.service.ts": "e86af8daa57b8744360979b7a26065b5eece80ad8f1a3e990e4f7d407e6afb3b",
     "src/app/services/workspace.service.spec.ts": "e74630bfe6925662cf35d337d9892865d06acbf7eab2cedf169b429ef718f1e9",
@@ -151,7 +151,9 @@
     "src/app/components/mark-entry/mark-entry.coordinator.spec.ts": "0b9453ecf58c6d6405493dc66c3d67eb2dafcdad4b266204eb88b1030973c69d",
     "src/app/components/class-results/class-results.component.ts": "fde4d43e54fb3c78b5ac7c89dd29dd58303e063baa1046acdc8d552fe7ebf2d3",
     "src/app/components/class-results/class-results.coordinator.spec.ts": "93016a0e3865bc146700597f8271c6d68e8f09fbada7b8cc5ca8c195c246586b",
-    "src/app/services/marks.service.ts": "3c037b6c39cc6c2b0a02281d9023fc2455d7f33759196fea4bd6f58786255b1c"
+    "src/app/services/marks.service.ts": "3c037b6c39cc6c2b0a02281d9023fc2455d7f33759196fea4bd6f58786255b1c",
+    "src/app/components/coordinator-report-cards/report-card-preview-dialog.component.ts": "9d952a36d72a023b012bc36e18ff6fdcaa21f5e1d6f9b5ef27a244358f4db10b",
+    "src/app/components/coordinator-report-cards/coordinator-report-cards.preview.spec.ts": "52a23081b32dbac6ac8ebdb3d06e69893d86ab33e39a4ae66ac69f8a727a8d77"
   },
   "platformSpecific": [
     {

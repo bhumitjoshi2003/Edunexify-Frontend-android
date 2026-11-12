@@ -357,3 +357,13 @@
 @media (prefers-reduced-motion: reduce) {
   .tcu-page *, .tcu-page *::before, .tcu-page *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── Equal cards: the title and message take the same room on every card, so cards line up;
+   cards in a row stretch to the same height and the footer sits at the bottom. ── */
+.tcu-grid { align-items: stretch; grid-auto-rows: 1fr; }
+.tcu-card-body { flex: 1 1 auto; }
+.tcu-card-title h3 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(1.3em * 2); }
+.tcu-message { min-height: calc(1.55em * 3); }
+.tcu-message.is-clamped { -webkit-line-clamp: 3; }
+.tcu-card-foot { margin-top: auto; }
+@media (max-width: 600px) { .tcu-grid { grid-auto-rows: auto; } .tcu-card-title h3, .tcu-message { min-height: 0; } }

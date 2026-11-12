@@ -121,7 +121,7 @@
 
           <div class="thw-block is-classwork" *ngIf="post.classwork">
             <span class="thw-block-label"><span class="thw-block-icon"><mat-icon>class</mat-icon></span>Classwork</span>
-            <p>{{ post.classwork }}</p>
+            <p [title]="post.classwork">{{ post.classwork }}</p>
           </div>
           <div class="thw-block is-homework" *ngIf="post.homework">
             <span class="thw-block-label"><span class="thw-block-icon"><mat-icon>home_work</mat-icon></span>Homework
@@ -129,7 +129,7 @@
                 <mat-icon>alarm</mat-icon>{{ dueText }}
               </span>
             </span>
-            <p>{{ post.homework }}</p>
+            <p [title]="post.homework">{{ post.homework }}</p>
           </div>
 
           <div class="thw-gallery" *ngIf="post.attachments.length">

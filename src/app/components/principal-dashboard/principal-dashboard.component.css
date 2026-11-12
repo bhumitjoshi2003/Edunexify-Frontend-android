@@ -487,16 +487,36 @@ a.pd-tile:hover { border-color: var(--tile-border); transform: translateY(-3px);
 /* Loading: plain light cards with a light sweeping across, exactly as on the Admin dashboard. */
 .pd-tile.pd-sk { border-color: #e6ebf2; background: linear-gradient(160deg, #fff, #fbfdff); box-shadow: 0 7px 22px rgba(30,48,73,.055); }
 .pd-tile.pd-sk > * { visibility: hidden; }
+/* The Admin cards' loading motion: the soft corner bubble glides along the top of the card. */
 .pd-tile.pd-sk::after {
-  inset: 0;
-  width: auto;
-  height: auto;
-  border-radius: 0;
+  left: 0;
+  top: -28px;
+  right: auto;
+  bottom: auto;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: rgba(15,118,110,.08);
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.74), transparent);
   animation: pd-tile-shimmer 1.2s ease-in-out infinite;
 }
 @keyframes pd-tile-shimmer { to { transform: translateX(100%); } }
+
+/* Loading lines in the panels: grey bars with a light sweeping across, as on the Admin dashboard. */
+.pd-sk-line, .pd-sk-row .pd-sk-line {
+  position: relative;
+  overflow: hidden;
+  background: #e8edf2;
+  animation: none;
+}
+.pd-sk-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.72), transparent);
+  animation: pd-tile-shimmer 1.25s ease-in-out infinite;
+}
 
 @media (max-width: 900px) {
   .pd-today { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -511,6 +531,6 @@ a.pd-tile:hover { border-color: var(--tile-border); transform: translateY(-3px);
   .pd-today { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pd-tile.pd-sk::after { animation: none; }
+  .pd-tile.pd-sk::after, .pd-sk-line::after { animation: none; }
   a.pd-tile:hover { transform: none; }
 }

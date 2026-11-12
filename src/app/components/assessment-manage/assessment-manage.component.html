@@ -101,9 +101,9 @@
         <div class="asm-card-content">
           <div class="asm-portion">
             <span class="asm-portion-label"><mat-icon>menu_book</mat-icon>Syllabus / portion</span>
-            <p>{{ item.syllabus }}</p>
+            <p [title]="item.syllabus">{{ item.syllabus }}</p>
           </div>
-          <p class="asm-instructions" *ngIf="item.instructions"><mat-icon>info</mat-icon>{{ item.instructions }}</p>
+          <p class="asm-instructions" *ngIf="item.instructions" [title]="item.instructions"><mat-icon>info</mat-icon>{{ item.instructions }}</p>
 
           <a class="asm-file" *ngIf="item.attachment as file" [href]="file.url" target="_blank" rel="noopener" [title]="file.fileName">
             <img *ngIf="file.type === 'IMAGE'" [src]="file.url" [alt]="file.fileName" loading="lazy" />
