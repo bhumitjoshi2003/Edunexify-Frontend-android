@@ -60,7 +60,9 @@ describe('CoordinatorDashboardComponent', () => {
     expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('Coordinator');
     expect(text).not.toContain('Class teacher');
     expect(text).toContain('Class 8-A');                    // attendance table
-    expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('1 class');
+    // Role and date only: the class count is not shown in the header.
+    expect(el.querySelector('.pd-hero-meta')?.textContent).toContain('Coordinator');
+    expect(el.querySelector('.pd-hero-meta')?.textContent).not.toContain('class');
     expect(el.querySelectorAll('.pd-today .pd-tile').length).toBe(4);
     const tiles = Array.from(el.querySelectorAll('.pd-today .pd-tile')).map(t => t.textContent ?? '');
     expect(tiles[0]).toContain('Students present');
