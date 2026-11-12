@@ -130,7 +130,7 @@
     "src/app/utils/leave-escalation.util.ts": "57bdd606c6059bd635dd3d06eeaca0ce8fed74b994241de07137380440da4242",
     "src/app/components/leave-escalation-badge/leave-escalation-badge.component.ts": "3da9b9bd43f9d1c151ca49685072938b96edf77f3812dcba869eeaf1f0a5ac64",
     "src/app/interfaces/coordinator.ts": "f7f1a3281dc938b9defc852bce4593bbb9ef876b9bc9e74f2bdd77c177b397f4",
-    "src/app/services/coordinator.service.ts": "552e12c491c145adcdf4bfc5f877bf1c58ecc6066ee7c8369b2500ea8ea749a0",
+    "src/app/services/coordinator.service.ts": "1b1de96308f50f4a0379a9e2ab2fd83bfcc674ede00f4ad1a450cd736ffc3e12",
     "src/app/services/coordinator.service.spec.ts": "c546d823f410f0261db57be59dab09d2a8d2e7034223a9862cb353b3b9f26021",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "029075df29ce68952c50d2b3767557d247541bdb10a4d3778a58f4f2bde5be06",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8ce07528a42da52b3222c73114cdb02a78644f1655d4709fe7e8c46fabc74f80",
@@ -146,7 +146,12 @@
     "src/app/components/student-details/student-details.coordinator-scope.spec.ts": "d768266fd3188542d855eadae3fd2fe72777fdbb30c172045267c6ff0c8f0306",
     "src/app/components/teacher-details/teacher-details.account-controls.spec.ts": "7d5ead2b7d3e2806d0a0a93ccc9696f64a689df15e3add6fec635d17306f6a32",
     "src/app/core/workspace.interceptor.ts": "80d332396c8afcb828cb88029d58448d85ecbeae514c7be800144ea97c201051",
-    "src/app/core/workspace.interceptor.spec.ts": "de67d304cfe8e8eebf7a1a8753f12a233b069fca2abbd77aff29010ab33fb485"
+    "src/app/core/workspace.interceptor.spec.ts": "de67d304cfe8e8eebf7a1a8753f12a233b069fca2abbd77aff29010ab33fb485",
+    "src/app/components/mark-entry/mark-entry.component.ts": "68fc50edfdf4e51834ddd8949d32f49b0412a10ee8fe7fcd9a91cf16c7f80cc4",
+    "src/app/components/mark-entry/mark-entry.coordinator.spec.ts": "0b9453ecf58c6d6405493dc66c3d67eb2dafcdad4b266204eb88b1030973c69d",
+    "src/app/components/class-results/class-results.component.ts": "fde4d43e54fb3c78b5ac7c89dd29dd58303e063baa1046acdc8d552fe7ebf2d3",
+    "src/app/components/class-results/class-results.coordinator.spec.ts": "93016a0e3865bc146700597f8271c6d68e8f09fbada7b8cc5ca8c195c246586b",
+    "src/app/services/marks.service.ts": "3c037b6c39cc6c2b0a02281d9023fc2455d7f33759196fea4bd6f58786255b1c"
   },
   "platformSpecific": [
     {

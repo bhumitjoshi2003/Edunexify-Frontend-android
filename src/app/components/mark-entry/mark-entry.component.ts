@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription, takeUntil, forkJoin } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Subject, Subscription, takeUntil, forkJoin, combineLatest, of } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 import { ToastService } from '../../services/toast.service';
 import { ExamConfigService, ExamConfig, ExamSubjectEntry, isPublished } from '../../services/exam-config.service';
 import { MarksService, MarkEntryStudent, StudentExamSubject, MarkEntryRequest, MarkError } from '../../services/marks.service';
@@ -14,6 +14,8 @@ import { LoggerService } from '../../services/logger.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
+import { CoordinatorService } from '../../services/coordinator.service';
+import { WorkspaceService } from '../../services/workspace.service';
 
 type LoadState = 'idle' | 'loading' | 'loaded' | 'error';
 
@@ -59,6 +61,11 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   managedClasses: SchoolClass[] = [];
   sections: Section[] = [];
   selectedSectionId: number | null = null;
+  /** False when a Coordinator covers only some sections of the class: "All Sections" is not theirs. */
+  allSectionsAllowed = true;
+  /** Class lists still loading; the Coordinator's first class is chosen once they arrive. */
+  private listsLoaded = 0;
+  private pendingInit: (() => void) | null = null;
   private sectionMemory: Map<string, number | null> = new Map();
 
   /** Request state of each table, so "nothing found" is only shown after an empty, successful load. */
@@ -84,20 +91,25 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private toast: ToastService,
     private schoolService: SchoolService,
-    private sectionService: SectionService
+    private sectionService: SectionService,
+    private injector: Injector
   ) { }
 
   ngOnInit(): void {
     const user = this.authState.getUser();
-    this.role = user?.role ?? '';
+    // A Coordinator in the Coordinator workspace corrects marks of the classes they cover, with a
+    // reason (like the Principal, never publishing). The Teacher workspace keeps the class-teacher view.
+    this.role = user?.role === 'TEACHER' && WorkspaceService.leadershipView(this.authState) ? 'COORDINATOR' : (user?.role ?? '');
 
-    this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
-      next: classes => { this.classOptions = classes; this.cdr.markForCheck(); },
-      error: (err) => this.logger.error('Failed to load classes', err)
-    });
+    const classes$ = this.schoolService.getClasses();
+    (this.isCoordinatorView ? classes$.pipe(switchMap(classes => this.coordinators().restrictToScopedClassNames(classes))) : classes$)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: classes => { this.classOptions = classes; this.cdr.markForCheck(); this.listLoaded(); },
+        error: (err) => { this.logger.error('Failed to load classes', err); this.listLoaded(); }
+      });
     this.schoolService.getManagedClasses().pipe(takeUntil(this.destroy$)).subscribe({
-      next: classes => { this.managedClasses = classes; },
-      error: (err) => this.logger.error('Failed to load managed classes', err)
+      next: classes => { this.managedClasses = classes; this.listLoaded(); },
+      error: (err) => { this.logger.error('Failed to load managed classes', err); this.listLoaded(); }
     });
 
     this.academicSessionService.getAllSessions().pipe(takeUntil(this.destroy$)).subscribe({
@@ -129,12 +141,32 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
         },
         error: (e) => this.logger.error('Error fetching teacher:', e),
       });
+    } else if (this.isCoordinatorView && this.listsLoaded < 2) {
+      this.pendingInit = () => this.initAfterSettings(user);
     } else {
-      this.selectedClass = this.classOptions.length > 0 ? this.classOptions[0] : '1';
+      this.selectedClass = this.classOptions.length > 0 ? this.classOptions[0] : (this.isCoordinatorView ? '' : '1');
+      if (!this.selectedClass) return;
       this.loadSectionsForClass(this.selectedClass);
       this.loadExams();
     }
   }
+
+  private listLoaded(): void {
+    this.listsLoaded++;
+    if (this.listsLoaded === 2 && this.pendingInit) {
+      const init = this.pendingInit;
+      this.pendingInit = null;
+      init();
+    }
+  }
+
+  get isCoordinatorView(): boolean { return this.role === 'COORDINATOR'; }
+
+  /** Resolved only for a Coordinator: no other role needs the appointment. */
+  private coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
+
+  /** Principal and Coordinator corrections need a reason and are recorded as corrections. */
+  get correcting(): boolean { return this.role === 'PRINCIPAL' || this.role === 'COORDINATOR'; }
 
   ngOnDestroy(): void {
     this.destroyed = true;
@@ -143,6 +175,12 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   }
 
   get isTeacher(): boolean { return this.role === 'TEACHER'; }
+
+  private saveRequest(entries: MarkEntryRequest[], reason: string) {
+    if (this.role === 'PRINCIPAL') return this.marksService.correctMarks(entries, reason);
+    if (this.role === 'COORDINATOR') return this.marksService.coordinatorCorrectMarks(entries, reason);
+    return this.marksService.saveBulkMarks(entries);
+  }
 
   get selectedExam(): ExamConfig | null {
     return this.exams.find(e => e.id === this.selectedExamId) ?? null;
@@ -206,10 +244,20 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   loadSectionsForClass(className: string): void {
     const cls = this.managedClasses.find(c => c.name === className);
     if (!cls) return;
-    this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: sections => { this.sections = sections; this.cdr.markForCheck(); },
-      error: (err) => this.logger.error('Failed to load sections', err)
-    });
+    const scope$ = this.isCoordinatorView ? this.coordinators().sectionScope(className) : of({ wholeClass: true, sectionIds: [] as number[] });
+    combineLatest([this.sectionService.getSectionsForClass(cls.id), scope$])
+      .pipe(take(1), takeUntil(this.destroy$)).subscribe({
+        next: ([sections, scope]) => {
+          this.allSectionsAllowed = scope.wholeClass;
+          this.sections = scope.wholeClass ? sections : sections.filter(s => s.id != null && scope.sectionIds.includes(s.id));
+          // Only some sections are covered: open the first of them rather than the whole class.
+          if (!scope.wholeClass && !this.sections.some(s => s.id === this.selectedSectionId)) {
+            this.selectedSectionId = this.sections[0]?.id ?? null;
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => this.logger.error('Failed to load sections', err)
+      });
   }
 
   onSectionSelect(sectionId: number | null): void {
@@ -341,7 +389,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   }
 
   private validCorrectionReason(): boolean {
-    if (this.role !== 'PRINCIPAL' || (this.correctionReason.trim().length > 0 && this.correctionReason.trim().length <= 500)) return true;
+    if (!this.correcting || (this.correctionReason.trim().length > 0 && this.correctionReason.trim().length <= 500)) return true;
     this.toast.warning('Reason required', 'Enter a reason of up to 500 characters for these mark corrections.');return false;
   }
 
@@ -388,7 +436,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
     const reason = this.correctionReason.trim();
     this.confirming = true;
     const confirmed = await this.toast.confirm({
-      title: this.role === 'PRINCIPAL' ? 'Confirm reasoned mark corrections' : 'Save Marks',
+      title: this.correcting ? 'Confirm reasoned mark corrections' : 'Save Marks',
       message: `You are about to save marks for ${entries.length} students. This cannot be easily undone.`,
       confirmText: 'Yes, Save',
       cancelText: 'Cancel',
@@ -399,7 +447,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.rowErrors = {};
-    (this.role === 'PRINCIPAL' ? this.marksService.correctMarks(entries, reason) : this.marksService.saveBulkMarks(entries)).pipe(takeUntil(this.destroy$)).subscribe({
+    this.saveRequest(entries, reason).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.saving = false;
         // Sync snapshot so a second save won't re-send the same changes
@@ -458,7 +506,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
     const reason = this.correctionReason.trim();
     this.confirming = true;
     const confirmed = await this.toast.confirm({
-      title: this.role === 'PRINCIPAL' ? 'Confirm reasoned mark corrections' : 'Save Marks',
+      title: this.correcting ? 'Confirm reasoned mark corrections' : 'Save Marks',
       message: `You are about to save marks for ${entries.length} subjects. This cannot be easily undone.`,
       confirmText: 'Yes, Save',
       cancelText: 'Cancel',
@@ -469,7 +517,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
 
     this.saving = true;
     this.rowErrors = {};
-    (this.role === 'PRINCIPAL' ? this.marksService.correctMarks(entries, reason) : this.marksService.saveBulkMarks(entries)).pipe(takeUntil(this.destroy$)).subscribe({
+    this.saveRequest(entries, reason).pipe(takeUntil(this.destroy$)).subscribe({
       next: (result) => {
         this.saving = false;
         // Sync snapshot so a second save won't re-send the same changes

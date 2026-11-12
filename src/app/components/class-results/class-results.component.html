@@ -23,7 +23,7 @@
     </div>
     <div class="cr-filter-group" *ngIf="showClassDropdown">
       <label>Class</label>
-      <select [(ngModel)]="selectedClass" (ngModelChange)="loadExams()">
+      <select [(ngModel)]="selectedClass" (ngModelChange)="onClassChange()">
         <option *ngFor="let c of classOptions; trackBy: trackByIndex" [value]="c">Class {{ c }}</option>
       </select>
     </div>
@@ -62,7 +62,7 @@
   <!-- Section chips — admins only (a teacher always sees their own section) -->
   <div class="cr-section-chips" *ngIf="sections.length > 0 && !isTeacher">
     <span class="section-label">Sections</span>
-    <button class="cr-sec-chip" [class.cr-sec-active]="selectedSectionId === null"
+    <button class="cr-sec-chip" *ngIf="allSectionsAllowed" [class.cr-sec-active]="selectedSectionId === null"
       (click)="onSectionSelect(null)">All Sections</button>
     <button *ngFor="let sec of sections" class="cr-sec-chip"
       [class.cr-sec-active]="selectedSectionId === sec.id"

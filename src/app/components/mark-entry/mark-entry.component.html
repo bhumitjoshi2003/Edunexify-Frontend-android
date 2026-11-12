@@ -22,7 +22,7 @@
   </div>
 
   <!-- Filters -->
-  <section *ngIf="role === 'PRINCIPAL'" class="me-filter-group">
+  <section *ngIf="correcting" class="me-filter-group">
     <label for="mark-correction-reason">Reason for mark corrections</label>
     <textarea id="mark-correction-reason" [(ngModel)]="correctionReason" maxlength="500" rows="2" [disabled]="saving"></textarea>
   </section>
@@ -33,7 +33,7 @@
         <option *ngFor="let s of sessions; trackBy: trackByIndex" [value]="s">{{ s }}</option>
       </select>
     </div>
-    <div class="me-filter-group" *ngIf="role === 'ADMIN' || role === 'PRINCIPAL'">
+    <div class="me-filter-group" *ngIf="role === 'ADMIN' || correcting">
       <label>Class</label>
       <select [(ngModel)]="selectedClass" (ngModelChange)="onClassChange()">
         <option *ngFor="let c of classOptions; trackBy: trackByIndex" [value]="c">Class {{ c }}</option>
@@ -62,7 +62,7 @@
   <!-- Section Chips (admins; a teacher always works in their own section) -->
   <div class="me-section-chips" *ngIf="sections.length > 0 && !isTeacher">
     <span class="section-label">Sections</span>
-    <button class="me-sec-chip" [class.me-sec-active]="selectedSectionId === null"
+    <button class="me-sec-chip" *ngIf="allSectionsAllowed" [class.me-sec-active]="selectedSectionId === null"
       (click)="onSectionSelect(null)">All Sections</button>
     <button *ngFor="let sec of sections" class="me-sec-chip"
       [class.me-sec-active]="selectedSectionId === sec.id"
