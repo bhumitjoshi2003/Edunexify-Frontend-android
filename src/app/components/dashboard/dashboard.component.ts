@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { AdoptionMetadataService } from '../../services/adoption-metadata.service';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
@@ -369,8 +369,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /** Scroll handler of the page content: reveal on a downward scroll, hide at the top or on an upward scroll. */
   onContentScroll(event: Event): void {
+    this.trackScroll((event.target as HTMLElement).scrollTop);
+  }
+
+  /**
+   * The page itself scrolls on phones: the shell grows with its content, so the content area never
+   * scrolls and its scroll event never fires. Following the page's scroll too is what lets the
+   * update card appear (it never did while only the content area was watched).
+   */
+  @HostListener('window:scroll')
+  onPageScroll(): void {
+    this.trackScroll(this.pageScrollTop());
+  }
+
+  protected pageScrollTop(): number {
+    return document.scrollingElement?.scrollTop ?? window.scrollY ?? 0;
+  }
+
+  private trackScroll(scrollTop: number): void {
     if (!this.showUpdateBanner) return;
-    const top = Math.max(0, (event.target as HTMLElement).scrollTop);
+    const top = Math.max(0, scrollTop || 0);
     const delta = top - this.lastScrollTop;
     let reveal = this.updateBannerRevealed;
     if (top <= DashboardComponent.UPDATE_HIDE_AT_TOP_PX) {

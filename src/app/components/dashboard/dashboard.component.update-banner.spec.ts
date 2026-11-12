@@ -68,4 +68,29 @@ describe('DashboardComponent — update banner reveal on scroll', () => {
     expect(c.updateBannerRevealed).toBeFalse();
     expect(c.lastScrollTop).toBe(0);
   });
+  describe('when the page itself scrolls (phones: the content area does not scroll)', () => {
+    let pageTop = 0;
+    const scrollPage = (top: number) => { pageTop = top; c.onPageScroll(); };
+
+    beforeEach(() => { c.pageScrollTop = () => pageTop; pageTop = 0; });
+
+    it('slides in on a downward page scroll and hides on an upward one', () => {
+      scrollPage(300);
+      expect(c.updateBannerRevealed).toBeTrue();
+      scrollPage(500);
+      expect(c.updateBannerRevealed).toBeTrue();
+      scrollPage(420);
+      expect(c.updateBannerRevealed).toBeFalse();
+      scrollPage(700);
+      expect(c.updateBannerRevealed).toBeTrue();
+      scrollPage(0);
+      expect(c.updateBannerRevealed).toBeFalse();
+    });
+
+    it('stays hidden when no update is available', () => {
+      c.showUpdateBanner = false;
+      scrollPage(400);
+      expect(c.updateBannerRevealed).toBeFalse();
+    });
+  });
 });
