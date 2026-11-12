@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { AuthInterceptor } from './auth/auth.interceptor';
+import { WorkspaceInterceptor } from './core/workspace.interceptor';
 import { AuthStateService } from './auth/auth-state.service';
 import { GlobalErrorHandler } from './core/global-error-handler';
 import { TenantService } from './services/tenant.service';
@@ -22,6 +23,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(withInterceptorsFromDi()),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    // A Coordinator in the Teacher workspace calls the API as an ordinary teacher.
+    { provide: HTTP_INTERCEPTORS, useClass: WorkspaceInterceptor, multi: true },
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideAppInitializer(() => {
       const tenantService    = inject(TenantService);

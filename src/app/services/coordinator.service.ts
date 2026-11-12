@@ -80,6 +80,22 @@ export class CoordinatorService {
     }));
   }
 
+  /**
+   * The sections of a class a Coordinator may open on class-wide pages (marks, results): every
+   * section when the class is covered in full, otherwise only the covered ones. Anyone else: the
+   * whole class.
+   */
+  sectionScope(className: string): Observable<{ wholeClass: boolean; sectionIds: number[] }> {
+    if (!this.authState.isCoordinator()) return of({ wholeClass: true, sectionIds: [] });
+    return this.mine().pipe(map(m => {
+      const entries = (m?.scope ?? []).filter(e => e.className === className);
+      return {
+        wholeClass: entries.some(e => e.sectionId == null && e.streamId == null),
+        sectionIds: entries.map(e => e.sectionId).filter((id): id is number => id != null),
+      };
+    }));
+  }
+
   /** Same as {@link restrictToFullClasses} for pages that list classes by name. */
   restrictClassNames(names: string[]): Observable<string[]> {
     if (!this.authState.isCoordinator()) return of(names);

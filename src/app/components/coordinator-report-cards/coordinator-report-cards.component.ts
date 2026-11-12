@@ -145,6 +145,26 @@ export class CoordinatorReportCardsComponent implements OnInit, OnDestroy {
     return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
   }
 
+  /** Sections per status under the other filters, for the status switch. */
+  statusCount(status: 'all' | 'pending' | 'complete'): number {
+    return this.progress.filter(r =>
+      (status === 'all' || (status === 'complete') === this.isComplete(r))
+      && (!this.setupFilter || r.setupId === this.setupFilter)
+      && (!this.classFilter || r.className === this.classFilter)
+      && (!this.sectionFilter || r.sectionId === this.sectionFilter)).length;
+  }
+
+  /** Share of students whose report card is ready, across the filtered sections. */
+  get readyPercent(): number {
+    const t = this.totals;
+    return t.students ? Math.round((t.ready / t.students) * 100) : 0;
+  }
+
+  /** Short class-and-section mark for a section card, e.g. "7A". */
+  monogram(r: CoordinatorReportCardProgress): string {
+    return `${r.className}${r.sectionName ?? ''}`.slice(0, 4);
+  }
+
   get completeCount(): number { return this.progress.filter(r => this.isComplete(r)).length; }
 
   percent(r: CoordinatorReportCardProgress): number {

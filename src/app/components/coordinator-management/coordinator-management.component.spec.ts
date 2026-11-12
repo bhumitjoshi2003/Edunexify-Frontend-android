@@ -48,9 +48,13 @@ describe('CoordinatorManagementComponent', () => {
     fixture.detectChanges();
   });
 
-  it('lists active coordinators with their scope and offers only unappointed active teachers', () => {
+  it('lists active coordinators by name only, shows the scope under Change scope, and offers only unappointed active teachers', () => {
     expect(fixture.nativeElement.textContent).toContain('Asha Rao');
-    expect(fixture.nativeElement.textContent).toContain('Class 8 (all sections)');
+    expect(fixture.nativeElement.textContent).not.toContain('Class 8 (all sections)');
+    expect(fixture.nativeElement.querySelectorAll('.cm-card .cm-tag').length).toBe(0);
+    (fixture.nativeElement.querySelector('.cm-card .cm-btn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cm-editor').textContent).toContain('Class 8');
     expect(fixture.nativeElement.textContent).not.toContain('Academic');
     expect(component.availableTeachers.map(t => t.teacherId)).toEqual(['T2']);
   });

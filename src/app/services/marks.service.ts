@@ -121,6 +121,11 @@ export class MarksService {
     return this.http.post<MarkBulkResult>(`${environment.apiUrl}/principal/marks/corrections`, {marks: entries, reason});
   }
 
+  /** A Coordinator's reasoned corrections, limited on the server to the classes/sections they cover. */
+  coordinatorCorrectMarks(entries: MarkEntryRequest[], reason: string): Observable<MarkBulkResult> {
+    return this.http.post<MarkBulkResult>(`${environment.apiUrl}/coordinator/marks/corrections`, {marks: entries, reason});
+  }
+
   saveBulkMarks(entries: MarkEntryRequest[]): Observable<MarkBulkResult> {
     return this.http.post<MarkBulkResult>(`${this.base}/bulk`, entries);
   }

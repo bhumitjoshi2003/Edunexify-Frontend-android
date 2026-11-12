@@ -422,3 +422,95 @@ a.pd-tile { transition: transform .2s, border-color .2s, box-shadow .2s; }
 .pd-setup-links a:hover { background: #f8fafc; }
 .pd-setup-links a:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
 .pd-setup-links mat-icon { flex: none; width: 18px; height: 18px; font-size: 18px; color: #4f46e5; }
+
+/* ── Today tiles: the same cards as the Admin dashboard's "Today at a glance" ──
+   Shared by the Principal and Coordinator dashboards. Icon above an uppercase label, a tinted
+   card with a soft corner bubble, the same lift on hover and the same shimmer while loading. */
+.pd-today { gap: 12px; }
+.pd-tile {
+  --tile-border: #e6ebf2;
+  --tile-bg: linear-gradient(160deg, #fff, #fbfdff);
+  --tile-icon-bg: #eef2f6;
+  --tile-accent: #526278;
+  --tile-shadow: rgba(82,98,120,.12);
+  --tile-orb: rgba(15,118,110,.08);
+  min-height: 124px;
+  padding: 16px 16px 14px;
+  gap: 0;
+  justify-content: flex-start;
+  border: 1px solid var(--tile-border);
+  border-radius: 17px;
+  background: var(--tile-bg);
+  box-shadow: 0 7px 22px rgba(30,48,73,.055);
+}
+.pd-tile::after {
+  right: -22px;
+  top: -28px;
+  bottom: auto;
+  width: 74px;
+  height: 74px;
+  background: var(--tile-orb);
+}
+a.pd-tile { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+a.pd-tile:hover { border-color: var(--tile-border); transform: translateY(-3px); box-shadow: 0 12px 28px rgba(30,48,73,.10); }
+.pd-tile-top { flex-direction: column-reverse; align-items: flex-start; justify-content: flex-start; gap: 0; }
+.pd-tile-top mat-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  margin-bottom: 11px;
+  padding: 0;
+  border-radius: 11px;
+  font-size: 19px;
+  line-height: 36px;
+  text-align: center;
+  color: var(--tile-accent);
+  background: var(--tile-icon-bg);
+  box-shadow: 0 5px 13px var(--tile-shadow);
+}
+.pd-tile-staff .pd-tile-top mat-icon,
+.pd-tile-leaves .pd-tile-top mat-icon,
+.pd-tile-reviews .pd-tile-top mat-icon { color: var(--tile-accent); background: var(--tile-icon-bg); }
+.pd-tile-label { color: var(--tile-accent); font-size: .66rem; font-weight: 800; letter-spacing: .025em; text-transform: uppercase; }
+.pd-tile strong { margin-top: 4px; color: #223047; font-size: 1.55rem; font-weight: 800; line-height: 1.15; letter-spacing: 0; }
+/* Figures stay the Admin cards' colour; the rate's tone shows in the class tables below. */
+.pd-tile strong.pd-tone-good, .pd-tile strong.pd-tone-fair, .pd-tile strong.pd-tone-low { color: #223047; }
+.pd-tile strong.pd-tone-none { display: block; min-height: 0; margin-top: 4px; padding: 0; color: #64748b; font-size: 1rem; letter-spacing: 0; }
+.pd-tile small { margin-top: 5px; color: #7b879a; font-size: .69rem; line-height: 1.35; }
+.pd-tile .pd-of { color: #98a6b8; font-size: 1rem; }
+.pd-tile-students { --tile-border: #c9e8e3; --tile-bg: linear-gradient(160deg, #f0fdfa, #fff); --tile-icon-bg: #dff7f3; --tile-accent: #087e88; --tile-shadow: rgba(8,126,136,.14); --tile-orb: rgba(20,184,166,.10); }
+.pd-tile-staff { --tile-border: #d4def4; --tile-bg: linear-gradient(160deg, #f5f8ff, #fff); --tile-icon-bg: #e9efff; --tile-accent: #46689c; --tile-shadow: rgba(70,104,156,.13); --tile-orb: rgba(70,104,156,.08); }
+.pd-tile-leaves { --tile-border: #f0dcc4; --tile-bg: linear-gradient(160deg, #fffaf3, #fff); --tile-icon-bg: #fff1dc; --tile-accent: #a9681a; --tile-shadow: rgba(169,104,26,.13); --tile-orb: rgba(245,158,11,.09); }
+.pd-tile-reviews { --tile-border: #d9d6ef; --tile-bg: linear-gradient(160deg, #f8f7ff, #fff); --tile-icon-bg: #efedff; --tile-accent: #6656a3; --tile-shadow: rgba(102,86,163,.13); --tile-orb: rgba(99,102,241,.08); }
+.pd-tile-muted { --tile-bg: #f8fafc; }
+
+/* Loading: plain light cards with a light sweeping across, exactly as on the Admin dashboard. */
+.pd-tile.pd-sk { border-color: #e6ebf2; background: linear-gradient(160deg, #fff, #fbfdff); box-shadow: 0 7px 22px rgba(30,48,73,.055); }
+.pd-tile.pd-sk > * { visibility: hidden; }
+.pd-tile.pd-sk::after {
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.74), transparent);
+  animation: pd-tile-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes pd-tile-shimmer { to { transform: translateX(100%); } }
+
+@media (max-width: 900px) {
+  .pd-today { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+@media (max-width: 600px) {
+  .pd-today { gap: 9px; }
+  .pd-tile { min-height: 112px; padding: 13px; border-radius: 14px; }
+  .pd-tile-top mat-icon { width: 32px; height: 32px; margin-bottom: 8px; line-height: 32px; font-size: 18px; }
+  .pd-tile strong { font-size: 1.3rem; }
+}
+@media (max-width: 380px) {
+  .pd-today { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pd-tile.pd-sk::after { animation: none; }
+  a.pd-tile:hover { transform: none; }
+}

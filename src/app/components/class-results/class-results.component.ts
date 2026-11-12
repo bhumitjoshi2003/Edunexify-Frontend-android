@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, combineLatest, of, switchMap, take, takeUntil } from 'rxjs';
 import { MarksService, ClassStudentResult, ClassStudentSubject } from '../../services/marks.service';
 import { ExamConfigService, ExamConfig, ExamSubjectEntry, isPublished } from '../../services/exam-config.service';
 import { ToastService } from '../../services/toast.service';
@@ -13,6 +13,8 @@ import { LoggerService } from '../../services/logger.service';
 import { SchoolService, SchoolClass } from '../../services/school.service';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
+import { CoordinatorService } from '../../services/coordinator.service';
+import { WorkspaceService } from '../../services/workspace.service';
 
 @Component({
   selector: 'app-class-results',
@@ -31,6 +33,10 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
   managedClasses: SchoolClass[] = [];
   sections: Section[] = [];
   selectedSectionId: number | null = null;
+  /** False when a Coordinator covers only some sections of the class: "All Sections" is not theirs. */
+  allSectionsAllowed = true;
+  private listsLoaded = 0;
+  private pendingInit: (() => void) | null = null;
   showClassDropdown: boolean = true;
 
   selectedSession = '';
@@ -62,12 +68,15 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
     private schoolService: SchoolService,
     private sectionService: SectionService,
     private toast: ToastService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private injector: Injector
   ) { }
 
   ngOnInit(): void {
     const user = this.authState.getUser();
-    this.role = user?.role ?? '';
+    // A Coordinator in the Coordinator workspace reads the results of the classes they cover (never
+    // publishing them). The Teacher workspace keeps the class-teacher view.
+    this.role = user?.role === 'TEACHER' && WorkspaceService.leadershipView(this.authState) ? 'COORDINATOR' : (user?.role ?? '');
     const q = this.route.snapshot.queryParamMap;
     const urlSession = q.get('session');
     const urlClass = q.get('className');
@@ -79,13 +88,15 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
       sectionId: Number.isInteger(sectionParam) && sectionParam > 0 ? sectionParam : null,
     };
 
-    this.schoolService.getClasses().pipe(takeUntil(this.destroy$)).subscribe({
-      next: classes => { this.classOptions = classes; this.cdr.markForCheck(); },
-      error: (err) => this.logger.error('Failed to load classes', err)
-    });
+    const classes$ = this.schoolService.getClasses();
+    (this.isCoordinatorView ? classes$.pipe(switchMap(classes => this.coordinators().restrictToScopedClassNames(classes))) : classes$)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: classes => { this.classOptions = classes; this.cdr.markForCheck(); this.listLoaded(); },
+        error: (err) => { this.logger.error('Failed to load classes', err); this.listLoaded(); }
+      });
     this.schoolService.getManagedClasses().pipe(takeUntil(this.destroy$)).subscribe({
-      next: classes => { this.managedClasses = classes; },
-      error: (err) => this.logger.error('Failed to load managed classes', err)
+      next: classes => { this.managedClasses = classes; this.listLoaded(); },
+      error: (err) => { this.logger.error('Failed to load managed classes', err); this.listLoaded(); }
     });
 
     this.academicSessionService.getAllSessions().pipe(takeUntil(this.destroy$)).subscribe({
@@ -120,22 +131,59 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
         },
         error: (e) => this.logger.error('Error fetching teacher:', e),
       });
+    } else if (this.isCoordinatorView && this.listsLoaded < 2) {
+      this.pendingInit = () => this.initAfterSettings(user, urlClass);
     } else {
       this.showClassDropdown = true;
-      // A teacher's class is always their own; only admins restore a class from the URL.
-      this.selectedClass = urlClass || (this.classOptions.length > 0 ? this.classOptions[0] : '1');
+      // A teacher's class is always their own; only admins (and a Coordinator, within scope) restore a class from the URL.
+      const allowedUrlClass = urlClass && (!this.isCoordinatorView || this.classOptions.includes(urlClass)) ? urlClass : null;
+      this.selectedClass = allowedUrlClass || (this.classOptions.length > 0 ? this.classOptions[0] : (this.isCoordinatorView ? '' : '1'));
+      if (!this.selectedClass) return;
       this.loadSectionsForClass(this.selectedClass);
       this.loadExams();
     }
   }
 
+  private listLoaded(): void {
+    this.listsLoaded++;
+    if (this.listsLoaded === 2 && this.pendingInit) {
+      const init = this.pendingInit;
+      this.pendingInit = null;
+      init();
+    }
+  }
+
+  get isCoordinatorView(): boolean { return this.role === 'COORDINATOR'; }
+
+  /** Resolved only for a Coordinator: no other role needs the appointment. */
+  private coordinators(): CoordinatorService { return this.injector.get(CoordinatorService); }
+
+  /** A different class: its own sections (and, for a Coordinator, only the covered ones). */
+  onClassChange(): void {
+    this.selectedSectionId = null;
+    this.sections = [];
+    this.loadSectionsForClass(this.selectedClass);
+    this.loadExams();
+  }
+
   loadSectionsForClass(className: string): void {
     const cls = this.managedClasses.find(c => c.name === className);
     if (!cls) return;
-    this.sectionService.getSectionsForClass(cls.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: sections => { this.sections = sections; this.cdr.markForCheck(); },
-      error: (err) => this.logger.error('Failed to load sections', err)
-    });
+    const scope$ = this.isCoordinatorView ? this.coordinators().sectionScope(className) : of({ wholeClass: true, sectionIds: [] as number[] });
+    combineLatest([this.sectionService.getSectionsForClass(cls.id), scope$])
+      .pipe(take(1), takeUntil(this.destroy$)).subscribe({
+        next: ([sections, scope]) => {
+          this.allSectionsAllowed = scope.wholeClass;
+          this.sections = scope.wholeClass ? sections : sections.filter(s => s.id != null && scope.sectionIds.includes(s.id));
+          // Only some sections are covered: open the first of them rather than the whole class.
+          if (!scope.wholeClass && !this.sections.some(s => s.id === this.selectedSectionId)) {
+            this.selectedSectionId = this.sections[0]?.id ?? null;
+            if (this.selectedExamId) { this.results = []; this.loadResults(); }
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => this.logger.error('Failed to load sections', err)
+      });
   }
 
   onSectionSelect(sectionId: number | null): void {

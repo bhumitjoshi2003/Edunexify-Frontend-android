@@ -9,8 +9,7 @@
   --teal-soft: #e7f8f5;
   --danger: #b42318;
   --danger-soft: #fef3f2;
-  max-width: 1180px;
-  margin: 0 auto;
+  /* Full width of the dashboard content area, like the other admin pages (Parents, Coordinators). */
   padding-bottom: 28px;
   color: var(--ink);
   font-family: Inter, "Segoe UI", sans-serif;
