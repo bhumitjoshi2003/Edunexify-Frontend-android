@@ -133,7 +133,7 @@
     "src/app/services/coordinator.service.ts": "1b1de96308f50f4a0379a9e2ab2fd83bfcc674ede00f4ad1a450cd736ffc3e12",
     "src/app/services/coordinator.service.spec.ts": "c546d823f410f0261db57be59dab09d2a8d2e7034223a9862cb353b3b9f26021",
     "src/app/components/coordinator-dashboard/coordinator-dashboard.component.ts": "029075df29ce68952c50d2b3767557d247541bdb10a4d3778a58f4f2bde5be06",
-    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8ce07528a42da52b3222c73114cdb02a78644f1655d4709fe7e8c46fabc74f80",
+    "src/app/components/coordinator-dashboard/coordinator-dashboard.component.spec.ts": "8c7e06217cb4da73a25ddda34c0ad339bbee5e50305eceb4abcab1b739c983d3",
     "src/app/components/coordinator-management/coordinator-management.component.ts": "f3f85f7ef86125e4bd7567c63b79ca1d41f6d372e74647cf31d1d1c4681bf54e",
     "src/app/components/coordinator-management/coordinator-management.component.spec.ts": "a4538d04054a8a4b5ec1530b3befdc73e310de2bf53e6a07cfe171fb16ff50dc",
     "src/app/components/coordinator-report-cards/coordinator-report-cards.component.ts": "fcb0bc35956aef3c7f8f4356400f0e30b3e3ce5eb2b40d2e93232f72b0c9663b",
