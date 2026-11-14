@@ -42,9 +42,11 @@ describe('TEACHER edit flow (rendered template)', () => {
 
   async function setup(entries: any[] = [mathEntry]) {
     api = jasmine.createSpyObj('TimetableService', [
-      'getTeacherTimetable', 'updateEntry', 'deleteEntry', 'createEntry', 'getClassTimetable'
+      'getTeacherTimetable', 'updateEntry', 'deleteEntry', 'createEntry', 'getClassTimetable', 'getPermittedSubjects', 'getTimingDisplay'
     ]);
+    api.getPermittedSubjects.and.returnValue(of(['Mathematics', 'Physics', 'Maths', 'Biology', 'Accountancy']));
     api.getTeacherTimetable.and.returnValue(of(entries));
+    api.getTimingDisplay.and.returnValue(of({ showTimes: true, activeProfileId: null, activeProfileName: null, periods: [] }));
     api.updateEntry.and.returnValue(of({}));
     api.createEntry.and.returnValue(of({}));
     api.deleteEntry.and.returnValue(of({}));
@@ -147,6 +149,26 @@ describe('TEACHER edit flow (rendered template)', () => {
     expect(c.canEditEntry(historical)).toBeFalse();
     c.openEdit(historical);
     expect(c.showModal).toBeFalse();
+  });
+
+  it('11. with central period times, choosing a period in the form saves it with that period\'s time', async () => {
+    // Regression: the Period Number list gave text ("8"), so the time lookup found nothing and
+    // saving failed with "Period 8 does not have a time in the active timing profile".
+    await setup();
+    const periods = [1, 2, 3, 4, 5, 6, 7, 8].map(n => ({ periodNumber: n, startTime: `${String(7 + n).padStart(2, '0')}:00`, endTime: `${String(7 + n).padStart(2, '0')}:40` }));
+    api.getTimingDisplay = jasmine.createSpy('getTimingDisplay').and.returnValue(of({ showTimes: true, activeProfileId: 1, activeProfileName: 'Regular day', periods }));
+    c.loadTimingDisplay();
+    c.openAddPeriodAsTeacher();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const select: HTMLSelectElement = fixture.nativeElement.querySelector('#modal-period');
+    select.selectedIndex = Array.from(select.options).findIndex(o => o.textContent?.trim() === 'Period 8');
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    c.modalForm.subjectName = 'Mathematics';
+    c.saveEntry();
+    expect(c.modalError).toBeNull();
+    expect(api.createEntry).toHaveBeenCalledWith(jasmine.objectContaining({ periodNumber: 8, startTime: '15:00', endTime: '15:40' }));
   });
 
   it('8. adding a period into a slot another teacher already occupies still succeeds, with no conflict UI', async () => {

@@ -554,8 +554,9 @@ export class TimetableComponent implements OnInit, OnDestroy {
     return entry.endTime || '';
   }
 
-  configuredTimeForPeriod(periodNumber: number): TimetableTimingPeriod | null {
-    return this.timingByPeriod.get(periodNumber) ?? null;
+  configuredTimeForPeriod(periodNumber: number | string): TimetableTimingPeriod | null {
+    // Accept a period number given as text too (e.g. straight from a form control).
+    return this.timingByPeriod.get(Number(periodNumber)) ?? null;
   }
 
   private applyTimingConfig(config: TimetableTimingConfig): void {
@@ -911,7 +912,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     const body: TimetableEntryRequest = {
       ...(this.canEditPeriods() ? { academicSessionId: this.selectedSession!.id } : this.isEditMode ? { academicSessionId: form.academicSessionId } : {}),
       classId: form.classId!, sectionId: form.sectionId ?? null, day: form.day,
-      periodNumber: form.periodNumber, startTime: form.startTime, endTime: form.endTime,
+      periodNumber: Number(form.periodNumber), startTime: form.startTime, endTime: form.endTime,
       subjectName: form.subjectName, teacherId: this.isTeacher() ? this.userId : form.teacherId
     };
     const save$ = this.isEditMode && this.modalForm.id != null
