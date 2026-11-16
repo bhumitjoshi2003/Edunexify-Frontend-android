@@ -43,6 +43,33 @@ describe('G1 timetable screen', () => {
     expect(body.className).toBeUndefined();
   });
   it('creates explicitly in a future session', () => { c.selectedSession = future; c.modalForm.academicSessionId = 2; c.saveEntry(); expect(api.createEntry.calls.mostRecent().args[0].academicSessionId).toBe(2); });
+  it('opens Add Period and Grant access before a section is chosen; the section is picked in the form', () => {
+    c.sections = [{ id: 4, classId: 8, name: 'A', active: true }, { id: 5, classId: 8, name: 'B', active: true }] as any;
+    c.selectedSectionId = null;
+    expect(c.canAdd()).toBeTrue();
+    c.openAddPeriod();
+    expect(c.showModal).toBeTrue();
+    expect(c.modalForm.sectionId).toBeNull();
+    Object.assign(c.modalForm, { subjectName: 'Math', teacherId: 'T1', startTime: '09:00', endTime: '09:40' });
+    c.saveEntry();
+    expect(api.createEntry).not.toHaveBeenCalled();
+    c.modalForm.sectionId = 5;
+    c.saveEntry();
+    expect(api.createEntry.calls.mostRecent().args[0].sectionId).toBe(5);
+
+    const grants = { create: jasmine.createSpy('create').and.returnValue(of({})) };
+    (c as any).teacherClassGrantService = grants;
+    expect(c.canGrant()).toBeTrue();
+    c.openGrantModal();
+    expect(c.showGrantModal).toBeTrue();
+    c.grantTeacherId = 'T1';
+    c.saveGrant();
+    expect(grants.create).not.toHaveBeenCalled();
+    expect(c.grantError).toBe('Please select a section.');
+    c.grantSectionId = 4;
+    c.saveGrant();
+    expect(grants.create).toHaveBeenCalledWith({ teacherId: 'T1', className: '8', sectionId: 4 });
+  });
   it('requires a canonical section when the class has sections', () => {
     c.sections = [{ id: 4, classId: 8, name: 'A', active: true }]; c.saveEntry(); expect(api.createEntry).not.toHaveBeenCalled();
     c.modalForm.sectionId = 4; c.saveEntry(); expect(api.createEntry.calls.mostRecent().args[0].sectionId).toBe(4);

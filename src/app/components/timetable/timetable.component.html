@@ -466,7 +466,7 @@
     <h3 class="tt-modal-title">Grant Teacher Access</h3>
 
     <div class="tt-modal-meta">
-      Class {{ selectedClass }}<span *ngIf="selectedSectionName"> – {{ selectedSectionName }}</span>
+      Class {{ selectedClass }}<span *ngIf="grantSectionName"> – {{ grantSectionName }}</span>
     </div>
 
     <p class="tt-field-hint">Lets this teacher add their own periods for this class going forward — for
@@ -474,6 +474,14 @@
       class-teacher assignment. This only grants self-service access; it doesn't create a period itself.</p>
 
     <div class="tt-modal-body">
+      <div class="tt-field" *ngIf="sections.length > 0">
+        <label class="tt-field-label" for="grant-section">Section</label>
+        <select id="grant-section" class="tt-field-input" [(ngModel)]="grantSectionId">
+          <option [ngValue]="null">-- Select a section --</option>
+          <option *ngFor="let s of sections" [ngValue]="s.id">{{ s.name }}</option>
+        </select>
+      </div>
+
       <div class="tt-field">
         <label class="tt-field-label" for="grant-teacher">Teacher</label>
         <select id="grant-teacher" class="tt-field-input" [(ngModel)]="grantTeacherId">
