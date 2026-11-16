@@ -89,10 +89,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
   /** Period entries: Admin, the Principal (TIMETABLE_EDIT) and a Coordinator in scope. Bulk import and session copy stay Admin-only. */
   canEditPeriods(): boolean { return this.canManage() || this.role === 'PRINCIPAL' || this.coordinatorMode; }
   canWrite(): boolean { return this.canEditPeriods() && writableSession(this.selectedSession); }
-  canAdd(): boolean { return this.canWrite() && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
+  /** The section is chosen (or confirmed) in the Add Period form, so a section need not be selected first. */
+  canAdd(): boolean { return this.canWrite() && !!this.selectedClassId && this.sectionsLoaded; }
   /** Timings, class-teacher configuration and access grants; period editing stays canWrite(). */
   canManageSetup(): boolean { return this.canManage() || this.role === 'PRINCIPAL'; }
-  canGrant(): boolean { return this.canManageSetup() && writableSession(this.selectedSession) && !!this.selectedClassId && this.sectionsLoaded && (this.sections.length ? this.sections.some(s => s.id === this.selectedSectionId) : this.selectedSectionId == null); }
+  /** Like Add Period, the section is chosen in the Grant form. */
+  canGrant(): boolean { return this.canManageSetup() && writableSession(this.selectedSession) && !!this.selectedClassId && this.sectionsLoaded; }
   onSessionSelected(session: AcademicSession | null): void {
     this.classRead$.next(null);
     this.selectedSession = session; this.showModal = false; this.showGrantModal = false;
@@ -138,6 +140,8 @@ export class TimetableComponent implements OnInit, OnDestroy {
    *  fields are entirely different (just a teacher, against the already-selected class). */
   showGrantModal = false;
   grantTeacherId = '';
+  /** Section the grant is for (required when the class has sections); starts from the selected one. */
+  grantSectionId: number | null = null;
   grantError: string | null = null;
   grantSaving = false;
 
@@ -817,6 +821,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
   openGrantModal(): void {
     if (!this.canGrant() || !this.selectedSession?.current) return;
     this.grantTeacherId = '';
+    this.grantSectionId = this.sections.some(s => s.id === this.selectedSectionId) ? this.selectedSectionId : null;
     this.grantError = null;
     this.showGrantModal = true;
     this.cdr.markForCheck();
@@ -827,9 +832,16 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  get grantSectionName(): string | null {
+    return this.sections.find(s => s.id === this.grantSectionId)?.name ?? null;
+  }
+
   saveGrant(): void {
     if (!this.canGrant() || !this.selectedSession?.current || this.grantSaving) return;
     this.grantError = null;
+    if (this.sections.length && !this.sections.some(s => s.id === this.grantSectionId)) {
+      this.grantError = 'Please select a section.'; return;
+    }
     if (!this.grantTeacherId) {
       this.grantError = 'Please select a teacher.'; return;
     }
@@ -840,7 +852,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.teacherClassGrantService.create({
       teacherId: this.grantTeacherId,
       className: this.selectedClass,
-      sectionId: this.selectedSectionId
+      sectionId: this.sections.length ? this.grantSectionId : null
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.grantSaving = false;
