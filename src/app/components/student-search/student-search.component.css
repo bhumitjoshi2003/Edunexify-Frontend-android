@@ -217,6 +217,7 @@
 .ss-status-active   { background: #dcfce7; color: #15803d; }
 .ss-status-upcoming { background: #eff6ff; color: #1d4ed8; }
 .ss-status-inactive { background: #f1f5f9; color: #64748b; }
+.ss-status-unknown  { background: #f8fafc; color: #94a3b8; }
 
 .ss-arrow {
   width: 18px;

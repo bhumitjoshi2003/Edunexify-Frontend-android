@@ -224,4 +224,14 @@ describe('teacher today-classes utilities', () => {
     ], new Date(2026, 8, 23, 8, 0));
     expect(entries.map(e => e.timetableEntryId)).toEqual([100, 300, null]);
   });
+
+  it('classifies space-padded and malformed times the same way on every client', () => {
+    const padded = buildTodayClasses([entry({ id: 1, startTime: ' 09:10 ', endTime: '09:50 ' })], at(9, 30))[0];
+    expect(padded.status).toBe('current');
+    const junk = buildTodayClasses([entry({ id: 2, startTime: '09:10abc', endTime: '09:50' })], at(9, 30))[0];
+    expect(junk.status).toBe('scheduled');
+    expect(junk.startTime).toBeNull();
+    const withSeconds = buildTodayClasses([entry({ id: 3, startTime: '09:10:00', endTime: '09:50:00' })], at(9, 30))[0];
+    expect(withSeconds.status).toBe('current');
+  });
 });

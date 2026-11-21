@@ -1,3 +1,4 @@
+import { studentStatusLabel, studentStatusTone } from '../../utils/student-status.util';
 import {
   ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit
 } from '@angular/core';
@@ -87,17 +88,9 @@ export class StudentSearchComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/student-details', studentId]);
   }
 
-  getStatusClass(status: string | undefined): string {
-    if (status === 'INACTIVE') return 'ss-status-inactive';
-    if (status === 'UPCOMING') return 'ss-status-upcoming';
-    return 'ss-status-active';
-  }
+  getStatusClass(status: string | undefined): string { return 'ss-status-' + studentStatusTone(status); }
 
-  getStatusLabel(status: string | undefined): string {
-    if (status === 'INACTIVE') return 'Inactive';
-    if (status === 'UPCOMING') return 'Upcoming';
-    return 'Active';
-  }
+  getStatusLabel(status: string | undefined): string { return studentStatusLabel(status); }
 
   getInitial(name: string): string {
     return name ? name.charAt(0).toUpperCase() : '?';
