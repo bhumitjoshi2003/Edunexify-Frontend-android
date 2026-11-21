@@ -6,18 +6,22 @@ import { sessionKind, writableSession } from '../academic-session-selector/acade
 const current: AcademicSession = { id: 1, label: 'Current', startDate: '2000-01-01', endDate: '2001-01-01', current: true };
 const future: AcademicSession = { id: 2, label: 'Future', startDate: '2998-01-01', endDate: '2999-01-01', current: false };
 const historical: AcademicSession = { id: 3, label: 'Past', startDate: '2000-01-01', endDate: '2001-01-01', current: false };
-describe('G1 timetable screen', () => {
+describe('F6A timetable screen', () => {
   let c: TimetableComponent;
   let api: any;
   let toast: any;
   beforeEach(() => {
-    api = jasmine.createSpyObj('TimetableService', ['createEntry', 'updateEntry', 'deleteEntry', 'getClassTimetable', 'getTeacherTimetable']);
+    api = jasmine.createSpyObj('TimetableService', ['createEntry', 'updateEntry', 'deleteEntry', 'getClassTimetable', 'getTeacherTimetable', 'getPermittedSubjects', 'getTimingDisplay', 'getTimingConfig', 'setTimingVisibility', 'createTimingProfile', 'updateTimingProfile', 'activateTimingProfile', 'deleteTimingProfile']);
+    api.getPermittedSubjects.and.returnValue(of(['Math', 'English']));
     for (const key of ['createEntry', 'updateEntry', 'deleteEntry']) api[key].and.returnValue(of({}));
     api.getClassTimetable.and.returnValue(of([])); api.getTeacherTimetable.and.returnValue(of([]));
+    api.getTimingDisplay.and.returnValue(of({ showTimes: true, activeProfileId: null, activeProfileName: null, periods: [] }));
+    api.getTimingConfig.and.returnValue(of({ showTimes: true, activeProfileId: null, profiles: [] }));
     toast = { success: jasmine.createSpy(), confirm: jasmine.createSpy().and.resolveTo(true) };
     c = new TimetableComponent(api, { getTeacher: () => of({}) } as any, {} as any, {} as any, { error: () => {} } as any, { markForCheck: () => {} } as any, toast, {} as any, {} as any, { snapshot: { queryParamMap: { get: () => null } } } as any, {} as any, { getForTeacher: () => of([]) } as any);
     c.role = 'ADMIN'; c.selectedSession = current; c.selectedClassId = 8; c.selectedClass = '8'; c.sectionsLoaded = true;
     c.modalForm = { id: 10, academicSessionId: 1, classId: 8, className: 'Untrusted display', sectionId: null, day: 'MONDAY', periodNumber: 1, startTime: '09:00', endTime: '10:00', subjectName: 'Math', teacherId: 'T1' };
+    c.subjectOptions = ['Math', 'English']; c.subjectsLoaded = true;
   });
   afterEach(() => c.ngOnDestroy());
   it('uses authoritative current flag even outside date range', () => { expect(sessionKind(current)).toBe('CURRENT'); expect(writableSession(current)).toBeTrue(); });
@@ -46,6 +50,7 @@ describe('G1 timetable screen', () => {
   it('opens Add Period and Grant access before a section is chosen; the section is picked in the form', () => {
     c.sections = [{ id: 4, classId: 8, name: 'A', active: true }, { id: 5, classId: 8, name: 'B', active: true }] as any;
     c.selectedSectionId = null;
+    c.subjectOptions = ['Math', 'English']; c.subjectsLoaded = true;
     expect(c.canAdd()).toBeTrue();
     c.openAddPeriod();
     expect(c.showModal).toBeTrue();
@@ -140,11 +145,53 @@ describe('G1 timetable screen', () => {
     c.onMyClassSelect(c.myClassKey({ className: '11', sectionId: 3 }));
     c.modalForm.day = 'FRIDAY'; c.modalForm.periodNumber = 5;
     c.modalForm.startTime = '11:00'; c.modalForm.endTime = '11:40';
-    c.modalForm.subjectName = 'Maths';
+    c.modalForm.subjectName = 'Math';
 
     c.saveEntry();
 
     expect(c.modalError).toBeNull();
     expect(api.createEntry).toHaveBeenCalledWith(jasmine.objectContaining({ classId: 11, sectionId: 3 }));
+  });
+  // ── B4-1 / B4-2 ─────────────────────────────────────────────────────────────────────
+  it('offers only ACTIVE teachers in the period and grant pickers', () => {
+    (c as any).teacherService = { getAllTeachers: () => of([
+      { teacherId: 'emp_26010001', name: 'T1', status: 'ACTIVE' }, { teacherId: 'emp_26010004', name: 'Left', status: 'LEFT' },
+      { teacherId: 'emp_26010003', name: 'T3', status: 'ACTIVE' }]) };
+    (c as any).loadTeachers();
+    expect(c.teachers.map(t => t.teacherId)).toEqual(['emp_26010001', 'emp_26010003']);
+  });
+  it('loads the configured subjects of the modal\'s class and keeps a matching subject canonically', () => {
+    c.openEdit({ ...c.modalForm, subjectName: ' math ' });
+    expect(api.getPermittedSubjects).toHaveBeenCalledWith(8);
+    expect(c.subjectOptions).toEqual(['Math', 'English']);
+    expect(c.modalForm.subjectName).toBe('Math');
+    c.saveEntry();
+    expect(api.updateEntry.calls.mostRecent().args[1].subjectName).toBe('Math');
+  });
+  it('drops a subject that is not configured for the class', () => {
+    c.openEdit({ ...c.modalForm, subjectName: 'Quantum Basket Weaving' });
+    expect(c.modalForm.subjectName).toBe('');
+    c.saveEntry();
+    expect(api.updateEntry).not.toHaveBeenCalled();
+    expect(c.modalError).toBe('Select a subject configured for this class.');
+  });
+  it('blocks saving when the class has no configured subjects', () => {
+    api.getPermittedSubjects.and.returnValue(of([]));
+    c.openAddPeriod();
+    expect(c.hasSubjectOptions).toBeFalse();
+    c.modalForm.subjectName = 'Math'; c.modalForm.teacherId = 'T1'; c.modalForm.startTime = '09:00'; c.modalForm.endTime = '10:00';
+    c.saveEntry();
+    expect(api.createEntry).not.toHaveBeenCalled();
+    expect(c.modalError).toContain('No subjects are configured');
+  });
+  it('reloads subjects when a teacher switches the modal\'s class', () => {
+    c.role = 'TEACHER';
+    c.myClasses = [{ classId: 8, className: '8', sectionId: null, sectionName: null }, { classId: 9, className: '9', sectionId: null, sectionName: null }];
+    c.openAddPeriodAsTeacher();
+    expect(api.getPermittedSubjects).toHaveBeenCalledWith(8);
+    api.getPermittedSubjects.and.returnValue(of(['Biology']));
+    c.onMyClassSelect(c.myClassKey({ className: '9', sectionId: null }));
+    expect(api.getPermittedSubjects).toHaveBeenCalledWith(9);
+    expect(c.subjectOptions).toEqual(['Biology']);
   });
 });

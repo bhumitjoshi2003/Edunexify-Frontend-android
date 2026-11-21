@@ -1,13 +1,13 @@
+import { ListDisplay, ListLoadState, listDisplay } from '../../utils/list-state.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { TeacherService } from '../../services/teacher.service';
 import { Router } from '@angular/router';
 import { WorkspaceService } from '../../services/workspace.service';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
-import { finalize } from 'rxjs/operators';
-import { ToastService } from '../../services/toast.service';
 
 interface Teacher {
   teacherId: string;
@@ -28,7 +28,8 @@ interface Teacher {
 })
 export class TeacherListComponent implements OnInit, OnDestroy {
   teachers: Teacher[] = [];
-  isLoading: boolean = true;
+  /** See utils/list-state.util.ts: a failed load shows an error with Retry, never "No teachers". */
+  loadState: ListLoadState = 'loading';
   loggedInUserRole: string = '';
   private ngUnsubscribe = new Subject<void>();
 
@@ -38,7 +39,6 @@ export class TeacherListComponent implements OnInit, OnDestroy {
     private authStateService: AuthStateService,
     private logger: LoggerService,
     private cdr: ChangeDetectorRef,
-    private toast: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -69,21 +69,23 @@ export class TeacherListComponent implements OnInit, OnDestroy {
   }
 
   loadAllTeachers(): void {
-    this.isLoading = true;
+    this.loadState = 'loading';
     this.cdr.markForCheck();
-    this.teacherService.getAllTeachers().pipe(
-      takeUntil(this.ngUnsubscribe),
-      finalize(() => { this.isLoading = false; this.cdr.markForCheck(); })
-    ).subscribe({
+    this.teacherService.getAllTeachers().pipe(takeUntil(this.ngUnsubscribe)).subscribe({
       next: (teachers) => {
         this.teachers = teachers ?? [];
+        this.loadState = 'ready';
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.logger.error('Error fetching all teachers:', error);
-        this.toast.error('Error', 'Failed to load teachers. Please try again.');
+        this.loadState = 'failed';
+        this.cdr.markForCheck();
       }
     });
   }
+
+  get display(): ListDisplay { return listDisplay(this.loadState, this.teachers.length); }
 
   trackByTeacherId(index: number, teacher: Teacher): string { return teacher.teacherId; }
 
@@ -95,7 +97,7 @@ export class TeacherListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/teacher-bulk-import']);
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authStateService.hasFeature(featureKey);
   }
 }

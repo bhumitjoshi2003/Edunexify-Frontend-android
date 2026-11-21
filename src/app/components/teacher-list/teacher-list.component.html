@@ -17,7 +17,7 @@
   </div>
 
   <!-- ── Skeleton ─────────────────────────────────────────────────────── -->
-  <div class="tl-section" *ngIf="isLoading">
+  <div class="tl-section" *ngIf="display === 'loading'" data-testid="list-loading">
     <div class="tl-section-header">
       <span class="sk-shimmer" style="width:100px;height:14px"></span>
       <span class="sk-shimmer" style="width:22px;height:14px;border-radius:10px"></span>
@@ -35,14 +35,21 @@
   </div>
 
   <!-- ── Empty ──────────────────────────────────────────────────────── -->
-  <div class="tl-empty" *ngIf="!isLoading && teachers.length === 0">
+  <div class="tl-empty" *ngIf="display === 'error'" data-testid="list-error">
+    <div class="tl-empty-icon">⚠️</div>
+    <p class="tl-empty-title">Teachers couldn't be loaded</p>
+    <p class="tl-empty-sub">Please check your connection and try again.</p>
+    <button type="button" class="tl-retry" (click)="loadAllTeachers()">Retry</button>
+  </div>
+
+  <div class="tl-empty" *ngIf="display === 'empty'" data-testid="list-empty">
     <div class="tl-empty-icon">🔍</div>
     <p class="tl-empty-title">No teachers found</p>
     <p class="tl-empty-sub">No teacher records available</p>
   </div>
 
   <!-- ── Teacher List ──────────────────────────────────────────────── -->
-  <div class="tl-section" *ngIf="!isLoading && teachers.length > 0">
+  <div class="tl-section" *ngIf="display === 'list'">
     <div class="tl-section-header">
       <h2 class="tl-section-title">All Teachers</h2>
       <span class="tl-section-count">{{ teachers.length }}</span>

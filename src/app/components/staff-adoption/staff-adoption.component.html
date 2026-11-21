@@ -24,13 +24,13 @@
         <p>See how your teaching staff are getting started with Edunexify.</p>
       </div>
       <div class="sa-hero-score">
-        <strong>{{ d.summary.totalTeachers ? ((d.summary.startedTeachers / d.summary.totalTeachers) * 100 | number:'1.0-0') : 0 }}%</strong>
+        <strong>{{ adoptionRate }}%</strong>
         <span>started</span>
       </div>
       <button type="button" class="sa-reminder-toggle" (click)="toggleReminderPanel()">
         <mat-icon>campaign</mat-icon><span>Send Reminder</span>
       </button>
-      <div class="sa-hero-progress"><span [style.width.%]="d.summary.totalTeachers ? (d.summary.startedTeachers / d.summary.totalTeachers) * 100 : 0"></span></div>
+      <div class="sa-hero-progress"><span [style.width.%]="adoptionRate"></span></div>
       <div class="sa-blob sa-blob-1"></div><div class="sa-blob sa-blob-2"></div>
     </header>
 
@@ -60,7 +60,7 @@
       <div class="sa-summary-card" style="--c1:#0369a1;--c2:#0ea5e9"><div class="sa-summary-icon"><mat-icon>groups</mat-icon></div><div><strong>{{d.summary.totalTeachers}}</strong><span>Teachers</span></div></div>
       <div class="sa-summary-card" style="--c1:#059669;--c2:#34d399"><div class="sa-summary-icon"><mat-icon>check_circle</mat-icon></div><div><strong>{{d.summary.startedTeachers}}</strong><span>Started</span></div></div>
       <div class="sa-summary-card" style="--c1:#0f766e;--c2:#14b8a6"><div class="sa-summary-icon"><mat-icon>fingerprint</mat-icon></div><div><strong>{{d.summary.attendanceUsedTeachers}}</strong><span>Attendance Used</span></div></div>
-      <div class="sa-summary-card" style="--c1:#b45309;--c2:#f59e0b"><div class="sa-summary-icon"><mat-icon>hourglass_empty</mat-icon></div><div><strong>{{d.summary.notStartedTeachers + d.summary.disabledTeachers}}</strong><span>Not Started</span></div></div>
+      <div class="sa-summary-card" style="--c1:#b45309;--c2:#f59e0b"><div class="sa-summary-icon"><mat-icon>hourglass_empty</mat-icon></div><div><strong>{{notStartedCount}}</strong><span>Not Started</span></div></div>
     </section>
 
     <section class="sa-directory" *ngIf="d.teachers.length">
@@ -71,7 +71,7 @@
       <div class="sa-controls">
         <label class="sa-search"><mat-icon>search</mat-icon><input [(ngModel)]="searchTerm" placeholder="Search name or teacher ID" /></label>
         <select [(ngModel)]="filter" aria-label="Filter teachers">
-          <option value="ALL">All teachers</option><option value="STARTED">Started</option><option value="NOT_STARTED">Not started</option><option value="USED">Attendance used</option><option value="NOT_USED">Attendance not yet used</option>
+          <option value="ALL">All teachers</option><option value="STARTED">Started</option><option value="NOT_STARTED">Not started</option><option value="USED">Attendance used</option><option value="NOT_USED">Attendance not yet used</option><option value="LAST_7_DAYS">Active in last 7 days</option><option value="OLDER">Active more than 7 days ago</option><option value="NEVER">Never active</option>
         </select>
       </div>
 

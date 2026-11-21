@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, TimeoutError } from 'rxjs';
+import { map, Observable, TimeoutError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface DemoRequestPayload {
@@ -11,6 +11,10 @@ export interface DemoRequestPayload {
   numberOfStudents?: string;
   city?:        string;
   message?:     string;
+}
+
+export interface DemoSubmissionResult {
+  notificationSent: boolean | null;
 }
 
 export interface DemoRequestSummary {
@@ -70,8 +74,13 @@ export class DemoService {
   constructor(private http: HttpClient) {}
 
   /** Public — no auth required */
-  submitRequest(payload: DemoRequestPayload): Observable<string> {
-    return this.http.post(this.baseUrl, payload, { responseType: 'text' });
+  submitRequest(payload: DemoRequestPayload): Observable<DemoSubmissionResult> {
+    // Accept the legacy plain-text response during backend-first rollouts too.
+    return this.http.post(this.baseUrl, payload, { responseType: 'text' }).pipe(
+      map(body => body.trim().startsWith('{')
+        ? JSON.parse(body) as DemoSubmissionResult
+        : { notificationSent: null })
+    );
   }
 
   /** Admin only — view all demo requests */

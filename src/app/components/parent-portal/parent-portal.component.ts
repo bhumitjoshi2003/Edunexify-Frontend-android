@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { catchError, debounceTime, distinctUntilChanged, finalize, of, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import {
   ChildAccess, ParentDirectoryStats, ParentLinkedFilter, ParentProfile, ParentStatusFilter, ParentSummary,
 } from '../../interfaces/parent-portal';
@@ -45,7 +46,7 @@ export class ParentPortalComponent implements OnInit, OnDestroy {
   private readonly directorySearchInput$ = new Subject<string>();
   private readonly directoryQuery$ = new Subject<void>();
   readonly isAdmin = this.authState.getUserRole() === 'ADMIN';
-  hasFeature(featureKey: string): boolean { return this.authState.hasFeature(featureKey); }
+  hasFeature(featureKey: FeatureKey): boolean { return this.authState.hasFeature(featureKey); }
   readonly pageSize = 20;
   loading = true;
   directoryBusy = false;

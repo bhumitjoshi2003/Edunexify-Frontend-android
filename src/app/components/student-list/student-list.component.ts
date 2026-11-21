@@ -5,6 +5,7 @@ import { Teacher } from '../../interfaces/teacher';
 import { Router } from '@angular/router';
 import { WorkspaceService } from '../../services/workspace.service';
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil, switchMap, forkJoin, of, EMPTY } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -220,7 +221,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/student-bulk-import']);
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authStateService.hasFeature(featureKey);
   }
 
