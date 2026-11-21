@@ -1,17 +1,13 @@
+import { formatClockTime12h } from './clock-time.util';
+
 export function localDateKey(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export function formatTeacherAttendanceTime(value: string | null): string {
-  if (!value) return '—';
-  const time = value.includes('T') ? value.split('T')[1] : value;
-  const [hourText = '', minute = ''] = time.split(':');
-  const hour = Number(hourText);
-  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !/^\d{2}$/.test(minute)) return value;
-  const suffix = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minute} ${suffix}`;
+/** Check-in/out and period times as "h:mm AM/PM" (see utils/clock-time.util.ts for accepted forms). */
+export function formatTeacherAttendanceTime(value: string | null | undefined): string {
+  return formatClockTime12h(value);
 }
 
 export function teacherAttendanceErrorMessage(error: any, fallback: string): string {

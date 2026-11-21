@@ -49,6 +49,16 @@
     "src/app/components/register-student/*.spec.ts",
     "src/app/components/register-teacher/*.spec.ts",
     "src/app/components/reset-password/*.spec.ts",
-    "src/app/components/event-form/*.spec.ts"
+    "src/app/components/event-form/*.spec.ts",
+    "src/app/utils/clock-time.util.spec.ts",
+    "src/app/utils/student-status.util.spec.ts",
+    "src/app/utils/page-count.util.spec.ts",
+    "src/app/utils/staff-adoption.util.spec.ts",
+    "src/app/utils/list-state.util.spec.ts",
+    "src/app/utils/teacher-attendance.util.spec.ts",
+    "src/app/utils/teacher-timetable-today.util.spec.ts",
+    "src/app/components/admin-list/*.spec.ts",
+    "src/app/components/teacher-list/*.spec.ts",
+    "src/app/components/staff-adoption/*.spec.ts"
   ]
 }

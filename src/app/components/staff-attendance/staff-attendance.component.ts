@@ -14,6 +14,7 @@ import { ToastService } from '../../services/toast.service';
 import { AcademicSessionService } from '../../services/academic-session.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { TeacherAttendanceCorrection } from '../../interfaces/teacher-checkin';
+import { formatClockTime12h, toTimeInputValue } from '../../utils/clock-time.util';
 
 @Component({
   selector: 'app-staff-attendance',
@@ -493,8 +494,7 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   }
 
   private extractTime(isoTime: string): string {
-    const d = new Date(isoTime);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return toTimeInputValue(isoTime);
   }
 
   get presentCount(): number { return this.records.filter(r => r.status === 'ON_TIME' || r.status === 'LATE').length; }
@@ -526,9 +526,7 @@ export class StaffAttendanceComponent implements OnInit, OnDestroy {
   }
 
   formatTime(isoTime: string | null): string {
-    if (!isoTime) return '—';
-    const d = new Date(isoTime);
-    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return formatClockTime12h(isoTime);
   }
 
   getPhotoUrl(record: TeacherAttendanceRecord): string | null {

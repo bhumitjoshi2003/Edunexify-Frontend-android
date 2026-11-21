@@ -75,7 +75,7 @@
         <div class="sd-attend-row">
           <span class="sd-attend-dot" style="background:#d97706"></span>
           <span class="sd-attend-text">Pending Leaves</span>
-          <span class="sd-attend-val">{{ pendingLeavesCount }}</span>
+          <span class="sd-attend-val">{{ pendingLeavesLabel }}</span>
         </div>
       </div>
       <div class="sd-attend-foot">
@@ -258,7 +258,7 @@
     <div class="sd-section">
       <h2 class="sd-section-title">
         Recent Leave Applications
-        <span class="sd-badge" *ngIf="pendingLeavesCount > 0">{{ pendingLeavesCount }}</span>
+        <span class="sd-badge" *ngIf="pendingLeavesCount > 0">{{ pendingLeavesLabel }}</span>
       </h2>
 
       <div class="sd-empty-leaves" *ngIf="recentLeaves.length === 0">
