@@ -1,101 +1,154 @@
-import { Subject, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, throwError } from 'rxjs';
 import { NotificationStateService, UnreadCountState } from './notification-state.service';
 
+/** Shared by the web and Android clients — keep the two copies identical. */
 describe('NotificationStateService', () => {
-  // ─── Shared status-aware unreadState$ — the loading/success/error companion to unreadCount$ ───
+  let status$: BehaviorSubject<string>;
+  let userId: string;
+  let auth: any;
+  let api: any;
 
-  it('starts in a loading/unknown state before any refresh has resolved', () => {
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
-    const state = new NotificationStateService(api);
-    let latest: UnreadCountState | undefined;
-    state.unreadState$.subscribe(s => (latest = s));
-    expect(latest).toEqual({ status: 'loading', count: 0 });
+  beforeEach(() => {
+    userId = 'U1';
+    status$ = new BehaviorSubject<string>('AUTHENTICATED');
+    auth = {
+      status$,
+      getUserId: () => (status$.value === 'AUTHENTICATED' ? userId : ''),
+      isAuthenticated: () => status$.value === 'AUTHENTICATED',
+    };
+    api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
   });
 
-  it('refreshUnread() publishes a success state to unreadState$ alongside the plain unreadCount$', () => {
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
+  const make = () => new NotificationStateService(api, auth);
+  const latestState = (state: NotificationStateService) => { let s: UnreadCountState | undefined; state.unreadState$.subscribe(v => (s = v)).unsubscribe(); return s!; };
+  const latestCount = (state: NotificationStateService) => { let c = -1; state.unreadCount$.subscribe(v => (c = v)).unsubscribe(); return c; };
+
+  it('starts in a loading/unknown state', () => {
+    expect(latestState(make())).toEqual({ status: 'loading', count: 0 });
+  });
+
+  it('refresh publishes a success state alongside the plain count', () => {
     const source = new Subject<number>();
     api.getUnreadNotificationCount.and.returnValue(source);
-    const state = new NotificationStateService(api);
-
-    const states: UnreadCountState[] = [];
-    state.unreadState$.subscribe(s => states.push(s));
+    const state = make();
     state.refreshUnread();
     source.next(5);
-
-    expect(states[states.length - 1]).toEqual({ status: 'success', count: 5 });
+    expect(latestState(state)).toEqual({ status: 'success', count: 5 });
+    expect(latestCount(state)).toBe(5);
   });
 
-  it('a fetch failure publishes an error state — never collapsed into a false zero', () => {
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
-    api.getUnreadNotificationCount.and.returnValue(throwError(() => new Error('offline')));
-    const state = new NotificationStateService(api);
-
-    const states: UnreadCountState[] = [];
-    state.unreadState$.subscribe(s => states.push(s));
-    state.refreshUnread();
-
-    expect(states[states.length - 1].status).toBe('error');
-  });
-
-  it('a failure never changes the plain unreadCount$ value (last known good count is kept)', () => {
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
+  it('a failure reports error and keeps the last known count (never a false zero)', () => {
     const first = new Subject<number>();
     api.getUnreadNotificationCount.and.returnValue(first);
-    const state = new NotificationStateService(api);
+    const state = make();
     state.refreshUnread();
     first.next(4);
-
     api.getUnreadNotificationCount.and.returnValue(throwError(() => new Error('offline')));
-    const counts: number[] = [];
-    state.unreadCount$.subscribe(c => counts.push(c));
     state.refreshUnread();
-
-    expect(counts[counts.length - 1]).toBe(4);
+    expect(latestState(state)).toEqual({ status: 'error', count: 4 });
+    expect(latestCount(state)).toBe(4);
   });
 
-  it('clear() resets both unreadCount$ and unreadState$ back to unknown (logout safety)', () => {
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
-    const state = new NotificationStateService(api);
-    state.setUnread(7);
-
-    state.clear();
-
-    let latestCount: number | undefined;
-    state.unreadCount$.subscribe(c => (latestCount = c));
-    let latestState: UnreadCountState | undefined;
-    state.unreadState$.subscribe(s => (latestState = s));
-    expect(latestCount).toBe(0);
-    expect(latestState).toEqual({ status: 'loading', count: 0 });
-  });
-
-  it('uses the latest unread refresh instead of dropping it', () => {
-    const first = new Subject<number>();
-    const latest = new Subject<number>();
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
-    api.getUnreadNotificationCount.and.returnValues(first, latest);
-    const state = new NotificationStateService(api);
+  it('overlapping refreshes answered out of order: the older answer is ignored', () => {
+    const older = new Subject<number>();
+    const newer = new Subject<number>();
+    api.getUnreadNotificationCount.and.returnValues(older, newer);
+    const state = make();
     const counts: number[] = [];
-    state.unreadCount$.subscribe(value => counts.push(value));
-
+    state.unreadCount$.subscribe(v => counts.push(v));
     state.refreshUnread();
     state.refreshUnread();
-    first.next(9);
-    latest.next(3);
-
+    newer.next(3);
+    older.next(9);
     expect(counts).toEqual([0, 3]);
   });
 
-  it('publishes immediate one-read and all-read count changes', () => {
-    const api = jasmine.createSpyObj('NotificationService', ['getUnreadNotificationCount']);
-    const state = new NotificationStateService(api);
-    const counts: number[] = [];
-    state.unreadCount$.subscribe(value => counts.push(value));
+  it('logout while a refresh is in flight: the late answer is dropped and the state is unknown', () => {
+    const source = new Subject<number>();
+    api.getUnreadNotificationCount.and.returnValue(source);
+    const state = make();
+    state.refreshUnread();
+    status$.next('UNAUTHENTICATED');
+    source.next(7);
+    expect(latestState(state)).toEqual({ status: 'loading', count: 0 });
+  });
 
+  it('user A → logout → user B never shows A\'s count', () => {
+    const forA = new Subject<number>();
+    const forB = new Subject<number>();
+    api.getUnreadNotificationCount.and.returnValues(forA, forB);
+    const state = make();
+    state.refreshUnread();
+    forA.next(5);
+    expect(latestCount(state)).toBe(5);
+
+    status$.next('UNAUTHENTICATED');
+    expect(latestState(state)).toEqual({ status: 'loading', count: 0 });
+    userId = 'U2';
+    status$.next('AUTHENTICATED');
+    expect(latestState(state)).toEqual({ status: 'loading', count: 0 });
+    state.refreshUnread();
+    forB.next(1);
+    expect(latestCount(state)).toBe(1);
+  });
+
+  it('a different user signing in directly (no logout in between) also resets and drops A\'s in-flight answer', () => {
+    const forA = new Subject<number>();
+    api.getUnreadNotificationCount.and.returnValue(forA);
+    const state = make();
+    state.setUnread(4);
+    state.refreshUnread();
+    userId = 'U2';
+    status$.next('AUTHENTICATED');
+    forA.next(8);
+    expect(latestState(state)).toEqual({ status: 'loading', count: 0 });
+  });
+
+  it('a server-revoked session (auth state goes UNAUTHENTICATED) clears the count', () => {
+    const state = make();
+    state.setUnread(6);
+    status$.next('UNAUTHENTICATED');
+    expect(latestCount(state)).toBe(0);
+    expect(latestState(state).status).toBe('loading');
+  });
+
+  it('mark one read updates the shared count and a stale in-flight refresh cannot undo it', () => {
+    const inFlight = new Subject<number>();
+    api.getUnreadNotificationCount.and.returnValue(inFlight);
+    const state = make();
     state.setUnread(3);
+    state.refreshUnread();
+    const changed = jasmine.createSpy('changed');
+    state.changed$.subscribe(changed);
     state.notificationRead(true);
-    state.allRead();
+    inFlight.next(3);                       // computed before the read
+    expect(latestCount(state)).toBe(2);
+    expect(changed).toHaveBeenCalled();
+  });
 
-    expect(counts).toEqual([0, 3, 2, 0]);
+  it('mark all read sets zero and a stale in-flight refresh cannot undo it', () => {
+    const inFlight = new Subject<number>();
+    api.getUnreadNotificationCount.and.returnValue(inFlight);
+    const state = make();
+    state.setUnread(3);
+    state.refreshUnread();
+    state.allRead();
+    inFlight.next(3);
+    expect(latestState(state)).toEqual({ status: 'success', count: 0 });
+  });
+
+  it('reading an already-read notification leaves the count alone; never below zero', () => {
+    const state = make();
+    state.setUnread(0);
+    state.notificationRead(false);
+    state.notificationRead(true);
+    expect(latestCount(state)).toBe(0);
+  });
+
+  it('no refresh is requested without a signed-in user', () => {
+    status$.next('UNAUTHENTICATED');
+    const state = make();
+    state.refreshUnread();
+    expect(api.getUnreadNotificationCount).not.toHaveBeenCalled();
   });
 });

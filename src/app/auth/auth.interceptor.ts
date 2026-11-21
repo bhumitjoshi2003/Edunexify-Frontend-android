@@ -22,7 +22,11 @@ import { newRequestId, REQUEST_ID_HEADER, validRequestId } from '../core/request
 import { ANDROID_PLATFORM, CLIENT_PLATFORM_HEADER, nativeSession, REFRESH_TIMEOUT_MS } from '../core/native-session';
 
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take, tap, timeout } from 'rxjs/operators';
+import { catchError, filter, finalize, switchMap, take, tap, timeout } from 'rxjs/operators';
+
+/** Shown when the server has ended this session (revoked, expired or signed out elsewhere). */
+export const SIGNED_OUT_TITLE = 'Signed out';
+export const SIGNED_OUT_MESSAGE = "You've been signed out. Please sign in again.";
 
 @Injectable({ providedIn: 'root' })
 export class AuthInterceptor implements HttpInterceptor {
@@ -207,6 +211,7 @@ export class AuthInterceptor implements HttpInterceptor {
           this.refreshDone$ = new BehaviorSubject<boolean>(false);
 
           if (classifyAuthFailure(refreshError) === 'AUTHORITATIVE') {
+            const wasSignedIn = this.authStateService.isLoggedIn();
             // The server actually looked at the refresh token and rejected it (401/403) —
             // this session is really over.
             this.authStateService.clearUser();
@@ -215,6 +220,9 @@ export class AuthInterceptor implements HttpInterceptor {
             if (!this.isPublicRoute()) {
               saveIntendedRoute(typeof window !== 'undefined' ? window.location.pathname + window.location.search : null);
               this.router.navigate(['/home']);
+              // Say why, once: only for a user who was signed in (not an anonymous visitor) and
+              // only here — a transient failure (offline, timeout, 5xx) never reaches this branch.
+              if (wasSignedIn) this.injector.get(ToastService).warning(SIGNED_OUT_TITLE, SIGNED_OUT_MESSAGE);
             }
           }
           // TRANSIENT (network down, timeout, 502/503/504, etc.): the server was never
@@ -222,6 +230,21 @@ export class AuthInterceptor implements HttpInterceptor {
           // failure is not proof the credentials are invalid. The caller's own request fails
           // this one time; a later request, tab-resume, or `online` event can retry.
           return throwError(() => refreshError);
+        }),
+        // Belt-and-braces alongside the explicit resets above: if this whole chain is instead
+        // torn down via unsubscribe (e.g. AuthStateService.loadCurrentUser()'s startup /auth/me
+        // call is wrapped in an outer timeout() that fires while this refresh is still in
+        // flight), neither callback above runs, since RxJS teardown doesn't trigger error
+        // handlers. Without this, isRefreshing would stay stuck true and every later request
+        // (including the startup screen's Retry) would queue behind a refreshDone$ that can
+        // never emit again — so the requests already queued behind this refresh are released too.
+        finalize(() => {
+          this.isRefreshing = false;
+          if (!settled) {
+            const waiting = this.refreshDone$;
+            this.refreshDone$ = new BehaviorSubject<boolean>(false);
+            waiting.error(new Error('Session refresh was cancelled before it completed.'));
+          }
         })
       );
     } else {

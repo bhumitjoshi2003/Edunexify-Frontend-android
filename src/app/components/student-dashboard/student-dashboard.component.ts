@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, forkJoin, takeUntil } from 'rxjs';
 
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { StudentService } from '../../services/student.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { LeaveService, LeaveApplication } from '../../services/leave.service';
@@ -234,7 +235,7 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authState.hasFeature(featureKey);
   }
 }

@@ -1,0 +1,59 @@
+<div class="sr-screen" [class.sr-screen--offline]="variant === 'offline'" [class.sr-screen--loading]="variant === 'loading'">
+  <div class="sr-orb sr-orb--one" aria-hidden="true"></div>
+  <div class="sr-orb sr-orb--two" aria-hidden="true"></div>
+
+  <div class="sr-card">
+    <img src="/EdunexifyLogo.png" alt="Edunexify" class="sr-logo">
+
+    <div class="sr-illustration" aria-hidden="true">
+      <div class="sr-illustration-ring sr-illustration-ring--outer"></div>
+      <div class="sr-illustration-ring sr-illustration-ring--mid"></div>
+      <svg class="sr-illustration-core" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        @if (variant === 'offline') {
+          <!-- Signal-off motif: a muted cloud with a broken link line. -->
+          <path d="M20 40a10 10 0 0 1 1.2-19.9A14 14 0 0 1 47.6 24 9 9 0 0 1 46 42H21c-.3 0-.7 0-1-.1" stroke="var(--edu-text-sec)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 14l36 36" stroke="var(--edu-teal)" stroke-width="2.5" stroke-linecap="round"/>
+        } @else {
+          <!-- Connection-node motif: three orbiting nodes reaching for a central hub. -->
+          <circle cx="32" cy="32" r="6" fill="var(--edu-teal)"/>
+          <circle cx="14" cy="18" r="4" fill="var(--edu-blue)" opacity="0.85"/>
+          <circle cx="50" cy="18" r="4" fill="var(--edu-blue)" opacity="0.85"/>
+          <circle cx="32" cy="52" r="4" fill="var(--edu-blue)" opacity="0.85"/>
+          <path d="M17 20.5L27 29" stroke="var(--edu-border)" stroke-width="2" stroke-linecap="round" class="sr-node-line"/>
+          <path d="M47 20.5L37 29" stroke="var(--edu-border)" stroke-width="2" stroke-linecap="round" class="sr-node-line sr-node-line--delay1"/>
+          <path d="M32 46V38" stroke="var(--edu-border)" stroke-width="2" stroke-linecap="round" class="sr-node-line sr-node-line--delay2"/>
+        }
+      </svg>
+    </div>
+
+    <h1 class="sr-heading" aria-live="polite">{{ heading }}</h1>
+    <p class="sr-body">{{ body }}</p>
+
+    @if (variant !== 'loading') {
+      <button
+        type="button"
+        class="sr-retry-btn"
+        [disabled]="retrying"
+        [attr.aria-busy]="retrying"
+        (click)="retry()"
+      >
+        @if (retrying) {
+          <span class="sr-spinner" aria-hidden="true"></span>
+          <span>Trying again…</span>
+        } @else {
+          <span>Try Again</span>
+        }
+      </button>
+    } @else {
+      <div class="sr-loading-dots" role="status" aria-live="polite">
+        <span></span><span></span><span></span>
+      </div>
+    }
+
+    @if (showSessionNote) {
+      <p class="sr-session-note">Your session is still here.</p>
+    }
+
+    <p class="sr-support-note">If the issue continues, please contact your school administrator.</p>
+  </div>
+</div>

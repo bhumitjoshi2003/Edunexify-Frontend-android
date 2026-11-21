@@ -1,7 +1,8 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AuthStateService, UserInfo } from './auth-state.service';
 import { environment } from '../../environments/environment';
+import { STARTUP_HTTP_TIMEOUT_MS } from '../core/startup.constants';
 
 describe('AuthStateService — mustChangePassword', () => {
   let service: AuthStateService;
@@ -138,22 +139,62 @@ describe('AuthStateService — bootstrap tri-state (CHECKING / AUTHENTICATED / U
     expect(service.getStatus()).toBe('UNAUTHENTICATED');
   });
 
-  it('5. a network failure (status 0) does NOT force UNAUTHENTICATED — stays CHECKING', async () => {
+  it('5. a network failure (status 0) does NOT force UNAUTHENTICATED — becomes SERVICE_UNAVAILABLE (online) instead of hanging in CHECKING', async () => {
     const p = service.loadCurrentUser();
     http.expectOne(base).error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
     await p;
 
-    expect(service.getStatus()).toBe('CHECKING');
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE');
     expect(service.isUnauthenticated()).toBeFalse();
+    expect(service.isChecking()).toBeFalse();
   });
 
-  it('6. a 503 during the check does NOT force UNAUTHENTICATED', async () => {
+  it('5b. the same network failure becomes OFFLINE instead when navigator.onLine reports false', async () => {
+    spyOnProperty(navigator, 'onLine').and.returnValue(false);
+
+    const p = service.loadCurrentUser();
+    http.expectOne(base).error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+    await p;
+
+    expect(service.getStatus()).toBe('OFFLINE');
+    expect(service.isOffline()).toBeTrue();
+  });
+
+  it('6. a 503 during the check does NOT force UNAUTHENTICATED — becomes SERVICE_UNAVAILABLE instead of hanging in CHECKING', async () => {
     const p = service.loadCurrentUser();
     http.expectOne(base).flush('unavailable', { status: 503, statusText: 'Service Unavailable' });
     await p;
 
-    expect(service.getStatus()).toBe('CHECKING');
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE');
+    expect(service.isServiceUnavailable()).toBeTrue();
   });
+
+  it('6b. a 502/504 during the check also becomes SERVICE_UNAVAILABLE', async () => {
+    let p = service.loadCurrentUser();
+    http.expectOne(base).flush('bad gateway', { status: 502, statusText: 'Bad Gateway' });
+    await p;
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE');
+
+    // Fresh service state for the 504 half of this check.
+    service = TestBed.inject(AuthStateService);
+    p = service.loadCurrentUser();
+    http.expectOne(base).flush('timeout', { status: 504, statusText: 'Gateway Timeout' });
+    await p;
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE');
+  });
+
+  it('a request that never resolves at all times out into SERVICE_UNAVAILABLE rather than hanging forever', fakeAsync(() => {
+    let settled = false;
+    service.loadCurrentUser().then(() => { settled = true; });
+    http.expectOne(base); // request is made, but deliberately never flushed/errored
+
+    tick(STARTUP_HTTP_TIMEOUT_MS - 1);
+    expect(settled).toBeFalse(); // not yet — still within the bound
+
+    tick(1);
+    expect(settled).toBeTrue();
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE');
+  }));
 
   it('a transient failure never demotes an already-AUTHENTICATED session', async () => {
     let p = service.loadCurrentUser();
@@ -174,5 +215,71 @@ describe('AuthStateService — bootstrap tri-state (CHECKING / AUTHENTICATED / U
     const p = service.loadCurrentUser();
     http.expectOne(base).error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
     await expectAsync(p).toBeResolved();
+  });
+
+  it('status$ emits every transition, so a subscriber never needs to poll getStatus()', async () => {
+    const seen: string[] = [];
+    const sub = service.status$.subscribe(s => seen.push(s));
+
+    const p = service.loadCurrentUser();
+    http.expectOne(base).flush(userInfo);
+    await p;
+
+    expect(seen).toEqual(['CHECKING', 'AUTHENTICATED']);
+    sub.unsubscribe();
+  });
+});
+
+describe('AuthStateService — prepareForRetry()', () => {
+  let service: AuthStateService;
+  let http: HttpTestingController;
+  const base = `${environment.apiUrl}/auth/me`;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [HttpClientTestingModule] });
+    service = TestBed.inject(AuthStateService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('resets SERVICE_UNAVAILABLE back to CHECKING so a retry gets a fresh verdict', async () => {
+    let p = service.loadCurrentUser();
+    http.expectOne(base).flush('unavailable', { status: 503, statusText: 'Service Unavailable' });
+    await p;
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE');
+
+    service.prepareForRetry();
+    expect(service.getStatus()).toBe('CHECKING');
+
+    p = service.loadCurrentUser();
+    http.expectOne(base).flush('unavailable', { status: 503, statusText: 'Service Unavailable' });
+    await p;
+    expect(service.getStatus()).toBe('SERVICE_UNAVAILABLE'); // retry can fail again, cleanly
+  });
+
+  it('resets OFFLINE back to CHECKING the same way', async () => {
+    spyOnProperty(navigator, 'onLine').and.returnValue(false);
+    const p = service.loadCurrentUser();
+    http.expectOne(base).error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+    await p;
+    expect(service.getStatus()).toBe('OFFLINE');
+
+    service.prepareForRetry();
+    expect(service.getStatus()).toBe('CHECKING');
+  });
+
+  it('is a no-op for AUTHENTICATED/UNAUTHENTICATED/CHECKING — retry is only ever meaningful from an outage state', () => {
+    expect(service.getStatus()).toBe('CHECKING');
+    service.prepareForRetry();
+    expect(service.getStatus()).toBe('CHECKING');
+
+    service.setUser({
+      userId: 'T1', role: 'TEACHER', name: null, className: null, schoolSlug: null,
+      featureKeys: null, planTier: null, planVersion: null, subscriptionStatus: null,
+      trialEndsAt: null, expiresAt: null, graceEndsAt: null, permissionKeys: null,
+    });
+    service.prepareForRetry();
+    expect(service.getStatus()).toBe('AUTHENTICATED'); // untouched
   });
 });
