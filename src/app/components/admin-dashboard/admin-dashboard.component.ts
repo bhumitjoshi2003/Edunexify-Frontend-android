@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, takeUntil } from 'rxjs';
 
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { DashboardAnalyticsService, DashboardStats } from '../../services/dashboard-analytics.service';
 import { LeaveService, LeaveApplication } from '../../services/leave.service';
 import { SchoolService, SchoolEntitlementSummary, SchoolSetupHealth } from '../../services/school.service';
@@ -477,7 +478,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return this.staffAttendance.presentCount + this.staffAttendance.lateCount + this.staffAttendance.halfDayCount;
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authState.hasFeature(featureKey);
   }
 

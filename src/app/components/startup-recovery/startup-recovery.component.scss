@@ -1,0 +1,271 @@
+:host {
+  display: block;
+}
+
+.sr-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--edu-bg-light) 0%, var(--edu-bg) 100%);
+}
+
+/* ── Soft floating background orbs ─────────────────────────────────── */
+.sr-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+  pointer-events: none;
+  animation: sr-float 12s ease-in-out infinite;
+}
+.sr-orb--one {
+  width: 340px;
+  height: 340px;
+  top: -80px;
+  left: -80px;
+  background: radial-gradient(circle, var(--edu-teal) 0%, transparent 70%);
+}
+.sr-orb--two {
+  width: 420px;
+  height: 420px;
+  bottom: -140px;
+  right: -100px;
+  background: radial-gradient(circle, var(--edu-blue) 0%, transparent 70%);
+  animation-delay: -6s;
+}
+
+@keyframes sr-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(20px, -24px) scale(1.06); }
+}
+
+/* ── Card ───────────────────────────────────────────────────────────── */
+.sr-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0; /* flex items default to min-width:auto, which refuses to shrink below the
+    heading's unwrapped intrinsic width — without this the card (and its text) overflows the
+    viewport on narrow screens instead of wrapping. */
+  max-width: 440px;
+  background: var(--edu-card-bg);
+  border-radius: var(--edu-radius-xl);
+  box-shadow: var(--edu-shadow-lg);
+  padding: 40px 32px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.sr-heading,
+.sr-body {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.sr-logo {
+  height: 34px;
+  width: auto;
+  margin-bottom: 28px;
+}
+
+/* ── Illustration ───────────────────────────────────────────────────── */
+.sr-illustration {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.sr-illustration-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--edu-teal);
+  opacity: 0;
+  animation: sr-pulse 2.8s ease-out infinite;
+}
+.sr-illustration-ring--outer {
+  width: 120px;
+  height: 120px;
+}
+.sr-illustration-ring--mid {
+  width: 88px;
+  height: 88px;
+  animation-delay: 0.9s;
+}
+
+@keyframes sr-pulse {
+  0%   { transform: scale(0.7); opacity: 0.55; }
+  80%  { opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.sr-illustration-core {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  background: var(--edu-bg-light);
+  border-radius: 50%;
+  box-shadow: var(--edu-shadow-sm);
+  padding: 8px;
+}
+
+.sr-node-line {
+  animation: sr-line-flow 2.4s ease-in-out infinite;
+}
+.sr-node-line--delay1 { animation-delay: 0.3s; }
+.sr-node-line--delay2 { animation-delay: 0.6s; }
+
+@keyframes sr-line-flow {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+
+/* ── Text ───────────────────────────────────────────────────────────── */
+.sr-heading {
+  margin: 0 0 10px;
+  font-size: var(--edu-text-xl);
+  font-weight: 800;
+  color: var(--edu-navy);
+  line-height: 1.3;
+}
+
+.sr-body {
+  margin: 0 0 28px;
+  font-size: var(--edu-text-base);
+  color: var(--edu-text-sec);
+  line-height: 1.6;
+  max-width: 340px;
+}
+
+/* ── Retry button ───────────────────────────────────────────────────── */
+.sr-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 160px;
+  min-height: var(--edu-touch-min);
+  padding: var(--edu-btn-lg-padding);
+  font-size: var(--edu-btn-lg-font);
+  font-weight: var(--edu-btn-weight);
+  color: #fff;
+  background: linear-gradient(135deg, var(--edu-teal-mid) 0%, var(--edu-blue) 100%);
+  border: none;
+  border-radius: var(--edu-btn-lg-radius);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: var(--edu-shadow-sm);
+}
+.sr-retry-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--edu-shadow-md);
+}
+.sr-retry-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.sr-retry-btn:focus-visible {
+  outline: 3px solid var(--edu-teal);
+  outline-offset: 2px;
+}
+.sr-retry-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sr-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: sr-spin 0.7s linear infinite;
+}
+
+@keyframes sr-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Loading-only dots (no retry button while loading) ─────────────── */
+.sr-loading-dots {
+  display: flex;
+  gap: 8px;
+  height: var(--edu-touch-min);
+  align-items: center;
+}
+.sr-loading-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--edu-teal);
+  animation: sr-bounce 1.2s ease-in-out infinite;
+}
+.sr-loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+.sr-loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes sr-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40%           { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Supporting text ────────────────────────────────────────────────── */
+.sr-session-note {
+  margin: 20px 0 0;
+  font-size: var(--edu-text-sm);
+  color: var(--edu-teal-dark);
+  font-weight: 600;
+}
+
+.sr-support-note {
+  margin: 10px 0 0;
+  font-size: var(--edu-text-xs);
+  color: var(--edu-text-muted);
+}
+
+/* ── Offline variant: calmer, muted palette ────────────────────────── */
+.sr-screen--offline .sr-illustration-ring {
+  border-color: var(--edu-text-muted);
+}
+.sr-screen--offline .sr-orb--one,
+.sr-screen--offline .sr-orb--two {
+  opacity: 0.18;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .sr-card {
+    padding: 32px 22px 26px;
+    max-width: 100%;
+  }
+  .sr-logo { height: 28px; margin-bottom: 22px; }
+  .sr-illustration { width: 96px; height: 96px; }
+  .sr-illustration-ring--outer { width: 96px; height: 96px; }
+  .sr-illustration-ring--mid { width: 70px; height: 70px; }
+  .sr-illustration-core { width: 52px; height: 52px; }
+  .sr-heading { font-size: var(--edu-text-lg); }
+  .sr-body { font-size: var(--edu-text-sm); }
+}
+
+/* ── Motion & contrast preferences ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sr-orb,
+  .sr-illustration-ring,
+  .sr-node-line,
+  .sr-spinner,
+  .sr-loading-dots span {
+    animation: none !important;
+  }
+  .sr-illustration-ring {
+    opacity: 0.4;
+  }
+}

@@ -1,3 +1,4 @@
+import { sectionRemovalDialog, sectionRemovalResult } from '../../utils/list-state.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -239,24 +240,14 @@ export class ClassManagementComponent implements OnInit, OnDestroy {
   }
 
   removeSection(classId: number, section: Section): void {
-    this.toast.confirm({
-      title: `Remove "${section.name}"?`,
-      message: 'Any students assigned to this section will have their section cleared. They will still appear under "All Sections".',
-      icon: 'warning',
-      danger: true,
-      confirmText: 'Yes, remove',
-      cancelText: 'Cancel',
-    }).then((confirmed) => {
+    this.toast.confirm(sectionRemovalDialog(section.name)).then((confirmed) => {
       if (!confirmed || !section.id) return;
       this.sectionService.deleteSection(section.id).pipe(takeUntil(this.destroy$)).subscribe({
-        next: ({ affected }) => {
+        next: (response) => {
           const current = this.classSections.get(classId) ?? [];
           this.classSections.set(classId, current.filter(s => s.id !== section.id));
-          if (affected > 0) {
-            this.toast.warning('Section Removed', `Section "${section.name}" removed. ${affected} student${affected === 1 ? "'s" : "s'"} section assignment was cleared.`);
-          } else {
-            this.toast.success('Removed', `Section "${section.name}" removed.`);
-          }
+          const result = sectionRemovalResult(section.name, response?.affected);
+          this.toast[result.level](result.title, result.message);
           this.cdr.markForCheck();
         },
         error: (e) => {

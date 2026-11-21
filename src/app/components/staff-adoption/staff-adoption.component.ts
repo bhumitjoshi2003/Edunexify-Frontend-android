@@ -8,6 +8,13 @@ import { StaffAdoptionService } from '../../services/staff-adoption.service';
 import { ToastService } from '../../services/toast.service';
 import { StaffAdoptionResponse, StaffAdoptionTeacherRow } from '../../interfaces/staff-adoption';
 import { StaffAdoptionReminderType } from '../../interfaces/staff-adoption-reminder';
+import {
+  StaffAdoptionQuery, accountStatusLabel, adoptionRatePercent, appVersionLabel, filterStaffAdoption,
+  notStartedForSummary, relativeActivityLabel, reminderConfirmDialog, reminderSendResult,
+} from '../../utils/staff-adoption.util';
+
+/** One select on the phone; each choice maps onto the shared filter query (see utils/staff-adoption.util.ts). */
+type AdoptionFilter = 'ALL' | 'STARTED' | 'NOT_STARTED' | 'USED' | 'NOT_USED' | 'LAST_7_DAYS' | 'OLDER' | 'NEVER';
 
 interface ReminderOption { type: StaffAdoptionReminderType; label: string; description: string; }
 const REMINDER_OPTIONS: ReminderOption[] = [
@@ -19,7 +26,7 @@ const REMINDER_OPTIONS: ReminderOption[] = [
 @Component({ selector: 'app-staff-adoption', standalone: true, imports: [CommonModule, FormsModule, MatIconModule, RouterLink], templateUrl: './staff-adoption.component.html', styleUrl: './staff-adoption.component.css', changeDetection: ChangeDetectionStrategy.OnPush })
 export class StaffAdoptionComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>(); loading = true; error = false; data: StaffAdoptionResponse | null = null;
-  searchTerm = ''; filter: 'ALL'|'STARTED'|'NOT_STARTED'|'USED'|'NOT_USED' = 'ALL';
+  searchTerm = ''; filter: AdoptionFilter = 'ALL';
 
   readonly reminderOptions = REMINDER_OPTIONS;
   reminderPanelOpen = false;
@@ -31,10 +38,21 @@ export class StaffAdoptionComponent implements OnInit, OnDestroy {
   constructor(private service: StaffAdoptionService, private toast: ToastService, private cdr: ChangeDetectorRef) {}
   ngOnInit(): void { this.load(); }
   load(): void { this.loading = true; this.error = false; this.service.getStaffAdoption().pipe(takeUntil(this.destroy$)).subscribe({ next: data => { this.data = data; this.loading = false; this.cdr.markForCheck(); }, error: () => { this.loading = false; this.error = true; this.cdr.markForCheck(); } }); }
-  get rows(): StaffAdoptionTeacherRow[] { const q = this.searchTerm.trim().toLowerCase(); return (this.data?.teachers ?? []).filter(t => (!q || t.name.toLowerCase().includes(q) || t.teacherId.toLowerCase().includes(q)) && (this.filter === 'ALL' || this.filter === 'STARTED' && t.accountStatus === 'STARTED' || this.filter === 'NOT_STARTED' && t.accountStatus !== 'STARTED' || this.filter === 'USED' && t.hasUsedAttendance || this.filter === 'NOT_USED' && !t.hasUsedAttendance)); }
-  status(t: StaffAdoptionTeacherRow): string { return t.accountStatus === 'ACCOUNT_PENDING' ? 'Account pending' : t.accountStatus === 'NOT_STARTED' ? 'Not started' : t.accountStatus.charAt(0) + t.accountStatus.slice(1).toLowerCase(); }
-  relative(value: string | null): string { if (!value) return 'Never'; const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000); return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`; }
-  app(t: StaffAdoptionTeacherRow): string { return t.appVersionStatus === 'UP_TO_DATE' ? 'Up to date' : t.appVersionStatus === 'UPDATE_AVAILABLE' ? 'Update available' : t.appVersionStatus === 'UPDATE_REQUIRED' ? 'Update required' : 'No version reported'; }
+  get rows(): StaffAdoptionTeacherRow[] { return filterStaffAdoption(this.data?.teachers ?? [], this.query, new Date()); }
+  private get query(): StaffAdoptionQuery {
+    const f = this.filter;
+    return {
+      search: this.searchTerm,
+      account: f === 'STARTED' || f === 'NOT_STARTED' ? f : 'ALL',
+      attendance: f === 'USED' || f === 'NOT_USED' ? f : 'ALL',
+      activity: f === 'LAST_7_DAYS' || f === 'OLDER' || f === 'NEVER' ? f : 'ALL',
+    };
+  }
+  get adoptionRate(): number { return adoptionRatePercent(this.data); }
+  get notStartedCount(): number { return notStartedForSummary(this.data); }
+  status(t: StaffAdoptionTeacherRow): string { return accountStatusLabel(t.accountStatus); }
+  relative(value: string | null): string { return relativeActivityLabel(value, new Date()); }
+  app(t: StaffAdoptionTeacherRow): string { return appVersionLabel(t); }
 
   // ── Reminders (admin-triggered, never automatic) ────────────────
 
@@ -57,13 +75,8 @@ export class StaffAdoptionComponent implements OnInit, OnDestroy {
   }
 
   private confirmAndSend(type: StaffAdoptionReminderType, count: number, names: string[]): void {
-    const shown = names.slice(0, 8);
-    const more = names.length > shown.length ? `<p>&hellip; and ${names.length - shown.length} more</p>` : '';
-    this.toast.confirm({
-      title: `Send reminder to ${count} teacher${count > 1 ? 's' : ''}?`,
-      html: `<p>${shown.join(', ')}</p>${more}`,
-      icon: 'question', confirmText: 'Send reminder', cancelText: 'Cancel',
-    }).then(confirmed => { if (confirmed) this.sendReminder(type); });
+    // Plain text: teacher names are never rendered as HTML.
+    this.toast.confirm(reminderConfirmDialog(count, names)).then(confirmed => { if (confirmed) this.sendReminder(type); });
   }
 
   private sendReminder(type: StaffAdoptionReminderType): void {
@@ -80,16 +93,10 @@ export class StaffAdoptionComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Truthful wording: "sent" here means accepted for delivery, never a claim that email/push
-   *  was actually received. */
+  /** Truthful wording: "sent" means accepted for delivery, never a claim it was received. */
   private toastForSendResult(sentCount: number, skippedRecentCount: number): void {
-    if (sentCount === 0 && skippedRecentCount > 0) {
-      this.toast.info('Already reminded', `All ${skippedRecentCount} teacher${skippedRecentCount > 1 ? 's were' : ' was'} reminded recently.`);
-      return;
-    }
-    let message = `Reminder sent to ${sentCount} teacher${sentCount === 1 ? '' : 's'}.`;
-    if (skippedRecentCount > 0) message += ` ${skippedRecentCount} skipped because they were reminded recently.`;
-    this.toast.success('Reminder sent', message);
+    const result = reminderSendResult(sentCount, skippedRecentCount);
+    this.toast[result.level](result.title, result.message);
   }
 
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }

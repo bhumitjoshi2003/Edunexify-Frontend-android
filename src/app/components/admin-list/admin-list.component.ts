@@ -1,3 +1,4 @@
+import { ListDisplay, ListLoadState, adminDeleteDialog, listDisplay } from '../../utils/list-state.util';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { AdminService } from '../../services/admin.service';
@@ -18,7 +19,8 @@ import { Admin } from '../../interfaces/admin';
 })
 export class AdminListComponent implements OnInit, OnDestroy {
   admins: Admin[] = [];
-  isLoading: boolean = true;
+  /** See utils/list-state.util.ts: a failed load shows an error with Retry, never "No administrators". */
+  loadState: ListLoadState = 'loading';
   loggedInUserRole: string = '';
   currentUserId: string = '';
   private ngUnsubscribe = new Subject<void>();
@@ -58,24 +60,25 @@ export class AdminListComponent implements OnInit, OnDestroy {
   }
 
   loadAdmins(): void {
-    this.isLoading = true;
+    this.loadState = 'loading';
     this.cdr.markForCheck();
     this.adminService.getAllAdmins()
       .pipe(takeUntil(this.ngUnsubscribe))
       .subscribe({
         next: (data) => {
-          this.admins = data;
-          this.isLoading = false;
+          this.admins = data ?? [];
+          this.loadState = 'ready';
           this.cdr.markForCheck();
         },
         error: (err) => {
           this.logger.error('Error fetching admins:', err);
-          this.isLoading = false;
+          this.loadState = 'failed';
           this.cdr.markForCheck();
-          this.toast.error('Error', 'Failed to load administrators. Please try again.');
         }
       });
   }
+
+  get display(): ListDisplay { return listDisplay(this.loadState, this.admins.length); }
 
   viewAdminDetails(adminId: string): void {
     this.router.navigate(['/dashboard/admin-details', adminId]);
@@ -89,13 +92,7 @@ export class AdminListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.toast.confirm({
-      title: 'Are you sure?',
-      message: 'This admin will be permanently removed!',
-      confirmText: 'Yes, delete it!',
-      cancelText: 'Cancel',
-      danger: true
-    }).then(confirmed => {
+    this.toast.confirm(adminDeleteDialog()).then(confirmed => {
       if (confirmed) {
         this.adminService.deleteAdmin(adminId).pipe(takeUntil(this.ngUnsubscribe)).subscribe({
           next: () => {
