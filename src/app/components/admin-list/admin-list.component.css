@@ -220,3 +220,6 @@
   .al-hero { flex-direction: column; align-items: flex-start; }
   .al-hero-btn { width: 100%; text-align: center; }
 }
+.al-empty-sub { font-size: 0.85rem; color: #94a3b8; margin: 0; }
+.al-retry { margin-top: 10px; padding: 8px 18px; border: 1px solid #cbd5e1; border-radius: 11px; background: #fff; font: inherit; font-weight: 700; color: #0f766e; cursor: pointer; }
+.al-retry:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }

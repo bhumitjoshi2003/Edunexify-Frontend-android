@@ -52,7 +52,8 @@ describe('StaffAdoptionComponent', () => {
       expect(service.previewReminder).toHaveBeenCalledWith('NOT_STARTED');
       const dialogData = toast.confirm.calls.mostRecent().args[0];
       expect(dialogData.title).toContain('2 teachers');
-      expect(dialogData.html).toContain('Tarun Bisht');
+      expect(dialogData.message).toContain('Tarun Bisht');
+      expect(dialogData.html).toBeUndefined();   // names are plain text, never HTML
     });
 
     it('does not send when the admin declines confirmation', () => {
@@ -118,7 +119,7 @@ describe('StaffAdoptionComponent', () => {
       fixture.detectChanges();
 
       expect(toast.error).toHaveBeenCalled();
-      expect(fixture.nativeElement.querySelector('.sa-back')).toBeTruthy();
+      expect(fixture.nativeElement.querySelector('.sa-reminder-panel')).toBeTruthy();   // still on the page, panel open
     });
   });
 });

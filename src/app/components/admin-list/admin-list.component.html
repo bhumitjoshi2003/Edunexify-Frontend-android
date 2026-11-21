@@ -17,15 +17,22 @@
   </div>
 
   <!-- ── Loading ───────────────────────────────────────────────────── -->
-  <div class="al-loading" *ngIf="isLoading">
+  <div class="al-loading" *ngIf="display === 'loading'" data-testid="list-loading">
     <div class="al-spinner"></div>
     <p>Loading administrators...</p>
   </div>
 
   <!-- ── List ──────────────────────────────────────────────────────── -->
-  <ng-container *ngIf="!isLoading">
+  <div class="al-empty" *ngIf="display === 'error'" data-testid="list-error">
+    <div class="al-empty-icon">⚠️</div>
+    <p class="al-empty-title">Administrators couldn't be loaded</p>
+    <p class="al-empty-sub">Please check your connection and try again.</p>
+    <button type="button" class="al-retry" (click)="loadAdmins()">Retry</button>
+  </div>
 
-    <div class="al-empty" *ngIf="admins.length === 0">
+  <ng-container *ngIf="display === 'empty' || display === 'list'">
+
+    <div class="al-empty" *ngIf="display === 'empty'" data-testid="list-empty">
       <div class="al-empty-icon">🔍</div>
       <p class="al-empty-title">No administrators found</p>
     </div>

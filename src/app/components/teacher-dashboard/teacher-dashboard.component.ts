@@ -1,3 +1,4 @@
+import { serverTotal } from '../../utils/page-count.util';
 import { WisdomCardsComponent } from '../wisdom/wisdom-cards.component';
 import { TeacherGettingStartedComponent } from '../teacher-getting-started/teacher-getting-started.component';
 import {
@@ -12,6 +13,7 @@ import { catchError } from 'rxjs/operators';
 import { ToastService } from '../../services/toast.service';
 
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { TeacherService } from '../../services/teacher.service';
 import { StudentService } from '../../services/student.service';
 import { AttendanceService } from '../../services/attendance.service';
@@ -424,7 +426,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         this.logger.error('Today attendance load error:', e);
         return of(null);
       })),
-      this.leaveService.getLeavesPaginated(0, 50, this.className),
+      // Server-filtered to PENDING so totalElements is the real count, not what one page held.
+      this.leaveService.getLeavesPaginated(0, 50, this.className, undefined, undefined, 'PENDING'),
       this.attendanceService.getClassSummary(this.className, { year, month }),
     ]).pipe(takeUntil(this.destroy$)).subscribe({
       next: ([students, todaySheet, leavesPage, summary]) => {
@@ -435,7 +438,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         this.todayPresent = todayRows.filter(s => s.status === 'PRESENT').length;
 
         const pending = leavesPage.content.filter(l => l.status === 'PENDING');
-        this.pendingLeavesCount = pending.length;
+        this.pendingLeavesCount = serverTotal(leavesPage).count;
         // Overdue requests first (oldest day first); the rest keep the server's order.
         this.recentLeaves = [...pending]
           .sort((a, b) => (isLeaveNeedsAttention(b) ? (b.escalation?.day ?? 0) : 0) - (isLeaveNeedsAttention(a) ? (a.escalation?.day ?? 0) : 0))
@@ -612,7 +615,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     return this.attendanceTaken ? 'marked' : 'not-marked';
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authState.hasFeature(featureKey);
   }
 }

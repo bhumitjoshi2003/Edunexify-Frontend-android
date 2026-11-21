@@ -71,11 +71,10 @@ describe('TEACHER edit flow (rendered template)', () => {
     fixture = TestBed.createComponent(TimetableComponent);
     c = fixture.componentInstance;
     fixture.detectChanges();
+    // ngOnInit opens on today's weekday; the fixtures sit on WEDNESDAY, so pick it explicitly
+    // (as a teacher would via the day tabs) to keep the rendered card list independent of the run date.
+    c.onDaySelect('WEDNESDAY');
     await fixture.whenStable();
-    // The real page intentionally opens on today's working day. These fixtures are all
-    // Wednesday rows, so select their day explicitly instead of making the regression suite
-    // depend on which weekday CI happens to run.
-    if (entries.length) c.onDaySelect(entries[0].day);
     fixture.detectChanges();
   }
 
@@ -99,7 +98,9 @@ describe('TEACHER edit flow (rendered template)', () => {
   it('2. populates the existing subject exactly (not the section/stream name)', async () => {
     await setup();
     await clickEdit('Mathematics');
-    const subjectInput: HTMLInputElement = fixture.nativeElement.querySelector('#modal-subject');
+    const subjectInput: HTMLSelectElement = fixture.nativeElement.querySelector('#modal-subject');
+    expect(subjectInput.tagName).toBe('SELECT');   // B4-2: picked from configuration, never typed
+    expect(Array.from(subjectInput.options).map(o => o.value)).toEqual(['', 'Mathematics', 'Physics', 'Maths', 'Biology', 'Accountancy']);
     expect(subjectInput.value).toBe('Mathematics');
     expect(c.modalForm.subjectName).toBe('Mathematics');
   });

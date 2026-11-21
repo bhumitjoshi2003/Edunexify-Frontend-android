@@ -1,3 +1,16 @@
-<router-outlet></router-outlet>
+@switch (authState.status$ | async) {
+  @case ('SERVICE_UNAVAILABLE') {
+    <app-startup-recovery variant="unavailable"></app-startup-recovery>
+  }
+  @case ('OFFLINE') {
+    <app-startup-recovery variant="offline"></app-startup-recovery>
+  }
+  @case ('CHECKING') {
+    <app-startup-recovery variant="loading"></app-startup-recovery>
+  }
+  @default {
+    <router-outlet></router-outlet>
+  }
+}
 <app-toast-container></app-toast-container>
 <app-offline-indicator></app-offline-indicator>

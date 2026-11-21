@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { STARTUP_HTTP_TIMEOUT_MS } from '../core/startup.constants';
+import { clearIntendedRoute, setIntendedRouteSchoolResolver } from '../auth/redirect-url.util';
 
 export interface PublicSchoolInfo {
   name: string;
@@ -21,7 +23,10 @@ export class TenantService {
   private _school: PublicSchoolInfo | null = null;
   private _slug: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // A saved post-login destination belongs to the school it was saved under (the stored school).
+    setIntendedRouteSchoolResolver(() => this._slug);
+  }
 
   get isBranded(): boolean { return this._school !== null; }
   get school(): PublicSchoolInfo | null { return this._school; }
@@ -37,7 +42,7 @@ export class TenantService {
     if (!slug) return Promise.resolve();
     this._slug = slug;
     return firstValueFrom(
-      this.http.get<PublicSchoolInfo>(`${environment.apiUrl}/public/school/${slug}`)
+      this.http.get<PublicSchoolInfo>(`${environment.apiUrl}/public/school/${slug}`).pipe(timeout(STARTUP_HTTP_TIMEOUT_MS))
     )
       .then(info => { this._school = info ?? null; })
       .catch(() => { this._school = null; });
@@ -66,10 +71,17 @@ export class TenantService {
   /** Fetch school info for a slug without storing it (used during entry). */
   lookupSchool(slug: string): Promise<PublicSchoolInfo | null> {
     return firstValueFrom(
-      this.http.get<PublicSchoolInfo>(`${environment.apiUrl}/public/school/${slug}`)
+      this.http.get<PublicSchoolInfo>(`${environment.apiUrl}/public/school/${slug}`).pipe(timeout(STARTUP_HTTP_TIMEOUT_MS))
     )
       .then(info => info ?? null)
       .catch(() => null);
+  }
+
+  /** Startup adapter shared with the website (core/startup.service.ts): a valid session whose
+   *  school isn't stored (e.g. app storage was cleared) recovers it from the session's slug. */
+  async loadSchoolBySlug(slug: string): Promise<void> {
+    const info = await this.lookupSchool(slug);
+    if (info) this.setSchool(slug, info);
   }
 
   /** Store slug + branding after a successful lookup. */
@@ -81,6 +93,8 @@ export class TenantService {
 
   /** Clear stored school (for switching schools). */
   clearSchool(): void {
+    // A page saved under the previous school never applies to the next one.
+    clearIntendedRoute();
     localStorage.removeItem(SLUG_KEY);
     this._slug = null;
     this._school = null;

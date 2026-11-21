@@ -78,6 +78,11 @@ export class TimetableService {
     return this.http.get<TimetableEntry[]>(`${this.baseUrl}/teacher/${encodeURIComponent(teacherId)}`, { params: academicSessionId == null ? {} : { academicSessionId } });
   }
 
+  /** Canonical names of the subjects configured for this class — the only valid period subjects. */
+  getPermittedSubjects(classId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/subjects`, { params: { classId } });
+  }
+
   createEntry(entry: TimetableEntryRequest): Observable<TimetableEntry> {
     return this.http.post<TimetableEntry>(this.baseUrl, entry);
   }
