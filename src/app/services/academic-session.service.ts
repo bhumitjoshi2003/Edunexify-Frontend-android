@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AcademicSession } from '../interfaces/academic-session';
-import { ActivationPreview, SessionActivationOutcome } from '../interfaces/session-activation';
+import { ActivationPreview, SessionActivationOutcome } from '../interfaces/teaching-configuration';
 
 export interface SessionReadiness {
   sessionId: number;
@@ -47,7 +47,9 @@ export class AcademicSessionService {
   }
 
   /** Phase G: switching current now also activates that session's class-teacher configuration
-   *  in the same atomic backend call — see SessionActivationOutcome for the combined result. */
+   *  in the same atomic backend call — see SessionActivationOutcome for the combined result.
+   *  A session that hasn't started yet is refused (409 FUTURE_SESSION_CONFIRMATION_REQUIRED)
+   *  unless confirmFutureActivation is set after the admin's explicit early-activation confirmation. */
   setCurrentSession(sessionId: number, confirmFutureActivation = false): Observable<SessionActivationOutcome> {
     const options = confirmFutureActivation ? { params: { confirmFutureActivation: 'true' } } : {};
     return this.http.put<SessionActivationOutcome>(`${this.apiUrl}/${sessionId}/set-current`, {}, options);

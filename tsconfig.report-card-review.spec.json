@@ -70,6 +70,7 @@
     "src/app/core/startup.service.spec.ts",
     "src/app/services/notification-state.service.spec.ts",
     "src/app/components/startup-recovery/*.spec.ts",
-    "src/app/components/dashboard/dashboard.resume.spec.ts"
+    "src/app/components/dashboard/dashboard.resume.spec.ts",
+    "src/app/services/demo.service.spec.ts"
   ]
 }

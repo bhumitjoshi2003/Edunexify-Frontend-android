@@ -205,10 +205,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       // The one place the busy state is cleared: success, any error, timeout or an unexpected throw.
       finalize(() => { this.sendingDemo = false; this.cdr.markForCheck(); })
     ).subscribe({
-      next: () => {
+      next: (result) => {
         this.showDemoForm = false;
         this.demo = { schoolName: '', contactName: '', email: '', phone: '', students: '', city: '', message: '' };
         this.cdr.markForCheck();
+        if (result.notificationSent === false) {
+          this.toast.warning('Request Saved', 'Your demo request was saved, but our team could not be notified by email. Please contact support@edunexify.co.in. You do not need to submit again.');
+          return;
+        }
         this.toast.confirm({ title: 'Demo Request Received!', html: '<p style="color:#64748b;font-size:.88rem;line-height:1.6">Thank you! Our team will reach out within <strong style="color:#1e3a5f">24 hours</strong> to schedule your personalised demo.</p>', confirmText: 'Awesome, Thanks!', icon: 'success' });
       },
       error: (err) => {
