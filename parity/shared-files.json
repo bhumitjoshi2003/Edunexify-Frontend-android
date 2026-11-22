@@ -198,7 +198,7 @@
     },
     {
       "path": "src/app/interfaces/session-activation.ts",
-      "reason": "Android only: re-export kept for older imports (types live in teaching-configuration.ts)."
+      "reason": "Android only: an older standalone copy of the activation types (app code now imports them from teaching-configuration.ts, as on the website); only school-settings.component.spec.ts still imports it."
     },
     {
       "path": "src/app/app.component.ts",
