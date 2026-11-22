@@ -18,6 +18,7 @@ import { AttendanceService } from '../../services/attendance.service';
 import { AttendanceSheet, AttendanceStatus } from '../../interfaces/attendance-sheet';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { getStoredSelectedClass, setStoredSelectedClass } from '../../utils/class-selection-storage.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 /** One roster row being marked. Everyone starts PRESENT; APPROVED leave starts ABSENT. */
 interface MarkRow {
@@ -32,7 +33,7 @@ const TEACHER_EDIT_WINDOW_DAYS = 3;
 
 @Component({
   selector: 'app-teacher-attendance',
-  imports: [
+  imports: [HelpButtonComponent, 
     FormsModule,
     CommonModule,
     MatDatepickerModule,

@@ -27,6 +27,7 @@ import {
   ReportCardApprovalService,
   ReviewSummary,
 } from '../../services/report-card-approval.service';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   standalone: true,
@@ -67,7 +68,7 @@ export class ReviewPdfDialogComponent {
 @Component({
   standalone: true,
   selector: 'app-report-card-approvals',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, RouterLink],
   templateUrl: './report-card-approvals.component.html',
   styleUrls: ['./report-card-approvals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

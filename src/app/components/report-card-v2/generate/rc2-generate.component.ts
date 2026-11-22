@@ -8,6 +8,7 @@ import { ReportCardPdfDeliveryService } from '../../../services/report-card-pdf-
 import { ToastService } from '../../../services/toast.service';
 import { RouterLink } from '@angular/router';
 import { AuthStateService } from '../../../auth/auth-state.service';
+import { HelpButtonComponent } from '../../help-button/help-button.component';
 
 /**
  * Report Card V2 — Generate & Preview (ADMIN; TEACHER read-only for their own class/section):
@@ -18,7 +19,7 @@ import { AuthStateService } from '../../../auth/auth-state.service';
 @Component({
   selector: 'app-rc2-generate',
   standalone: true,
-  imports: [CommonModule, RouterLink, Rc2ContextComponent],
+  imports: [HelpButtonComponent, CommonModule, RouterLink, Rc2ContextComponent],
   templateUrl: './rc2-generate.component.html',
   styleUrls: ['../rc2-shared.css', './rc2-generate.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

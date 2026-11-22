@@ -71,6 +71,8 @@
     "src/app/services/notification-state.service.spec.ts",
     "src/app/components/startup-recovery/*.spec.ts",
     "src/app/components/dashboard/dashboard.resume.spec.ts",
-    "src/app/services/demo.service.spec.ts"
+    "src/app/services/demo.service.spec.ts",
+    "src/app/help/*.spec.ts",
+    "src/app/components/help-panel/*.spec.ts"
   ]
 }

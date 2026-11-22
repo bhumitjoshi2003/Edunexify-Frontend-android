@@ -16,11 +16,12 @@ import { LoggerService } from '../../services/logger.service';
 import { SchoolService } from '../../services/school.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { FEATURES } from '../../auth/feature-keys';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-subject-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './subject-config.component.html',
   styleUrl: './subject-config.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -10,12 +10,13 @@ import { TeacherLeave } from '../../interfaces/teacher-leave';
 import { PaginatedResponse } from '../../services/payment-history.service';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { AUTO_APPROVED_NOTE, isLeaveAutoApproved } from '../../utils/leave-escalation.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-apply-teacher-leave',
   templateUrl: './apply-teacher-leave.component.html',
   styleUrls: ['./apply-teacher-leave.component.css'],
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [HelpButtonComponent, ReactiveFormsModule, CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApplyTeacherLeaveComponent implements OnInit, OnDestroy {

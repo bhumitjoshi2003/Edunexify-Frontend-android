@@ -16,11 +16,12 @@ import { FeeHead } from '../../interfaces/fee-head';
 import { FeeStructureRule } from '../../interfaces/fee-rule';
 import { AcademicSession } from '../../interfaces/academic-session';
 import { schoolDateKey } from '../../utils/school-date.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-fee-structure',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './fee-structure.component.html',
   styleUrls: ['./fee-structure.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -16,13 +16,14 @@ import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { WorkspaceService } from '../../services/workspace.service';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 type LoadState = 'idle' | 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-mark-entry',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './mark-entry.component.html',
   styleUrl: './mark-entry.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

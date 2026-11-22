@@ -10,6 +10,7 @@ import { AuthStateService } from '../../auth/auth-state.service';
 import { PaginatedResponse } from '../../services/payment-history.service';
 import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
 import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-teacher-leave-requests',
@@ -17,7 +18,7 @@ import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-es
   styleUrls: ['./teacher-leave-requests.component.css'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, LeaveEscalationBadgeComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, LeaveEscalationBadgeComponent],
 })
 export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
   leaves: TeacherLeave[] = [];

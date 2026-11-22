@@ -30,13 +30,14 @@ import { ToastService } from '../../services/toast.service';
 import { SchoolService } from '../../services/school.service';
 import { summarizeFeeChange } from '../../utils/fee-change-outcome.util';
 import { schoolDateKey } from '../../utils/school-date.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 type FeeAssignmentTab = 'assign' | 'discounts' | 'history';
 
 @Component({
   selector: 'app-fee-assignment',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, RouterLink],
   templateUrl: './fee-assignment.component.html',
   styleUrls: ['./fee-assignment.component.css'],
 })

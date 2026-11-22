@@ -4,7 +4,7 @@
       <div class="cr-hero-icon" aria-hidden="true"><mat-icon>fact_check</mat-icon></div>
       <div class="cr-hero-copy">
         <div class="cr-hero-title">
-          <h1>Report Card Review</h1>
+          <h1>Report Card Review<app-help-button topic="report-cards"></app-help-button></h1>
           <span class="cr-hero-chip" *ngIf="!loading && !loadError">{{ progress.length }} {{ progress.length === 1 ? 'section' : 'sections' }}</span>
         </div>
         <p>Check every section's report cards are ready, and ask class teachers for corrections.</p>

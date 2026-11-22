@@ -7,7 +7,7 @@
     <div class="ss-hero-body">
       <div class="ss-hero-avatar">{{ schoolInitials }}</div>
       <div class="ss-hero-text">
-        <h1 class="ss-hero-name">{{ settings?.name || 'School Settings' }}</h1>
+        <h1 class="ss-hero-name">{{ settings?.name || 'School Settings' }}<app-help-button topic="school-settings"></app-help-button></h1>
         <p class="ss-hero-location" *ngIf="settings?.city">
           {{ settings!.city }}<ng-container *ngIf="settings!.state">, {{ settings!.state }}</ng-container>
         </p>

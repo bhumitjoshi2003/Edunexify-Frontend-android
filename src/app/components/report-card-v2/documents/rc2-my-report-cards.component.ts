@@ -6,6 +6,7 @@ import { ReportCardDocument, ReportCardV2Service } from '../../../services/repor
 import { ToastService } from '../../../services/toast.service';
 import { ChildAccess } from '../../../interfaces/parent-portal';
 import { ParentChildContextComponent } from '../../parent-child-context/parent-child-context.component';
+import { HelpButtonComponent } from '../../help-button/help-button.component';
 
 /**
  * A student's (or, with ?studentId, a parent's linked child's) published report cards: only the
@@ -14,7 +15,7 @@ import { ParentChildContextComponent } from '../../parent-child-context/parent-c
 @Component({
   selector: 'app-rc2-my-report-cards',
   standalone: true,
-  imports: [CommonModule, RouterLink, ParentChildContextComponent],
+  imports: [HelpButtonComponent, CommonModule, RouterLink, ParentChildContextComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['../rc2-shared.css'],
   styles: [`
@@ -100,7 +101,7 @@ import { ParentChildContextComponent } from '../../parent-child-context/parent-c
         <div class="rc2-blob rc2-blob-2"></div>
         <div class="rc2-hero-icon" aria-hidden="true">🎓</div>
         <div class="rc2-hero-text">
-          <h1 class="rc2-hero-title">Report Cards</h1>
+          <h1 class="rc2-hero-title">Report Cards<app-help-button topic="report-cards"></app-help-button></h1>
           <p class="rc2-hero-sub">Official report cards issued by the school. Each one carries a QR code anyone can scan to check it is genuine.</p>
         </div>
       </div>

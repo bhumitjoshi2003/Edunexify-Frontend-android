@@ -11,6 +11,7 @@ import { ReportCardPreviewDialogComponent, ReportCardPreviewData } from './repor
 import { ToastService } from '../../services/toast.service';
 import { CoordinatorReportCardProgress, ReportCardCorrectionRequest, coordinatorUnitLabel } from '../../interfaces/coordinator';
 import { apiMessage } from '../academic-session-selector/academic-session-selector.component';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 /**
  * Report card review for the Principal (whole school) and an Academic Coordinator (their scope): completion per class section, each student's marks,
@@ -20,7 +21,7 @@ import { apiMessage } from '../academic-session-selector/academic-session-select
 @Component({
   selector: 'app-coordinator-report-cards',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, MatIconModule, MatDialogModule],
   templateUrl: './coordinator-report-cards.component.html',
   styleUrl: './coordinator-report-cards.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

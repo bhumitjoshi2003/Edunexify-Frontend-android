@@ -17,6 +17,7 @@ import { LeaveApplication, LeaveService, PaginatedResponse } from '../../service
 import { getStoredSelectedClass, setStoredSelectedClass, clearStoredSelectedClass } from '../../utils/class-selection-storage.util';
 import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
 import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-view-leaves',
@@ -24,7 +25,7 @@ import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-es
   styleUrls: ['./view-leaves.component.css'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [HelpButtonComponent, 
     CommonModule,
     FormsModule,
     LeaveEscalationBadgeComponent

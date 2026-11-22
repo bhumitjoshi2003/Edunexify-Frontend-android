@@ -17,11 +17,12 @@ import { FeeWorkflowService } from '../../services/fee-workflow.service';
 import { SchoolPaymentConnectionComponent } from '../school-payment-connection/school-payment-connection.component';
 import { isStaffAttendanceUsable, staffAttendanceConfigError } from '../../utils/staff-attendance-config.util';
 import { FEATURES } from '../../auth/feature-keys';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-school-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SchoolPaymentConnectionComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, RouterLink, SchoolPaymentConnectionComponent],
   templateUrl: './school-settings.component.html',
   styleUrl: './school-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
