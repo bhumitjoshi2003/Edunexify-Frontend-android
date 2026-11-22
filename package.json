@@ -9,6 +9,8 @@
     "prebuild:android": "node scripts/generate-observability-config.mjs",
     "build:android": "ng build --configuration=android",
     "check:parity": "node scripts/audit-web-parity.mjs",
+    "parity:check": "node scripts/check-parity.mjs",
+    "parity:update": "node scripts/check-parity.mjs --update",
     "watch": "ng build --watch --configuration development",
     "pretest": "node scripts/generate-observability-config.mjs",
     "test": "ng test",
