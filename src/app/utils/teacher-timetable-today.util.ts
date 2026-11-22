@@ -2,8 +2,10 @@
  * Pure, testable "what do I teach today" logic for the teacher dashboard's Today's
  * Classes section. Consumes whatever TimetableService.getTeacherTimetable already
  * returns (day/period/start/end/class/section/subject) — no new backend call shape,
- * no invented timing data.
+ * no invented timing data. Shared by the web and Android clients — keep the two copies identical.
+ * Time strings are parsed by utils/clock-time.util.ts (trimmed, anchored, no trailing junk).
  */
+import { minutesSinceMidnight } from './clock-time.util';
 
 export type TeacherTodayClassStatus = 'current' | 'upcoming' | 'done' | 'scheduled';
 
@@ -59,17 +61,6 @@ export function todayDayCode(date: Date): string {
   return DAY_CODES[date.getDay()];
 }
 
-function parseMinutesSinceMidnight(time: string | null | undefined): number | null {
-  if (!time) return null;
-  const match = /^(\d{1,2}):(\d{2})/.exec(time);
-  if (!match) return null;
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (!Number.isInteger(hour) || hour < 0 || hour > 23) return null;
-  if (!Number.isInteger(minute) || minute < 0 || minute > 59) return null;
-  return hour * 60 + minute;
-}
-
 /**
  * Today's entries, classified and ordered with the timetable's actual clock times as
  * the authority whenever they're present: an entry with a valid startTime always
@@ -89,8 +80,8 @@ export function buildTodayClasses(entries: TeacherTimetableEntryLike[], now: Dat
   return entries
     .filter(entry => entry.day === today)
     .map((entry, index) => {
-      const start = parseMinutesSinceMidnight(entry.startTime);
-      const end = parseMinutesSinceMidnight(entry.endTime);
+      const start = minutesSinceMidnight(entry.startTime);
+      const end = minutesSinceMidnight(entry.endTime);
       let status: TeacherTodayClassStatus;
       if (start === null || end === null) {
         status = 'scheduled';

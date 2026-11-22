@@ -1,3 +1,4 @@
+import { countLabel, countOnPage } from '../../utils/page-count.util';
 import { WisdomCardsComponent } from '../wisdom/wisdom-cards.component';
 import {
   ChangeDetectionStrategy, ChangeDetectorRef,
@@ -44,6 +45,7 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
   lowAttendance = false;
   lowAttendanceThreshold = 75;
   pendingLeavesCount = 0;
+  pendingLeavesLabel = '0';
   recentLeaves: LeaveApplication[] = [];
 
   /** Isolated from the main dashboard load: a homework outage never blocks the rest. */
@@ -185,7 +187,11 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
         const leaves = leavesPage.content
           .slice()
           .sort((a, b) => b.leaveDate.localeCompare(a.leaveDate));
-        this.pendingLeavesCount = leaves.filter(l => l.status === 'PENDING').length;
+        // The student leave endpoint has no status filter: count within the latest page and say
+        // "N+" when older requests exist, rather than presenting a partial count as the total.
+        const pending = countOnPage(leavesPage, l => l.status === 'PENDING');
+        this.pendingLeavesCount = pending.count;
+        this.pendingLeavesLabel = countLabel(pending);
         this.recentLeaves = leaves.slice(0, 5);
 
         this.isLoading = false;
