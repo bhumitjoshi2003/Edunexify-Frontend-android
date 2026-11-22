@@ -419,8 +419,13 @@
 
       <div class="tt-field">
         <label class="tt-field-label" for="modal-subject">Subject</label>
-        <input id="modal-subject" type="text" class="tt-field-input" [(ngModel)]="modalForm.subjectName"
-          placeholder="e.g. Mathematics" autocomplete="off">
+        <select id="modal-subject" class="tt-field-input" [(ngModel)]="modalForm.subjectName" [disabled]="!hasSubjectOptions">
+          <option value="">{{ subjectsLoaded ? '-- Select Subject --' : 'Loading subjects…' }}</option>
+          <option *ngFor="let s of subjectOptions" [value]="s">{{ s }}</option>
+        </select>
+        <p class="tt-field-hint" *ngIf="subjectsLoaded && !subjectOptions.length" role="status">
+          {{ subjectsError || 'No subjects are configured for this class yet. Add them in Subject Configuration first.' }}
+        </p>
       </div>
 
       <div class="tt-field" *ngIf="!isTeacher()">
@@ -447,7 +452,7 @@
       </button>
       <div class="tt-modal-right-actions">
         <button class="tt-btn-cancel" (click)="closeModal()" [disabled]="modalSaving || (!isTeacher() && !canWrite())">Cancel</button>
-        <button class="tt-btn-save" (click)="saveEntry()" [disabled]="modalSaving || (!isTeacher() && !canWrite())">
+        <button class="tt-btn-save" (click)="saveEntry()" [disabled]="modalSaving || (!isTeacher() && !canWrite()) || !hasSubjectOptions">
           {{ modalSaving ? 'Saving…' : (isEditMode ? 'Update' : 'Add Period') }}
         </button>
       </div>
