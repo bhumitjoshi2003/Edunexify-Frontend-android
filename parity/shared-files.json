@@ -170,13 +170,14 @@
     "src/app/components/timetable/timetable.component.ts": "d9bbde31a9d666f44baf8323cc2ef5cd6413c3fbd31e0f09a5b2a50a731d5b48",
     "src/app/components/timetable/timetable.component.spec.ts": "09b895068703454bd762d57dc4d46997c7cff96cd5c145fb3ef28af0cfd7164f",
     "src/app/components/timetable/timetable.component.teacher-edit.spec.ts": "1e06244e9aafe027f14fc73fc7135113b44b35fa4f99c08cabdfc6d0924607ef",
-    "src/app/help/help-content.ts": "cd93d0c93f2d99ea3e3cb502ac3a826741e5828d0881ab4da5c8bdc687452b1b",
-    "src/app/help/help.service.ts": "0c37b38fe0c938af727da0d3748e30942b21235d6f8f59e1c3f437de63735aec",
+    "src/app/help/help-content.ts": "956f207a69106cf9c6c8683cf7896ab270fe0c12bd69a8a4764faa595f1b09a9",
+    "src/app/help/help.service.ts": "ff37457db907aab5b8b45ebfcc57ef58a9328721c1eaf9e5ba1e931105b32c9c",
     "src/app/help/help-content.spec.ts": "825d2b2a93f48eff7f0556ba87a8897b59d52c072d0ccdcf96a4ec9a2a8708aa",
-    "src/app/help/help.service.spec.ts": "5547ebc37c7fc177856f5c76dc6132903d6eb86283acc927a35f2bca66fcd602",
+    "src/app/help/help.service.spec.ts": "d5bbd6efd4817daa6431aeab28476cbc068af558387ae654b43e99b8a9f5f9e5",
     "src/app/components/help-button/help-button.component.ts": "7c95b63d78e8bc495ff02261af6182df8b4113fd515b03ecf5f3369177ea0260",
-    "src/app/components/help-panel/help-panel.component.ts": "a2031d726dfe187e05edc3fc413d482bce79b01014dd52da0ef8fd8b17ba932a",
-    "src/app/components/help-panel/help-panel.component.spec.ts": "ed27e145eaf79d943d52aef505eca5bec5b7533724f72f88aedc46609ddf71a9"
+    "src/app/components/help-panel/help-panel.component.ts": "7e902db1e3dd7ab2b1674f21a49e5a95f428c1314108873490a21925de068371",
+    "src/app/components/help-panel/help-panel.component.spec.ts": "589d20b1c91881c9558795dc18f00f524f569f40877c083e721681d4d8258679",
+    "src/app/help/help-permissions.spec.ts": "cbc4eb87ef0818fde0e58cf0d1ec0571ee2dd470c7d8c563ae58c5f0ccca1eef"
   },
   "platformSpecific": [
     {

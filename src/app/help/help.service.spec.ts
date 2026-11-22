@@ -98,6 +98,29 @@ describe('HelpService — role-aware help and authorised links', () => {
     expect(attendance.about.map(a => a.text).join(' ')).toContain('Teacher workspace');
   });
 
+  it('Coordinator workspace: student leave to decide, teacher leave to view only', async () => {
+    setup('TEACHER', { coordinator: true });
+    const leave = await resolve('leave');
+    const titles = leave.workflows.map(w => w.title);
+    expect(titles).toContain('Review student leave');
+    expect(titles).toContain('See teacher leave');
+    expect(titles).not.toContain('Review teacher leave');
+    expect(paths(leave)).toEqual(jasmine.arrayContaining(['view-leaves', 'teacher-leave-requests']));
+    expect(leave.about.map(a => a.text).join(' ')).toContain('cannot approve, reject or cancel');
+  });
+
+  it('Admin and Principal: decide teacher leave', async () => {
+    setup('ADMIN');
+    expect((await resolve('leave')).workflows.map(w => w.title)).toContain('Review teacher leave');
+    setup('PRINCIPAL');
+    const p = resolve('leave');
+    http.expectOne(PRINCIPAL_CAPS).flush(['TEACHER_LEAVE_DECIDE']);
+    const h = await p;
+    expect(h.workflows.map(w => w.title)).toContain('Review teacher leave');
+    expect(h.principalNote).toBeTrue();
+    expect(paths(h)).toContain('teacher-leave-requests');
+  });
+
   it('Coordinator workspace: never offers a Teacher-workspace page (which would switch the workspace)', async () => {
     setup('TEACHER', { coordinator: true });
     for (const id of Object.keys(HELP_TOPICS) as HelpTopicId[]) {

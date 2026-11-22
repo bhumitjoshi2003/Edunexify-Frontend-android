@@ -8,7 +8,7 @@ import { HelpButtonComponent } from '../help-button/help-button.component';
 /** Shared by the web and Android clients — keep the two copies identical. */
 describe('Contextual help — button and panel', () => {
   const resolved = (over: Partial<ResolvedHelp> = {}): ResolvedHelp => ({
-    id: 'timetable', title: 'Timetable', audience: 'ADMIN', unavailable: false, parentNote: false,
+    id: 'timetable', title: 'Timetable', audience: 'ADMIN', unavailable: false, parentNote: false, principalNote: false,
     about: [{ text: 'Weekly periods.' }], prerequisites: [{ text: 'A current session.' }],
     workflows: [{ title: 'Add a period', steps: ['Choose the class.', 'Press + Add Period.'] }],
     problems: [{ problem: 'No subjects.', solution: 'Add them first.' }],
@@ -55,6 +55,11 @@ describe('Contextual help — button and panel', () => {
     expect(el.textContent).toContain("is not part of your school's current plan");
     expect(el.textContent).not.toContain('How to');
     expect(el.textContent).not.toContain('Related pages');
+  });
+
+  it('tells the Principal that steps depend on granted permissions', () => {
+    const { el } = renderPanel(resolved({ audience: 'PRINCIPAL', principalNote: true }));
+    expect(el.textContent).toContain('need a permission your school gives the Principal');
   });
 
   it('tells parents to choose the child first', () => {

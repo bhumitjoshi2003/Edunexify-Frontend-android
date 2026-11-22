@@ -112,6 +112,10 @@ import { HelpPanelData, HelpService, ResolvedHelp } from '../../help/help.servic
               }
             </section>
           }
+          @if (h.principalNote) {
+            <div class="hp-note info" role="note"><mat-icon aria-hidden="true">verified_user</mat-icon>
+              <span>Some of these steps need a permission your school gives the Principal. Only pages you can open are linked below.</span></div>
+          }
           @if (h.parentNote) {
             <div class="hp-note info" role="note"><mat-icon aria-hidden="true">family_restroom</mat-icon>
               <span>Choose your child in the parent portal first. The pages you can open depend on what the school allows for that child.</span></div>

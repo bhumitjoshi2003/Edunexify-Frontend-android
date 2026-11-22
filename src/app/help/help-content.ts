@@ -86,7 +86,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     pages: ['timetable', 'coordinator-timetable'],
     about: [
       { text: 'The Timetable shows each class\'s weekly periods: day, period number, subject and teacher.' },
-      { text: 'You see your own teaching schedule. You can add or change periods for your own class and for classes an admin has given you access to.', for: ['TEACHER'] },
+      { text: 'You see your own teaching schedule. You can add your own periods for your class (as class teacher), for classes you already teach this session, and for classes an admin has given you access to.', for: ['TEACHER'] },
       { text: 'You see the timetable of the classes your coordination covers.', for: ['COORDINATOR'] },
       { text: 'You can view your class timetable here.', for: FAMILY },
     ],
@@ -97,10 +97,15 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       { text: 'Period times in Timetable → Setup, if you want times shown.', for: LEADERS },
     ],
     workflows: [
-      { title: 'Add a period', for: ['ADMIN', 'PRINCIPAL', 'TEACHER'], steps: [
+      { title: 'Add a period', for: ['ADMIN', 'PRINCIPAL'], steps: [
         'Choose the class (and section) and the day.',
         'Press + Add Period.',
         'Pick the section, period number, subject and teacher, then save.',
+      ] },
+      { title: 'Add a period', for: ['TEACHER'], steps: [
+        'Choose the day and press + Add Period.',
+        'Pick the class and section, the period number and the subject, then save.',
+        'You are always the teacher of the periods you add.',
       ] },
       { title: 'Set period times', for: LEADERS, steps: [
         'Open the Setup tab and go to Period timings.',
@@ -117,6 +122,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       { problem: '"No subjects are configured for this class yet."', solution: 'Add the class\'s subjects in Subject Configuration first.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
       { problem: '"Period N does not have a time in the active timing profile."', solution: 'Add that period to the active profile in Timetable → Setup, or ask an admin.' },
       { problem: '"No timetable assigned yet."', solution: 'No periods list you as the teacher yet. Ask your school admin.', for: ['TEACHER'] },
+      { problem: '"You can only add periods for a class or section you already teach…"', solution: 'Ask a school admin to grant you access to that class (Timetable → Grant a teacher access).', for: ['TEACHER'] },
       { problem: 'Changes are not allowed.', solution: 'Past sessions are read-only. Choose the current or a future session.', for: ['ADMIN', 'PRINCIPAL'] },
     ],
     links: [
@@ -137,6 +143,8 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       { text: 'You mark attendance for your own class. You can change today and the previous three days.', for: ['TEACHER'] },
       { text: 'Here you can correct attendance for any section you coordinate. Every correction needs a reason. Your own class is marked from the Teacher workspace.', for: ['COORDINATOR'] },
       { text: 'You can see your attendance and download the monthly report.', for: FAMILY },
+      { text: 'In Staff attendance you can correct a teacher\'s check-in with a reason. You cannot correct your own record, the Principal\'s or another Coordinator\'s.', for: ['COORDINATOR'] },
+      { text: 'In Staff attendance you can correct a teacher\'s check-in with a reason. You cannot correct your own record.', for: ['PRINCIPAL'] },
     ],
     prerequisites: [
       { text: 'A current academic session and students placed in classes and sections.', for: ['ADMIN', 'PRINCIPAL', 'SUB_ADMIN'] },
@@ -166,8 +174,9 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     ],
     problems: [
       { problem: '"Attendance can only be marked by the class teacher of this class, or a school admin."', solution: 'Ask the admin to make you the class teacher of that class (Timetable → Setup → class teachers).', for: ['TEACHER'] },
-      { problem: '"Teachers can change attendance from … to today."', solution: 'Older days can only be corrected by a school admin.', for: ['TEACHER'] },
+      { problem: '"Teachers can change attendance from … to today."', solution: 'Older days can be corrected by a school admin, or by a Coordinator for the sections they coordinate.', for: ['TEACHER'] },
       { problem: '"No students enrolled".', solution: 'No students are placed in this class and section on that date. Check the student records.', for: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'] },
+      { problem: '"The attendance of the Principal or another Coordinator cannot be corrected here."', solution: 'Ask a school admin to correct it.', for: ['COORDINATOR'] },
       { problem: 'A day shows "Not recorded".', solution: 'Attendance was not submitted for that day. Ask the class teacher.', for: FAMILY },
     ],
     links: [
@@ -183,8 +192,10 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     title: 'Leave',
     pages: ['view-leaves', 'apply-leave', 'apply-teacher-leave', 'teacher-leave-requests'],
     about: [
-      { text: 'Students (or parents) apply for a day of leave with a reason. The class teacher or school admin approves or rejects it.' },
-      { text: 'Teachers apply for their own leave for one or more days. An admin, the Principal or a Coordinator decides it.' },
+      { text: 'Students (or parents) apply for a day of leave with a reason. The class teacher or a school admin approves or rejects it. The Principal can too, if the school allows it.' },
+      { text: 'You can approve or reject the student leave of the classes and sections you coordinate.', for: ['COORDINATOR'] },
+      { text: 'Teachers apply for their own leave for one or more days. A school admin decides it, or the Principal if the school allows it.' },
+      { text: 'You can see teacher leave requests, but you cannot approve, reject or cancel them.', for: ['COORDINATOR'] },
       { text: 'Requests for today or tomorrow are marked urgent and shown first.' },
     ],
     prerequisites: [
@@ -201,8 +212,8 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
         'Pick the start and end dates and write a reason.',
         'Submit. You can cancel it while it is pending.',
       ] },
-      { title: 'Review student leave', for: ['ADMIN', 'PRINCIPAL', 'TEACHER'], steps: [
-        'Open Leave Applications and keep the Pending filter.',
+      { title: 'Review student leave', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'], steps: [
+        'Open Leave Applications and keep the Pending filter. Coordinators can choose any class they coordinate.',
         'Press Approve or Reject on each request.',
         'Approved leave shows on the attendance sheet for that day.',
       ] },
@@ -210,18 +221,23 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
         'Switch to the Teacher workspace.',
         'Open Leave Application (Staff Portal), pick the dates and write a reason.',
       ] },
-      { title: 'Review teacher leave', for: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], steps: [
+      { title: 'Review teacher leave', for: ['ADMIN', 'PRINCIPAL'], steps: [
         'Open Teacher Leave Requests and keep the Pending filter.',
         'Approve or Reject. Use "Change decision" if you made a mistake.',
+      ] },
+      { title: 'See teacher leave', for: ['COORDINATOR'], steps: [
+        'Open Teacher Leave Requests to see who is on leave and the status of each request.',
+        'Decisions are made by a school admin or the Principal. Contact them if a request needs attention.',
       ] },
     ],
     problems: [
       { problem: 'The date cannot be chosen.', solution: 'Leave cannot be applied for past dates or Sundays.', for: FAMILY },
       { problem: '"No leave applications found".', solution: 'Clear the filters or choose another status or class.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
+      { problem: 'There are no Approve or Reject buttons on teacher leave.', solution: 'Coordinators can only see teacher leave. A school admin or the Principal decides it.', for: ['COORDINATOR'] },
       { problem: 'A parent cannot apply.', solution: 'Open Leave from the parent portal with the child selected. The school must allow leave for that child.', for: ['PARENT', 'ADMIN'] },
     ],
     links: [
-      { label: 'Leave Applications', path: 'view-leaves', for: ['ADMIN', 'PRINCIPAL', 'TEACHER'] },
+      { label: 'Leave Applications', path: 'view-leaves' },
       { label: 'Teacher Leave Requests', path: 'teacher-leave-requests' },
       { label: 'Apply for my leave', path: 'apply-teacher-leave' },
       { label: 'Apply for leave', path: 'apply-leave', for: ['STUDENT'] },
@@ -269,13 +285,14 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       { text: 'Students and parents see marks only after an admin publishes the results. Published marks are locked.' },
       { text: 'You enter marks for your own class.', for: ['TEACHER'] },
       { text: 'Your changes are corrections: give a reason. They are recorded in the academic history.', for: ['PRINCIPAL', 'COORDINATOR'] },
+      { text: 'You can correct the marks of the classes and sections you coordinate.', for: ['COORDINATOR'] },
     ],
     prerequisites: [
       { text: 'The exam, with its subjects and maximum marks, in Exam Configuration.' },
     ],
     workflows: [
       { title: 'Enter marks', steps: [
-        'Choose the session, class and exam.',
+        'Choose the session, class (if asked) and exam.',
         'Use By Subject to fill one subject for the whole class, or By Student for one student.',
         'Type the marks and save.',
       ] },
@@ -337,8 +354,8 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     about: [
       { text: 'Report cards turn a student\'s exam marks into a printable PDF.' },
       { text: 'A report card combines one or more exams of a class. It is set up once, checked, then published as a PDF for students and parents.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
-      { text: 'When approvals are switched on for a report card, the class teacher and then the Principal approve it before the admin can publish.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER'] },
-      { text: 'You can review report cards of the sections you coordinate and send them back for correction with a reason.', for: ['COORDINATOR'] },
+      { text: 'When approvals are switched on for a report card, the class teacher and then the Principal approve it. Only a school admin publishes.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER'] },
+      { text: 'You can review report cards of the sections you coordinate and ask the class teacher for corrections. You cannot approve, sign or publish report cards.', for: ['COORDINATOR'] },
       { text: 'Your published report cards appear here as PDFs you can open and download.', for: FAMILY },
     ],
     prerequisites: [
@@ -352,16 +369,21 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
         'Remarks: add class teacher and Principal remarks.',
         'Generate & Preview: check each student\'s card.',
         'Published Report Cards: publish for the class.',
+        'To require approvals, switch on "Teacher & Principal approval" on Published Report Cards (this cannot be undone). Each section then needs class teacher and Principal approval, with both signatures saved, before you can publish.',
       ] },
       { title: 'Review your sections', for: ['COORDINATOR'], steps: [
         'Open Report Card Review. Filter by examination, class or section.',
         'Sections marked "Needs work" have missing marks or remarks. Press Review to see each student and Preview a card.',
         'Press Request correction and say what needs to be corrected. The class teacher is asked to fix it.',
       ] },
-      { title: 'Add remarks and check cards', for: ['TEACHER', 'PRINCIPAL'], steps: [
+      { title: 'Add remarks and check cards', for: ['TEACHER'], steps: [
         'Open Remarks, choose the report card and write each student\'s remark.',
-        'Open Generate & Preview (teachers) to check cards before they are published.',
-        'If approvals are on, approve from Report Card Approvals.',
+        'Open Generate & Preview to check the cards before they are published.',
+        'If approvals are on, approve as class teacher from Report Card Approvals. The Principal approves next, and an admin publishes.',
+      ] },
+      { title: 'Add remarks and approve', for: ['PRINCIPAL'], steps: [
+        'Open Remarks, choose the report card and write the Principal\'s remarks.',
+        'If approvals are on, save your signature, then approve as Principal from Report Card Approvals after the class teacher. An admin publishes.',
       ] },
     ],
     problems: [
@@ -410,6 +432,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       { title: 'Pay fees', for: FAMILY, steps: [
         'Open Fees (parents: choose your child first).',
         'Select the months to pay and press Pay.',
+        'If online payment is not offered, pay at the school office. The office records it and the months show as paid.',
       ] },
     ],
     problems: [
@@ -454,7 +477,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       ] },
       { title: 'Set staff check-in rules', steps: [
         'Open the Staff Attendance tab.',
-        'Set the school location, the allowed distance and the timings, then save.',
+        'Press Edit Settings, set the school location, the allowed distance and the timings, then save.',
       ] },
     ],
     problems: [

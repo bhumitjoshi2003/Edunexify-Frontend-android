@@ -22,6 +22,8 @@ export interface ResolvedHelp {
   unavailable: boolean;
   /** Parents open pages from the parent portal with a child selected, so no direct links. */
   parentNote: boolean;
+  /** The Principal's steps and links depend on the permissions the school has granted. */
+  principalNote: boolean;
   about: HelpLine[];
   prerequisites: HelpLine[];
   workflows: HelpWorkflow[];
@@ -82,6 +84,7 @@ export class HelpService {
         audience,
         unavailable,
         parentNote: audience === 'PARENT',
+        principalNote: audience === 'PRINCIPAL' && !unavailable,
         about: pick(topic.about),
         prerequisites: unavailable ? [] : pick(topic.prerequisites),
         workflows: unavailable ? [] : pick(topic.workflows),
