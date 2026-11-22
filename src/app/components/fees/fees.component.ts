@@ -47,6 +47,7 @@ import { emptyPaymentData, monthSelectionString, paymentDataFromQuote } from '..
 import { paiseToRupees, remainingDuePaise, rupeesToPaise } from '../../utils/fee-money.util';
 import { FeeMonthPresentation, feeMonthPresentation } from '../../utils/fee-month-state.util';
 import { LocalPendingPayment, localPendingPayment, reconcilePendingConfirmations } from '../../utils/pending-payment.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 export interface FeeLineItem {
   name: string;
@@ -106,7 +107,7 @@ export type FeeLedgerDisplay = 'loading' | 'error' | 'empty' | 'rows';
 @Component({
   selector: 'app-payment-tracker',
   standalone: true,
-  imports: [
+  imports: [HelpButtonComponent, 
     ComingSoonComponent,
     FormsModule,
     CommonModule,

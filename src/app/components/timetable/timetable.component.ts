@@ -25,11 +25,12 @@ import { AcademicSession } from '../../interfaces/academic-session';
 import { AcademicSessionSelectorComponent, writableSession, apiMessage } from '../academic-session-selector/academic-session-selector.component';
 import { TeachingConfigurationComponent } from '../teaching-configuration/teaching-configuration.component';
 import { subjectIcon, subjectAccentClass } from '../../utils/subject-visual.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-timetable',
   standalone: true,
-  imports: [CommonModule, FormsModule, ParentChildContextComponent, AcademicSessionSelectorComponent, TeachingConfigurationComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent, AcademicSessionSelectorComponent, TeachingConfigurationComponent],
   templateUrl: './timetable.component.html',
   styleUrl: './timetable.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

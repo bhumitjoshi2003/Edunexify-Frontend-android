@@ -170,6 +170,12 @@ Reactive forms (`ReactiveFormsModule`, `FormBuilder`) for complex forms. Templat
 
 ---
 
+### Contextual help — keep it in step with the app (required)
+
+The **?** button in page headers opens help written in `src/app/help/help-content.ts` (shared with the other frontend; listed in `parity/shared-files.json`). `HelpService` shows a role only its own lines, and only links it could open now (route roles, workspace, plan feature, Principal permission).
+
+**Any change to a feature's workflow, permissions or role rules (including Coordinator scope and Principal permissions), navigation or routes, prerequisites, or user-facing error messages must, in the same change, review and update that feature's help content** — steps, "Before you start", "If something isn't working" (quote the real message), audiences (`for`) and links. Never describe an action a role cannot perform; check the backend `@PreAuthorize` and service rules, not just the UI. Then run `npm run parity:update`, copy the shared files and manifest to the other repo, and keep `help-permissions.spec.ts` (permission-sensitive wording) and the other help specs passing. Adding a header button to a new page means adding its route path to the topic's `pages`.
+
 ## Backend
 
 ### Multi-tenancy

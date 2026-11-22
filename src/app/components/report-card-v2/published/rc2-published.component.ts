@@ -12,6 +12,7 @@ import {
 } from '../../../services/report-card-v2.service';
 import { ReportCardPdfDeliveryService } from '../../../services/report-card-pdf-delivery.service';
 import { ToastService } from '../../../services/toast.service';
+import { HelpButtonComponent } from '../../help-button/help-button.component';
 
 /**
  * Report Card V2 — Published Report Cards (ADMIN): the official, frozen documents. Publishing
@@ -26,7 +27,7 @@ import { ToastService } from '../../../services/toast.service';
 @Component({
   selector: 'app-rc2-published',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, Rc2ContextComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, RouterLink, Rc2ContextComponent],
   templateUrl: './rc2-published.component.html',
   styleUrls: ['../rc2-shared.css', './rc2-published.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

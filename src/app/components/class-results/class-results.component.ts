@@ -15,11 +15,12 @@ import { SectionService } from '../../services/section.service';
 import { Section } from '../../interfaces/section';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { WorkspaceService } from '../../services/workspace.service';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-class-results',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './class-results.component.html',
   styleUrl: './class-results.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

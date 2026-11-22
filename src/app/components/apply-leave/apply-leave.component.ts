@@ -15,13 +15,14 @@ import { ParentPortalService } from '../../services/parent-portal.service';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { ChildAccess } from '../../interfaces/parent-portal';
 import { AUTO_APPROVED_NOTE, isLeaveAutoApproved } from '../../utils/leave-escalation.util';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 
 @Component({
   selector: 'app-apply-leave',
   templateUrl: './apply-leave.component.html',
   styleUrls: ['./apply-leave.component.css'],
-  imports: [ReactiveFormsModule, CommonModule, ParentChildContextComponent],
+  imports: [HelpButtonComponent, ReactiveFormsModule, CommonModule, ParentChildContextComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApplyLeaveComponent implements OnInit, OnDestroy {

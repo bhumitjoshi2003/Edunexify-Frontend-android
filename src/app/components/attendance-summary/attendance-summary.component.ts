@@ -26,11 +26,12 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 import { attendanceHealth } from '../../interfaces/attendance-insights';
 import { StudentAttendanceInsightsComponent } from '../attendance-insights/student-attendance-insights.component';
 import { ClassAttendanceInsightsComponent } from '../attendance-insights/class-attendance-insights.component';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-attendance-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, ParentChildContextComponent, StudentAttendanceInsightsComponent, ClassAttendanceInsightsComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent, StudentAttendanceInsightsComponent, ClassAttendanceInsightsComponent],
   templateUrl: './attendance-summary.component.html',
   styleUrl: './attendance-summary.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

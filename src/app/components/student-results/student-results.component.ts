@@ -15,11 +15,12 @@ import { ParentPortalService } from '../../services/parent-portal.service';
 import { ChildAccess } from '../../interfaces/parent-portal';
 import { ToastService } from '../../services/toast.service';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
+import { HelpButtonComponent } from '../help-button/help-button.component';
 
 @Component({
   selector: 'app-student-results',
   standalone: true,
-  imports: [CommonModule, FormsModule, ParentChildContextComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent],
   templateUrl: './student-results.component.html',
   styleUrl: './student-results.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

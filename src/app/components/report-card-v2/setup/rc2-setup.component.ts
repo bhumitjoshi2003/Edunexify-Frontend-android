@@ -8,6 +8,7 @@ import {
 } from '../../../services/report-card-v2.service';
 import { ToastService } from '../../../services/toast.service';
 import { AuthStateService } from '../../../auth/auth-state.service';
+import { HelpButtonComponent } from '../../help-button/help-button.component';
 
 interface TermRow { key: string; name: string; weight: number | null; }
 interface ExamRow { examConfigId: number; examName: string; resultStatus: string; termKey: string | null; weight: number | null; }
@@ -16,7 +17,7 @@ interface ExamRow { examConfigId: number; examName: string; resultStatus: string
 @Component({
   selector: 'app-rc2-setup',
   standalone: true,
-  imports: [CommonModule, FormsModule, Rc2ContextComponent],
+  imports: [HelpButtonComponent, CommonModule, FormsModule, Rc2ContextComponent],
   templateUrl: './rc2-setup.component.html',
   styleUrls: ['../rc2-shared.css', './rc2-setup.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
