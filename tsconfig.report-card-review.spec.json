@@ -59,6 +59,17 @@
     "src/app/utils/teacher-timetable-today.util.spec.ts",
     "src/app/components/admin-list/*.spec.ts",
     "src/app/components/teacher-list/*.spec.ts",
-    "src/app/components/staff-adoption/*.spec.ts"
+    "src/app/components/staff-adoption/*.spec.ts",
+    "src/app/auth/auth-state.service.spec.ts",
+    "src/app/auth/redirect-url.util.spec.ts",
+    "src/app/auth/auth.guard.spec.ts",
+    "src/app/auth/password-change.guard.spec.ts",
+    "src/app/auth/auth.interceptor*.spec.ts",
+    "src/app/auth/auth-failure-classifier.spec.ts",
+    "src/app/core/app-resume.service.spec.ts",
+    "src/app/core/startup.service.spec.ts",
+    "src/app/services/notification-state.service.spec.ts",
+    "src/app/components/startup-recovery/*.spec.ts",
+    "src/app/components/dashboard/dashboard.resume.spec.ts"
   ]
 }

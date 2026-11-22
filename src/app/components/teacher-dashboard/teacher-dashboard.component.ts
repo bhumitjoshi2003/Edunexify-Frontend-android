@@ -13,6 +13,7 @@ import { catchError } from 'rxjs/operators';
 import { ToastService } from '../../services/toast.service';
 
 import { AuthStateService } from '../../auth/auth-state.service';
+import { FeatureKey } from '../../auth/feature-keys';
 import { TeacherService } from '../../services/teacher.service';
 import { StudentService } from '../../services/student.service';
 import { AttendanceService } from '../../services/attendance.service';
@@ -614,7 +615,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     return this.attendanceTaken ? 'marked' : 'not-marked';
   }
 
-  hasFeature(featureKey: string): boolean {
+  hasFeature(featureKey: FeatureKey): boolean {
     return this.authState.hasFeature(featureKey);
   }
 }

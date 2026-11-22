@@ -6,9 +6,9 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@a
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { WorkspaceInterceptor } from './core/workspace.interceptor';
-import { AuthStateService } from './auth/auth-state.service';
 import { GlobalErrorHandler } from './core/global-error-handler';
-import { TenantService } from './services/tenant.service';
+import { StartupService } from './core/startup.service';
+import { STARTUP_BOOTSTRAP_GRACE_MS } from './core/startup.constants';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -27,24 +27,12 @@ export const appConfig: ApplicationConfig = {
     { provide: HTTP_INTERCEPTORS, useClass: WorkspaceInterceptor, multi: true },
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideAppInitializer(() => {
-      const tenantService    = inject(TenantService);
-      const authStateService = inject(AuthStateService);
-
-      return Promise.all([
-        tenantService.init(),
-        authStateService.loadCurrentUser(),
-      ]).then(() => {
-        // Edge case: valid session cookie persists but localStorage was cleared.
-        // Auto-recover the school from the JWT's schoolSlug so all subsequent
-        // API requests include the correct X-School-Slug header.
-        const user = authStateService.getUser();
-        if (user?.schoolSlug && !tenantService.slug) {
-          return tenantService.lookupSchool(user.schoolSlug).then(info => {
-            if (info) tenantService.setSchool(user.schoolSlug!, info);
-          });
-        }
-        return;
-      });
+      // Same startup sequence as the website (core/startup.service.ts): tenant branding + the
+      // session check, each bounded. Bootstrap waits at most the grace period; after that the app
+      // shell renders the startup screen for CHECKING and the real result replaces it.
+      const initPromise = inject(StartupService).initialize();
+      const grace = new Promise<void>(resolve => setTimeout(resolve, STARTUP_BOOTSTRAP_GRACE_MS));
+      return Promise.race([initPromise, grace]);
     })
   ]
 };

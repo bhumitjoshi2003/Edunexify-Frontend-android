@@ -118,7 +118,7 @@ describe('AuthInterceptor — refresh-failure navigation', () => {
     failMeThenRefresh(`${base}/some-protected-endpoint`);
 
     expect(router.navigate).toHaveBeenCalledWith(['/home']);
-    expect(localStorage.getItem('redirectUrl')).toBe('/dashboard/timetable');
+    expect(JSON.parse(localStorage.getItem('redirectUrl')!).url).toBe('/dashboard/timetable');
     localStorage.removeItem('redirectUrl');
   });
 });

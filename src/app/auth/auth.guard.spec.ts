@@ -62,7 +62,7 @@ describe('authGuard', () => {
 
     run('/dashboard/timetable');
 
-    expect(localStorage.getItem('redirectUrl')).toBe('/dashboard/timetable');
+    expect(JSON.parse(localStorage.getItem('redirectUrl')!).url).toBe('/dashboard/timetable');
     localStorage.removeItem('redirectUrl');
   });
 });
@@ -117,11 +117,20 @@ describe('authGuard — tri-state integration with the real AuthStateService', (
 
   /**
    * The exact scenario from this review round: fresh bootstrap, user=null, status=CHECKING,
-   * the guard's own bounded resolution attempt ALSO hits a network failure (status 0) and never
-   * recovers within the bound. Required outcomes: not treated as a definitive logout (no
-   * clearUser-equivalent — status must NOT become UNAUTHENTICATED), the intended deep route is
-   * preserved, and — since identity was never confirmed — this particular navigation is denied
-   * rather than exposing protected content to an unknown caller.
+   * the guard's own bounded resolution attempt ALSO hits a network failure (status 0). Required
+   * outcomes: not treated as a definitive logout (status must NOT become UNAUTHENTICATED), the
+   * intended deep route is preserved, and — since identity was never confirmed — this particular
+   * navigation is denied rather than exposing protected content to an unknown caller.
+   *
+   * Since AuthStateService's white-screen fix (see auth-state.service.ts), a transient failure
+   * on the very first check now resolves loadCurrentUser() itself into a definite, user-visible
+   * SERVICE_UNAVAILABLE/OFFLINE state immediately — CHECKING is no longer left hanging for the
+   * guard's full 6s bound to expire. resolveCheckingState()'s Promise.race settles via that
+   * branch as soon as it happens, so the guard's own decision lands well before its 6s ceiling
+   * too (that ceiling now only matters if loadCurrentUser() itself were somehow slower than the
+   * guard's own bound, which shouldn't happen since it's driven by the same STARTUP_HTTP_TIMEOUT
+   * path). Chrome (this test's real browser) reports navigator.onLine === true, so this lands on
+   * SERVICE_UNAVAILABLE, not OFFLINE.
    */
   it('fresh boot + persistent network failure: denies THIS navigation without destructively logging out, and preserves the intended route', fakeAsync(() => {
     expect(authState.getStatus()).toBe('CHECKING'); // brand new service, nothing loaded yet
@@ -139,24 +148,25 @@ describe('authGuard — tri-state integration with the real AuthStateService', (
       .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
     flushMicrotasks();
 
-    // Still within the bound — no decision yet, nothing destructive has happened.
-    expect(authState.getStatus()).toBe('CHECKING');
-
-    // Exhaust the bounded wait.
-    tick(6000);
-    flushMicrotasks();
-
+    // loadCurrentUser() itself already produced a definite verdict — no need to wait out the
+    // guard's full 6s bound; nothing destructive has happened.
+    expect(authState.getStatus()).toBe('SERVICE_UNAVAILABLE');
     expect(result).toBeFalse();
     expect(router.navigate).toHaveBeenCalledWith(['/home']);
-    expect(authState.getStatus()).toBe('CHECKING'); // NOT UNAUTHENTICATED — never destructively logged out
-    expect(localStorage.getItem('redirectUrl')).toBe('/dashboard/timetable');
+    expect(JSON.parse(localStorage.getItem('redirectUrl')!).url).toBe('/dashboard/timetable');
+
+    // Draining the guard's own timer (now moot, since the race already settled the other way)
+    // must not change anything further.
+    tick(6000);
+    flushMicrotasks();
+    expect(authState.getStatus()).toBe('SERVICE_UNAVAILABLE'); // still NOT UNAUTHENTICATED
   }));
 
   /** Recovery: once connectivity returns and a later check succeeds, the previously-denied
    *  attempt's intended route is still there to be picked up (by HomeComponent's own bounce,
    *  or a retried navigation) with no credentials re-entered. */
   it('recovers after the network returns, with no credentials required, and the saved route is still usable', async () => {
-    localStorage.setItem('redirectUrl', '/dashboard/timetable');
+    localStorage.setItem('redirectUrl', JSON.stringify({ url: '/dashboard/timetable', school: null }));
 
     const p = authState.loadCurrentUser();
     http.expectOne(`${environment.apiUrl}/auth/me`).flush(userInfo);
@@ -166,7 +176,7 @@ describe('authGuard — tri-state integration with the real AuthStateService', (
 
     const result = TestBed.runInInjectionContext(() => authGuard({} as any, { url: '/dashboard/timetable' } as any));
     expect(result).toBeTrue(); // now a plain synchronous allow — no re-check needed
-    expect(localStorage.getItem('redirectUrl')).toBe('/dashboard/timetable'); // guard doesn't touch it on allow
+    expect(JSON.parse(localStorage.getItem('redirectUrl')!).url).toBe('/dashboard/timetable'); // guard doesn't touch it on allow
     localStorage.removeItem('redirectUrl');
   });
 

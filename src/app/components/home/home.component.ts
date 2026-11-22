@@ -11,7 +11,7 @@ import { DemoService, demoSubmissionError } from '../../services/demo.service';
 import { defer, finalize, Subject, takeUntil, timeout } from 'rxjs';
 
 import { ToastService } from '../../services/toast.service';
-import { consumeIntendedRoute, clearIntendedRoute } from '../../auth/redirect-url.util';
+import { postLoginDestination } from '../../auth/redirect-url.util';
 import { PRIVACY_POLICY_URL, openExternalUrl } from '../../utils/legal-links';
 
 @Component({
@@ -68,11 +68,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     // session was fine all along — returns to the page they were using, not always /dashboard.
     if (this.authStateService.isLoggedIn()) {
       this.authenticated = true;
-      if (this.authStateService.mustChangePassword()) {
-        this.router.navigate(['/change-initial-password']);
-      } else {
-        this.router.navigateByUrl(consumeIntendedRoute());
-      }
+      this.router.navigateByUrl(postLoginDestination({
+        mustChangePassword: this.authStateService.mustChangePassword(), school: this.tenantService.slug,
+      }));
     }
   }
 
@@ -135,15 +133,12 @@ export class HomeComponent implements OnInit, OnDestroy {
 
           this.pushNotificationService.init();
 
-          // First-login (or admin-reset) accounts land on the mandatory password-change
-          // page instead of the dashboard — enforced server-side too (JwtAuthFilter).
-          if (response.mustChangePassword) {
-            clearIntendedRoute();
-            this.router.navigateByUrl('/change-initial-password');
-            return;
-          }
-
-          this.router.navigateByUrl(consumeIntendedRoute());
+          // First-login (or admin-reset) accounts land on the mandatory password-change page
+          // (enforced server-side too, JwtAuthFilter); otherwise a page saved under this school
+          // is honoured (shared rule, see redirect-url.util).
+          this.router.navigateByUrl(postLoginDestination({
+            mustChangePassword: !!response.mustChangePassword, school: this.tenantService.slug,
+          }));
         });
       },
       error: (error) => {
