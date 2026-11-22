@@ -50,11 +50,10 @@
   </div>
 
   <!-- Exam List -->
-  <div *ngIf="!isLoadingExams && exams.length === 0" class="ec-empty">
-    <div class="ec-empty-icon">📝</div>
-    <p class="ec-empty-title">No exams configured</p>
-    <p class="ec-empty-sub">No exams configured for Class {{ selectedClass }}, {{ selectedSession }}.</p>
-  </div>
+  <app-guidance class="ec-guidance" *ngIf="examsError" [guidance]="examsError" (retry)="retryLoad()"></app-guidance>
+  <app-guidance class="ec-guidance" *ngIf="!examsError && sessionsLoaded && !sessions.length" [guidance]="noSessionGuidance"></app-guidance>
+  <app-guidance class="ec-guidance" *ngIf="!examsError && classesLoaded && !classOptions.length" [guidance]="noClassesGuidance"></app-guidance>
+  <app-guidance class="ec-guidance" *ngIf="!examsError && !isLoadingExams && selectedClass && selectedSession && exams.length === 0" [guidance]="noExamsGuidance"></app-guidance>
 
   <div *ngFor="let exam of exams; trackBy: trackById" class="ec-accordion">
     <div class="ec-accordion-header" (click)="toggleExam(exam)">
@@ -109,9 +108,7 @@
           </div>
         </div>
 
-        <div *ngIf="getClassRows(exam.id).length === 0" class="ec-empty-sub">
-          No subjects configured for this class. Add subjects in Subject Config first, or add extra subjects below.
-        </div>
+        <app-guidance class="ec-guidance" *ngIf="getClassRows(exam.id).length === 0" [guidance]="noSubjectsGuidance(exam.className)"></app-guidance>
 
         <!-- Extra Subjects -->
         <div class="ec-section-label ec-section-extra">

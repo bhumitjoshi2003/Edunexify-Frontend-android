@@ -16,11 +16,13 @@ import { Section } from '../../interfaces/section';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { WorkspaceService } from '../../services/workspace.service';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-class-results',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './class-results.component.html',
   styleUrl: './class-results.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -259,8 +261,19 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** A failed load: shown with Retry, never as "no students". */
+  resultsError: Guidance | null = null;
+
+  /** Why the list is empty: the exam has no subjects yet, or the class/section has no students. */
+  get emptyGuidance(): Guidance {
+    return this.examSubjects.length === 0
+      ? GUIDANCE.noExamSubjects()
+      : GUIDANCE.noRecords('No students in this class or section', 'Results appear here once students are placed in the class and their marks are entered.');
+  }
+
   loadResults(): void {
     if (!this.selectedExamId) return;
+    this.resultsError = null;
     this.loading = true;
     this.marksService.getClassResults(this.selectedClass, this.selectedExamId, this.selectedSectionId)
       .pipe(takeUntil(this.destroy$))
@@ -274,6 +287,7 @@ export class ClassResultsComponent implements OnInit, OnDestroy {
         },
         error: (e) => {
           this.logger.error('Error loading class results:', e);
+          this.resultsError = errorGuidance(e, 'class results');
           this.loading = false;
           this.cdr.markForCheck();
         },

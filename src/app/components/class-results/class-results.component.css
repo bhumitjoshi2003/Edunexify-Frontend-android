@@ -365,3 +365,5 @@
 @keyframes cr-sk-wave { to { background-position-x: -200%; } }
 @media (max-width: 600px) { .cr-results-skeleton { padding: 12px; } .cr-sk-table { padding: 10px; } .cr-sk-table-row { height: 36px; } }
 @media (prefers-reduced-motion: reduce) { .cr-sk-shimmer { animation: none; } }
+
+.cr-guidance { display: block; margin: 10px 0; }

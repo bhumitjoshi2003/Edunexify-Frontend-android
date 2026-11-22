@@ -30,11 +30,7 @@
     </div>
   </div>
 
-  <div class="thw-empty is-error" *ngIf="!loading && failed">
-    <div class="thw-empty-art"><mat-icon>cloud_off</mat-icon></div>
-    <h3>Homework &amp; classwork is temporarily unavailable.</h3>
-    <button type="button" class="thw-ghost" (click)="load()"><mat-icon>refresh</mat-icon>Retry</button>
-  </div>
+  <app-guidance class="thw-guidance" *ngIf="!loading && failed" [guidance]="loadErrorGuidance" (retry)="load()"></app-guidance>
 
   <ng-container *ngIf="!loading && !failed">
     <!-- ── Today's periods ── -->
@@ -47,10 +43,7 @@
         </div>
       </div>
 
-      <div class="thw-empty is-compact" *ngIf="!periods.length">
-        <mat-icon>event_available</mat-icon>
-        <h3>No periods scheduled for you today.</h3>
-      </div>
+      <app-guidance class="thw-guidance" *ngIf="!periods.length" [guidance]="noPeriodsGuidance"></app-guidance>
 
       <div class="thw-period-grid" *ngIf="periods.length">
         <article class="thw-period" *ngFor="let period of periods; let i = index"

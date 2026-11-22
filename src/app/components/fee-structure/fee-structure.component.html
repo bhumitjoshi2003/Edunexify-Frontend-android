@@ -115,18 +115,10 @@
   </div>
 
   <!-- No sessions -->
-  <div class="fs-empty-state" *ngIf="!accessDenied && !isLoading && !rulesLoading && sessions.length === 0">
-    <div class="fs-empty-icon">📋</div>
-    <p class="fs-empty-title">No academic sessions found</p>
-    <p class="fs-empty-sub">Create a session in School Settings first.</p>
-  </div>
+  <app-guidance class="fs-guidance" *ngIf="!accessDenied && !isLoading && !rulesLoading && sessions.length === 0" [guidance]="noSessionGuidance"></app-guidance>
 
   <!-- No fee heads -->
-  <div class="fs-empty-state" *ngIf="!accessDenied && !isLoading && !rulesLoading && sessions.length > 0 && feeHeads.length === 0">
-    <div class="fs-empty-icon">📋</div>
-    <p class="fs-empty-title">No fee heads configured</p>
-    <p class="fs-empty-sub">Add fee heads using the button above to define your school's fee structure.</p>
-  </div>
+  <app-guidance class="fs-guidance" *ngIf="!accessDenied && !isLoading && !rulesLoading && sessions.length > 0 && feeHeads.length === 0" [guidance]="noFeeHeadsGuidance"></app-guidance>
 
   <!-- Fee Head Edit Inline -->
   <div class="fs-fh-form" *ngIf="!accessDenied && editingFeeHeadId !== null && canEdit()">
@@ -209,8 +201,8 @@
             </td>
           </tr>
           <tr *ngIf="classes.length === 0">
-            <td [attr.colspan]="feeHeads.length + 1" style="text-align:center; color:#94a3b8; padding:20px">
-              No classes found. Add classes in Class Management.
+            <td [attr.colspan]="feeHeads.length + 1" style="padding:12px">
+              <app-guidance [guidance]="noClassesGuidance"></app-guidance>
             </td>
           </tr>
         </tbody>

@@ -293,3 +293,5 @@
 }
 .pt-alert-action:disabled { opacity: 0.6; cursor: not-allowed; }
 .pt-month--stale { opacity: 0.7; cursor: default; }
+
+.pt-guidance { display: block; margin: 10px 0; }

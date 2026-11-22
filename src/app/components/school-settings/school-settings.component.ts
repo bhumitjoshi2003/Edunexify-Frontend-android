@@ -18,11 +18,13 @@ import { SchoolPaymentConnectionComponent } from '../school-payment-connection/s
 import { isStaffAttendanceUsable, staffAttendanceConfigError } from '../../utils/staff-attendance-config.util';
 import { FEATURES } from '../../auth/feature-keys';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-school-settings',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule, RouterLink, SchoolPaymentConnectionComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule, RouterLink, SchoolPaymentConnectionComponent],
   templateUrl: './school-settings.component.html',
   styleUrl: './school-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -690,8 +692,12 @@ export class SchoolSettingsComponent implements OnInit, OnDestroy {
   }
 
   // ── Academic Sessions ──────────────────────────────────────────────
+  /** A failed load of the sessions: shown with Retry, never as "no sessions". */
+  sessionsError: Guidance | null = null;
+
   loadSessions(): void {
     this.sessionsLoading = true;
+    this.sessionsError = null;
     this.cdr.markForCheck();
     this.academicSessionService.getAllSessions().pipe(takeUntil(this.destroy$)).subscribe({
       next: (sessions) => {
@@ -701,6 +707,7 @@ export class SchoolSettingsComponent implements OnInit, OnDestroy {
       },
       error: (e) => {
         this.logger.error('Failed to load academic sessions', e);
+        this.sessionsError = errorGuidance(e, 'academic sessions');
         this.sessionsLoading = false;
         this.cdr.markForCheck();
       }

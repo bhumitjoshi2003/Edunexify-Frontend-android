@@ -46,11 +46,8 @@
     </div>
   </div>
 
-  <div *ngIf="!loading && results.length === 0" class="sr-empty">
-    <div class="sr-empty-icon">📋</div>
-    <p class="sr-empty-title">No published results yet</p>
-    <p class="sr-empty-sub">Results for {{ selectedSession }} appear here once your school publishes them.</p>
-  </div>
+  <app-guidance class="sr-guidance" *ngIf="resultsError" [guidance]="resultsError" (retry)="loadResults()"></app-guidance>
+  <app-guidance class="sr-guidance" *ngIf="!resultsError && !loading && results.length === 0" [guidance]="notPublishedGuidance"></app-guidance>
 
   <!-- ── Progress Tracker View ─────────────────────────────────────── -->
   <div *ngIf="showProgress && !loading && results.length > 0" class="sp-section">

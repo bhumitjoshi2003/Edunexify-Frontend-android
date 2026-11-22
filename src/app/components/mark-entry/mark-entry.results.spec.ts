@@ -215,12 +215,12 @@ describe('MarkEntryComponent — loading, empty and error states', () => {
     c.onStudentChange();
     fixture.detectChanges();
     expect(el().querySelector('.me-skeleton')).not.toBeNull();
-    expect(text()).not.toContain('No subjects found');
+    expect(text()).not.toContain('No subjects for this student in this exam');
 
     response.next([]);
     fixture.detectChanges();
     expect(el().querySelector('.me-skeleton')).toBeNull();
-    expect(text()).toContain('No subjects found');
+    expect(text()).toContain('No subjects for this student in this exam');
   });
 
   it('By Student: the student list shows loading, then an error state if it fails', () => {

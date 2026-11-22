@@ -17,14 +17,7 @@
     </div>
   </div>
 
-  <div class="rc2-card" *ngIf="state === 'no-setup'">
-    <div class="rc2-empty">
-      <div class="rc2-empty-icon">🗂️</div>
-      <p class="rc2-empty-title">No report card setup found for this class and session.</p>
-      <p class="rc2-empty-sub">Create one in Report Card Setup, then publish it here.</p>
-      <a class="rc2-btn rc2-btn-primary" routerLink="/dashboard/report-cards-v2/setup">Go to Report Card Setup</a>
-    </div>
-  </div>
+  <app-guidance class="rc2-guidance" *ngIf="state === 'no-setup'" [guidance]="noSetupGuidance"></app-guidance>
 
   <div class="rc2-card" *ngIf="state === 'loading'" aria-busy="true" aria-label="Loading published report cards">
     <div class="rc2-skeleton">

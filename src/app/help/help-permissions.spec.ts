@@ -6,7 +6,8 @@ import { HELP_TOPICS, HelpAudience, HelpTopicId, forAudience } from './help-cont
  *  - Coordinators decide student leave in their scope, but only VIEW teacher leave
  *    (TeacherLeaveController: decide/reverse = Admin or Principal with TEACHER_LEAVE_DECIDE).
  *  - Coordinators request report-card corrections but never approve, sign or publish.
- *  - Only an Admin publishes results and report cards.
+ *  - Only an Admin publishes report cards; results are published by an Admin, or by the Principal
+ *    with EXAM_RESULT_RELEASE.
  *  - Coordinators correct staff attendance with a reason, never their own, the Principal's or
  *    another Coordinator's record.
  * Shared by the web and Android clients — keep the two copies identical.
@@ -50,16 +51,21 @@ describe('Help content — permission-sensitive instructions', () => {
       .toContain('cannot approve, sign or publish');
   });
 
-  it('no role but Admin is told to publish results or report cards', () => {
+  it('only an Admin publishes report cards; results by an Admin or a Principal with the permission', () => {
+    // Report-card publication: ReportCardV2PublicationController = ADMIN only.
+    // Exam results: ExamController publish/unpublish = ADMIN; the Principal releases through
+    // LeadershipAcademicDecisionsController with EXAM_RESULT_RELEASE.
     for (const who of ['PRINCIPAL', 'COORDINATOR', 'TEACHER', 'SUB_ADMIN', 'PARENT', 'STUDENT'] as HelpAudience[]) {
-      for (const id of ids) {
-        for (const line of steps(id, who)) {
-          expect(line).withContext(`${who} ${id}`).not.toMatch(/^(press|use|open)\b.*\bpublish\b/i);
-          expect(line).withContext(`${who} ${id}`).not.toMatch(/Publish Results/);
-        }
+      for (const line of steps('report-cards', who)) {
+        expect(line).withContext(`${who} report-cards`).not.toMatch(/^(press|use|open)\b.*\bpublish\b/i);
       }
     }
-    expect(workflow('results', 'Publish results')[0].for).toEqual(['ADMIN']);
+    for (const who of ['COORDINATOR', 'TEACHER', 'SUB_ADMIN', 'PARENT', 'STUDENT'] as HelpAudience[]) {
+      for (const id of ids) {
+        expect(steps(id, who).join(' ')).withContext(`${who} ${id}`).not.toMatch(/Publish Results/);
+      }
+    }
+    expect(workflow('results', 'Publish results')[0].for).toEqual(['ADMIN', 'PRINCIPAL']);
     expect(workflow('report-cards', 'Prepare and publish')[0].for).toEqual(['ADMIN']);
   });
 

@@ -9,6 +9,8 @@ import { ToastService } from '../../../services/toast.service';
 import { RouterLink } from '@angular/router';
 import { AuthStateService } from '../../../auth/auth-state.service';
 import { HelpButtonComponent } from '../../help-button/help-button.component';
+import { GUIDANCE } from '../../../guidance/guidance';
+import { GuidanceComponent } from '../../guidance/guidance.component';
 
 /**
  * Report Card V2 — Generate & Preview (ADMIN; TEACHER read-only for their own class/section):
@@ -19,7 +21,7 @@ import { HelpButtonComponent } from '../../help-button/help-button.component';
 @Component({
   selector: 'app-rc2-generate',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, RouterLink, Rc2ContextComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, RouterLink, Rc2ContextComponent],
   templateUrl: './rc2-generate.component.html',
   styleUrls: ['../rc2-shared.css', './rc2-generate.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +37,9 @@ export class Rc2GenerateComponent implements OnDestroy {
   private previewObjectUrl: string | null = null;
   private previewBlob: Blob | null = null;
   private ctx: Rc2Context | null = null;
+  readonly noSetupGuidance = GUIDANCE.noReportCardSetup();
+  /** A class and session are chosen but no report card exists for them yet. */
+  get noSetups(): boolean { return !!this.ctx?.schoolClass && !!this.ctx?.session && this.ctx.setups.length === 0; }
   private loadSub?: Subscription;
   private destroy$ = new Subject<void>();
   readonly isAdmin: boolean;

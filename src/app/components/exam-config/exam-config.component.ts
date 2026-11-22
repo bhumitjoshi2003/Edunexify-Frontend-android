@@ -10,6 +10,8 @@ import { LoggerService } from '../../services/logger.service';
 import { AcademicSessionService } from '../../services/academic-session.service';
 import { SchoolService } from '../../services/school.service';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 /** One row in the subject checklist (class subject or extra). */
 interface SubjectRow {
@@ -26,7 +28,7 @@ interface SubjectRow {
 @Component({
   selector: 'app-exam-config',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './exam-config.component.html',
   styleUrl: './exam-config.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +46,12 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
 
   exams: ExamConfig[] = [];
   isLoadingExams = false;
+  /** A failed load is shown as a failure with Retry, never as "no exams". */
+  examsError: Guidance | null = null;
+  sessionsLoaded = false;
+  classesLoaded = false;
+  readonly noSessionGuidance = GUIDANCE.noSession();
+  readonly noClassesGuidance = GUIDANCE.noClasses();
   expandedExamId: number | null = null;
 
   // Per-exam subject setup state
@@ -73,23 +81,31 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
         this.sessions = sessions.map(s => s.label);
         const current = sessions.find(s => s.current);
         this.selectedSession = current ? current.label : (this.sessions[0] ?? '');
+        this.sessionsLoaded = true;
         this.cdr.markForCheck();
         if (this.selectedClass) this.loadExams();
       },
-      error: (e) => this.logger.error('Failed to load sessions', e)
+      error: (e) => { this.logger.error('Failed to load sessions', e); this.examsError = errorGuidance(e, 'academic sessions'); this.cdr.markForCheck(); }
     });
     this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c)), takeUntil(this.destroy$)).subscribe({
       next: classes => {
         this.classOptions = classes;
+        this.classesLoaded = true;
         if (!this.selectedClass && classes.length > 0) {
           this.selectedClass = classes[0];
         }
         this.cdr.markForCheck();
         if (this.selectedSession) this.loadExams();
       },
-      error: e => this.logger.error('Failed to load classes', e),
+      error: e => { this.logger.error('Failed to load classes', e); this.examsError = errorGuidance(e, 'classes'); this.cdr.markForCheck(); },
     });
   }
+
+  get noExamsGuidance(): Guidance { return GUIDANCE.noExams(this.selectedClass, this.selectedSession); }
+  noSubjectsGuidance(className: string): Guidance { return GUIDANCE.noSubjectsForClass(className); }
+
+  /** Retry after a failed load: everything this page needs. */
+  retryLoad(): void { this.examsError = null; this.ngOnInit(); }
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -103,6 +119,7 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
     this.defaultMaxMarks = {};
     this.classSubjectsCache = {};
     this.isLoadingExams = true;
+    this.examsError = null;
     this.cdr.markForCheck();
     this.examService.getExams(this.selectedSession, this.selectedClass)
       .pipe(takeUntil(this.destroy$))
@@ -115,8 +132,8 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
         error: (e) => {
           this.logger.error('Error loading exams:', e);
           this.isLoadingExams = false;
+          this.examsError = errorGuidance(e, 'exams');
           this.cdr.markForCheck();
-          this.toast.error('Error', 'Failed to load exams.');
         },
       });
   }

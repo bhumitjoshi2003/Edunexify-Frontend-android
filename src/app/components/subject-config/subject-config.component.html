@@ -52,8 +52,10 @@
         </span>
         <button class="btn-delete" (click)="deleteClassSubject(s.id)" [attr.aria-label]="'Delete subject ' + s.subjectName">&#x2715;</button>
       </li>
-      <li *ngIf="classSubjects.length === 0 && hasConfiguredClass" class="sc-empty">No subjects defined for Class {{ selectedClass }}.</li>
-      <li *ngIf="!hasConfiguredClass" class="sc-empty">Add classes in Class Management to configure subjects.</li>
+      <li *ngIf="classesError" class="sc-guidance"><app-guidance [guidance]="classesError" (retry)="loadClasses()"></app-guidance></li>
+      <li *ngIf="subjectsError && !classesError" class="sc-guidance"><app-guidance [guidance]="subjectsError" (retry)="loadClassSubjects()"></app-guidance></li>
+      <li *ngIf="!subjectsError && !classesError && classSubjects.length === 0 && hasConfiguredClass" class="sc-empty">No subjects defined for Class {{ selectedClass }} yet. Type a subject name above and press + Add.</li>
+      <li *ngIf="classesLoaded && !classesError && !hasConfiguredClass" class="sc-guidance"><app-guidance [guidance]="noClassesGuidance"></app-guidance></li>
     </ul>
   </div>
 

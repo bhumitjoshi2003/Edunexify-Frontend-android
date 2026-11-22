@@ -85,9 +85,7 @@
       </div>
     </div>
 
-    <div class="frc-card" *ngIf="!rulesLoading && selectedSessionId && selectedClass && rules.length === 0 && feeHeads.length === 0">
-      <p style="text-align:center; color:#94a3b8; padding:20px">No fee heads configured. Add fee heads first.</p>
-    </div>
+    <app-guidance class="frc-guidance" *ngIf="!rulesLoading && selectedSessionId && selectedClass && rules.length === 0 && feeHeads.length === 0" [guidance]="noFeeHeadsGuidance"></app-guidance>
 
   </ng-container>
 </div>

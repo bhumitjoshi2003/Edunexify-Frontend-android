@@ -73,6 +73,11 @@
     "src/app/components/dashboard/dashboard.resume.spec.ts",
     "src/app/services/demo.service.spec.ts",
     "src/app/help/*.spec.ts",
-    "src/app/components/help-panel/*.spec.ts"
+    "src/app/components/help-panel/*.spec.ts",
+    "src/app/guidance/*.spec.ts",
+    "src/app/components/guidance/*.spec.ts",
+    "src/app/components/subject-config/*.spec.ts",
+    "src/app/components/mark-entry/mark-entry.results.spec.ts",
+    "src/app/components/student-results/*.spec.ts"
   ]
 }

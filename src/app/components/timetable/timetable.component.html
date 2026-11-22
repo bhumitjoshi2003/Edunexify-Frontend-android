@@ -153,7 +153,7 @@
     <div class="tt-spinner"></div>
     <span>Loading…</span>
   </div>
-  <p class="tt-error" *ngIf="error">{{ error }}</p>
+  <app-guidance class="tt-guidance no-print" *ngIf="errorGuidanceState as g" [guidance]="g" (retry)="retryLoad()"></app-guidance>
 
   <!-- ══════════════════════════════════════════════════════════
        STUDENT / ADMIN CLASS VIEW
@@ -330,10 +330,7 @@
     </ng-container>
 
     <ng-template #noTeacherSchedule>
-      <div class="tt-day-empty">
-        <div class="tt-empty-icon">📭</div>
-        <p>No timetable assigned yet. Contact admin to set up your schedule.</p>
-      </div>
+      <app-guidance class="tt-guidance" *ngIf="!error" [guidance]="noTimetableGuidance"></app-guidance>
     </ng-template>
 
     <!-- Self-service: add a period you teach yourself, e.g. a gap the admin hasn't filled in
@@ -423,9 +420,8 @@
           <option value="">{{ subjectsLoaded ? '-- Select Subject --' : 'Loading subjects…' }}</option>
           <option *ngFor="let s of subjectOptions" [value]="s">{{ s }}</option>
         </select>
-        <p class="tt-field-hint" *ngIf="subjectsLoaded && !subjectOptions.length" role="status">
-          {{ subjectsError || 'No subjects are configured for this class yet. Add them in Subject Configuration first.' }}
-        </p>
+        <app-guidance class="tt-guidance tt-guidance--modal" *ngIf="subjectsLoaded && !subjectOptions.length"
+          [guidance]="noSubjectsGuidance" (retry)="retrySubjects()"></app-guidance>
       </div>
 
       <div class="tt-field" *ngIf="!isTeacher()">

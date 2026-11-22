@@ -306,3 +306,5 @@
 .thw-block p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .thw-post-foot { margin-top: auto; }
 @media (max-width: 600px) { .thw-post-grid { grid-auto-rows: auto; } }
+
+.thw-guidance { display: block; margin: 10px 0; }

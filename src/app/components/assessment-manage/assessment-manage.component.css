@@ -311,3 +311,5 @@
 .asm-instructions { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .asm-instructions mat-icon { vertical-align: -3px; margin-right: 6px; }
 @media (max-width: 600px) { .asm-grid { grid-auto-rows: auto; } }
+
+.asm-guidance { display: block; margin: 10px 0; }

@@ -17,13 +17,15 @@ import { Section } from '../../interfaces/section';
 import { CoordinatorService } from '../../services/coordinator.service';
 import { WorkspaceService } from '../../services/workspace.service';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 type LoadState = 'idle' | 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-mark-entry',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './mark-entry.component.html',
   styleUrl: './mark-entry.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -313,13 +315,25 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** The selected exam's subject list: loaded (possibly empty) or failed — never confused. */
+  examSubjectsLoaded = false;
+  examSubjectsError: Guidance | null = null;
+  readonly noExamSubjectsGuidance = GUIDANCE.noExamSubjects();
+  readonly noStudentSubjectsGuidance: Guidance = {
+    ...GUIDANCE.noExamSubjects(),
+    title: 'No subjects for this student in this exam',
+    message: 'The exam has no subjects this student takes. Check the exam\'s subjects in Exam Configuration (and the student\'s stream).',
+  };
+
   loadExamSubjects(): void {
     if (!this.selectedExamId) return;
+    this.examSubjectsLoaded = false;
+    this.examSubjectsError = null;
     this.examService.getExamSubjects(this.selectedExamId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => { this.examSubjects = data; this.cdr.markForCheck(); },
-        error: (e) => { this.logger.error('Error loading exam subjects:', e); this.toast.error('Error', 'Failed to load exam subjects.'); },
+        next: (data) => { this.examSubjects = data; this.examSubjectsLoaded = true; this.cdr.markForCheck(); },
+        error: (e) => { this.logger.error('Error loading exam subjects:', e); this.examSubjectsError = errorGuidance(e, 'this exam\'s subjects'); this.cdr.markForCheck(); },
       });
   }
 
@@ -562,6 +576,7 @@ export class MarkEntryComponent implements OnInit, OnDestroy {
   private resetSubjectSelection(): void {
     this.rowErrors = {};
     this.examSubjects = [];
+    this.examSubjectsLoaded = false;
     this.selectedSubjectEntryId = null;
     this.subjectStudentsSub?.unsubscribe();
     this.subjectStudentsState = 'idle';

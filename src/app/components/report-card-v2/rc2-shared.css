@@ -194,3 +194,5 @@
   .rc2-pdf-dialog { height: 100%; border-radius: 0; }
   .rc2-actions .rc2-btn { flex: 1 1 auto; }
 }
+
+.rc2-guidance { display: block; margin: 0 0 12px; }

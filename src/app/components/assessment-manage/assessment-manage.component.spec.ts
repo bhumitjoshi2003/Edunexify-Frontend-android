@@ -233,6 +233,6 @@ describe('AssessmentManageComponent', () => {
     });
     fixture = TestBed.createComponent(AssessmentManageComponent);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('temporarily unavailable');
+    expect(fixture.nativeElement.textContent).toContain("Couldn't load");
   });
 });

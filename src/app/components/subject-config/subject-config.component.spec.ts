@@ -66,7 +66,7 @@ describe('SubjectConfigComponent — class subjects', () => {
     c.newSubjectName = 'English';
     c.addClassSubject();
     expect(service.addClassSubject).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Add classes in Class Management');
+    expect(fixture.nativeElement.textContent).toContain('No classes yet');
   });
 
   it('a value outside the configured classes is never fetched or submitted', () => {

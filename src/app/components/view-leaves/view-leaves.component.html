@@ -80,11 +80,9 @@
   </div>
 
   <!-- ── Empty State ────────────────────────────────────────────────── -->
-  <div class="vl-empty" *ngIf="!isLoading && filteredLeaves.length === 0">
-    <div class="vl-empty-icon">📭</div>
-    <p class="vl-empty-title">No leave applications found</p>
-    <p class="vl-empty-sub">Try clearing the filters or selecting a different class</p>
-  </div>
+  <app-guidance class="vl-guidance" *ngIf="loadError" [guidance]="loadError" (retry)="retryLoad()"></app-guidance>
+  <app-guidance class="vl-guidance" *ngIf="!loadError && !isLoading && filteredLeaves.length === 0"
+    [guidance]="emptyGuidance" (clearFilters)="clearFilter()"></app-guidance>
 
   <!-- ── Leave Cards ────────────────────────────────────────────────── -->
   <div class="vl-section" *ngIf="!isLoading && filteredLeaves.length > 0">

@@ -462,3 +462,5 @@
 /* Leave Phase 1: cancelled status and decision details */
 .vl-status-cancelled { background: #f1f5f9; color: #64748b; }
 .vl-card-meta { display: block; margin-top: 2px; font-size: 0.72rem; color: #64748b; }
+
+.vl-guidance { display: block; margin: 10px 0; }

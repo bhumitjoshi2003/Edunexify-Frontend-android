@@ -16,11 +16,13 @@ import { ChildAccess } from '../../interfaces/parent-portal';
 import { ToastService } from '../../services/toast.service';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-student-results',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent],
   templateUrl: './student-results.component.html',
   styleUrl: './student-results.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,6 +131,8 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
     this.charts.clear();
     if (this.progressChart) { this.progressChart.destroy(); this.progressChart = null; }
 
+    this.resultsError = null;
+
     this.marksService.getStudentResults(this.studentId, this.selectedSession)
       .pipe(takeUntil(this.destroy$), takeUntil(this.resultsRequest$))
       .subscribe({
@@ -142,10 +146,20 @@ export class StudentResultsComponent implements OnInit, OnDestroy, AfterViewChec
         },
         error: (e) => {
           this.logger.error('Error loading results:', e);
+          this.resultsError = errorGuidance(e, 'results');
           this.loading = false;
           this.cdr.markForCheck();
         },
       });
+  }
+
+  /** A failed load: shown with Retry, never as "no published results". */
+  resultsError: Guidance | null = null;
+
+  get notPublishedGuidance(): Guidance {
+    return this.selectedSession
+      ? { ...GUIDANCE.resultsNotPublished(), message: `Results for ${this.selectedSession} appear here after your school publishes them.` }
+      : GUIDANCE.resultsNotPublished();
   }
 
   onChildTabSelected(child: ChildAccess): void {

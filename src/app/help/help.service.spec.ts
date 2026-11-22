@@ -195,6 +195,18 @@ describe('HelpService — role-aware help and authorised links', () => {
     expect(h.about.length).toBeGreaterThan(0);
   });
 
+  it('page guidance actions use the same rules: setup links only for those who may open them', async () => {
+    const actions = [{ label: 'Open Subject Configuration', path: 'subject-config' }, { label: 'Open Fee Assignment', path: 'fee-assignment', for: ['ADMIN'] as const }];
+    setup('ADMIN');
+    expect((await firstValueFrom(service.allowedLinks(actions))).map(a => a.path)).toEqual(['subject-config', 'fee-assignment']);
+    setup('TEACHER');
+    expect(await firstValueFrom(service.allowedLinks(actions))).toEqual([]);
+    setup('TEACHER', { coordinator: true });
+    expect((await firstValueFrom(service.allowedLinks(actions))).map(a => a.path)).toEqual(['subject-config']);
+    setup('ADMIN', { features: [] });
+    expect((await firstValueFrom(service.allowedLinks(actions))).map(a => a.path)).toEqual(['subject-config']);   // fee pages need the Fees plan
+  });
+
   it('every role sees something on every topic and never a link it could not open', async () => {
     for (const role of ['ADMIN', 'SUB_ADMIN', 'TEACHER', 'PARENT', 'STUDENT']) {
       setup(role);

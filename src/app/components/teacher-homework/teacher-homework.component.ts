@@ -25,6 +25,8 @@ import { TeacherSubstitutionService } from '../../services/teacher-substitution.
 import { ToastService } from '../../services/toast.service';
 import { LoggerService } from '../../services/logger.service';
 import { todayDayCode } from '../../utils/teacher-timetable-today.util';
+import { Guidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 /** One entry in the form's attachment list: already on the post, or newly picked. */
 export interface FormAttachment {
@@ -55,12 +57,20 @@ interface FormState {
 @Component({
   selector: 'app-teacher-homework',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [GuidanceComponent, CommonModule, FormsModule, MatIconModule],
   templateUrl: './teacher-homework.component.html',
   styleUrl: './teacher-homework.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeacherHomeworkComponent implements OnInit, OnDestroy {
+  /** A failed load, with Retry — never shown as an empty day. */
+  readonly loadErrorGuidance: Guidance = { kind: 'load-error', title: 'Couldn\'t load homework & classwork', message: 'Please check your connection and try again.' };
+  readonly noPeriodsGuidance: Guidance = {
+    kind: 'empty', title: 'No periods for you today',
+    message: 'Homework and classwork are posted from your periods. They appear here on days you teach.',
+    actions: [{ label: 'Open Timetable', path: 'timetable', for: ['TEACHER'] }],
+  };
+
   private readonly destroy$ = new Subject<void>();
   readonly classLabel = homeworkClassLabel;
   readonly kind = homeworkKind;

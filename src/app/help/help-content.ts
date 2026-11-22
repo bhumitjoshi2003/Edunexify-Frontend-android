@@ -87,7 +87,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     about: [
       { text: 'The Timetable shows each class\'s weekly periods: day, period number, subject and teacher.' },
       { text: 'You see your own teaching schedule. You can add your own periods for your class (as class teacher), for classes you already teach this session, and for classes an admin has given you access to.', for: ['TEACHER'] },
-      { text: 'You see the timetable of the classes your coordination covers.', for: ['COORDINATOR'] },
+      { text: 'Here you can see and change the periods of the classes and sections you coordinate, for any active teacher. Your own periods are managed from the Teacher workspace.', for: ['COORDINATOR'] },
       { text: 'You can view your class timetable here.', for: FAMILY },
     ],
     prerequisites: [
@@ -97,7 +97,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
       { text: 'Period times in Timetable → Setup, if you want times shown.', for: LEADERS },
     ],
     workflows: [
-      { title: 'Add a period', for: ['ADMIN', 'PRINCIPAL'], steps: [
+      { title: 'Add a period', for: ['ADMIN', 'PRINCIPAL', 'COORDINATOR'], steps: [
         'Choose the class (and section) and the day.',
         'Press + Add Period.',
         'Pick the section, period number, subject and teacher, then save.',
@@ -282,7 +282,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     feature: FEATURES.EXAMS_RESULTS,
     about: [
       { text: 'Mark Entry is where exam marks are entered, by subject or by student.' },
-      { text: 'Students and parents see marks only after an admin publishes the results. Published marks are locked.' },
+      { text: 'Students and parents see marks only after the results are published (by an admin, or the Principal if the school allows it). Published marks are locked.' },
       { text: 'You enter marks for your own class.', for: ['TEACHER'] },
       { text: 'Your changes are corrections: give a reason. They are recorded in the academic history.', for: ['PRINCIPAL', 'COORDINATOR'] },
       { text: 'You can correct the marks of the classes and sections you coordinate.', for: ['COORDINATOR'] },
@@ -300,7 +300,7 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     problems: [
       { problem: '"No subjects found".', solution: 'The exam has no subjects yet. Add them in Exam Configuration.', for: STAFF_SETUP },
       { problem: '"No subjects found".', solution: 'The exam has no subjects yet. Ask your school admin.', for: ['TEACHER'] },
-      { problem: 'Marks cannot be changed.', solution: 'The results are published. An admin must unpublish them in Class Results first.' },
+      { problem: 'Marks cannot be changed.', solution: 'The results are published. They must be unpublished in Class Results first (by an admin, or the Principal if the school allows it).' },
       { problem: '"Reason required".', solution: 'Corrections need a reason of up to 500 characters.', for: ['PRINCIPAL', 'COORDINATOR'] },
     ],
     links: [
@@ -317,14 +317,14 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
     about: [
       { text: 'Results show exam marks, totals and ranks once marks are entered.' },
       { text: 'Class Results shows every student\'s total, rank and pass/fail for an exam. A student is ranked only when all their marks are entered.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
-      { text: 'Results start as Draft (staff only). Publishing makes them visible to students and parents and locks the marks.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
+      { text: 'Results start as Draft (staff only). Publishing makes them visible to students and parents and locks the marks. An admin publishes, or the Principal if the school allows it.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
       { text: 'My Results shows published exam results, subject by subject, with your progress over time.', for: FAMILY },
     ],
     prerequisites: [
       { text: 'Marks entered in Mark Entry for the exam.', for: ['ADMIN', 'PRINCIPAL', 'TEACHER', 'COORDINATOR'] },
     ],
     workflows: [
-      { title: 'Publish results', for: ['ADMIN'], steps: [
+      { title: 'Publish results', for: ['ADMIN', 'PRINCIPAL'], steps: [
         'Choose the session, class and exam.',
         'Check the marks; students marked Incomplete still have missing marks.',
         'Press Publish Results. Use Unpublish to correct marks.',

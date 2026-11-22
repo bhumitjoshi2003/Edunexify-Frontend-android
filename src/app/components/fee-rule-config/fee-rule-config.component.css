@@ -49,3 +49,5 @@
 .frc-effective { margin: 12px 0; overflow-wrap: anywhere; }
 .frc-effective input { max-width: 100%; min-width: 0; box-sizing: border-box; }
  .frc-td-name { min-width: 0; overflow-wrap: anywhere; } .frc-input { min-width: 0; width: 140px; max-width: 45%; box-sizing: border-box; }
+
+.frc-guidance { display: block; margin: 10px 0; }

@@ -6,6 +6,8 @@ import { Rc2Context, Rc2ContextComponent } from '../rc2-context.component';
 import { RemarkSaveRow, RemarksPage, ReportCardV2Service } from '../../../services/report-card-v2.service';
 import { ToastService } from '../../../services/toast.service';
 import { HelpButtonComponent } from '../../help-button/help-button.component';
+import { GUIDANCE } from '../../../guidance/guidance';
+import { GuidanceComponent } from '../../guidance/guidance.component';
 
 interface EditRow {
   studentId: string; studentName: string; sectionName: string | null; locked: boolean;
@@ -20,7 +22,7 @@ interface EditRow {
 @Component({
   selector: 'app-rc2-remarks',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule, Rc2ContextComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule, Rc2ContextComponent],
   templateUrl: './rc2-remarks.component.html',
   styleUrls: ['../rc2-shared.css', './rc2-remarks.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +33,9 @@ export class Rc2RemarksComponent implements OnDestroy {
   state: 'idle' | 'loading' | 'loaded' | 'error' = 'idle';
   saving = false;
   private ctx: Rc2Context | null = null;
+  readonly noSetupGuidance = GUIDANCE.noReportCardSetup();
+  /** A class and session are chosen but no report card exists for them yet. */
+  get noSetups(): boolean { return !!this.ctx?.schoolClass && !!this.ctx?.session && this.ctx.setups.length === 0; }
   private loadSub?: Subscription;
   private destroy$ = new Subject<void>();
 

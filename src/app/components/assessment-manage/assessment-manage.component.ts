@@ -30,6 +30,8 @@ import { formatFileSize } from '../../interfaces/homework';
 import { AssessmentService } from '../../services/assessment.service';
 import { ToastService } from '../../services/toast.service';
 import { LoggerService } from '../../services/logger.service';
+import { Guidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 export type AssessmentManageTab = 'upcoming' | 'past';
 
@@ -72,12 +74,15 @@ interface FormState {
 @Component({
   selector: 'app-assessment-manage',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [GuidanceComponent, CommonModule, FormsModule, MatIconModule],
   templateUrl: './assessment-manage.component.html',
   styleUrl: './assessment-manage.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssessmentManageComponent implements OnInit, OnDestroy {
+  /** A failed load, with Retry — never shown as an empty list. */
+  readonly loadErrorGuidance: Guidance = { kind: 'load-error', title: 'Couldn\'t load assessments', message: 'Please check your connection and try again.' };
+
   private readonly destroy$ = new Subject<void>();
   readonly types = ASSESSMENT_TYPES;
   readonly typeMeta = assessmentTypeMeta;

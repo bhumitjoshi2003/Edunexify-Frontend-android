@@ -102,6 +102,6 @@ describe('StudentHomeworkComponent', () => {
     homework.studentOn.and.returnValue(throwError(() => new Error('offline')));
     component.load('today');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('temporarily unavailable');
+    expect(fixture.nativeElement.textContent).toContain("Couldn't load");
   });
 });

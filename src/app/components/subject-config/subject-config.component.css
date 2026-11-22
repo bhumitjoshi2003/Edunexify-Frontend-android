@@ -423,3 +423,5 @@
   font-size: 0.75rem;
   font-weight: 600;
 }
+
+.sc-guidance { list-style: none; padding: 4px 0; }

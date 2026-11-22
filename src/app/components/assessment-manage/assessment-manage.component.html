@@ -54,11 +54,7 @@
       </div>
     </div>
 
-    <div class="asm-empty is-error" *ngIf="!s.loading && s.failed">
-      <div class="asm-empty-art"><mat-icon>cloud_off</mat-icon></div>
-      <h3>Assessments are temporarily unavailable.</h3>
-      <button type="button" class="asm-ghost" (click)="load(active)"><mat-icon>refresh</mat-icon>Retry</button>
-    </div>
+    <app-guidance class="asm-guidance" *ngIf="!s.loading && s.failed" [guidance]="loadErrorGuidance" (retry)="load(active)"></app-guidance>
 
     <div class="asm-empty" *ngIf="!s.loading && !s.failed && s.loaded && !s.items.length">
       <div class="asm-empty-art">

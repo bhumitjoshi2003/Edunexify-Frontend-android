@@ -102,7 +102,7 @@ describe('StudentAssessmentsComponent', () => {
     service.studentUpcoming.and.returnValue(throwError(() => new Error('offline')));
     component.load('upcoming');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('temporarily unavailable');
+    expect(fixture.nativeElement.textContent).toContain("Couldn't load");
   });
 
   it('countdown and time helpers', () => {

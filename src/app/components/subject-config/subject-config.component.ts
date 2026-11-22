@@ -17,11 +17,13 @@ import { SchoolService } from '../../services/school.service';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { FEATURES } from '../../auth/feature-keys';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-subject-config',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './subject-config.component.html',
   styleUrl: './subject-config.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,17 +66,36 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
     private authState: AuthStateService
   ) { }
 
+  /** A failed load is shown as a failure with Retry, never as "no classes" or "no subjects". */
+  classesError: Guidance | null = null;
+  subjectsError: Guidance | null = null;
+  classesLoaded = false;
+  readonly noClassesGuidance = GUIDANCE.noClasses();
+
   ngOnInit(): void {
-    this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c)), takeUntil(this.destroy$)).subscribe(classes => {
-      this.classOptions = classes;
-      if (!this.hasConfiguredClass) this.selectedClass = classes[0] ?? '';
-      this.cdr.markForCheck();
-      this.loadClassSubjects();
-    });
+    this.loadClasses();
     if (this.streamsAvailable) {
       this.loadStreams();
       this.loadOptionalGroups();
     }
+  }
+
+  loadClasses(): void {
+    this.classesError = null;
+    this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c)), takeUntil(this.destroy$)).subscribe({
+      next: classes => {
+        this.classOptions = classes;
+        this.classesLoaded = true;
+        if (!this.hasConfiguredClass) this.selectedClass = classes[0] ?? '';
+        this.cdr.markForCheck();
+        this.loadClassSubjects();
+      },
+      error: e => {
+        this.logger.error('Error loading classes:', e);
+        this.classesError = errorGuidance(e, 'classes');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   /** Class subjects are part of every plan (the timetable needs them); streams and optional
@@ -100,6 +121,7 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
   }
 
   loadClassSubjects(): void {
+    this.subjectsError = null;
     if (!this.hasConfiguredClass) {
       this.classSubjects = [];
       this.cdr.markForCheck();
@@ -107,7 +129,7 @@ export class SubjectConfigComponent implements OnInit, OnDestroy {
     }
     this.service.getClassSubjects(this.selectedClass).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => { this.classSubjects = data; this.cdr.markForCheck(); },
-      error: (e) => { this.logger.error('Error loading class subjects:', e); this.toast.error('Error', 'Failed to load subjects.'); },
+      error: (e) => { this.logger.error('Error loading class subjects:', e); this.subjectsError = errorGuidance(e, 'subjects'); this.cdr.markForCheck(); },
     });
   }
 

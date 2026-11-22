@@ -13,6 +13,8 @@ import {
 import { ReportCardPdfDeliveryService } from '../../../services/report-card-pdf-delivery.service';
 import { ToastService } from '../../../services/toast.service';
 import { HelpButtonComponent } from '../../help-button/help-button.component';
+import { GUIDANCE } from '../../../guidance/guidance';
+import { GuidanceComponent } from '../../guidance/guidance.component';
 
 /**
  * Report Card V2 — Published Report Cards (ADMIN): the official, frozen documents. Publishing
@@ -27,7 +29,7 @@ import { HelpButtonComponent } from '../../help-button/help-button.component';
 @Component({
   selector: 'app-rc2-published',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule, RouterLink, Rc2ContextComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule, RouterLink, Rc2ContextComponent],
   templateUrl: './rc2-published.component.html',
   styleUrls: ['../rc2-shared.css', './rc2-published.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +39,7 @@ export class Rc2PublishedComponent implements OnDestroy {
 
   ctx: Rc2Context | null = null;
   state: 'idle' | 'no-setup' | 'loading' | 'loaded' | 'error' = 'idle';
+  readonly noSetupGuidance = { ...GUIDANCE.noReportCardSetup(), message: 'Create one in Report Card Setup, then publish it here.' };
   publications: Publication[] = [];
   documents: ReportCardDocument[] = [];
   selected: Publication | null = null;
