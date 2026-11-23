@@ -217,6 +217,18 @@ describe('GettingStartedComponent', () => {
       expect(failed.stepIds()).not.toContain('teachers✓');
     });
 
+    it('does not request readiness once its steps are done, or while the guide is hidden or finished', async () => {
+      configure('ADMIN');
+      stored[KEY] = { ...blank(), done: ['teachers', 'students', 'fees'] };
+      await render();
+      expect(school.getSetupHealth).not.toHaveBeenCalled();
+      TestBed.resetTestingModule();
+      configure('ADMIN');
+      stored[KEY] = { ...blank(), hidden: true };
+      await render();
+      expect(school.getSetupHealth).not.toHaveBeenCalled();
+    });
+
     it('the Sub-admin never requests the Admin-only readiness', async () => {
       configure('SUB_ADMIN');
       await render();

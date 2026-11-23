@@ -86,7 +86,8 @@ export class GettingStartedComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.key) { this.loading = false; this.cdr.markForCheck(); return; }
     this.service.changed$.pipe(filter(k => k === this.key), takeUntil(this.destroy$)).subscribe(() => void this.refresh());
     try { this.notifications = (await this.injector.get(TeacherOnboardingService).permissions()).notifications; } catch { this.notifications = 'unavailable'; }
-    if (this.guide.audience === 'ADMIN' && this.setupHealth === undefined && this.auth.getUserRole() === 'ADMIN') {
+    if (this.guide.audience === 'ADMIN' && this.setupHealth === undefined && this.auth.getUserRole() === 'ADMIN'
+        && await this.needsReadiness(this.guide, this.key)) {
       const health = await firstValueFrom(this.school.getSetupHealth()).catch(() => null);
       this.setup = statuses(health);
     } else {
@@ -173,6 +174,13 @@ export class GettingStartedComponent implements OnInit, OnChanges, OnDestroy {
     this.state = await this.service.update(this.key, s => ({ ...s, hidden: true }));
     this.showCompletion = false;
     this.cdr.markForCheck();
+  }
+
+  /** Admin without the dashboard's readiness: request it only while a readiness step is still open. */
+  private async needsReadiness(guide: GuideDefinition, key: string): Promise<boolean> {
+    const state = await this.service.state(key);
+    if (state.hidden || state.completedAt) return false;
+    return guide.steps.some(s => s.completion.kind === 'setup' && !state.done.includes(s.id));
   }
 
   /** Re-reads the steps and progress; latches server and device signals that are now complete. */
