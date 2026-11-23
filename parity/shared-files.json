@@ -191,8 +191,8 @@
     "src/app/onboarding/getting-started.service.ts": "a7ab3ebe60ffcfb2ad74121acb5cf2308387163d278385f2a34d99d638c5ee27",
     "src/app/onboarding/getting-started.service.spec.ts": "5036455cc693071aff1ad76ea860a14b4e4a9b6da9776992110a7d98e30ef0df",
     "src/app/onboarding/getting-started.interceptor.ts": "4edbae01138158ef45b43921f1297c06405e51be8ea1e21086e14c7507e428db",
-    "src/app/components/getting-started/getting-started.component.ts": "0abad168e05ddb506fc0b0191b318182c8eab551b72ce560357ebd619adf68ed",
-    "src/app/components/getting-started/getting-started.component.spec.ts": "beed57aef4cf60e0ac6b00e03f4042e7658a655c180973398851fe8f347bfd50"
+    "src/app/components/getting-started/getting-started.component.ts": "9f0eb820c635bd5ca4f11b0a6663b643d8a72154c1af045c46d62322a35a01ca",
+    "src/app/components/getting-started/getting-started.component.spec.ts": "4e589c70ea4c8a4a4db456b50c9b47fb18780416e8996c4eabb048a6e87ed021"
   },
   "platformSpecific": [
     {

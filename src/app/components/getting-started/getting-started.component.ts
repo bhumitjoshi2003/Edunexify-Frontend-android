@@ -16,6 +16,8 @@ import { WorkspaceService } from '../../services/workspace.service';
 
 export interface GettingStartedItem extends ResolvedStep {
   complete: boolean;
+  /** Beyond the first two open steps: on phones, shown only after "View all steps". */
+  extra: boolean;
   /** Parent: the selected child lacks this step's access; the button asks for another child. */
   needsOtherChild: boolean;
 }
@@ -62,6 +64,8 @@ export class GettingStartedComponent implements OnInit, OnChanges, OnDestroy {
   loading = true;
   pending: string | null = null;
   showCompletion = false;
+  /** Phones: all steps shown ("View all steps"). Only the viewer changes it; never stored. */
+  showAll = false;
   private key: string | null = null;
   private notifications: DevicePermission = 'unavailable';
   private setup: Record<string, string> | null = null;
@@ -110,12 +114,17 @@ export class GettingStartedComponent implements OnInit, OnChanges, OnDestroy {
 
   get items(): GettingStartedItem[] {
     const done = this.state?.done ?? [];
+    const firstOpen = this.steps.filter(r => !done.includes(r.step.id)).slice(0, COLLAPSED_STEPS).map(r => r.step.id);
     return this.steps.map(r => ({
       ...r,
       complete: done.includes(r.step.id),
+      extra: !firstOpen.includes(r.step.id),
       needsOtherChild: !!r.step.childPermission && !this.selectedChild?.[r.step.childPermission],
     }));
   }
+  /** Steps a phone hides until "View all steps" (completed ones and open ones after the first two). */
+  get extraCount(): number { return this.items.filter(i => i.extra).length; }
+  toggleShowAll(): void { this.showAll = !this.showAll; this.cdr.markForCheck(); }
   get completedCount(): number { return this.items.filter(i => i.complete).length; }
   get progressPercent(): number { return this.steps.length ? Math.round(this.completedCount * 100 / this.steps.length) : 0; }
   get isComplete(): boolean { return this.steps.length > 0 && this.completedCount === this.steps.length; }
@@ -218,6 +227,9 @@ export class GettingStartedComponent implements OnInit, OnChanges, OnDestroy {
     this.cdr.markForCheck();
   }
 }
+
+/** Open steps a phone shows before "View all steps". */
+const COLLAPSED_STEPS = 2;
 
 function statuses(health: SchoolSetupHealth | null): Record<string, string> | null {
   return health?.items ? Object.fromEntries(health.items.map(i => [i.key, i.status])) : null;

@@ -31,8 +31,8 @@
 
     <ng-template #checklist>
       <div class="gs-progress" role="progressbar" aria-label="Getting started progress" [attr.aria-valuenow]="completedCount" aria-valuemin="0" [attr.aria-valuemax]="steps.length"><span [style.width.%]="progressPercent"></span></div>
-      <div class="gs-list">
-        <article class="gs-item" *ngFor="let item of items" [class.is-complete]="item.complete" [attr.data-step]="item.step.id">
+      <div class="gs-list" id="gs-steps" [class.is-expanded]="showAll">
+        <article class="gs-item" *ngFor="let item of items" [class.is-complete]="item.complete" [class.is-extra]="item.extra" [attr.data-step]="item.step.id">
           <span class="gs-item-icon"><mat-icon aria-hidden="true">{{ item.complete ? 'done' : item.step.icon }}</mat-icon></span>
           <div class="gs-copy">
             <strong>{{ item.step.title }}</strong>
@@ -43,6 +43,9 @@
           <button *ngIf="!item.complete" type="button" class="gs-action" [disabled]="pending !== null" (click)="run(item)">{{ buttonLabel(item) }}</button>
         </article>
       </div>
+      <button *ngIf="extraCount" type="button" class="gs-more" aria-controls="gs-steps" [attr.aria-expanded]="showAll" (click)="toggleShowAll()">
+        {{ showAll ? 'Show less' : 'View all steps (' + extraCount + ' more)' }}<mat-icon aria-hidden="true">{{ showAll ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
     </ng-template>
   </ng-template>
 </section>

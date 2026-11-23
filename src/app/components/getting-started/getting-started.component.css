@@ -39,6 +39,9 @@
 .gs-complete div{flex:1}
 .gs-complete strong{font-size:.82rem}
 .gs-complete p{margin:2px 0 0;color:#62746e;font-size:.68rem}
+/* Phones show the first two open steps; "View all steps" shows the rest (desktop always shows all). */
+.gs-more{display:none;align-items:center;justify-content:center;gap:4px;width:100%;margin-top:8px;padding:7px 10px;border:1px solid #e5eaed;border-radius:9px;color:#0f6f69;background:#fff;font:inherit;font-size:.7rem;font-weight:800;cursor:pointer}
+.gs-more mat-icon{width:18px;height:18px;font-size:18px}
 button:focus-visible{outline:3px solid rgba(20,125,118,.28);outline-offset:2px}
-@media(max-width:760px){.gs-list{grid-template-columns:1fr}.gs-action{min-width:84px;min-height:40px}.gs-icon-button{width:40px;height:40px}.gs-help{width:36px;height:36px}}
+@media(max-width:760px){.gs-list{grid-template-columns:1fr}.gs-list:not(.is-expanded) .gs-item.is-extra{display:none}.gs-more{display:flex}.gs-action{min-width:84px;min-height:40px}.gs-icon-button{width:40px;height:40px}.gs-help{width:36px;height:36px}}
 @media(max-width:520px){.gs-shell{padding:12px}.gs-item{display:grid;grid-template-columns:30px minmax(0,1fr) auto;column-gap:10px;row-gap:6px;align-items:center}.gs-help{grid-column:3;grid-row:1}.gs-action,.gs-status{grid-column:2/4;grid-row:2;justify-self:start;margin:0}.gs-action{min-height:36px}.gs-status{grid-column:3;grid-row:1}}

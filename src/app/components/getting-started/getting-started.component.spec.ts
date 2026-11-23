@@ -158,6 +158,34 @@ describe('GettingStartedComponent', () => {
     expect(stepIds()).toContain('leave✓');
   });
 
+  it('phones show the first two open steps; "View all steps" shows the rest, including done ones, and "Show less" folds them', async () => {
+    configure('STUDENT');
+    stored[KEY] = { ...blank(), done: ['timetable'] };
+    const { fixture, el } = await render();
+    const extra = () => Array.from(el.querySelectorAll('[data-step].is-extra')).map(s => s.getAttribute('data-step'));
+    expect(extra()).toEqual(['timetable', 'fees', 'results']);           // done + beyond the first two open
+    expect(el.textContent).toContain('1 of 5');                           // the full count stays
+    const more = el.querySelector('.gs-more') as HTMLButtonElement;
+    expect(more.textContent).toContain('View all steps (3 more)');
+    expect(more.getAttribute('aria-expanded')).toBe('false');
+    expect(el.querySelector('.gs-list')!.classList).not.toContain('is-expanded');
+    more.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.gs-list')!.classList).toContain('is-expanded');
+    expect(more.textContent).toContain('Show less');
+    expect(more.getAttribute('aria-expanded')).toBe('true');
+    more.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.gs-list')!.classList).not.toContain('is-expanded');
+    expect(stored[KEY].done).toEqual(['timetable']);                      // folding never changes progress
+  });
+
+  it('no "View all steps" when two or fewer steps are open and none are done', async () => {
+    configure('STUDENT', 'STUDENT', GUIDES.STUDENT.steps.slice(0, 2));
+    const small = await render();
+    expect(small.el.querySelector('.gs-more')).toBeNull();
+  });
+
   it('minimise and hide are remembered and keep progress', async () => {
     configure('STUDENT');
     stored[KEY] = { ...blank(), done: ['attendance'] };
