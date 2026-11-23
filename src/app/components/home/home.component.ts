@@ -70,7 +70,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.authenticated = true;
       this.router.navigateByUrl(postLoginDestination({
         mustChangePassword: this.authStateService.mustChangePassword(), school: this.tenantService.slug,
-      }));
+      }), { replaceUrl: true });
     }
   }
 
@@ -138,7 +138,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           // is honoured (shared rule, see redirect-url.util).
           this.router.navigateByUrl(postLoginDestination({
             mustChangePassword: !!response.mustChangePassword, school: this.tenantService.slug,
-          }));
+          }), { replaceUrl: true });
         });
       },
       error: (error) => {
