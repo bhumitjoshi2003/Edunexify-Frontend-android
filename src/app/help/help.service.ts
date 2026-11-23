@@ -95,6 +95,17 @@ export class HelpService {
     }));
   }
 
+  /**
+   * The links (help links or page-guidance actions) this viewer may follow now, in order. Same rules
+   * as the help panel, so a prerequisite's "Open …" button is never a way into a page the viewer
+   * cannot open. Emits once.
+   */
+  allowedLinks<T extends { path: string; for?: readonly HelpAudience[] }>(links: readonly T[]): Observable<T[]> {
+    const audience = this.audience();
+    return this.principalOperations().pipe(map(ops =>
+      (audience ? forAudience(links, audience) : []).filter(l => this.canOpen(l.path, audience, ops))));
+  }
+
   /** Could this viewer open /dashboard/{path} now? Mirrors the route's guards (see class comment). */
   canOpen(path: string, audience: HelpAudience | null, principalOps: readonly string[]): boolean {
     if (!audience) return false;
@@ -143,9 +154,9 @@ export class HelpService {
     });
   }
 
-  /** Navigates to a help link (always a page under /dashboard). */
-  go(path: string): void {
-    void this.router.navigateByUrl(`/dashboard/${path}`);
+  /** Navigates to a help link or guidance action (always a page under /dashboard). */
+  go(path: string, queryParams?: Record<string, string>): void {
+    void this.router.navigate([`/dashboard/${path}`], queryParams ? { queryParams } : undefined);
   }
 
   private findRoute(path: string): Route | undefined {

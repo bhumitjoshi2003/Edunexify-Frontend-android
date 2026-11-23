@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ClassResultsComponent } from './class-results.component';
 import { MarksService, ClassStudentResult } from '../../services/marks.service';
 import { ExamConfigService, ExamConfig } from '../../services/exam-config.service';
@@ -65,6 +65,25 @@ describe('ClassResultsComponent — results publishing', () => {
         { provide: SectionService, useValue: { getSectionsForClass: () => of([{ id: 3, name: 'A' }, { id: 4, name: 'B' }]) } },
       ],
     });
+  });
+
+  it('a failed load is shown with Retry, never as "no students"; Retry loads again', () => {
+    marks.getClassResults.and.returnValue(throwError(() => ({ status: 503 })));
+    const el = render('ADMIN', 'DRAFT');
+    expect(el.querySelector('[data-guidance]')!.getAttribute('data-guidance')).toBe('load-error');
+    expect(el.textContent).not.toContain('No students in this class');
+    marks.getClassResults.and.returnValue(of(results));
+    (Array.from(el.querySelectorAll('button')).find(b => b.textContent!.includes('Retry')) as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-guidance]')).toBeNull();
+  });
+
+  it('an exam without subjects is a prerequisite, not "no students"', () => {
+    marks.getClassResults.and.returnValue(of([]));
+    const el = render('TEACHER', 'DRAFT');
+    expect(el.querySelector('[data-guidance]')!.getAttribute('data-guidance')).toBe('prerequisite');
+    expect(el.textContent).toContain('This exam has no subjects yet');
+    expect(el.textContent).toContain('Ask your school admin');
   });
 
   it('admin sees Draft status, counts and the Publish action', () => {

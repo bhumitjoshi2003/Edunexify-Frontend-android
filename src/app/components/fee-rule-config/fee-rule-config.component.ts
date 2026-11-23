@@ -14,11 +14,13 @@ import { AcademicSession } from '../../interfaces/academic-session';
 import { ToastService } from '../../services/toast.service';
 import { LoggerService } from '../../services/logger.service';
 import { schoolDateKey } from '../../utils/school-date.util';
+import { GUIDANCE } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-fee-rule-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [GuidanceComponent, CommonModule, FormsModule],
   templateUrl: './fee-rule-config.component.html',
   styleUrl: './fee-rule-config.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -91,6 +93,8 @@ export class FeeRuleConfigComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  readonly noFeeHeadsGuidance = GUIDANCE.noFeeHeads();
 
   ngOnDestroy(): void {
     this.destroyed = true; this.generation++; this.ruleRequest$.next();

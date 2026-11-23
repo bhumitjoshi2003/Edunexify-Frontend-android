@@ -1004,3 +1004,6 @@
   .tt-period-header-right { gap: 6px; }
   .tt-teacher-action { width: 32px; height: 32px; }
 }
+
+.tt-guidance { display: block; margin: 10px 0; }
+.tt-guidance--modal { margin: 6px 0 0; }

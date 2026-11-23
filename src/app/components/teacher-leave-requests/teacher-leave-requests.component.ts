@@ -11,6 +11,8 @@ import { PaginatedResponse } from '../../services/payment-history.service';
 import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
 import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-teacher-leave-requests',
@@ -18,7 +20,7 @@ import { HelpButtonComponent } from '../help-button/help-button.component';
   styleUrls: ['./teacher-leave-requests.component.css'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HelpButtonComponent, CommonModule, FormsModule, LeaveEscalationBadgeComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule, LeaveEscalationBadgeComponent],
 })
 export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
   leaves: TeacherLeave[] = [];
@@ -64,8 +66,19 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
     this.teacherIdInputSubject.complete();
   }
 
+  /** A failed load: shown with Retry, never as "no requests". */
+  loadError: Guidance | null = null;
+
+  get emptyGuidance(): Guidance {
+    if (this.teacherIdFilter || this.dateFilter) return GUIDANCE.noMatches('teacher leave requests');
+    const status = this.statusFilter === 'all' ? '' : `${this.statusFilter.toLowerCase()} `;
+    return GUIDANCE.noRecords(`No ${status}teacher leave requests`,
+      this.statusFilter === 'PENDING' ? 'Nothing is waiting for a decision.' : 'Choose another status to see more.');
+  }
+
   fetchLeaves(): void {
     this.isLoading = true;
+    this.loadError = null;
     this.cdr.markForCheck();
 
     const status = this.statusFilter === 'all' ? undefined : this.statusFilter;
@@ -86,7 +99,7 @@ export class TeacherLeaveRequestsComponent implements OnInit, OnDestroy {
         },
         error: (error: unknown) => {
           this.logger.error('Error loading teacher leave requests:', error);
-          this.toast.error('Error!', 'Failed to load teacher leave requests.');
+          this.loadError = errorGuidance(error, 'teacher leave requests');
           this.leaves = [];
           this.totalElements = 0;
           this.totalPages = 0;

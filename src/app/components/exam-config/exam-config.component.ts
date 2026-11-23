@@ -1,32 +1,34 @@
-import { coordinatorClassNames, optionalCoordinatorService } from '../../services/coordinator.service';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { coordinatorClassNames, optionalCoordinatorService } from '../../services/coordinator.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, forkJoin, switchMap } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
-import { ExamConfigService, ExamConfig, ExamSubjectEntry } from '../../services/exam-config.service';
-import { SubjectConfigService, ClassSubject } from '../../services/subject-config.service';
+import { ExamConfigService, ExamConfig, ExamSubjectEntry, ExamSubjectOption } from '../../services/exam-config.service';
 import { LoggerService } from '../../services/logger.service';
 import { AcademicSessionService } from '../../services/academic-session.service';
 import { SchoolService } from '../../services/school.service';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
-/** One row in the subject checklist (class subject or extra). */
+/** One row in the subject checklist (an academic subject of the class, or a legacy extra). */
 interface SubjectRow {
   subjectName: string;
   checked: boolean;
   maxMarks: number | null;
   examDate: string;
   isElective: boolean;
+  isStream?: boolean;        // a stream core / optional subject (stream students of that stream only)
   optionalGroup: string | null;
-  isExtra: boolean;          // true = user-added, not from class config
+  isExtra: boolean;          // true = saved earlier but no longer configured for the class
   existingEntryId?: number;  // set if this subject was already saved for this exam
 }
 
 @Component({
   selector: 'app-exam-config',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './exam-config.component.html',
   styleUrl: './exam-config.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +46,12 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
 
   exams: ExamConfig[] = [];
   isLoadingExams = false;
+  /** A failed load is shown as a failure with Retry, never as "no exams". */
+  examsError: Guidance | null = null;
+  sessionsLoaded = false;
+  classesLoaded = false;
+  readonly noSessionGuidance = GUIDANCE.noSession();
+  readonly noClassesGuidance = GUIDANCE.noClasses();
   expandedExamId: number | null = null;
 
   // Per-exam subject setup state
@@ -55,11 +63,10 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
   newExamName = '';
 
   // Cached class subjects to avoid re-fetching on every toggle
-  private classSubjectsCache: Record<string, ClassSubject[]> = {};
+  private classSubjectsCache: Record<string, ExamSubjectOption[]> = {};
 
   constructor(
     private examService: ExamConfigService,
-    private subjectConfigService: SubjectConfigService,
     private academicSessionService: AcademicSessionService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
@@ -73,23 +80,31 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
         this.sessions = sessions.map(s => s.label);
         const current = sessions.find(s => s.current);
         this.selectedSession = current ? current.label : (this.sessions[0] ?? '');
+        this.sessionsLoaded = true;
         this.cdr.markForCheck();
         if (this.selectedClass) this.loadExams();
       },
-      error: (e) => this.logger.error('Failed to load sessions', e)
+      error: (e) => { this.logger.error('Failed to load sessions', e); this.examsError = errorGuidance(e, 'academic sessions'); this.cdr.markForCheck(); }
     });
     this.schoolService.getClasses().pipe(switchMap(c => coordinatorClassNames(this.coordinators, c)), takeUntil(this.destroy$)).subscribe({
       next: classes => {
         this.classOptions = classes;
+        this.classesLoaded = true;
         if (!this.selectedClass && classes.length > 0) {
           this.selectedClass = classes[0];
         }
         this.cdr.markForCheck();
         if (this.selectedSession) this.loadExams();
       },
-      error: e => this.logger.error('Failed to load classes', e),
+      error: e => { this.logger.error('Failed to load classes', e); this.examsError = errorGuidance(e, 'classes'); this.cdr.markForCheck(); },
     });
   }
+
+  get noExamsGuidance(): Guidance { return GUIDANCE.noExams(this.selectedClass, this.selectedSession); }
+  noSubjectsGuidance(className: string): Guidance { return GUIDANCE.noSubjectsForClass(className); }
+
+  /** Retry after a failed load: everything this page needs. */
+  retryLoad(): void { this.examsError = null; this.ngOnInit(); }
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -103,6 +118,7 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
     this.defaultMaxMarks = {};
     this.classSubjectsCache = {};
     this.isLoadingExams = true;
+    this.examsError = null;
     this.cdr.markForCheck();
     this.examService.getExams(this.selectedSession, this.selectedClass)
       .pipe(takeUntil(this.destroy$))
@@ -115,8 +131,8 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
         error: (e) => {
           this.logger.error('Error loading exams:', e);
           this.isLoadingExams = false;
+          this.examsError = errorGuidance(e, 'exams');
           this.cdr.markForCheck();
-          this.toast.error('Error', 'Failed to load exams.');
         },
       });
   }
@@ -137,10 +153,6 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
     this.loadingSubjects[exam.id] = true;
     this.cdr.markForCheck();
 
-    const classSubjects$ = this.classSubjectsCache[exam.className]
-      ? new Subject<ClassSubject[]>() as any // will be replaced below
-      : this.subjectConfigService.getClassSubjects(exam.className);
-
     // If cached, just use the cache
     if (this.classSubjectsCache[exam.className]) {
       this.mergeSubjectSetup(exam, this.classSubjectsCache[exam.className]);
@@ -148,7 +160,7 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
     }
 
     forkJoin([
-      this.subjectConfigService.getClassSubjects(exam.className),
+      this.examService.getSubjectOptions(exam.className),
       this.examService.getExamSubjects(exam.id)
     ]).pipe(takeUntil(this.destroy$)).subscribe({
       next: ([classSubjects, examEntries]) => {
@@ -164,7 +176,7 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
     });
   }
 
-  private mergeSubjectSetup(exam: ExamConfig, classSubjects: ClassSubject[], examEntries?: ExamSubjectEntry[]): void {
+  private mergeSubjectSetup(exam: ExamConfig, classSubjects: ExamSubjectOption[], examEntries?: ExamSubjectEntry[]): void {
     // If examEntries not provided, fetch them
     if (!examEntries) {
       this.examService.getExamSubjects(exam.id).pipe(takeUntil(this.destroy$)).subscribe({
@@ -196,6 +208,7 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
         maxMarks: existing?.maxMarks ?? null,
         examDate: existing?.examDate ?? '',
         isElective: cs.optional,
+        isStream: cs.kind === 'STREAM',
         optionalGroup: cs.optionalGroup,
         isExtra: false,
         existingEntryId: existing?.id,
@@ -294,22 +307,6 @@ export class ExamConfigComponent implements OnInit, OnDestroy {
     for (const row of this.subjectRows[examId] ?? []) {
       if (!row.isExtra) row.checked = checked;
     }
-    this.cdr.markForCheck();
-  }
-
-  /** Add an empty extra subject row. */
-  addExtraSubject(examId: number): void {
-    const rows = this.subjectRows[examId];
-    if (!rows) return;
-    rows.push({
-      subjectName: '',
-      checked: true,
-      maxMarks: this.defaultMaxMarks[examId] ?? null,
-      examDate: '',
-      isElective: false,
-      optionalGroup: null,
-      isExtra: true,
-    });
     this.cdr.markForCheck();
   }
 

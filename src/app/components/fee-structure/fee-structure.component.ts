@@ -17,11 +17,13 @@ import { FeeStructureRule } from '../../interfaces/fee-rule';
 import { AcademicSession } from '../../interfaces/academic-session';
 import { schoolDateKey } from '../../utils/school-date.util';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-fee-structure',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule],
   templateUrl: './fee-structure.component.html',
   styleUrls: ['./fee-structure.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,6 +81,10 @@ export class FeeStructureComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
     private toast: ToastService
   ) {}
+
+  readonly noSessionGuidance = GUIDANCE.noSession();
+  readonly noFeeHeadsGuidance = { ...GUIDANCE.noFeeHeads(), message: 'Add fee heads (for example Tuition) to define the school\'s fee structure.' };
+  readonly noClassesGuidance = { ...GUIDANCE.noClasses(), message: 'Fee amounts are set per class. Add classes first.' };
 
   ngOnDestroy(): void {
     this.destroyed = true; this.generation++;

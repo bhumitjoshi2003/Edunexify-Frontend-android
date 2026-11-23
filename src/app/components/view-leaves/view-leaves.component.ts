@@ -18,6 +18,8 @@ import { getStoredSelectedClass, setStoredSelectedClass, clearStoredSelectedClas
 import { LeaveEscalationBadgeComponent } from '../leave-escalation-badge/leave-escalation-badge.component';
 import { isLeaveAutoApproved, isLeaveNeedsAttention } from '../../utils/leave-escalation.util';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-view-leaves',
@@ -25,7 +27,7 @@ import { HelpButtonComponent } from '../help-button/help-button.component';
   styleUrls: ['./view-leaves.component.css'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HelpButtonComponent, 
+  imports: [GuidanceComponent, HelpButtonComponent, 
     CommonModule,
     FormsModule,
     LeaveEscalationBadgeComponent
@@ -137,11 +139,14 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
       next: (teacher: Teacher) => {
         this.loggedInUserClass = teacher.classTeacher ?? '';
         this.selectedClass = teacher.classTeacher ?? '';
+        // Not a class teacher (and not reviewing as a Coordinator): nothing to load — the page says why.
+        if (!this.loggedInUserClass && !this.schoolWide) { this.isLoading = false; this.filteredLeaves = []; this.cdr.markForCheck(); return; }
         this.fetchLeaves();
       },
       error: (error: unknown) => {
         this.logger.error('Error fetching teacher details:', error);
-        this.toast.error('Error!', 'Failed to load teacher details or leave applications.');
+        this.loadError = errorGuidance(error, 'leave applications');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -175,6 +180,7 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
     );
 
     this.isLoading = true;
+    this.loadError = null;
     this.cdr.markForCheck();
 
     leavesObservable.pipe(takeUntil(this.ngUnsubscribe))
@@ -189,7 +195,7 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
         },
         error: (error: unknown) => {
           this.logger.error('Error loading leave applications:', error);
-          this.toast.error('Error!', 'Failed to load leave applications.');
+          this.loadError = errorGuidance(error, 'leave applications');
           this.filteredLeaves = [];
           this.totalElements = 0;
           this.totalPages = 0;
@@ -205,6 +211,24 @@ export class ViewLeavesComponent implements OnInit, OnDestroy {
     const month = (d.getMonth() + 1).toString().padStart(2, '0');
     const day = d.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /** A failed load: shown with Retry, never as "no leave applications". */
+  loadError: Guidance | null = null;
+
+  /** What an empty list means here: not a class teacher, hidden by filters, or genuinely none. */
+  get emptyGuidance(): Guidance {
+    if (this.loggedInUserRole === 'TEACHER' && !this.schoolWide && !this.loggedInUserClass) return GUIDANCE.notClassTeacher();
+    if (this.selectedDate || this.studentIdFilter) return GUIDANCE.noMatches('leave applications');
+    const status = this.statusFilter === 'all' ? '' : `${this.statusFilter.toLowerCase()} `;
+    return GUIDANCE.noRecords(`No ${status}leave applications`,
+      this.statusFilter === 'PENDING' ? 'Nothing is waiting for a decision.' : 'Choose another status or class to see more.');
+  }
+
+  retryLoad(): void {
+    this.loadError = null;
+    if (this.loggedInUserRole === 'TEACHER' && !this.schoolWide && !this.loggedInUserClass) this.getTeacherClassAndLoadLeaves();
+    else this.fetchLeaves();
   }
 
   onClassSelect(className: string): void {

@@ -19,6 +19,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { ChildAccess } from '../../interfaces/parent-portal';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
+import { Guidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 export type StudentAssessmentTab = 'upcoming' | 'month' | 'past';
 
@@ -32,12 +34,15 @@ interface TabState {
 @Component({
   selector: 'app-student-assessments',
   standalone: true,
-  imports: [CommonModule, MatIconModule, ParentChildContextComponent],
+  imports: [GuidanceComponent, CommonModule, MatIconModule, ParentChildContextComponent],
   templateUrl: './student-assessments.component.html',
   styleUrl: './student-assessments.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentAssessmentsComponent implements OnInit, OnDestroy {
+  /** A failed load, with Retry — never shown as an empty list. */
+  readonly loadErrorGuidance: Guidance = { kind: 'load-error', title: 'Couldn\'t load assessments', message: 'Please check your connection and try again.' };
+
   private readonly destroy$ = new Subject<void>();
   readonly typeMeta = assessmentTypeMeta;
   readonly classLabel = assessmentClassLabel;

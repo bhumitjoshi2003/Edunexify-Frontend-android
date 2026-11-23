@@ -85,7 +85,8 @@
     <div class="ta-warning" *ngIf="sheet?.markable && !isWithinTeacherWindow">
       Teachers can change attendance from {{ editWindowStart }} to today. Ask a school admin to correct older days.
     </div>
-    <div class="ta-warning ta-warning-error" *ngIf="loadError">{{ loadError }}</div>
+    <app-guidance class="ta-guidance" *ngIf="loadError && loadErrorGuidance" [guidance]="loadErrorGuidance" (retry)="retryLoad()"></app-guidance>
+    <div class="ta-warning ta-warning-error" *ngIf="loadError && !loadErrorGuidance">{{ loadError }}</div>
 
     <!-- ── Loading ───────────────────────────────────────────────────── -->
     <div class="ta-list" *ngIf="loading && !sheet" aria-busy="true">
@@ -93,11 +94,7 @@
     </div>
 
     <!-- ── Empty ─────────────────────────────────────────────────────── -->
-    <div class="ta-empty" *ngIf="sheet && rows.length === 0">
-      <div class="ta-empty-icon">🔍</div>
-      <p class="ta-empty-title">No students enrolled</p>
-      <p class="ta-empty-sub">No students are enrolled in {{ displayScope }} on this date.</p>
-    </div>
+    <app-guidance class="ta-guidance" *ngIf="sheet && rows.length === 0" [guidance]="noStudentsGuidance"></app-guidance>
 
     <ng-container *ngIf="sheet && rows.length > 0">
       <!-- ── Summary ────────────────────────────────────────────────── -->

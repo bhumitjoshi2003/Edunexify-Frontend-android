@@ -48,6 +48,8 @@ import { paiseToRupees, remainingDuePaise, rupeesToPaise } from '../../utils/fee
 import { FeeMonthPresentation, feeMonthPresentation } from '../../utils/fee-month-state.util';
 import { LocalPendingPayment, localPendingPayment, reconcilePendingConfirmations } from '../../utils/pending-payment.util';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 export interface FeeLineItem {
   name: string;
@@ -107,7 +109,7 @@ export type FeeLedgerDisplay = 'loading' | 'error' | 'empty' | 'rows';
 @Component({
   selector: 'app-payment-tracker',
   standalone: true,
-  imports: [HelpButtonComponent, 
+  imports: [GuidanceComponent, HelpButtonComponent, 
     ComingSoonComponent,
     FormsModule,
     CommonModule,
@@ -271,6 +273,8 @@ export class PaymentTrackerComponent implements OnInit, OnDestroy {
       },
     });
   }
+
+  readonly noFeesGuidance = GUIDANCE.noFeesGenerated();
 
   ngOnDestroy(): void {
     this.activeCheckout = null;

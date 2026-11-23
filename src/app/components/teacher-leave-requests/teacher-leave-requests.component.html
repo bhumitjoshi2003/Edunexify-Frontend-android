@@ -71,11 +71,9 @@
   </div>
 
   <!-- ── Empty State ────────────────────────────────────────────────── -->
-  <div class="tl-empty" *ngIf="!isLoading && leaves.length === 0">
-    <div class="tl-empty-icon">📭</div>
-    <p class="tl-empty-title">No leave requests found</p>
-    <p class="tl-empty-sub">Try clearing the filters or a different status</p>
-  </div>
+  <app-guidance class="tl-guidance" *ngIf="loadError" [guidance]="loadError" (retry)="fetchLeaves()"></app-guidance>
+  <app-guidance class="tl-guidance" *ngIf="!loadError && !isLoading && leaves.length === 0"
+    [guidance]="emptyGuidance" (clearFilters)="clearFilter()"></app-guidance>
 
   <!-- ── Leave Cards ────────────────────────────────────────────────── -->
   <div class="tl-section" *ngIf="!isLoading && leaves.length > 0">

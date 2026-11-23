@@ -80,11 +80,8 @@
     </div>
   </div>
 
-  <div *ngIf="!loading && selectedExamId && results.length === 0" class="cr-empty">
-    <div class="cr-empty-icon">📊</div>
-    <p class="cr-empty-title">No students found</p>
-    <p class="cr-empty-sub">No students or subjects are set up for this exam yet.</p>
-  </div>
+  <app-guidance class="cr-guidance" *ngIf="resultsError" [guidance]="resultsError" (retry)="loadResults()"></app-guidance>
+  <app-guidance class="cr-guidance" *ngIf="!resultsError && !loading && selectedExamId && results.length === 0" [guidance]="emptyGuidance"></app-guidance>
 
   <div *ngIf="!loading && results.length > 0" class="cr-table-wrapper">
     <table class="cr-table">

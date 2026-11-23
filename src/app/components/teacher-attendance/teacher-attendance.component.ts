@@ -19,6 +19,8 @@ import { AttendanceSheet, AttendanceStatus } from '../../interfaces/attendance-s
 import { AuthStateService } from '../../auth/auth-state.service';
 import { getStoredSelectedClass, setStoredSelectedClass } from '../../utils/class-selection-storage.util';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance, errorGuidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 /** One roster row being marked. Everyone starts PRESENT; APPROVED leave starts ABSENT. */
 interface MarkRow {
@@ -33,7 +35,7 @@ const TEACHER_EDIT_WINDOW_DAYS = 3;
 
 @Component({
   selector: 'app-teacher-attendance',
-  imports: [HelpButtonComponent, 
+  imports: [GuidanceComponent, HelpButtonComponent, 
     FormsModule,
     CommonModule,
     MatDatepickerModule,
@@ -109,20 +111,21 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
       switchMap(() => {
         const date = this.dateChosen ? formatDate(this.attendanceDate, 'yyyy-MM-dd', 'en') : null;
         return this.attendanceService.getSheet(date, this.selectedClassId, this.selectedSectionId).pipe(
-          map(sheet => ({ sheet, error: null as string | null })),
+          map(sheet => ({ sheet, error: null as string | null, raw: null as unknown })),
           catchError(err => {
             this.logger.error('Error loading attendance sheet:', err);
             const message = err?.status === 403
               ? 'Attendance can only be marked by the class teacher of this class, or a school admin.'
               : this.errorMessage(err, 'Failed to load the class roster.');
-            return of({ sheet: null, error: message });
+            return of({ sheet: null, error: message, raw: err as unknown });
           })
         );
       }),
       takeUntil(this.destroy$)
-    ).subscribe(({ sheet, error }) => {
+    ).subscribe(({ sheet, error, raw }) => {
       this.loading = false;
       this.loadError = error;
+      this.loadErrorGuidance = error ? this.failureGuidance(raw, error) : null;
       this.applySheet(sheet);
     });
 
@@ -136,15 +139,44 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     });
 
     if (this.coordinatorMode) {
-      this.coordinators!.units().pipe(takeUntil(this.destroy$)).subscribe({
-        next: units => { this.coordinatorUnits = units; this.loadAdminClasses(); },
-        error: err => { this.loadError = this.errorMessage(err, 'Your coordination scope could not be loaded.'); this.cdr.markForCheck(); }
-      });
+      this.loadCoordinatorScope();
     } else if (this.isAdmin) {
       this.loadAdminClasses();
     } else {
       this.reload();
     }
+  }
+
+  /** The load problem as guidance: never shown as an empty class. */
+  loadErrorGuidance: Guidance | null = null;
+  readonly noStudentsGuidance = GUIDANCE.noStudentsInClass();
+
+  /** 403 for a teacher means "not this class's class teacher" (a prerequisite); other failures retry. */
+  private failureGuidance(err: unknown, message: string): Guidance {
+    const status = (err as { status?: number } | null)?.status;
+    if (status === 403 && !this.isAdmin) return { ...GUIDANCE.notClassTeacher(), message };
+    return { ...errorGuidance(err, 'the class roster'), message };
+  }
+
+  /** Retry the roster (or, for a Coordinator, the coordination scope). */
+  retryLoad(): void {
+    this.loadError = null;
+    this.loadErrorGuidance = null;
+    if (this.coordinatorMode && !this.coordinatorUnits.length) this.loadCoordinatorScope();
+    else this.reload();
+    this.cdr.markForCheck();
+  }
+
+  /** A Coordinator's sections, then their classes. */
+  private loadCoordinatorScope(): void {
+    this.coordinators!.units().pipe(takeUntil(this.destroy$)).subscribe({
+      next: units => { this.coordinatorUnits = units; this.loadAdminClasses(); },
+      error: err => {
+        this.loadError = this.errorMessage(err, 'Your coordination scope could not be loaded.');
+        this.loadErrorGuidance = { ...errorGuidance(err, 'your coordination scope'), message: this.loadError };
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   // ─── Scope selection ──────────────────────────────────────────────

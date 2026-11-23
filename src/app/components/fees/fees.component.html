@@ -214,20 +214,12 @@
         </div>
       </div>
     </div>
-    <div
-      class="pt-alert pt-alert--reminder"
+    <app-guidance
+      class="pt-guidance"
       *ngIf="ledgerDisplay === 'empty'"
       data-testid="fees-empty"
-    >
-      <div class="pt-alert-icon">ℹ️</div>
-      <div class="pt-alert-body">
-        <span class="pt-alert-title">No fees generated yet</span>
-        <span class="pt-alert-text"
-          >This student has no fee charges for the selected session. Use Fee
-          Assignment to assign and generate the required months.</span
-        >
-      </div>
-    </div>
+      [guidance]="noFeesGuidance"
+    ></app-guidance>
 
     <!-- ── Payment Summary (before payment; not a receipt) ───────────── -->
     <app-fee-breakdown

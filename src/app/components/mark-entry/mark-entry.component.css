@@ -394,3 +394,5 @@
   .me-sk-row { grid-template-columns: 18px minmax(0, 1fr) 80px; }
   .me-sk-b { display: none !important; }
 }
+
+.me-guidance { display: block; margin: 10px 0; }

@@ -45,7 +45,7 @@ describe('StudentResultsComponent — published results', () => {
   it('shows a clean empty state when nothing is published', () => {
     const el = render([]);
     expect(marks.getStudentResults).toHaveBeenCalledWith('S1', '2026-2027');
-    expect(el.querySelector('.sr-empty-title')!.textContent!.trim()).toBe('No published results yet');
+    expect(el.querySelector('[data-guidance="unpublished"]')!.textContent).toContain('No published results yet');
   });
 
   it('uses the backend grade, fail flag and rank', () => {

@@ -26,11 +26,13 @@ import { AcademicSessionSelectorComponent, writableSession, apiMessage } from '.
 import { TeachingConfigurationComponent } from '../teaching-configuration/teaching-configuration.component';
 import { subjectIcon, subjectAccentClass } from '../../utils/subject-visual.util';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GUIDANCE, Guidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 @Component({
   selector: 'app-timetable',
   standalone: true,
-  imports: [HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent, AcademicSessionSelectorComponent, TeachingConfigurationComponent],
+  imports: [GuidanceComponent, HelpButtonComponent, CommonModule, FormsModule, ParentChildContextComponent, AcademicSessionSelectorComponent, TeachingConfigurationComponent],
   templateUrl: './timetable.component.html',
   styleUrl: './timetable.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -205,6 +207,36 @@ export class TimetableComponent implements OnInit, OnDestroy {
   }
 
   get hasSubjectOptions(): boolean { return this.subjectsLoaded && this.subjectOptions.length > 0; }
+
+  readonly noTimetableGuidance = GUIDANCE.noTimetable();
+
+  /** The page-level problem as guidance: a failed load (Retry) or, for a parent, a missing child. */
+  get errorGuidanceState(): Guidance | null {
+    if (!this.error) return null;
+    if (this.isParent() && this.error.startsWith('Select a child')) {
+      return { kind: 'prerequisite', title: 'Choose a child first', message: this.error };
+    }
+    return { kind: 'load-error', title: 'Couldn\'t load the timetable', message: this.error };
+  }
+
+  /** The modal's subject list is empty: why, and what to do (link only if the viewer may open it). */
+  get noSubjectsGuidance(): Guidance {
+    return this.subjectsError
+      ? { kind: 'load-error', title: 'Couldn\'t load this class\'s subjects', message: this.subjectsError }
+      : GUIDANCE.noSubjectsForClass();
+  }
+
+  /** Retry after a failed load: the schedule this viewer is looking at. */
+  retryLoad(): void {
+    this.error = null;
+    if (this.isTeacher()) this.loadTeacherTimetable();
+    else if (this.selectedClass) this.loadClassTimetable();
+    else this.ngOnInit();
+    this.cdr.markForCheck();
+  }
+
+  /** Retry the modal's subject list. */
+  retrySubjects(): void { this.loadSubjectsFor(this.modalForm.classId ?? null); }
 
   ngOnInit(): void {
     const user = this.authStateService.getUser();

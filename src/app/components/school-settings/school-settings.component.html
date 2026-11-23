@@ -274,7 +274,8 @@
             <div *ngIf="sessionsLoading" class="ss-info-row" style="justify-content:center;padding:1rem;">
               Loading sessions...
             </div>
-            <div *ngIf="!sessionsLoading && sessions.length === 0" class="ss-info-row" style="justify-content:center;padding:1rem;color:#94a3b8;">
+            <app-guidance *ngIf="sessionsError" [guidance]="sessionsError" (retry)="loadSessions()"></app-guidance>
+            <div *ngIf="!sessionsLoading && !sessionsError && sessions.length === 0" class="ss-info-row" style="justify-content:center;padding:1rem;color:#94a3b8;">
               No sessions yet. Click "Add Next Session" to create one.
             </div>
             <div *ngFor="let s of sessions" class="ss-info-row" style="align-items:center;">

@@ -195,6 +195,46 @@ describe('HelpService — role-aware help and authorised links', () => {
     expect(h.about.length).toBeGreaterThan(0);
   });
 
+  it('page guidance actions use the same rules: setup links only for those who may open them', async () => {
+    const actions = [{ label: 'Open Subject Configuration', path: 'subject-config' }, { label: 'Open Fee Assignment', path: 'fee-assignment', for: ['ADMIN'] as const }];
+    setup('ADMIN');
+    expect((await firstValueFrom(service.allowedLinks(actions))).map(a => a.path)).toEqual(['subject-config', 'fee-assignment']);
+    setup('TEACHER');
+    expect(await firstValueFrom(service.allowedLinks(actions))).toEqual([]);
+    setup('TEACHER', { coordinator: true });
+    expect((await firstValueFrom(service.allowedLinks(actions))).map(a => a.path)).toEqual(['subject-config']);
+    setup('ADMIN', { features: [] });
+    expect((await firstValueFrom(service.allowedLinks(actions))).map(a => a.path)).toEqual(['subject-config']);   // fee pages need the Fees plan
+  });
+
+  it('page guidance actions for every role: only setup pages that role may open', async () => {
+    const actions = [
+      { label: 'Open Class Management', path: 'class-management' },
+      { label: 'Open Subject Configuration', path: 'subject-config' },
+      { label: 'Open Exam Configuration', path: 'exam-config' },
+      { label: 'Open Report Card Setup', path: 'report-cards-v2/setup' },
+      { label: 'Open Fee Assignment', path: 'fee-assignment', for: ['ADMIN'] as const },
+      { label: 'Open School Settings', path: 'school-settings' },
+    ];
+    const allowed = async () => (await firstValueFrom(service.allowedLinks(actions))).map(a => a.path);
+    setup('ADMIN');
+    expect(await allowed()).toEqual(['class-management', 'subject-config', 'exam-config', 'report-cards-v2/setup', 'fee-assignment', 'school-settings']);
+    setup('SUB_ADMIN');
+    expect(await allowed()).toEqual(['class-management']);
+    setup('TEACHER');
+    expect(await allowed()).toEqual([]);
+    setup('TEACHER', { coordinator: true });
+    expect(await allowed()).toEqual(['subject-config', 'exam-config']);
+    setup('PARENT');
+    expect(await allowed()).toEqual([]);
+    setup('STUDENT');
+    expect(await allowed()).toEqual([]);
+    setup('PRINCIPAL');
+    const p = allowed();
+    http.expectOne(PRINCIPAL_CAPS).flush(['ACADEMIC_CONFIGURATION_EDIT']);
+    expect(await p).toEqual(['class-management', 'subject-config', 'exam-config']);   // no report-card configuration permission
+  });
+
   it('every role sees something on every topic and never a link it could not open', async () => {
     for (const role of ['ADMIN', 'SUB_ADMIN', 'TEACHER', 'PARENT', 'STUDENT']) {
       setup(role);

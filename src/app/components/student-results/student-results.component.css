@@ -531,3 +531,5 @@
 @keyframes sr-sk-wave { to { background-position-x: -200%; } }
 @media (max-width: 600px) { .sr-results-skeleton { padding: 14px; } .sr-sk-grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .sr-sk-shimmer { animation: none; } }
+
+.sr-guidance { display: block; margin: 10px 0; }

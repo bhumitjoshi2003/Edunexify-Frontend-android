@@ -9,6 +9,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { ChildAccess } from '../../interfaces/parent-portal';
 import { ParentChildContextComponent } from '../parent-child-context/parent-child-context.component';
+import { Guidance } from '../../guidance/guidance';
+import { GuidanceComponent } from '../guidance/guidance.component';
 
 export type StudentHomeworkTab = 'today' | 'upcoming' | 'recent';
 
@@ -22,12 +24,15 @@ interface TabState {
 @Component({
   selector: 'app-student-homework',
   standalone: true,
-  imports: [CommonModule, MatIconModule, ParentChildContextComponent],
+  imports: [GuidanceComponent, CommonModule, MatIconModule, ParentChildContextComponent],
   templateUrl: './student-homework.component.html',
   styleUrl: './student-homework.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StudentHomeworkComponent implements OnInit, OnDestroy {
+  /** A failed load, with Retry — never shown as an empty list. */
+  readonly loadErrorGuidance: Guidance = { kind: 'load-error', title: 'Couldn\'t load homework', message: 'Please check your connection and try again.' };
+
   private readonly destroy$ = new Subject<void>();
   readonly kind = homeworkKind;
   readonly due = dueLabel;

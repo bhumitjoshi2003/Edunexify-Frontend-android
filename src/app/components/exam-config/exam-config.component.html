@@ -50,11 +50,10 @@
   </div>
 
   <!-- Exam List -->
-  <div *ngIf="!isLoadingExams && exams.length === 0" class="ec-empty">
-    <div class="ec-empty-icon">📝</div>
-    <p class="ec-empty-title">No exams configured</p>
-    <p class="ec-empty-sub">No exams configured for Class {{ selectedClass }}, {{ selectedSession }}.</p>
-  </div>
+  <app-guidance class="ec-guidance" *ngIf="examsError" [guidance]="examsError" (retry)="retryLoad()"></app-guidance>
+  <app-guidance class="ec-guidance" *ngIf="!examsError && sessionsLoaded && !sessions.length" [guidance]="noSessionGuidance"></app-guidance>
+  <app-guidance class="ec-guidance" *ngIf="!examsError && classesLoaded && !classOptions.length" [guidance]="noClassesGuidance"></app-guidance>
+  <app-guidance class="ec-guidance" *ngIf="!examsError && !isLoadingExams && selectedClass && selectedSession && exams.length === 0" [guidance]="noExamsGuidance"></app-guidance>
 
   <div *ngFor="let exam of exams; trackBy: trackById" class="ec-accordion">
     <div class="ec-accordion-header" (click)="toggleExam(exam)">
@@ -100,6 +99,7 @@
               <input type="checkbox" [(ngModel)]="row.checked" />
               <span class="ec-subj-name">{{ row.subjectName }}</span>
               <span *ngIf="row.isElective" class="ec-elective-badge">elective</span>
+              <span *ngIf="row.isStream" class="ec-elective-badge">stream</span>
               <span *ngIf="row.optionalGroup" class="ec-group-tag">{{ row.optionalGroup }}</span>
             </label>
             <div class="ec-row-inputs" *ngIf="row.checked">
@@ -109,21 +109,19 @@
           </div>
         </div>
 
-        <div *ngIf="getClassRows(exam.id).length === 0" class="ec-empty-sub">
-          No subjects configured for this class. Add subjects in Subject Config first, or add extra subjects below.
+        <app-guidance class="ec-guidance" *ngIf="getClassRows(exam.id).length === 0" [guidance]="noSubjectsGuidance(exam.className)"></app-guidance>
+
+        <!-- Saved earlier but no longer configured for the class: can only be removed -->
+        <div class="ec-section-label ec-section-extra" *ngIf="getExtraRows(exam.id).length > 0">
+          <span>Not configured for this class</span>
+          <span class="ec-section-hint">Remove these, or add the subject in Subject Setup first</span>
         </div>
 
-        <!-- Extra Subjects -->
-        <div class="ec-section-label ec-section-extra">
-          <span>Extra Subjects</span>
-          <span class="ec-section-hint">Subjects not in class syllabus (e.g. GK, Drawing)</span>
-        </div>
-
-        <div class="ec-subject-list">
+        <div class="ec-subject-list" *ngIf="getExtraRows(exam.id).length > 0">
           <div *ngFor="let row of getExtraRows(exam.id); let i = index; trackBy: trackByName"
                class="ec-subject-row ec-extra-row">
             <div class="ec-extra-label">
-              <input type="text" [(ngModel)]="row.subjectName" placeholder="Subject name" class="ec-extra-name-input" aria-label="Extra subject name" />
+              <span class="ec-subj-name">{{ row.subjectName }}</span>
               <button class="ec-extra-remove" (click)="removeExtraSubject(exam.id, getExtraRowIndex(exam.id, row))" aria-label="Remove extra subject">&#x2715;</button>
             </div>
             <div class="ec-row-inputs">
@@ -132,8 +130,6 @@
             </div>
           </div>
         </div>
-
-        <button class="btn-outline" (click)="addExtraSubject(exam.id)">+ Add Extra Subject</button>
 
         <!-- Save All -->
         <div class="ec-save-bar">

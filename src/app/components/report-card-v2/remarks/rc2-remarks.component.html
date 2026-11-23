@@ -12,10 +12,11 @@
   <app-rc2-context [showSection]="true" [showSetup]="true" (contextChange)="onContext($event)"></app-rc2-context>
 
   <div class="rc2-card" *ngIf="state === 'idle'">
-    <div class="rc2-empty">
+    <app-guidance *ngIf="noSetups" [guidance]="noSetupGuidance"></app-guidance>
+    <div class="rc2-empty" *ngIf="!noSetups">
       <div class="rc2-empty-icon">🧾</div>
       <p class="rc2-empty-title">Choose a report card</p>
-      <p class="rc2-empty-sub">Report cards are created by an administrator in Report Card Setup.</p>
+      <p class="rc2-empty-sub">Pick the class and report card above.</p>
     </div>
   </div>
 

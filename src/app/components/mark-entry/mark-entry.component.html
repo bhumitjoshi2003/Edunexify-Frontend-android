@@ -80,6 +80,8 @@
         </option>
       </select>
     </div>
+    <app-guidance class="me-guidance" *ngIf="selectedExamId && examSubjectsError" [guidance]="examSubjectsError" (retry)="loadExamSubjects()"></app-guidance>
+    <app-guidance class="me-guidance" *ngIf="selectedExamId && examSubjectsLoaded && !examSubjects.length" [guidance]="noExamSubjectsGuidance"></app-guidance>
 
     <!-- Loading: skeleton rows instead of a premature "nothing found" -->
     <div *ngIf="selectedSubjectEntryId && subjectStudentsState === 'loading'" class="me-table-wrapper me-skeleton" aria-busy="true" aria-label="Loading students">
@@ -216,11 +218,7 @@
       </table>
     </div>
 
-    <div *ngIf="selectedStudentId && studentSubjectsState === 'loaded' && studentSubjects.length === 0" class="me-empty">
-      <div class="me-empty-icon">📚</div>
-      <p class="me-empty-title">No subjects found</p>
-      <p class="me-empty-sub">No subjects found for this student in this exam.</p>
-    </div>
+    <app-guidance class="me-guidance" *ngIf="selectedStudentId && studentSubjectsState === 'loaded' && studentSubjects.length === 0" [guidance]="noStudentSubjectsGuidance"></app-guidance>
 
     <div *ngIf="selectedStudentId && studentSubjectsState === 'error'" class="me-empty me-load-error">
       <div class="me-empty-icon">⚠️</div>

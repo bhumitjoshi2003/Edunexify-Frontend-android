@@ -247,8 +247,9 @@ describe('Report Card V2 (Phase 1)', () => {
     c.onContext({ session, schoolClass: cls, sectionId: null, setup: null, setups: [] });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent).toContain('No report card setup found for this class and session.');
-    expect(el.querySelector('a[href="/dashboard/report-cards-v2/setup"]')).not.toBeNull();
+    expect(el.textContent).toContain('No report card for this class yet');
+    // The setup link is the shared guidance action, shown only to someone who may open Report Card Setup.
+    expect(el.querySelector('[data-guidance="prerequisite"]')).not.toBeNull();
     expect(el.textContent!.toLowerCase()).not.toContain('template');
     expect(api.listPublications).not.toHaveBeenCalled();
   });
