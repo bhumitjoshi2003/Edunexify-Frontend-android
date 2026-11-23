@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -31,6 +33,8 @@ describe("StudentDashboardComponent — Today's Homework & Classwork", () => {
     TestBed.configureTestingModule({
       imports: [StudentDashboardComponent],
       providers: [
+        // The getting-started card on this page needs HttpClient (no request is made in these tests).
+        provideHttpClient(), provideHttpClientTesting(),
         provideRouter([]),
         { provide: AuthStateService, useValue: { getUser: () => null, hasFeature: () => false } },
         { provide: StudentService, useValue: {} },

@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -27,6 +29,8 @@ describe('CoordinatorDashboardComponent', () => {
     TestBed.configureTestingModule({
       imports: [CoordinatorDashboardComponent],
       providers: [
+        // The getting-started card on this page needs HttpClient (no request is made in these tests).
+        provideHttpClient(), provideHttpClientTesting(),
         provideRouter([]),
         { provide: CoordinatorService, useValue: coordinators },
         { provide: AuthStateService, useValue: { getUser: () => ({ name: 'Asha Rao' }), hasFeature: (k: string) => features.includes(k) } },

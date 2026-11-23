@@ -1,6 +1,10 @@
 {
   "extends": "./tsconfig.spec.json",
   "include": [
+    "src/app/onboarding/*.spec.ts",
+    "src/app/components/getting-started/*.spec.ts",
+    "src/app/components/teacher-getting-started/*.spec.ts",
+    "src/app/components/parent-child-context/*.spec.ts",
     "src/**/*.d.ts",
     "src/app/components/report-card-approvals/*.spec.ts",
     "src/app/components/report-card-v2/rc2.spec.ts",

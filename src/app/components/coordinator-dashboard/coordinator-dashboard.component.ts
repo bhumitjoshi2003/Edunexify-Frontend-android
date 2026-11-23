@@ -10,6 +10,7 @@ import {
   MyCoordinatorAppointment,
   coordinatorScopeLabel, coordinatorUnitLabel
 } from '../../interfaces/coordinator';
+import { GettingStartedComponent } from '../getting-started/getting-started.component';
 
 /** One independently loaded panel: its data, loading flag and failure. */
 interface Panel<T> { data: T | null; loading: boolean; failed: boolean; }
@@ -23,7 +24,7 @@ interface Panel<T> { data: T | null; loading: boolean; failed: boolean; }
 @Component({
   selector: 'app-coordinator-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatIconModule, GettingStartedComponent],
   templateUrl: './coordinator-dashboard.component.html',
   // Same visual language as the Principal dashboard; the local sheet only adds what is Coordinator-specific.
   styleUrls: ['../principal-dashboard/principal-dashboard.component.css', './coordinator-dashboard.component.css'],

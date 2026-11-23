@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 import { AuthStateService } from '../../auth/auth-state.service';
 import { OnLeaveTodayComponent } from '../on-leave-today/on-leave-today.component';
 import { LeaveAttentionBucket, LeaveAttentionSummary, NEEDS_ATTENTION_BADGE } from '../../utils/leave-escalation.util';
+import { GettingStartedComponent } from '../getting-started/getting-started.component';
 
 /** One class's attendance; recordedToday is absent from servers older than this screen. */
 export interface PrincipalClassAttendance {
@@ -88,7 +89,7 @@ const SEVERITY_ORDER: Record<AttentionSeverity, number> = { urgent: 0, warning: 
 @Component({
   selector: 'app-principal-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, OnLeaveTodayComponent],
+  imports: [CommonModule, RouterLink, MatIconModule, OnLeaveTodayComponent, GettingStartedComponent],
   templateUrl: './principal-dashboard.component.html',
   styleUrl: './principal-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

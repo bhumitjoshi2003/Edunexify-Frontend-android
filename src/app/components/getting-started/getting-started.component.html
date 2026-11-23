@@ -1,0 +1,51 @@
+<section class="gs-shell" *ngIf="visible && guide && state" [class.is-minimized]="state.minimized" aria-labelledby="gs-title" data-getting-started [attr.data-audience]="guide.audience">
+  <ng-container *ngIf="state.minimized; else expanded">
+    <div class="gs-minimized-copy">
+      <span class="gs-mark"><mat-icon aria-hidden="true">route</mat-icon></span>
+      <span><strong id="gs-title">Getting started</strong><small>{{ completedCount }} of {{ steps.length }} complete</small></span>
+    </div>
+    <div class="gs-head-actions">
+      <button type="button" class="gs-text-button" (click)="setMinimized(false)" aria-label="Show the getting-started guide">Show guide</button>
+      <button type="button" class="gs-icon-button" (click)="hide()" aria-label="Hide getting-started guide" title="Hide guide"><mat-icon aria-hidden="true">close</mat-icon></button>
+    </div>
+  </ng-container>
+
+  <ng-template #expanded>
+    <header class="gs-header">
+      <div class="gs-title-wrap">
+        <span class="gs-mark"><mat-icon aria-hidden="true">route</mat-icon></span>
+        <div><p>{{ guide.kicker }}</p><h2 id="gs-title">Getting started</h2></div>
+      </div>
+      <div class="gs-head-actions">
+        <span class="gs-count" *ngIf="!(showCompletion && isComplete)">{{ completedCount }} of {{ steps.length }}</span>
+        <button type="button" class="gs-icon-button" (click)="setMinimized(true)" aria-label="Minimize getting-started guide" title="Minimize"><mat-icon aria-hidden="true">remove</mat-icon></button>
+        <button type="button" class="gs-icon-button" (click)="hide()" aria-label="Hide getting-started guide" title="Hide guide"><mat-icon aria-hidden="true">close</mat-icon></button>
+      </div>
+    </header>
+
+    <div class="gs-complete" *ngIf="showCompletion && isComplete; else checklist" role="status">
+      <span><mat-icon aria-hidden="true">done</mat-icon></span>
+      <div><strong>You’re all set.</strong><p>Help is on the ? button of each page.</p></div>
+      <button type="button" class="gs-primary" (click)="hide()">Done</button>
+    </div>
+
+    <ng-template #checklist>
+      <div class="gs-progress" role="progressbar" aria-label="Getting started progress" [attr.aria-valuenow]="completedCount" aria-valuemin="0" [attr.aria-valuemax]="steps.length"><span [style.width.%]="progressPercent"></span></div>
+      <div class="gs-list" id="gs-steps" [class.is-expanded]="showAll">
+        <article class="gs-item" *ngFor="let item of items" [class.is-complete]="item.complete" [class.is-extra]="item.extra" [attr.data-step]="item.step.id">
+          <span class="gs-item-icon"><mat-icon aria-hidden="true">{{ item.complete ? 'done' : item.step.icon }}</mat-icon></span>
+          <div class="gs-copy">
+            <strong>{{ item.step.title }}</strong>
+            <p>{{ item.needsOtherChild && selectedChild ? 'Not available for ' + selectedChild.studentName + '. Choose another child.' : item.step.description }}</p>
+          </div>
+          <button *ngIf="item.step.help && !item.complete" type="button" class="gs-help" (click)="openHelp(item)" [attr.aria-label]="'Help: ' + item.step.title" title="Help"><mat-icon aria-hidden="true">help_outline</mat-icon></button>
+          <span class="gs-status" *ngIf="item.complete">Done</span>
+          <button *ngIf="!item.complete" type="button" class="gs-action" [disabled]="pending !== null" (click)="run(item)">{{ buttonLabel(item) }}</button>
+        </article>
+      </div>
+      <button *ngIf="extraCount" type="button" class="gs-more" aria-controls="gs-steps" [attr.aria-expanded]="showAll" (click)="toggleShowAll()">
+        {{ showAll ? 'Show less' : 'View all steps (' + extraCount + ' more)' }}<mat-icon aria-hidden="true">{{ showAll ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+    </ng-template>
+  </ng-template>
+</section>

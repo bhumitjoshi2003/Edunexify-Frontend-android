@@ -39,4 +39,6 @@ jobs:
         run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.report-card-review.spec.json --include='src/app/services/demo.service.spec.ts'
       - name: Test contextual help and page guidance
         run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.report-card-review.spec.json --include='src/app/help/*.spec.ts' --include='src/app/components/help-panel/*.spec.ts' --include='src/app/guidance/*.spec.ts' --include='src/app/components/guidance/*.spec.ts' --include='src/app/components/subject-config/*.spec.ts' --include='src/app/components/mark-entry/mark-entry.results.spec.ts' --include='src/app/components/student-results/*.spec.ts' --include='src/app/components/exam-config/*.spec.ts'
+      - name: Test getting-started guides
+        run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.report-card-review.spec.json --include='src/app/onboarding/*.spec.ts' --include='src/app/components/getting-started/*.spec.ts' --include='src/app/components/teacher-getting-started/*.spec.ts' --include='src/app/components/parent-child-context/*.spec.ts'
       - run: npm run build:android

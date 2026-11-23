@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { AuthStateService } from '../auth/auth-state.service';
 import { ChildAccess, ParentProfile } from '../interfaces/parent-portal';
 
@@ -9,6 +9,9 @@ const STORAGE_KEY = 'edunexify.parent.selected-child';
 export class ParentChildContextService {
   private readonly selectedSubject = new BehaviorSubject<ChildAccess | null>(null);
   readonly selectedChild$ = this.selectedSubject.asObservable();
+  private readonly explicitSubject = new Subject<ChildAccess>();
+  /** Emits only when the parent picks a child themselves — never for the automatic first/last choice. */
+  readonly explicitSelection$ = this.explicitSubject.asObservable();
 
   constructor(private authState: AuthStateService) {}
 
@@ -35,8 +38,10 @@ export class ParentChildContextService {
     return selected;
   }
 
-  select(child: ChildAccess): void {
+  /** `explicit`: the parent chose this child themselves (the child switcher), not an automatic pick. */
+  select(child: ChildAccess, explicit = false): void {
     this.selectedSubject.next(child);
+    if (explicit) this.explicitSubject.next(child);
     if (typeof localStorage !== 'undefined' && this.authState.getUserRole() === 'PARENT') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         parentId: this.authState.getUserId(), studentId: child.studentId

@@ -16,13 +16,18 @@ import { HelpService } from '../../help/help.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host { display: inline-flex; vertical-align: middle; margin: -6px 0 -6px 8px; }
-    .hb { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0;
-      border-radius: 50%; border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+    .hb { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0;
+      border-radius: 50%; border: 1px solid rgba(127, 127, 127, .4); background: rgba(127, 127, 127, .14); /* WebViews without color-mix() */
+      border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
       background: color-mix(in srgb, currentColor 12%, transparent); color: inherit; cursor: pointer;
       opacity: .9; transition: background-color .15s ease, opacity .15s ease; }
     .hb:hover { opacity: 1; background: color-mix(in srgb, currentColor 22%, transparent); }
     .hb:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; opacity: 1; }
-    .hb mat-icon { width: 18px; height: 18px; font-size: 18px; line-height: 18px; }
+    /* A light glyph inside the 28px circle, in proportion with the title text. The ::before keeps a
+       40px touch area (Android) without changing the header's layout. */
+    .hb::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
+    .hb:active { background: color-mix(in srgb, currentColor 30%, transparent); }
+    .hb mat-icon { width: 15px; height: 15px; font-size: 15px; line-height: 15px; }
     @media (prefers-reduced-motion: reduce) { .hb { transition: none; } }
     @media print { :host { display: none; } }
   `],

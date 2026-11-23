@@ -79,7 +79,7 @@ export class ParentChildContextComponent implements OnChanges {
       this.childSelected.emit(child);
       return;
     }
-    this.context.select(child);
+    this.context.select(child, true);
     this.childSelected.emit(child);
   }
 
