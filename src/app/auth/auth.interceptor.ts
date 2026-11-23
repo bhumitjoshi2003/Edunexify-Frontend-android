@@ -219,7 +219,10 @@ export class AuthInterceptor implements HttpInterceptor {
             // legitimately on a public route (e.g. reset-password) has no session to lose.
             if (!this.isPublicRoute()) {
               saveIntendedRoute(typeof window !== 'undefined' ? window.location.pathname + window.location.search : null);
-              this.router.navigate(['/home']);
+              // An automatic redirect: replace the current entry (the page is saved above). On a
+              // signed-out cold start this runs while the start-up URL '/' is still current; a push
+              // would leave '/' under /home, and Back at the dashboard would bounce off it once.
+              this.router.navigate(['/home'], { replaceUrl: true });
               // Say why, once: only for a user who was signed in (not an anonymous visitor) and
               // only here — a transient failure (offline, timeout, 5xx) never reaches this branch.
               if (wasSignedIn) this.injector.get(ToastService).warning(SIGNED_OUT_TITLE, SIGNED_OUT_MESSAGE);

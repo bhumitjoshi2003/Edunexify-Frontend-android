@@ -129,7 +129,7 @@ describe('AuthInterceptor — Android session reliability', () => {
       { status: 401, statusText: 'Unauthorized' });
     expect(errors.sort()).toEqual(['a', 'b']);
     expect(authState.clearUser).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home'], { replaceUrl: true });
     window.history.pushState(null, '', '/');
   });
 
