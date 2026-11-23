@@ -458,9 +458,10 @@ export const HELP_TOPICS: Readonly<Record<HelpTopicId, HelpTopic>> = {
   'school-settings': {
     id: 'school-settings',
     title: 'School Settings',
-    pages: ['school-settings'],
+    pages: ['school-settings', 'school-setup'],
     about: [
       { text: 'School Settings holds your school profile, logo, academic year, sessions, grading, staff check-in rules, payments and plan.' },
+      { text: 'The School Setup checklist (on the website) shows what is ready, from your school\'s own data: the essentials, then academic setup — classes, subjects, class teachers, exams and report cards — with "8 of 12 classes" style progress and a link to fix each gap.', for: ['ADMIN'] },
     ],
     prerequisites: [
       { text: 'Only a school admin can change these settings.' },
