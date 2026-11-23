@@ -29,6 +29,15 @@ export interface ExamSubjectEntry {
   examDate: string;
 }
 
+/** A subject an exam of the class may include (the server's academic-subject rule). */
+export interface ExamSubjectOption {
+  subjectName: string;
+  optional: boolean;
+  optionalGroup: string | null;
+  /** COMMON: every student; ELECTIVE: enrolled students; STREAM: that stream's students. */
+  kind: 'COMMON' | 'ELECTIVE' | 'STREAM';
+}
+
 @Injectable({ providedIn: 'root' })
 export class ExamConfigService {
   private base = `${environment.apiUrl}/exams`;
@@ -60,6 +69,11 @@ export class ExamConfigService {
 
   deleteExam(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  /** The class's academically valid subjects: class subjects, plus stream/optional ones for a stream class. */
+  getSubjectOptions(className: string): Observable<ExamSubjectOption[]> {
+    return this.http.get<ExamSubjectOption[]>(`${this.base}/subject-options`, { params: { className } });
   }
 
   getExamSubjects(examId: number): Observable<ExamSubjectEntry[]> {

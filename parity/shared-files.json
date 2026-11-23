@@ -173,7 +173,7 @@
     "src/app/help/help-content.ts": "1a14ff92ebf79da2808a13ee7e9651b2f58883a56dd54cbc8667010d63411b25",
     "src/app/help/help.service.ts": "1383ad211c44bb3d0ddfbe560067dc9b8638dc69232619afc16b3f7b1e2399b9",
     "src/app/help/help-content.spec.ts": "825d2b2a93f48eff7f0556ba87a8897b59d52c072d0ccdcf96a4ec9a2a8708aa",
-    "src/app/help/help.service.spec.ts": "58d08529cb2aaeead23184767cc0037ce73029f3af75df05909ffc11625d808f",
+    "src/app/help/help.service.spec.ts": "f2b58cdb5c0e7a308b32491109c8d5921eab9b488f44715b46d717391edb3850",
     "src/app/components/help-button/help-button.component.ts": "7c95b63d78e8bc495ff02261af6182df8b4113fd515b03ecf5f3369177ea0260",
     "src/app/components/help-panel/help-panel.component.ts": "7e902db1e3dd7ab2b1674f21a49e5a95f428c1314108873490a21925de068371",
     "src/app/components/help-panel/help-panel.component.spec.ts": "589d20b1c91881c9558795dc18f00f524f569f40877c083e721681d4d8258679",
@@ -182,7 +182,10 @@
     "src/app/guidance/guidance.spec.ts": "67fe0c55cd4eddeab7276e91d3e8369bb6ec758fc662bfd3321de7249b908553",
     "src/app/components/guidance/guidance.component.ts": "6e688ff573d1aa82cc507961d0c7e12caa26df817c3e905fe06a79f11f00f687",
     "src/app/components/guidance/guidance.component.spec.ts": "69b23589bde59ccd47301434926ba908fc4addf3846c0a25961d95a9514f6ee2",
-    "src/app/components/view-leaves/view-leaves.states.spec.ts": "f2137168250ae93fc82037b3ef8e65e379c697d7f3d467b8b54ea2827e6f4ee3"
+    "src/app/components/view-leaves/view-leaves.states.spec.ts": "f2137168250ae93fc82037b3ef8e65e379c697d7f3d467b8b54ea2827e6f4ee3",
+    "src/app/services/exam-config.service.ts": "9f4eb6aa53e97cd3e0aae78f52793c657cb3a58fe8020c5e44581f12a4271083",
+    "src/app/components/exam-config/exam-config.component.ts": "5764292a79c41b6a32097407ccbfd9461e8468c00cf8ed30a9856c4c35f9aab0",
+    "src/app/components/exam-config/exam-config.component.spec.ts": "05d3f6c3227eee2270716b925e0f9729f3b2610efcdc8a1ccb843dfc145e034d"
   },
   "platformSpecific": [
     {
