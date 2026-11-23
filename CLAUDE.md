@@ -170,6 +170,10 @@ Reactive forms (`ReactiveFormsModule`, `FormBuilder`) for complex forms. Templat
 
 ---
 
+### Getting-started guides
+
+Short, optional checklists on each role's home page (`components/getting-started`, definitions in `onboarding/getting-started-guides.ts`, shared). Admin, Sub-admin, Principal, Coordinator workspace, Parent and Student; the Teacher guide (`teacher-getting-started`, including the Coordinator's Teacher workspace) is separate and unchanged. Steps are filtered by the same page checks as contextual help (`HelpService.allowedLinks`). A step completes only from what happened — the page's own data loaded (2xx, seen by `GettingStartedInterceptor` while that page is open), a server readiness item, the viewer's own action, or a device permission — never from pressing its button. Progress is stored on the device per guide, school and user (Coordinator: per appointment). Hide is restorable from the Help panel. When a step's page, its data request or its route changes, update the step's `actions`/`completion` and the guide specs.
+
 ### Contextual help — keep it in step with the app (required)
 
 The **?** button in page headers opens help written in `src/app/help/help-content.ts` (shared with the other frontend; listed in `parity/shared-files.json`). `HelpService` shows a role only its own lines, and only links it could open now (route roles, workspace, plan feature, Principal permission).

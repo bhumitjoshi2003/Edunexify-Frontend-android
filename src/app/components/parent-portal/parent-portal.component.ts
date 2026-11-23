@@ -16,6 +16,7 @@ import { ToastService } from '../../services/toast.service';
 import { StudentService } from '../../services/student.service';
 import { Student } from '../../interfaces/student';
 import { ParentChildContextService } from '../../services/parent-child-context.service';
+import { GettingStartedComponent } from '../getting-started/getting-started.component';
 
 /**
  * Serves two very different audiences at the same route, exactly as before the
@@ -26,7 +27,7 @@ import { ParentChildContextService } from '../../services/parent-child-context.s
 @Component({
   selector: 'app-parent-portal',
   standalone: true,
-  imports: [WisdomCardsComponent, CommonModule, ReactiveFormsModule, MatIconModule, ParentChildContextComponent],
+  imports: [WisdomCardsComponent, CommonModule, ReactiveFormsModule, MatIconModule, ParentChildContextComponent, GettingStartedComponent],
   templateUrl: './parent-portal.component.html',
   styleUrl: './parent-portal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -259,6 +260,12 @@ export class ParentPortalComponent implements OnInit, OnDestroy {
   }
 
   selectChild(child: ChildAccess): void { this.selectedChild = child; this.childContext.select(child); }
+  /** Getting started: brings the child switcher into view so the parent can choose a child. */
+  showChildSwitcher(): void {
+    const switcher = typeof document !== 'undefined' ? document.querySelector('app-parent-child-context') : null;
+    switcher?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    (switcher?.querySelector('button:not([disabled])') as HTMLElement | null)?.focus({ preventScroll: true });
+  }
 
   openAttendance(child: ChildAccess): void {
     this.childContext.select(child);

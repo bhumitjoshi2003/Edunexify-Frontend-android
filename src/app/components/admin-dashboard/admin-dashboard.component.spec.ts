@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -58,6 +60,8 @@ describe('AdminDashboardComponent — Daily Action Center (Phase 1)', () => {
     TestBed.configureTestingModule({
       imports: [AdminDashboardComponent],
       providers: [
+        // The getting-started card on this page needs HttpClient (no request is made in these tests).
+        provideHttpClient(), provideHttpClientTesting(),
         provideRouter([]),
         { provide: TeacherSubstitutionService, useValue: { getUncovered: () => of([]) } },
         { provide: AuthStateService, useValue: authState },
@@ -438,6 +442,8 @@ describe('AdminDashboardComponent — Daily Action Center (Phase 1)', () => {
     TestBed.configureTestingModule({
       imports: [AdminDashboardComponent],
       providers: [
+        // The getting-started card on this page needs HttpClient (no request is made in these tests).
+        provideHttpClient(), provideHttpClientTesting(),
         provideRouter([]),
         { provide: AuthStateService, useValue: authState },
         { provide: TeacherSubstitutionService, useValue: { getUncovered: () => of([]) } },

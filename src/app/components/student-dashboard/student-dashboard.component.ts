@@ -21,11 +21,12 @@ import { ClassUpdateService } from '../../services/class-update.service';
 import { ClassUpdate } from '../../interfaces/class-update';
 import { AssessmentService } from '../../services/assessment.service';
 import { Assessment, countdownLabel, countdownTone, dateParts } from '../../interfaces/assessment';
+import { GettingStartedComponent } from '../getting-started/getting-started.component';
 
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [WisdomCardsComponent, CommonModule, RouterLink, MatIconModule],
+  imports: [WisdomCardsComponent, CommonModule, RouterLink, MatIconModule, GettingStartedComponent],
   templateUrl: './student-dashboard.component.html',
   styleUrl: './student-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -4,6 +4,8 @@ import { of } from 'rxjs';
 import { HelpPanelComponent } from './help-panel.component';
 import { HelpService, ResolvedHelp } from '../../help/help.service';
 import { HelpButtonComponent } from '../help-button/help-button.component';
+import { GettingStartedService } from '../../onboarding/getting-started.service';
+import { Router } from '@angular/router';
 
 /** Shared by the web and Android clients — keep the two copies identical. */
 describe('Contextual help — button and panel', () => {
@@ -17,7 +19,12 @@ describe('Contextual help — button and panel', () => {
     ...over,
   });
 
-  function renderPanel(help: ResolvedHelp) {
+  function renderPanel(help: ResolvedHelp, guideHidden = false) {
+    const guides = jasmine.createSpyObj<GettingStartedService>('GettingStartedService', ['isHidden', 'restore']);
+    guides.isHidden.and.resolveTo(guideHidden);
+    guides.restore.and.resolveTo('/dashboard/admin-dashboard');
+    const router = jasmine.createSpyObj<Router>('Router', ['navigateByUrl']);
+    router.navigateByUrl.and.resolveTo(true);
     const service = jasmine.createSpyObj<HelpService>('HelpService', ['resolve', 'go']);
     service.resolve.and.returnValue(of(help));
     const dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
@@ -27,11 +34,13 @@ describe('Contextual help — button and panel', () => {
         { provide: HelpService, useValue: service },
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MAT_DIALOG_DATA, useValue: { topicId: help.id } },
+        { provide: GettingStartedService, useValue: guides },
+        { provide: Router, useValue: router },
       ],
     });
     const fixture = TestBed.createComponent(HelpPanelComponent);
     fixture.detectChanges();
-    return { fixture, el: fixture.nativeElement as HTMLElement, service, dialogRef };
+    return { fixture, el: fixture.nativeElement as HTMLElement, service, dialogRef, guides, router };
   }
 
   it('shows the sections in order, with a labelled close button', () => {
@@ -65,6 +74,26 @@ describe('Contextual help — button and panel', () => {
   it('tells parents to choose the child first', () => {
     const { el } = renderPanel(resolved({ audience: 'PARENT', parentNote: true, links: [] }));
     expect(el.textContent).toContain('Choose your child in the parent portal first');
+  });
+
+  it('offers to show a hidden getting-started guide again, keeping progress, and returns to its page', async () => {
+    const { fixture, el, guides, router, dialogRef } = renderPanel(resolved(), true);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const button = Array.from(el.querySelectorAll('.hp-link')).find(b => b.textContent!.includes('Show getting-started guide')) as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    button.click();
+    await fixture.whenStable();
+    expect(guides.restore).toHaveBeenCalled();
+    expect(dialogRef.close).toHaveBeenCalled();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard/admin-dashboard');
+  });
+
+  it('does not offer the guide when it is not hidden', async () => {
+    const { fixture, el } = renderPanel(resolved(), false);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('Show getting-started guide');
   });
 
   it('the header button opens this page\'s help and names it for screen readers', () => {

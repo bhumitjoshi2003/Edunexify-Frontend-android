@@ -2,15 +2,18 @@ import { ChangeDetectionStrategy, Component, Inject, ViewEncapsulation, inject }
 import { AsyncPipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { Observable } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, catchError, from, of } from 'rxjs';
 import { HELP_TOPICS } from '../../help/help-content';
 import { HelpPanelData, HelpService, ResolvedHelp } from '../../help/help.service';
+import { GettingStartedService } from '../../onboarding/getting-started.service';
 
 /**
  * The help panel for one page: what it does, what to set up first, how to do the common tasks,
  * common problems, links the viewer may open, and Help & Support. A dialog, so Close, Escape and
  * Android's back button return to the page. Right-side panel on wide screens, full screen on
- * phones (see HelpService.open).
+ * phones (see HelpService.open). When the viewer hid their getting-started guide, it offers to show
+ * it again (progress kept).
  * Shared by the web and Android clients — keep the two copies identical.
  */
 @Component({
@@ -130,6 +133,14 @@ import { HelpPanelData, HelpService, ResolvedHelp } from '../../help/help.servic
               </div>
             </section>
           }
+          @if (guideHidden$ | async) {
+            <section class="hp-sec" aria-labelledby="hp-guide">
+              <h3 id="hp-guide">Getting started</h3>
+              <div class="hp-links">
+                <button type="button" class="hp-link" (click)="showGuide()">Show getting-started guide<mat-icon aria-hidden="true">route</mat-icon></button>
+              </div>
+            </section>
+          }
         </div>
         @if (h.support.length) {
           <div class="hp-foot">
@@ -150,7 +161,11 @@ import { HelpPanelData, HelpService, ResolvedHelp } from '../../help/help.servic
 export class HelpPanelComponent {
   private readonly help = inject(HelpService);
   private readonly dialogRef = inject(MatDialogRef<HelpPanelComponent>);
+  private readonly guides = inject(GettingStartedService);
+  private readonly router = inject(Router);
   readonly help$: Observable<ResolvedHelp>;
+  /** The viewer hid their getting-started guide (it can be shown again). */
+  readonly guideHidden$: Observable<boolean> = from(this.guides.isHidden()).pipe(catchError(() => of(false)));
   readonly title: string;
 
   constructor(@Inject(MAT_DIALOG_DATA) data: HelpPanelData) {
@@ -162,5 +177,12 @@ export class HelpPanelComponent {
   go(path: string): void {
     this.dialogRef.close();
     this.help.go(path);
+  }
+
+  /** Shows the hidden getting-started guide again on its home page (progress kept). */
+  async showGuide(): Promise<void> {
+    const home = await this.guides.restore();
+    this.dialogRef.close();
+    if (home) await this.router.navigateByUrl(home);
   }
 }

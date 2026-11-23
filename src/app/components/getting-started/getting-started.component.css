@@ -1,0 +1,44 @@
+/* Same visual language as the Teacher card (teacher-getting-started), a little more compact. */
+:host{display:block;margin:0 0 16px}
+.gs-shell{padding:14px 16px;border:1px solid var(--edu-border,#dce4e8);border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(15,42,54,.05);color:var(--edu-text,#17252d)}
+.gs-header,.gs-title-wrap,.gs-minimized-copy,.gs-item,.gs-complete,.gs-head-actions{display:flex;align-items:center}
+.gs-header{justify-content:space-between;gap:12px;margin-bottom:10px}
+.gs-title-wrap,.gs-minimized-copy{gap:10px;min-width:0}
+.gs-head-actions{gap:6px;flex:0 0 auto}
+.gs-mark{display:grid;width:32px;height:32px;flex:0 0 32px;place-items:center;border-radius:10px;color:#0f766e;background:#e9f6f4}
+.gs-mark mat-icon{width:18px;height:18px;font-size:18px}
+.gs-title-wrap p{margin:0 0 1px;color:#71808a;font-size:.64rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.gs-title-wrap h2{margin:0;font-size:.95rem;font-weight:800}
+.gs-count{margin-right:4px;color:#667781;font-size:.7rem;font-weight:700;white-space:nowrap}
+.gs-icon-button,.gs-text-button,.gs-action,.gs-primary,.gs-help{border:0;font:inherit;cursor:pointer}
+.gs-icon-button{display:grid;width:32px;height:32px;place-items:center;border-radius:9px;color:#64747d;background:#f3f6f7}
+.gs-icon-button mat-icon{width:18px;height:18px;font-size:18px}
+.gs-progress{height:4px;overflow:hidden;margin-bottom:10px;border-radius:999px;background:#edf1f2}
+.gs-progress span{display:block;height:100%;border-radius:inherit;background:#147d76;transition:width .2s ease}
+.gs-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.gs-item{min-width:0;min-height:54px;gap:10px;padding:8px 10px;border:1px solid #e5eaed;border-radius:11px;background:#fbfcfc}
+.gs-item.is-complete{background:#f8faf9}
+.gs-item-icon{display:grid;width:30px;height:30px;flex:0 0 30px;place-items:center;border-radius:9px;color:#52646f;background:#eef2f4}
+.gs-item-icon mat-icon{width:17px;height:17px;font-size:17px}
+.is-complete .gs-item-icon{color:#147d76;background:#e8f4f1}
+.gs-copy{min-width:0;flex:1}
+.gs-copy strong{display:block;margin-bottom:2px;font-size:.75rem}
+.gs-copy p{margin:0;color:#73828b;font-size:.66rem;line-height:1.35}
+.gs-help{display:grid;width:28px;height:28px;flex:0 0 28px;place-items:center;border-radius:8px;color:#64747d;background:transparent}
+.gs-help mat-icon{width:17px;height:17px;font-size:17px}
+.gs-action,.gs-primary{min-height:32px;padding:0 11px;border-radius:8px;color:#fff;background:#173f4a;font-size:.66rem;font-weight:750;white-space:nowrap}
+.gs-action:disabled{opacity:.6;cursor:wait}
+.gs-status{color:#51756e;font-size:.65rem;font-weight:750}
+.gs-shell.is-minimized{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px}
+.gs-minimized-copy strong,.gs-minimized-copy small{display:block}
+.gs-minimized-copy strong{font-size:.76rem}
+.gs-minimized-copy small{margin-top:1px;color:#74838c;font-size:.64rem}
+.gs-text-button{padding:7px 9px;border-radius:8px;color:#0f6f69;background:transparent;font-size:.7rem;font-weight:800}
+.gs-complete{gap:12px;padding:10px 12px;border:1px solid #d9ebe6;border-radius:11px;background:#f6fbf9}
+.gs-complete>span{display:grid;width:32px;height:32px;flex:0 0 32px;place-items:center;border-radius:50%;color:#fff;background:#147d76}
+.gs-complete div{flex:1}
+.gs-complete strong{font-size:.82rem}
+.gs-complete p{margin:2px 0 0;color:#62746e;font-size:.68rem}
+button:focus-visible{outline:3px solid rgba(20,125,118,.28);outline-offset:2px}
+@media(max-width:760px){.gs-list{grid-template-columns:1fr}.gs-action{min-width:84px;min-height:40px}.gs-icon-button{width:40px;height:40px}.gs-help{width:36px;height:36px}}
+@media(max-width:520px){.gs-shell{padding:12px}.gs-item{display:grid;grid-template-columns:30px minmax(0,1fr) auto;column-gap:10px;row-gap:6px;align-items:center}.gs-help{grid-column:3;grid-row:1}.gs-action,.gs-status{grid-column:2/4;grid-row:2;justify-self:start;margin:0}.gs-action{min-height:36px}.gs-status{grid-column:3;grid-row:1}}

@@ -148,6 +148,7 @@
         <button type="button" (click)="openSchoolUpdates()"><mat-icon>campaign</mat-icon><div><strong>School updates</strong><span>Notices, events and holidays</span></div><mat-icon>chevron_right</mat-icon></button>
       </div>
     </section>
+    <app-getting-started [children]="profile.children" [selectedChild]="selectedChild" (chooseChild)="showChildSwitcher()"></app-getting-started>
     <ng-template #noChildren><div class="panel empty"><mat-icon>link_off</mat-icon><strong>No students linked</strong><span>Please contact the school administrator.</span></div></ng-template>
   </ng-container>
 </div>
