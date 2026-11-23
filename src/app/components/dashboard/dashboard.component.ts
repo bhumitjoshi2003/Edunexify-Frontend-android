@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, inject } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { AdoptionMetadataService } from '../../services/adoption-metadata.service';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -21,6 +21,7 @@ import { Subject, takeUntil, interval, Subscription } from 'rxjs';
 import { NavigationEnd } from '@angular/router';
 import { Workspace, WorkspaceService } from '../../services/workspace.service';
 import { AppResumeService } from '../../core/app-resume.service';
+import { AndroidBackService } from '../../core/android-back.service';
 import { filter } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
 import { AppUpdate, AppUpdateAvailability } from '@capawesome/capacitor-app-update';
@@ -79,6 +80,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private ngUnsubscribe = new Subject<void>();
   private pollingIntervalSubscription: Subscription | undefined;
 
+  /** The profile menu in the header (the only menu trigger in the shell). */
+  @ViewChild(MatMenuTrigger) private profileMenuTrigger?: MatMenuTrigger;
+  private readonly androidBack = inject(AndroidBackService);
+  private readonly backRegistrations: (() => void)[] = [];
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -100,6 +106,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    // Android hardware Back closes the profile menu, then the mobile sidebar drawer, before it navigates.
+    this.backRegistrations.push(
+      this.androidBack.register('popup', () => this.closeProfileMenuOnBack()),
+      this.androidBack.register('panel', () => this.closeMobileSidebarOnBack()),
+    );
     this.adoptionMetadata.reportAndroidVersionOnce();
     void this.pushNotificationService.init();
     this.getDetails();
@@ -142,6 +153,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.backRegistrations.forEach(unregister => unregister());
     this.ngUnsubscribe.next();
     this.ngUnsubscribe.complete();
     if (this.pollingIntervalSubscription) {
@@ -233,20 +245,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const isBareDashboard = url === '/dashboard' || url === '/dashboard/';
     if (!isBareDashboard) return;
 
+    // The bare /dashboard entry is only a redirect: replace it, so Back from the role home does not
+    // land on /dashboard and get redirected forward again (a Back loop that never gets past the dashboard).
+
     if (this.Role === 'STUDENT') {
-      this.router.navigate(['/dashboard/student-dashboard']);
+      this.router.navigate(['/dashboard/student-dashboard'], { replaceUrl: true });
     } else if (this.Role === 'TEACHER') {
       // One account, two workspaces: a coordinating teacher opens the workspace they last used
       // (Coordinator until they choose otherwise); everyone else opens the Teacher dashboard.
-      this.router.navigate([this.workspace.homeRoute()]);
+      this.router.navigate([this.workspace.homeRoute()], { replaceUrl: true });
     } else if (this.Role === 'PRINCIPAL') {
-      this.router.navigate(['/dashboard/principal-dashboard']);
+      this.router.navigate(['/dashboard/principal-dashboard'], { replaceUrl: true });
     } else if (this.Role === 'ADMIN' || this.Role === 'SUB_ADMIN') {
-      this.router.navigate(['/dashboard/admin-dashboard']);
+      this.router.navigate(['/dashboard/admin-dashboard'], { replaceUrl: true });
     } else if (this.Role === 'PARENT') {
-      this.router.navigate(['/dashboard/parent-dashboard']);
+      this.router.navigate(['/dashboard/parent-dashboard'], { replaceUrl: true });
     } else if (this.Role === 'SUPER_ADMIN') {
-      this.router.navigate(['/dashboard/super-admin-dashboard']);
+      this.router.navigate(['/dashboard/super-admin-dashboard'], { replaceUrl: true });
     }
   }
 
@@ -467,6 +482,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.sidebarCollapsed = !this.sidebarCollapsed;
     }
     this.cdr.markForCheck();
+  }
+
+  /** Hardware Back: closes the open profile menu (its own close API). True when something closed. */
+  closeProfileMenuOnBack(): boolean {
+    if (!this.profileMenuTrigger?.menuOpen) return false;
+    this.profileMenuTrigger.closeMenu();
+    return true;
+  }
+
+  /** Hardware Back: closes the open mobile sidebar drawer. True when something closed. */
+  closeMobileSidebarOnBack(): boolean {
+    if (!this.mobileSidebarOpen) return false;
+    this.closeMobileSidebar();
+    return true;
   }
 
   closeMobileSidebar(): void {

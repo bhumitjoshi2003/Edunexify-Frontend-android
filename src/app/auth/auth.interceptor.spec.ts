@@ -85,13 +85,13 @@ describe('AuthInterceptor — refresh-failure navigation', () => {
   it('still redirects to /home when refresh fails on a protected route', () => {
     simulatePath('/dashboard/fees');
     failMeThenRefresh(`${base}/some-protected-endpoint`);
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home'], { replaceUrl: true });
   });
 
   it('still redirects to /home when refresh fails on a nested protected route', () => {
     simulatePath('/dashboard/fees/S1');
     failMeThenRefresh(`${base}/some-protected-endpoint`);
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home'], { replaceUrl: true });
   });
 
   it('retries the original request after a successful refresh and never navigates, on any route', () => {
@@ -109,7 +109,7 @@ describe('AuthInterceptor — refresh-failure navigation', () => {
   it('does not treat a route merely starting with a public prefix as public (e.g. /reset-password-request)', () => {
     simulatePath('/reset-password-request');
     failMeThenRefresh(`${base}/some-protected-endpoint`);
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home'], { replaceUrl: true });
   });
 
   it('saves the intended route before an authoritative-failure redirect from a protected route', () => {
@@ -117,7 +117,7 @@ describe('AuthInterceptor — refresh-failure navigation', () => {
     simulatePath('/dashboard/timetable');
     failMeThenRefresh(`${base}/some-protected-endpoint`);
 
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home'], { replaceUrl: true });
     expect(JSON.parse(localStorage.getItem('redirectUrl')!).url).toBe('/dashboard/timetable');
     localStorage.removeItem('redirectUrl');
   });
@@ -206,7 +206,7 @@ describe('AuthInterceptor — transient vs. authoritative refresh failure', () =
 
     expect(authState.clearUser).toHaveBeenCalledTimes(1);
     expect(authState.isLoggedIn()).toBeFalse();
-    expect(router.navigate).toHaveBeenCalledWith(['/home']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home'], { replaceUrl: true });
   });
 
   it('9/10. concurrent same-tab 401s trigger exactly one refresh, and both requests are retried on success', () => {
