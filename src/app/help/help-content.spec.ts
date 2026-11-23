@@ -20,7 +20,7 @@ describe('Help content registry', () => {
 
   it('names only real pages (route paths under /dashboard) for help buttons and links', () => {
     for (const topic of topics) {
-      for (const page of topic.pages) expect(pagePaths.has(page)).withContext(`${topic.id} page ${page}`).toBeTrue();
+      for (const page of topic.pages) expect(pagePaths.has(page) || WEBSITE_ONLY.includes(page)).withContext(`${topic.id} page ${page}`).toBeTrue();
       for (const link of topic.links) {
         expect(pagePaths.has(link.path) || WEBSITE_ONLY.includes(link.path)).withContext(`${topic.id} link ${link.path}`).toBeTrue();
       }

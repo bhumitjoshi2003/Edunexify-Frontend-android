@@ -30,6 +30,15 @@ describe('F6A timetable screen', () => {
     for (const session of [historical, null]) { c.selectedSession = session; expect(c.canWrite()).toBeFalse(); c.openAddPeriod(); c.saveEntry(); }
     expect(api.createEntry).not.toHaveBeenCalled();
   });
+  it('?tab=setup opens the Setup tab for Admin and Principal only (School Setup deep link)', () => {
+    const route = (tab: string | null) => ({ snapshot: { queryParamMap: { get: (k: string) => k === 'tab' ? tab : null } } });
+    for (const [role, tab, expected] of [['ADMIN', 'setup', 'setup'], ['PRINCIPAL', 'setup', 'setup'], ['TEACHER', 'setup', 'timetable'],
+        ['SUB_ADMIN', 'setup', 'timetable'], ['ADMIN', null, 'timetable'], ['ADMIN', 'other', 'timetable']] as const) {
+      (c as any).route = route(tab); c.role = role; c.activeTab = 'timetable';
+      c.applyTabFromUrl();
+      expect(c.activeTab).withContext(`${role} ${tab}`).toBe(expected);
+    }
+  });
   it('does not expose ADMIN writes to SUB_ADMIN', () => { c.role = 'SUB_ADMIN'; expect(c.canWrite()).toBeFalse(); c.saveEntry(); expect(api.createEntry).not.toHaveBeenCalled(); });
   it('lets the Principal edit periods in a writable session, but keeps Admin-only bulk import and session copy off', () => {
     c.role = 'PRINCIPAL';

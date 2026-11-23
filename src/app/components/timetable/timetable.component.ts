@@ -238,6 +238,12 @@ export class TimetableComponent implements OnInit, OnDestroy {
   /** Retry the modal's subject list. */
   retrySubjects(): void { this.loadSubjectsFor(this.modalForm.classId ?? null); }
 
+  /** Deep link (e.g. School Setup → Class teachers): ?tab=setup opens the Setup tab for those who may
+   *  use it (Admin, Principal); anyone else stays on the timetable. */
+  applyTabFromUrl(): void {
+    if (this.route.snapshot?.queryParamMap?.get('tab') === 'setup' && this.canManageSetup()) this.activeTab = 'setup';
+  }
+
   ngOnInit(): void {
     const user = this.authStateService.getUser();
     this.role = user?.role ?? '';
@@ -247,6 +253,7 @@ export class TimetableComponent implements OnInit, OnDestroy {
     this.userName = user?.name ?? '';
     this.loadTimingDisplay();
     if (this.canManageSetup()) this.loadTimingConfig();
+    this.applyTabFromUrl();
 
     const dayMap = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
     this.todayDay = dayMap[new Date().getDay()];
